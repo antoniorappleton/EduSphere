@@ -1,13 +1,14 @@
 <!doctype html>
 <html lang="pt">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <link rel="stylesheet" href="./styles.css" />
-  <title>EduSphere — Área do Aluno/Pai</title>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <link rel="stylesheet" href="./styles.css"/>
+  <title>EduSphere — Aluno</title>
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <script src="./js/supabaseClient.js"></script>
   <script src="./js/auth.js"></script>
+  <script src="./js/pages/aluno.js" defer></script>
 </head>
 <body>
 <header>
@@ -32,81 +33,18 @@
   </div>
 
   <div class="card">
-  <h2>Exercícios</h2>
-  <ul id="exlist"></ul>
-</div>
+    <h2>Exercícios</h2>
+    <ul id="exlist"></ul>
+  </div>
 
-
+  <div class="card">
+    <h2>Alterar palavra-passe</h2>
+    <form id="fPwd">
+      <input type="password" name="pwd" placeholder="Nova palavra-passe" required>
+      <button class="button">Atualizar</button>
+      <span id="pwdMsg" style="margin-left:8px;"></span>
+    </form>
+  </div>
 </main>
-
-<script>
-  // Guardião: precisa de sessão e role aluno/pai
-  (async ()=>{
-    const appUser = await getAppUser();
-    if(!appUser || (appUser.role !== 'aluno' && appUser.role !== 'pai')) {
-      location.href = './login.html'; return;
-    }
-
-    // Ler dados (RLS já limita)
-    const { data: agenda } = await supabase
-      .from('v_explicacoes_detalhe')
-      .select('*').order('data',{ascending:true}).order('hora',{ascending:true});
-
-    const { data: pagos } = await supabase
-      .from('v_pagamentos_detalhe')
-      .select('*').order('mes',{ascending:true});
-
-    const ag = document.getElementById('agenda');
-    ag.innerHTML = (agenda||[]).map(x=>`
-      <article class="card">
-        <div><strong>${x.aluno_nome??''}</strong></div>
-        <div>${x.data} • ${x.hora} • ${x.local??''}</div>
-        <p>${x.detalhes??''}</p>
-        <span class="badge">${Number(x.preco).toFixed(2)} €</span>
-      </article>
-    `).join('') || '<p>Sem explicações.</p>';
-
-    const tbody = document.querySelector('#tabPag tbody');
-    tbody.innerHTML = (pagos||[]).map(p=>`
-      <tr>
-        <td>${p.mes}</td>
-        <td>${Number(p.valor_previsto).toFixed(2)} €</td>
-        <td>${Number(p.valor_pago).toFixed(2)} €</td>
-        <td><span class="badge ${p.estado}">${p.estado}</span></td>
-      </tr>
-    `).join('');
-  })();
-
-  document.getElementById('logout').addEventListener('click', async (e)=>{
-    e.preventDefault();
-    await signOut();
-    location.href = './login.html';
-  });
-  (async ()=>{
-  // ... (resto do guardião e carregamentos)
-  const { data: exs, error: exErr } = await supabase
-    .from('exercicios').select('*')
-    .order('created_at', { ascending: false });
-  const exlist = document.getElementById('exlist');
-
-  if (exErr) { exlist.innerHTML = `<li>${exErr.message}</li>`; return; }
-
-  // Se bucket for público e guardaste URL, mostra direto.
-  // Se bucket for privado (guardaste apenas path), gera signed URL por item:
-  const items = await Promise.all((exs || []).map(async ex => {
-    let href = ex.url;
-    if (!href || /^https?:\/\//.test(href) === false) {
-      // assumir privado -> criar URL assinada válida 1h
-      const { data: s } = await supabase
-        .storage.from('exercicios')
-        .createSignedUrl(ex.url, 3600);
-      href = s?.signedUrl ?? '#';
-    }
-    return `<li><a href="${href}" target="_blank" rel="noopener">${ex.nome}</a> <small>(${ex.tipo || 'ficheiro'})</small></li>`;
-  }));
-
-  exlist.innerHTML = items.join('') || '<li>Sem exercícios.</li>';
-})();
-</script>
 </body>
 </html>

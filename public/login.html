@@ -1,69 +1,47 @@
 <!doctype html>
 <html lang="pt">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <link rel="stylesheet" href="./styles.css" />
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <link rel="stylesheet" href="./styles.css"/>
   <title>EduSphere — Login</title>
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <script src="./js/supabaseClient.js"></script>
   <script src="./js/auth.js"></script>
+  <script src="./js/pages/login.js" defer></script>
 </head>
 <body>
-  <header>
-    <div class="header-inner">
-      <a class="logo" href="./index.html"><img src="./img/logo-icon.svg" alt=""> <span>EduSphere</span></a>
+<header>
+  <div class="header-inner">
+    <a class="logo" href="./index.html"><img src="./img/logo-icon.svg" alt=""><span>EduSphere</span></a>
+  </div>
+</header>
+
+<main>
+  <div class="card">
+    <h1>Entrar</h1>
+    <form id="loginForm">
+      <input type="email" name="email" placeholder="Email" required style="width:100%;padding:10px;margin:8px 0;">
+      <input type="password" name="password" placeholder="Password" required style="width:100%;padding:10px;margin:8px 0;">
+      <button class="button" style="width:100%;">Entrar</button>
+    </form>
+    <p style="margin-top:12px;">Ainda não tens conta? <a href="#" id="demoSignup">Criar conta demo</a></p>
+    <div id="msg" style="color:#a92a1f;margin-top:8px;"></div>
+  </div>
+  <div class="card">
+  <h2>Criar conta de Explicador</h2>
+  <form id="fSignupExpl">
+    <div style="display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px;">
+      <input name="nome" placeholder="O seu nome" required>
+      <input name="contacto" placeholder="Contacto (opcional)">
+      <input type="email" name="email" placeholder="Email" required>
+      <input type="password" name="password" placeholder="Password" required>
     </div>
-  </header>
+    <button class="button" style="margin-top:10px">Criar conta</button>
+    <div id="signupExplMsg" style="margin-top:8px;"></div>
+  </form>
+</div>
 
-  <main>
-    <div class="card">
-      <h1>Entrar</h1>
-      <form id="loginForm">
-        <input type="email" name="email" placeholder="Email" required style="width:100%;padding:10px;margin:8px 0;">
-        <input type="password" name="password" placeholder="Password" required style="width:100%;padding:10px;margin:8px 0;">
-        <button class="button" style="width:100%;">Entrar</button>
-      </form>
-      <p style="margin-top:12px;">Ainda não tens conta? <a href="#" id="demoSignup">Criar conta demo</a></p>
-      <div id="msg" style="color:#a92a1f;margin-top:8px;"></div>
-    </div>
-  </main>
-
-  <script>
-    // Se já estiver logado, salta o login
-    getSession().then(s => { if (s) routeByRole(); });
-
-    const form = document.getElementById('loginForm');
-    const msg  = document.getElementById('msg');
-
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      msg.textContent = '';
-      const email = e.target.email.value.trim();
-      const password = e.target.password.value;
-      try{
-        await signIn(email, password);
-        await routeByRole();
-      }catch(err){
-        msg.textContent = err.message;
-      }
-    });
-
-    // Cria um utilizador demo rápido (apenas para testes)
-    document.getElementById('demoSignup').addEventListener('click', async (e)=>{
-      e.preventDefault();
-      msg.textContent = '';
-      const email = `demo+${Date.now()}@example.com`;
-      const password = '12345678';
-      try{
-        await signUp(email, password);
-        msg.style.color = '#126b3a';
-        msg.textContent = `Conta criada: ${email}. Faz login. (Depois mapeia em app_users)`;
-      }catch(err){
-        msg.style.color = '#a92a1f';
-        msg.textContent = err.message;
-      }
-    });
-  </script>
+</main>
 </body>
 </html>
