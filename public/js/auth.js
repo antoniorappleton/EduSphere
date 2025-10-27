@@ -51,30 +51,15 @@ async function routeByRole() {
     location.href = "./login.html";
     return;
   }
-
   const appUser = await getAppUser();
-
-  // Caso ainda não tenha perfil criado em app_users
   if (!appUser || !appUser.role) {
     console.log(
       "Sessão válida mas app_user ainda não criado — permanece na página atual."
     );
-    return; // NÃO redireciona, evita loop
+    return;
   }
-
-  // Redireciona conforme papel
-  switch (appUser.role) {
-    case "admin":
-      if (!location.pathname.endsWith("/admin.html"))
-        location.href = "./admin.html";
-      break;
-    case "explicador":
-      if (!location.pathname.endsWith("/explicador.html"))
-        location.href = "./explicador.html";
-      break;
-    default:
-      if (!location.pathname.endsWith("/aluno.html"))
-        location.href = "./aluno.html";
-      break;
-  }
+  if (appUser.role === "admin") location.href = "./admin.html";
+  else if (appUser.role === "explicador") location.href = "./explicador.html";
+  else location.href = "./aluno.html";
 }
+
