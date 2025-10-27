@@ -1,0 +1,17 @@
+<svg width="320" height="64" viewBox="0 0 320 64" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="EduSphere">
+  <defs>
+    <style>
+      .p{fill:#4A90E2}
+      .a{fill:#7ED6A8}
+      .t{font:600 24px 'Poppins',sans-serif; fill:#4A90E2}
+      .n{fill:none;stroke:#4A90E2;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+    </style>
+  </defs>
+  <g transform="translate(8,8)">
+    <circle cx="24" cy="24" r="20" class="n"/>
+    <path d="M4 24h40M24 4v40M10 10c6 4 22 4 28 0M10 38c6-4 22-4 28 0" class="n"/>
+    <path d="M8 30c6-4 12-4 18 0v10c-6-4-12-4-18 0V30z" class="p"/>
+    <path d="M26 30c6-4 12-4 18 0v10c-6-4-12-4-18 0V30z" class="a"/>
+  </g>
+  <text x="64" y="36" class="t">EduSphere</text>
+</svg>

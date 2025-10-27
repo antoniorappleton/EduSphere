@@ -1,0 +1,15 @@
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="EduSphere">
+  <defs>
+    <style>
+      .p{fill:#4A90E2}
+      .a{fill:#7ED6A8}
+      .n{fill:none;stroke:#4A90E2;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+    </style>
+  </defs>
+  <!-- esfera / rede -->
+  <circle cx="64" cy="64" r="44" class="n"/>
+  <path d="M20 64h88M64 20v88M34 34c12 8 48 8 60 0M34 94c12-8 48-8 60 0" class="n"/>
+  <!-- livro minimalista -->
+  <path d="M40 74c10-6 20-6 30 0v16c-10-6-20-6-30 0V74z" class="p"/>
+  <path d="M70 74c10-6 20-6 30 0v16c-10-6-20-6-30 0V74z" class="a"/>
+</svg>
