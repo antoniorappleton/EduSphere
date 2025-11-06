@@ -4,10 +4,10 @@ const ASSETS = [
   "./index.html",
   "./styles.css",
   "./manifest.json",
-  "./img/logo-icon.svg",
-  "./img/logo-full.svg",
-  "./js/supabaseClient.js",
-  "./js/router.js",
+  "./public/img/logo-icon.svg",
+  "./public/img/logo-full.svg",
+  "./public/js/supabaseClient.js",
+  "./public/js/router.js",
 ];
 
 self.addEventListener("install", (e) => {

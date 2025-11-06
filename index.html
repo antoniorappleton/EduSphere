@@ -3,43 +3,45 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <!-- manifest e css na raiz -->
   <link rel="manifest" href="./manifest.json" />
   <link rel="stylesheet" href="./styles.css" />
   <title>EduSphere — Aprender juntos</title>
 </head>
-<body>
+
+<body class="home">
   <header>
     <div class="header-inner">
       <a class="logo" href="./index.html">
-        <img src="./img/logo-icon.svg" alt="EduSphere" />
+        <img src="./public/img/logo-icon.svg" alt="EduSphere" />
         <span>EduSphere</span>
       </a>
       <nav>
         <a href="./login.html">Login</a>
-        <a href="./aluno.html">Aluno/Pai</a>
-        <a href="./admin.html">Admin</a>
         <a href="./explicador.html">Explicador</a>
-
+        <a href="./public/admin.html">Admin</a>
       </nav>
     </div>
   </header>
+    <!-- coloca isto entre o </header> e o <footer> -->
+    <main class="hero" aria-hidden="true"></main>
 
-  <main>
-    <div class="card">
-      <h1>Bem-vindo à EduSphere</h1>
-      <p>Um espaço educativo digital que conecta alunos, pais e explicadores de forma organizada e transparente.</p>
-      <button class="button" onclick="location.href='./login.html'">Entrar</button>
-    </div>
-  </main>
 
-  <footer>© <span id="y"></span> EduSphere</footer>
+  <footer>© <span id="y"></span> EduSphere | by antonioappleton</footer>
 
   <script>
     document.getElementById('y').textContent = new Date().getFullYear();
-    if('serviceWorker' in navigator){ navigator.serviceWorker.register('./service-worker.js'); }
+    // service worker dentro da pasta public
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./service-worker.js');
+    }
   </script>
-  <!-- scripts da app (quando forem usados) -->
-  <script src="./js/supabaseClient.js"></script>
-  <script src="./js/router.js"></script>
+
+  <!-- 1️⃣ biblioteca do Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+
+  <!-- 2️⃣ scripts da app -->
+  <script src="./public/js/supabaseClient.js"></script>
+  <script src="./public/js/router.js"></script>
 </body>
 </html>

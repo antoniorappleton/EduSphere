@@ -3,7 +3,7 @@
 
 /* 2) DESIGN TOKENS */
 :root{
-  --primary: #4A90E2;   /* azul */
+  --primary: #a92a1f;   /* azul */
   --accent:  #7ED6A8;   /* verde menta */
   --bg:      #F2F2F2;   /* cinza suave */
   --text:    #333333;
@@ -72,3 +72,210 @@ main{ max-width:1100px; margin:20px auto; padding:0 16px; }
 .badge.Em\ atraso{ background:#fde9e7; color:#a92a1f; }
 
 footer{ text-align:center; color:#666; padding:24px; }
+
+/* ===== PÁGINA INICIAL (capa) ===== */
+
+/* fundo */
+body.home {
+  margin: 0;
+  min-height: 100vh;
+  background: url("./public/img/imagens/livro.jpg") center/cover no-repeat fixed;
+  display: flex;
+  flex-direction: column;
+  color: #fff;
+}
+
+/* overlay ligeiramente escuro sobre o fundo */
+.capa__overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 0;
+}
+
+/* header fixo simples */
+header {
+  position: relative;
+  z-index: 2;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+}
+.header-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 24px;
+}
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: #fff;
+  font-weight: 700;
+}
+.logo img {
+  width: 28px;
+  height: 28px;
+}
+nav a {
+  margin-left: 16px;
+  color: #fff;
+  text-decoration: none;
+  font-weight: 500;
+}
+nav a:hover { text-decoration: underline; }
+
+/* container central */
+main.capa {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+}
+
+.welcome {
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(6px);
+  color: #fff;
+  text-align: center;
+  padding: 3rem 1rem;
+  width: 100%;
+  max-width: 900px;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+.welcome h1 {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  font-weight: 700;
+}
+
+.welcome p {
+  font-size: 1.1rem;
+  margin-bottom: 2rem;
+  line-height: 1.5;
+}
+
+.welcome .button {
+  background: #ffffff;
+  color: rgb(118, 0, 0);
+  border: none;
+  padding: 14px 36px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.welcome .button:hover {
+  background: rgb(118, 0, 0);
+  color: #fff;
+}
+
+/* footer */
+footer {
+  text-align: center;
+  padding: 12px;
+  background: rgba(0,0,0,0.6);
+  font-size: 0.9rem;
+  color: #fff;
+}
+/* layout base para colar o footer ao fundo */
+body.home{
+  margin:0;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+}
+
+/* área central com a imagem */
+.hero{
+  flex: 1; /* ocupa o espaço entre header e footer */
+  background: url("/public/img/imagens/livro.jpg") center/contain no-repeat;
+  /* altura mínima para ficar “a meio” mesmo em ecrãs altos */
+  min-height: 60vh;
+}
+
+/* footer já existe; certifica que não tem margin-top */
+footer{ margin-top: 0; }
+/* ===== Login do Aluno (mesmo look do screen 1) ===== */
+
+/* centro do ecrã, mantendo header e footer iguais */
+.auth{
+  min-height: calc(100vh - 120px); /* espaço útil entre header e footer */
+  display: grid;
+  place-items: center;
+  padding: 24px 16px;
+  position: relative;
+  z-index: 1; /* acima do overlay */
+}
+
+.auth__panel{
+  width: 100%;
+  max-width: 420px;
+  background: rgba(255,255,255,0.25);
+  backdrop-filter: blur(8px) saturate(130%);
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 14px;
+  padding: 22px 18px;
+  color: #fff;
+  box-shadow: 0 14px 34px rgba(0,0,0,.25);
+}
+
+.auth__panel h1{
+  margin: 0 0 6px 0;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  font-size: 1.4rem;
+}
+
+.auth__hint{
+  margin: 0 0 14px 0;
+  opacity: .85;
+  font-size: .95rem;
+}
+
+.auth__form{
+  display: grid;
+  gap: 10px;
+}
+
+.auth__form input{
+  width: 100%;
+  border: 1px solid rgba(255,255,255,0.55);
+  background: rgba(255,255,255,0.15);
+  color: #fff;
+  padding: 12px 12px;
+  border-radius: 10px;
+  outline: none;
+}
+.auth__form input::placeholder{ color: rgba(255,255,255,0.85); }
+
+.auth__form .button{
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: #ffffff;
+  color: rgb(118,0,0);
+  font-weight: 700;
+}
+.auth__form .button:hover{
+  background: rgb(118,0,0);
+  color: #fff;
+}
+
+.auth__msg{
+  min-height: 1.25rem;
+  color: #ffe6e6;
+  font-weight: 600;
+}
+
+.auth__links{
+  margin-top: 6px;
+  text-align: center;
+}
+.auth__links a{ color: #fff; text-decoration: underline; }
