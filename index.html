@@ -18,13 +18,50 @@
       </a>
       <nav>
         <a href="./login.html">Login</a>
-        <a href="./explicador.html">Explicador</a>
+        <a id="navExplicador" href="./explicador.html">Explicador</a>
         <a href="./public/admin.html">Admin</a>
       </nav>
     </div>
   </header>
     <!-- coloca isto entre o </header> e o <footer> -->
     <main class="hero" aria-hidden="true"></main>
+
+
+      <!-- Modal Explicador -->
+  <div class="modal" id="explModal" aria-hidden="true">
+    <div class="modal__backdrop"></div>
+    <section class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="explTitle">
+      <header class="modal__header">
+        <h2 id="explTitle">Explicador</h2>
+        <button class="modal__close" id="explClose" aria-label="Fechar">×</button>
+      </header>
+
+      <div class="tabs">
+        <button class="tab tab--active" data-tab="entrar">Entrar</button>
+        <button class="tab" data-tab="criar">Criar conta</button>
+      </div>
+
+      <!-- Entrar -->
+      <form id="fExplLogin" class="auth__form tabpane tabpane--active" data-pane="entrar">
+        <input type="email" name="email" placeholder="Email" required />
+        <input type="password" name="password" placeholder="Password" required />
+        <button class="button" type="submit">Entrar</button>
+        <div id="explLoginMsg" class="auth__msg"></div>
+      </form>
+
+      <!-- Criar conta -->
+      <form id="fExplSignup" class="auth__form tabpane" data-pane="criar">
+        <div class="grid2">
+          <input name="nome" placeholder="Nome" required />
+          <input name="contacto" placeholder="Contacto (opcional)" />
+          <input type="email" name="email" placeholder="Email" required />
+          <input type="password" name="password" placeholder="Password" required minlength="6" />
+        </div>
+        <button class="button" type="submit">Criar conta</button>
+        <div id="explSignupMsg" class="auth__msg"></div>
+      </form>
+    </section>
+  </div>
 
 
   <footer>© <span id="y"></span> EduSphere | by antonioappleton</footer>
@@ -35,6 +72,95 @@
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./service-worker.js');
     }
+
+      // Abrir/fechar modal
+  const navExpl = document.getElementById('navExplicador');
+  const modal = document.getElementById('explModal');
+  const closeBtn = document.getElementById('explClose');
+
+  function openModal(){ modal.classList.add('open'); modal.setAttribute('aria-hidden','false'); }
+  function closeModal(){ modal.classList.remove('open'); modal.setAttribute('aria-hidden','true'); }
+
+  navExpl?.addEventListener('click', (e)=>{ e.preventDefault(); openModal(); });
+  closeBtn?.addEventListener('click', closeModal);
+  modal?.addEventListener('click', (e)=>{ if(e.target.classList.contains('modal__backdrop')) closeModal(); });
+  document.addEventListener('keydown', (e)=>{ if(e.key==='Escape' && modal.classList.contains('open')) closeModal(); });
+
+  // Tabs
+  document.querySelectorAll('.tabs .tab').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.tabs .tab').forEach(b=>b.classList.remove('tab--active'));
+      btn.classList.add('tab--active');
+      const t = btn.dataset.tab;
+      document.querySelectorAll('.tabpane').forEach(p=>{
+        p.classList.toggle('tabpane--active', p.dataset.pane===t);
+      });
+    });
+  });
+
+  // Login Explicador
+  document.getElementById('fExplLogin')?.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const msg = document.getElementById('explLoginMsg');
+    msg.textContent = '';
+    const email = e.target.email.value.trim();
+    const password = e.target.password.value;
+
+    const { error } = await window.supabase.auth.signInWithPassword({ email, password });
+    if(error){ msg.textContent = error.message; return; }
+
+    // verificar papel
+    const { data: { user } } = await window.supabase.auth.getUser();
+    const { data: profile, error: pErr } = await window.supabase
+      .from('app_users')
+      .select('role')
+      .eq('user_id', user.id)
+      .single();
+
+    if(pErr || !profile){ msg.textContent = 'Conta sem perfil associado.'; return; }
+    if(profile.role !== 'explicador'){ msg.textContent = 'Esta conta não é de explicador.'; return; }
+
+    location.href = './explicador.html';
+  });
+
+  // Criar conta Explicador
+  document.getElementById('fExplSignup')?.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const msg = document.getElementById('explSignupMsg');
+    msg.textContent = '';
+
+    const nome = e.target.nome.value.trim();
+    const contacto = e.target.contacto.value.trim() || null;
+    const email = e.target.email.value.trim();
+    const password = e.target.password.value;
+
+    // 1) criar user auth
+    const { data: sign, error: signErr } = await window.supabase.auth.signUp({ email, password });
+    if(signErr){ msg.textContent = signErr.message; return; }
+    const userId = sign?.user?.id;
+    if(!userId){ msg.textContent = 'Falha na criação de utilizador.'; return; }
+
+    // 2) criar explicador
+    const { data: exp, error: expErr } = await window.supabase
+      .from('explicadores')
+      .insert({ nome, contacto, email })
+      .select('id_explicador')
+      .single();
+    if(expErr){ msg.textContent = expErr.message; return; }
+
+    // 3) mapear papel
+    const { error: mapErr } = await window.supabase
+      .from('app_users')
+      .insert({ user_id: userId, role: 'explicador', id_explicador: exp.id_explicador });
+    if(mapErr){ msg.textContent = mapErr.message; return; }
+
+    msg.style.color = '#d3ffe5';
+    msg.textContent = 'Conta criada. Já pode fazer login.';
+    // opcional: mudar para tab "Entrar"
+    document.querySelector('.tabs .tab[data-tab="entrar"]').click();
+    e.target.reset();
+  });
+
   </script>
 
   <!-- 1️⃣ biblioteca do Supabase -->

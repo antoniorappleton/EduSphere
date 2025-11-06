@@ -1,184 +1,113 @@
 (async () => {
-  const me = await getAppUser();
-  if (!me || me.role !== "explicador") {
-    location.href = "./login.html";
-    return;
+  const supa = window.supabase;
+  const el = (sel) => document.querySelector(sel);
+
+  const ui = {
+    login: el("#explLogin"),
+    panel: el("#explPanel"),
+    msgLogin: el("#msgExplLogin"),
+    fLogin: el("#fExplLogin"),
+    fNew: el("#fNewAluno"),
+    msgNew: el("#msgNewAluno"),
+    tblBody: el("#tblAlunos tbody"),
+  };
+
+  // 1) login explicador
+  ui.fLogin?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    ui.msgLogin.textContent = "";
+    const { email, password } = e.target;
+    const { error } = await supa.auth.signInWithPassword({
+      email: email.value.trim(),
+      password: password.value,
+    });
+    if (error) return (ui.msgLogin.textContent = error.message);
+    await guardExplAndLoad();
+  });
+
+  // 2) autorizar explicador + carregar alunos
+  async function guardExplAndLoad() {
+    const {
+      data: { user },
+    } = await supa.auth.getUser();
+    if (!user) return;
+    const { data: me, error } = await supa
+      .from("app_users")
+      .select("role,id_explicador")
+      .eq("user_id", user.id)
+      .single();
+    if (error || me?.role !== "explicador") {
+      ui.msgLogin.textContent = "Acesso restrito a explicadores.";
+      return;
+    }
+    ui.login.style.display = "none";
+    ui.panel.style.display = "block";
+    await loadAlunos(me.id_explicador);
   }
 
-  // KPIs previsto/realizado
-  const { data: prevs } = await supabase
-    .from("v_previsto_explicador")
-    .select("*")
-    .eq("id_explicador", me.explicador_id);
-  const now = new Date();
-  const mesAtual =
-    String(now.getMonth() + 1).padStart(2, "0") + "/" + now.getFullYear();
-  const mesProxD = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-  const mesProx =
-    String(mesProxD.getMonth() + 1).padStart(2, "0") +
-    "/" +
-    mesProxD.getFullYear();
-  const prevAtual =
-    (prevs || []).find((x) => x.mes === mesAtual)?.previsto ?? 0;
-  const prevProx = (prevs || []).find((x) => x.mes === mesProx)?.previsto ?? 0;
-  const { data: reals } = await supabase
-    .from("v_realizado_explicador")
-    .select("*")
-    .eq("id_explicador", me.explicador_id)
-    .eq("mes", mesAtual);
-
-  document.getElementById("prevAtual").textContent =
-    Number(prevAtual).toFixed(2);
-  document.getElementById("prevProx").textContent = Number(prevProx).toFixed(2);
-  document.getElementById("realAtual").textContent = Number(
-    reals?.[0]?.realizado ?? 0
-  ).toFixed(2);
-
-  // Meus alunos
-  const { data: meus } = await supabase
-    .from("v_meus_alunos")
-    .select("*")
-    .eq("id_explicador", me.explicador_id)
-    .order("nome", { ascending: true });
-
-  const tbody = document.querySelector("#tabAlunos tbody");
-  tbody.innerHTML =
-    (meus || [])
-      .map(
-        (a) => `
-  <tr>
-    <td>${a.nome} ${a.apelido ?? ""}</td>
-    <td>${a.idade ?? ""}</td>
-    <td>${a.ano_escolaridade ?? ""}</td>
-    <td>${a.dia_semana_preferido ?? ""}</td>
-    <td>${a.valor_explicacao ?? ""}</td>
-    <td>${a.sessoes_mes ?? ""}</td>
-    <td>${a.pai_nome ?? a.nome_pai_cache ?? ""}</td>
-    <td>${a.pai_contacto ?? a.contacto_pai_cache ?? ""}</td>
-    <td>${a.email ?? ""}</td>
-  </tr>
-`
-      )
-      .join("") || '<tr><td colspan="9">Sem explicandos.</td></tr>';
-
-
-  // Criar novo aluno + associar a mim
-  document.getElementById("fNovo").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const msg = document.getElementById("novoMsg");
-    msg.textContent = "";
-    const f = Object.fromEntries(new FormData(e.target).entries());
-    try {
-      // 1) cria aluno (AGORA com email)
-      const { data: aIns, error: aErr } = await supabase
-        .from("alunos")
-        .insert([
-          {
-            nome: f.nome,
-            apelido: f.apelido || null,
-            idade: f.idade ? Number(f.idade) : null,
-            ano_escolaridade: f.ano ? Number(f.ano) : null,
-            telemovel: f.contacto || null,
-            email: f.email?.trim().toLowerCase(), // <<<<< AQUI
-            dia_semana_preferido: f.dia || null,
-            valor_explicacao: f.valor ? Number(f.valor) : null,
-            sessoes_mes: f.sessoes ? Number(f.sessoes) : null,
-            nome_pai_cache: f.pai || null,
-            contacto_pai_cache: f.cpai || null,
-          },
-        ])
-        .select("id_aluno")
-        .single();
-      if (aErr) throw aErr;
-
-      // 2) ligar ao meu explicador_id (mantém)
-      const { error: rErr } = await supabase
-        .from("relacoes_aluno_explicador")
-        .insert([
-          {
-            id_aluno: aIns.id_aluno,
-            id_explicador: me.explicador_id,
-          },
-        ]);
-      if (rErr) throw rErr;
-
-      msg.style.color = "#126b3a";
-      msg.textContent =
-        "Explicando criado e associado. O aluno poderá registar-se e entra automaticamente.";
-      e.target.reset();
-    } catch (err) {
-      msg.style.color = "#a92a1f";
-      msg.textContent = err.message;
+  async function loadAlunos(id_explicador) {
+    const { data, error } = await supa
+      .from("alunos")
+      .select("id_aluno,nome,email,ano_escolaridade,user_id")
+      .eq("id_explicador", id_explicador)
+      .order("nome", { ascending: true });
+    if (error) {
+      console.error(error);
+      return;
     }
-  });
+    ui.tblBody.innerHTML = "";
+    (data || []).forEach((a) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${a.nome}</td>
+        <td>${a.email ?? ""}</td>
+        <td>${a.ano_escolaridade ?? ""}</td>
+        <td style="text-align:right">
+          <button class="button" data-user="${a.user_id || ""}" data-id="${
+        a.id_aluno
+      }" style="background:#fff;color:#a92a1f;">Eliminar</button>
+        </td>`;
+      ui.tblBody.appendChild(tr);
+    });
+  }
 
-
-  // Agendar extra
-  document.getElementById("fExtra").addEventListener("submit", async (e) => {
+  // 3) criar aluno (Edge Function)
+  ui.fNew?.addEventListener("submit", async (e) => {
     e.preventDefault();
-    const msg = document.getElementById("extraMsg");
-    msg.textContent = "";
-    const f = Object.fromEntries(new FormData(e.target).entries());
-    try {
-      const { error } = await supabase.from("explicacoes").insert([
-        {
-          id_aluno: f.aluno_id,
-          data: f.data,
-          hora: f.hora,
-          local: f.local || null,
-          detalhes: f.detalhes || null,
-          preco: f.preco ? Number(f.preco) : 0,
-        },
-      ]);
-      if (error) throw error;
-      msg.style.color = "#126b3a";
-      msg.textContent = "Explicação extra agendada.";
-      e.target.reset();
-    } catch (err) {
-      msg.style.color = "#a92a1f";
-      msg.textContent = err.message;
-    }
+    ui.msgNew.textContent = "";
+    const payload = {
+      nome: e.target.nome.value.trim(),
+      apelido: e.target.apelido.value.trim() || null,
+      contacto: e.target.contacto.value.trim() || null,
+      email: e.target.email.value.trim(),
+      password: e.target.password.value,
+      ano_escolaridade: e.target.ano.value ? Number(e.target.ano.value) : null,
+    };
+    const { data, error } = await supa.functions.invoke(
+      "explicador-create-aluno",
+      { body: payload }
+    );
+    if (error) return (ui.msgNew.textContent = error.message);
+    ui.msgNew.style.color = "#d3ffe5";
+    ui.msgNew.textContent = "Aluno criado.";
+    e.target.reset();
+    guardExplAndLoad();
   });
 
-  // Enviar exercício
-  document.getElementById("fEx").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const msg = document.getElementById("exMsg");
-    msg.textContent = "";
-    const fd = new FormData(e.target);
-    const aluno_id = fd.get("aluno_id");
-    const nome = fd.get("nome");
-    const file = fd.get("ficheiro");
-    try {
-      const id_exercicio = crypto.randomUUID();
-      const safe = file.name.replace(/\s+/g, "_");
-      const path = `${aluno_id}/${id_exercicio}/${safe}`;
-
-      const { error: upErr } = await supabase.storage
-        .from("exercicios")
-        .upload(path, file);
-      if (upErr) throw upErr;
-
-      const pub = supabase.storage.from("exercicios").getPublicUrl(path);
-      const url = pub?.data?.publicUrl || path;
-
-      const { error: insErr } = await supabase
-        .from("exercicios")
-        .insert([{ id_aluno: aluno_id, nome, tipo: file.type || "file", url }]);
-      if (insErr) throw insErr;
-
-      msg.style.color = "#126b3a";
-      msg.textContent = "Exercício enviado.";
-      e.target.reset();
-    } catch (err) {
-      msg.style.color = "#a92a1f";
-      msg.textContent = err.message;
-    }
+  // 4) eliminar aluno (Edge Function)
+  el("#tblAlunos")?.addEventListener("click", async (e) => {
+    const btn = e.target.closest("button[data-user]");
+    if (!btn) return;
+    const user_id = btn.getAttribute("data-user");
+    const id_aluno = btn.getAttribute("data-id");
+    if (!confirm("Eliminar este aluno e a sua conta?")) return;
+    const { error } = await supa.functions.invoke("explicador-delete-aluno", {
+      body: { user_id, id_aluno },
+    });
+    if (error) return alert(error.message);
+    guardExplAndLoad();
   });
 
-  document.getElementById("logout").addEventListener("click", async (e) => {
-    e.preventDefault();
-    await signOut();
-    location.href = "./login.html";
-  });
+  // sessão existente?
+  guardExplAndLoad();
 })();

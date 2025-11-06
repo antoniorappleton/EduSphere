@@ -1,107 +1,62 @@
 <!doctype html>
 <html lang="pt">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <link rel="stylesheet" href="./styles.css" />
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <link rel="stylesheet" href="../styles.css"/>
   <title>EduSphere — Admin</title>
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-  <script src="./js/supabaseClient.js"></script>
-  <script src="./js/auth.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="../public/js/supabaseClient.js"></script>
+  <script defer src="../public/js/pages/admin.js"></script>
 </head>
-<body>
+<body class="home">
 <header>
   <div class="header-inner">
-    <a class="logo" href="./index.html"><img src="./img/logo-icon.svg" alt=""><span>EduSphere</span></a>
-    <nav>
-      <a id="logout" href="#">Sair</a>
-    </nav>
+    <a class="logo" href="../index.html"><img src="/public/img/logo-icon.svg" alt=""><span>EduSphere</span></a>
   </div>
 </header>
 
-<main>
-  <div class="card">
-    <h1>Dashboard Admin</h1>
-    <p>Bem-vindo! Aqui vais gerir alunos, explicações, pagamentos e exercícios.</p>
-  </div>
+<div class="capa__overlay"></div>
 
-  <div class="card">
-    <h2>Mapa Mensal (previsto vs. pago)</h2>
-    <p>(em breve: gráfico)</p>
-  </div>
-  <div class="card">
-  <h2>Enviar exercício</h2>
-  <form id="fx">
-    <input type="text" name="aluno" placeholder="ID do Aluno (UUID)" required style="width:100%;padding:10px;margin:8px 0;">
-    <input type="text" name="nome" placeholder="Nome do exercício" required style="width:100%;padding:10px;margin:8px 0;">
-    <input type="file" name="file" required style="width:100%;padding:10px;margin:8px 0;">
-    <button class="button">Upload</button>
-    <div id="fxmsg" style="margin-top:8px;"></div>
-  </form>
-</div>
+<main class="auth">
+  <!-- Painel de Login -->
+  <section class="auth__panel" id="adminLogin" style="display:block">
+    <h1>Entrar (Admin)</h1>
+    <form id="fAdminLogin" class="auth__form">
+      <input type="email" name="email" placeholder="Email" required />
+      <input type="password" name="password" placeholder="Password" required />
+      <button class="button" type="submit">Entrar</button>
+      <div id="msgAdmin" class="auth__msg"></div>
+    </form>
+  </section>
 
+  <!-- Painel de Gestão -->
+  <section class="auth__panel" id="adminPanel" style="display:none">
+    <h1>Gestão de Explicadores</h1>
+
+    <form id="fNewExpl" class="auth__form" style="margin-bottom:12px;">
+      <div class="grid2">
+        <input name="nome" placeholder="Nome" required />
+        <input name="contacto" placeholder="Contacto (opcional)" />
+        <input type="email" name="email" placeholder="Email" required />
+        <input type="password" name="password" placeholder="Password" minlength="6" required />
+      </div>
+      <button class="button" type="submit">Criar Explicador</button>
+      <div id="msgNew" class="auth__msg"></div>
+    </form>
+
+    <div class="card" style="background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);color:#fff;">
+      <h2 style="margin-top:0">Explicadores</h2>
+      <table class="table" id="tblExpl" style="color:#fff">
+        <thead><tr><th>Nome</th><th>Email</th><th>Contacto</th><th style="width:1%"></th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
 </main>
 
-<script>
-  // Guardião: só admin entra
-  (async ()=>{
-    const appUser = await getAppUser();
-    if(!appUser || appUser.role !== 'admin') location.href = './login.html';
-  })();
-
-  document.getElementById('logout').addEventListener('click', async (e)=>{
-    e.preventDefault();
-    await signOut();
-    location.href = './login.html';
-  });
-    async function uploadExercicio(id_aluno, file, nome){
-  // path recomendado: exercicios/{id_aluno}/{id_exercicio}/{ficheiro}
-  const id_exercicio = crypto.randomUUID();
-  const filename = file.name.replace(/\s+/g, '_');
-  const path = `${id_aluno}/${id_exercicio}/${filename}`;
-
-  // 1) Upload para o bucket
-  const { data, error } = await supabase.storage.from('exercicios').upload(path, file);
-  if (error) throw error;
-
-  // 2) Obter URL público (se bucket for PUBLIC)
-  let url = null;
-  const publicUrl = supabase.storage.from('exercicios').getPublicUrl(path);
-  url = publicUrl?.data?.publicUrl || null;
-
-  // 3) Registo na tabela 'exercicios'
-  const { error: err2 } = await supabase.from('exercicios').insert({
-    id_aluno,
-    nome,
-    tipo: file.type || 'file',
-    url: url ?? path   // se for privado, guarda o path; se público, guarda a URL
-  });
-  if (err2) throw err2;
-
-  return { id_exercicio, path, url };
-}
-
-    document.getElementById('fx').addEventListener('submit', async (e)=>{
-  e.preventDefault();
-  const msg = document.getElementById('fxmsg');
-  msg.textContent = '';
-  const id_aluno = e.target.aluno.value.trim();
-  const nome = e.target.nome.value.trim();
-  const file = e.target.file.files[0];
-
-  try{
-    const appUser = await getAppUser();
-    if (!appUser || appUser.role !== 'admin') throw new Error('Apenas admin pode fazer upload.');
-
-    await uploadExercicio(id_aluno, file, nome);
-    msg.style.color = '#126b3a';
-    msg.textContent = 'Exercício enviado com sucesso.';
-    e.target.reset();
-  }catch(err){
-    msg.style.color = '#a92a1f';
-    msg.textContent = err.message;
-  }
-});
-</script>
+<footer>© <span id="y"></span> EduSphere</footer>
+<script>document.getElementById('y').textContent=new Date().getFullYear()</script>
 </body>
 </html>

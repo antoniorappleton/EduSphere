@@ -5,97 +5,60 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <link rel="stylesheet" href="./styles.css"/>
   <title>EduSphere — Explicador</title>
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-  <script src="./js/supabaseClient.js"></script>
-  <script src="./js/auth.js"></script>
-  <script src="./js/pages/explicador.js" defer></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="./public/js/supabaseClient.js"></script>
+  <script defer src="./public/js/pages/explicador.js"></script>
 </head>
-<body>
+<body class="home">
 <header>
   <div class="header-inner">
-    <a class="logo" href="./index.html"><img src="./img/logo-icon.svg" alt=""><span>EduSphere</span></a>
-    <nav><a id="logout" href="./login.html">Sair</a></nav>
+    <a class="logo" href="./index.html"><img src="/public/img/logo-icon.svg" alt=""><span>EduSphere</span></a>
   </div>
 </header>
 
-<main>
-  <div class="card">
-    <h1>Dashboard Explicador</h1>
-    <div id="kpis" style="display:flex; gap:12px; flex-wrap:wrap;">
-      <div class="card" style="flex:1;"><h3>Previsto (mês atual)</h3><p><strong id="prevAtual">—</strong> €</p></div>
-      <div class="card" style="flex:1;"><h3>Previsto (próximo mês)</h3><p><strong id="prevProx">—</strong> €</p></div>
-      <div class="card" style="flex:1;"><h3>Realizado (mês atual)</h3><p><strong id="realAtual">—</strong> €</p></div>
+<div class="capa__overlay"></div>
+
+<main class="auth">
+  <!-- Login Explicador -->
+  <section class="auth__panel" id="explLogin" style="display:block">
+    <h1>Entrar (Explicador)</h1>
+    <form id="fExplLogin" class="auth__form">
+      <input type="email" name="email" placeholder="Email" required />
+      <input type="password" name="password" placeholder="Password" required />
+      <button class="button" type="submit">Entrar</button>
+      <div id="msgExplLogin" class="auth__msg"></div>
+    </form>
+  </section>
+
+  <!-- Painel Explicador -->
+  <section class="auth__panel" id="explPanel" style="display:none">
+    <h1>Alunos</h1>
+
+    <form id="fNewAluno" class="auth__form" style="margin-bottom:12px;">
+      <div class="grid2">
+        <input name="nome" placeholder="Nome" required />
+        <input name="apelido" placeholder="Apelido (opcional)" />
+        <input name="contacto" placeholder="Contacto (opcional)" />
+        <input type="number" name="ano" placeholder="Ano escolaridade (opcional)" />
+        <input type="email" name="email" placeholder="Email (login do aluno)" required />
+        <input type="password" name="password" placeholder="Password" minlength="6" required />
+      </div>
+      <button class="button" type="submit">Criar Aluno</button>
+      <div id="msgNewAluno" class="auth__msg"></div>
+    </form>
+
+    <div class="card" style="background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);color:#fff;">
+      <h2 style="margin-top:0">Meus Alunos</h2>
+      <table class="table" id="tblAlunos" style="color:#fff">
+        <thead><tr><th>Nome</th><th>Email</th><th>Ano</th><th style="width:1%"></th></tr></thead>
+        <tbody></tbody>
+      </table>
     </div>
-  </div>
-
-  <div class="card">
-    <h2>Os meus explicandos</h2>
-    <table class="table" id="tabAlunos">
-      <thead><tr><th>Nome</th><th>Idade</th><th>Ano</th><th>Dia</th><th>€/sessão</th><th>#/mês</th><th>Pai</th><th>Contacto</th></tr></thead>
-      <tbody></tbody>
-    </table>
-  </div>
-
-  <div class="card">
-    <h2>Criar novo explicando</h2>
-    <form id="fNovo">
-      <div style="display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px;">
-        <input name="nome" placeholder="Nome" required>
-        <input name="apelido" placeholder="Apelido">
-        <input name="idade" type="number" min="5" max="25" placeholder="Idade">
-        <input name="ano" type="number" min="1" max="13" placeholder="Ano de escolaridade">
-        <input name="contacto" placeholder="Contacto (aluno)">
-        <input name="dia" placeholder="Dia semana (ex: Seg)">
-        <input name="valor" type="number" step="0.01" placeholder="Valor € por sessão">
-        <input name="sessoes" type="number" min="0" placeholder="# sessões/mês">
-        <input name="pai" placeholder="Nome do pai/mãe (opcional)">
-        <input name="cpai" placeholder="Contacto do pai/mãe (opcional)">
-      </div>
-      <button class="button" style="margin-top:10px">Criar explicando</button>
-      <div id="novoMsg" style="margin-top:8px;"></div>
-    </form>
-  </div>
-
-  <div class="card">
-    <h2>Agendar explicação extra</h2>
-    <form id="fExtra">
-      <div style="display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px;">
-        <input name="aluno_id" placeholder="ID do aluno (UUID)" required>
-        <input name="data" type="date" required>
-        <input name="hora" type="time" required>
-        <input name="local" placeholder="Local">
-      </div>
-      <input name="preco" type="number" step="0.01" placeholder="Preço (€)" style="margin-top:8px;">
-      <input name="detalhes" placeholder="Detalhes (opcional)" style="margin-top:8px;">
-      <button class="button" style="margin-top:10px">Agendar</button>
-      <div id="extraMsg" style="margin-top:8px;"></div>
-    </form>
-  </div>
-
-  <div class="card">
-    <h2>Enviar exercício</h2>
-    <form id="fEx">
-      <div style="display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px;">
-        <input name="nome" placeholder="Nome" required>
-        <input name="apelido" placeholder="Apelido">
-        <input name="idade" type="number" min="5" max="25" placeholder="Idade">
-
-        <input name="ano" type="number" min="1" max="13" placeholder="Ano de escolaridade">
-        <input name="contacto" placeholder="Contacto (aluno)">
-        <input name="email" type="email" placeholder="Email do aluno (para login)" required>
-
-        <input name="dia" placeholder="Dia semana (ex: Seg)">
-        <input name="valor" type="number" step="0.01" placeholder="Valor € por sessão">
-        <input name="sessoes" type="number" min="0" placeholder="# sessões/mês">
-
-        <input name="pai" placeholder="Nome do pai/mãe (opcional)">
-        <input name="cpai" placeholder="Contacto do pai/mãe (opcional)">
-      </div>
-
-      <button class="button" style="margin-top:10px">Upload</button>
-      <div id="exMsg" style="margin-top:8px;"></div>
-    </form>
-  </div>
+  </section>
 </main>
+
+<footer>© <span id="y"></span> EduSphere</footer>
+<script>document.getElementById('y').textContent=new Date().getFullYear()</script>
 </body>
 </html>
