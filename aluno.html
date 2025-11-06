@@ -1,55 +1,51 @@
 <!doctype html>
 <html lang="pt">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
   <link rel="stylesheet" href="./styles.css"/>
-  <title>EduSphere — Aluno</title>
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-  <script src="./js/supabaseClient.js"></script>
-  <script src="./js/auth.js"></script>
-  <script src="./js/pages/aluno.js" defer></script>
+  <title>EduSphere — Área do Aluno</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="./public/js/supabaseClient.js"></script>
+  <script src="./public/js/auth.js"></script>
 </head>
-<body>
+<body class="home">
 <header>
   <div class="header-inner">
-    <a class="logo" href="./index.html"><img src="./img/logo-icon.svg" alt=""><span>EduSphere</span></a>
+    <a class="logo" href="./index.html"><img src="/public/img/logo-icon.svg" alt=""><span>EduSphere</span></a>
     <button id="btnLogout" class="button" style="margin-left:auto">Sair</button>
   </div>
 </header>
+<div class="capa__overlay"></div>
 
-<main>
-  <div class="card">
-    <h1>Agenda</h1>
-    <div id="agenda">A carregar…</div>
-  </div>
+<main class="auth">
+  <section class="auth__panel">
+    <h1>Bem-vindo 👋</h1>
+    <p id="alunoInfo">A carregar…</p>
 
-  <div class="card">
-    <h2>Pagamentos</h2>
-    <table class="table" id="tabPag">
-      <thead><tr><th>Mês</th><th>Previsto</th><th>Pago</th><th>Estado</th></tr></thead>
-      <tbody></tbody>
-    </table>
-  </div>
+    <div class="card">
+      <h2>Próximas explicações</h2>
+      <p>(Brevemente)</p>
+    </div>
 
-  <div class="card">
-    <h2>Exercícios</h2>
-    <ul id="exlist"></ul>
-  </div>
-
-  <div class="card">
-    <h2>Alterar palavra-passe</h2>
-    <form id="fPwd">
-      <input type="password" name="pwd" placeholder="Nova palavra-passe" required>
-      <button class="button">Atualizar</button>
-      <span id="pwdMsg" style="margin-left:8px;"></span>
-    </form>
-  </div>
+    <div class="card">
+      <h2>Pagamentos</h2>
+      <p>(Brevemente)</p>
+    </div>
+  </section>
 </main>
 
+<footer>© <span id="y"></span> EduSphere</footer>
 <script>
-  document.getElementById('btnLogout')?.addEventListener('click', ()=> Auth.signOut('./index.html'));
-</script>
+document.getElementById('y').textContent = new Date().getFullYear();
+document.getElementById('btnLogout')?.addEventListener('click', ()=> Auth.signOut('./index.html'));
 
+(async ()=>{
+  const user = await Auth.requireRole('aluno', './login.html'); if(!user) return;
+  const { data: map } = await supabase.from('app_users').select('ref_id').eq('user_id', user.id).single();
+  const { data: aluno } = await supabase.from('alunos').select('nome,apelido,ano_escolaridade').eq('id_aluno', map.ref_id).single();
+  const t = aluno ? `${aluno.nome} ${aluno.apelido ?? ''} — Ano ${aluno.ano_escolaridade ?? 'n/d'}` : 'Perfil não encontrado';
+  document.getElementById('alunoInfo').textContent = t;
+})();
+</script>
 </body>
 </html>

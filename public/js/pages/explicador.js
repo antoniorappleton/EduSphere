@@ -1,113 +1,88 @@
-(async () => {
-  const supa = window.supabase;
-  const el = (sel) => document.querySelector(sel);
+// ... mantém o topo do ficheiro como já tens
 
-  const ui = {
-    login: el("#explLogin"),
-    panel: el("#explPanel"),
-    msgLogin: el("#msgExplLogin"),
-    fLogin: el("#fExplLogin"),
-    fNew: el("#fNewAluno"),
-    msgNew: el("#msgNewAluno"),
-    tblBody: el("#tblAlunos tbody"),
-  };
+let myExplId = null;
+let maxAlunos = 0;
 
-  // 1) login explicador
-  ui.fLogin?.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    ui.msgLogin.textContent = "";
-    const { email, password } = e.target;
-    const { error } = await supa.auth.signInWithPassword({
-      email: email.value.trim(),
-      password: password.value,
-    });
-    if (error) return (ui.msgLogin.textContent = error.message);
-    await guardExplAndLoad();
-  });
-
-  // 2) autorizar explicador + carregar alunos
-  async function guardExplAndLoad() {
-    const {
-      data: { user },
-    } = await supa.auth.getUser();
-    if (!user) return;
-    const { data: me, error } = await supa
-      .from("app_users")
-      .select("role,id_explicador")
-      .eq("user_id", user.id)
-      .single();
-    if (error || me?.role !== "explicador") {
-      ui.msgLogin.textContent = "Acesso restrito a explicadores.";
-      return;
-    }
-    ui.login.style.display = "none";
-    ui.panel.style.display = "block";
-    await loadAlunos(me.id_explicador);
+async function guard() {
+  const {
+    data: { user },
+  } = await s.auth.getUser();
+  if (!user) return;
+  const { data } = await s
+    .from("app_users")
+    .select("role,ref_id")
+    .eq("user_id", user.id)
+    .single();
+  if (data?.role !== "explicador") {
+    ui.msg.textContent = "Acesso restrito a explicadores.";
+    return;
   }
+  myExplId = data.ref_id;
+  ui.login.style.display = "none";
+  ui.panel.style.display = "block";
+  await loadHeaderInfo();
+  await load();
+}
 
-  async function loadAlunos(id_explicador) {
-    const { data, error } = await supa
+async function loadHeaderInfo() {
+  // busca limite e contagem
+  const { data: exp } = await s
+    .from("explicadores")
+    .select("max_alunos")
+    .eq("id_explicador", myExplId)
+    .single();
+  const { count } = await s
+    .from("alunos")
+    .select("id_aluno", { count: "exact", head: true })
+    .eq("id_explicador", myExplId);
+  maxAlunos = exp?.max_alunos ?? 0;
+
+  // injeta um badge acima do formulário
+  let badge = document.getElementById("slotsBadge");
+  if (!badge) {
+    badge = document.createElement("div");
+    badge.id = "slotsBadge";
+    badge.style = "margin:6px 0 10px; font-weight:600;";
+    ui.panel.querySelector("h1").after(badge);
+  }
+  const livre =
+    maxAlunos === 0
+      ? "Sem limite"
+      : `${Math.max(maxAlunos - (count || 0), 0)} livres de ${maxAlunos}`;
+  badge.textContent = `Capacidade: ${livre}`;
+}
+
+ui.fNew?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  ui.msgNew.textContent = "";
+
+  // bloqueio no cliente se já atingiu limite
+  if (maxAlunos > 0) {
+    const { count } = await s
       .from("alunos")
-      .select("id_aluno,nome,email,ano_escolaridade,user_id")
-      .eq("id_explicador", id_explicador)
-      .order("nome", { ascending: true });
-    if (error) {
-      console.error(error);
+      .select("id_aluno", { count: "exact", head: true })
+      .eq("id_explicador", myExplId);
+    if ((count || 0) >= maxAlunos) {
+      ui.msgNew.textContent = "Limite de alunos atingido. Fale com o Admin.";
       return;
     }
-    ui.tblBody.innerHTML = "";
-    (data || []).forEach((a) => {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${a.nome}</td>
-        <td>${a.email ?? ""}</td>
-        <td>${a.ano_escolaridade ?? ""}</td>
-        <td style="text-align:right">
-          <button class="button" data-user="${a.user_id || ""}" data-id="${
-        a.id_aluno
-      }" style="background:#fff;color:#a92a1f;">Eliminar</button>
-        </td>`;
-      ui.tblBody.appendChild(tr);
-    });
   }
 
-  // 3) criar aluno (Edge Function)
-  ui.fNew?.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    ui.msgNew.textContent = "";
-    const payload = {
-      nome: e.target.nome.value.trim(),
-      apelido: e.target.apelido.value.trim() || null,
-      contacto: e.target.contacto.value.trim() || null,
-      email: e.target.email.value.trim(),
-      password: e.target.password.value,
-      ano_escolaridade: e.target.ano.value ? Number(e.target.ano.value) : null,
-    };
-    const { data, error } = await supa.functions.invoke(
-      "explicador-create-aluno",
-      { body: payload }
-    );
-    if (error) return (ui.msgNew.textContent = error.message);
-    ui.msgNew.style.color = "#d3ffe5";
-    ui.msgNew.textContent = "Aluno criado.";
-    e.target.reset();
-    guardExplAndLoad();
+  const p = {
+    nome: e.target.nome.value.trim(),
+    apelido: e.target.apelido.value.trim() || null,
+    contacto: e.target.contacto.value.trim() || null,
+    email: e.target.email.value.trim(),
+    password: e.target.password.value,
+    ano_escolaridade: e.target.ano.value ? Number(e.target.ano.value) : null,
+  };
+  const { error } = await s.functions.invoke("expl-alunos", {
+    body: { action: "create_aluno", payload: p },
   });
-
-  // 4) eliminar aluno (Edge Function)
-  el("#tblAlunos")?.addEventListener("click", async (e) => {
-    const btn = e.target.closest("button[data-user]");
-    if (!btn) return;
-    const user_id = btn.getAttribute("data-user");
-    const id_aluno = btn.getAttribute("data-id");
-    if (!confirm("Eliminar este aluno e a sua conta?")) return;
-    const { error } = await supa.functions.invoke("explicador-delete-aluno", {
-      body: { user_id, id_aluno },
-    });
-    if (error) return alert(error.message);
-    guardExplAndLoad();
-  });
-
-  // sessão existente?
-  guardExplAndLoad();
-})();
+  if (error) return (ui.msgNew.textContent = error.message);
+  ui.msgNew.style.color = "#d3ffe5";
+  ui.msgNew.textContent = "Aluno criado.";
+  e.target.reset();
+  await loadHeaderInfo();
+  load();
+});
