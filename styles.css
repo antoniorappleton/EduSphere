@@ -325,3 +325,34 @@ footer{ margin-top: 0; }
 .grid2{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
 @media (max-width:560px){ .grid2{ grid-template-columns:1fr; } }
 
+/* === AJUSTES EXISTENTES MANTÊM-SE === */
+
+/* --- grelha 2 colunas responsiva --- */
+.grid2 { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:10px; }
+@media (max-width: 700px){
+  .grid2 { grid-template-columns: 1fr; }
+}
+
+/* --- painéis de autenticação / gestão --- */
+.auth { min-height: calc(100vh - 120px); padding: 24px; display:flex; flex-direction:column; gap:16px; align-items:center; justify-content:flex-start; position:relative; z-index:1; }
+.auth__panel { width:100%; max-width: 1000px; background: rgba(255,255,255,0.25); backdrop-filter: blur(6px); border:1px solid rgba(255,255,255,0.35); border-radius: 12px; padding: 16px; color:#fff; }
+.auth__form input { width:100%; padding:10px; border-radius:10px; border:1px solid rgba(255,255,255,0.4); background: rgba(255,255,255,0.85); }
+.auth__form button.button { margin-top:8px; }
+.auth__msg { margin-top:8px; color:#ffe1e1; }
+
+/* --- tabela dentro de painel vidro --- */
+.table { width:100%; border-collapse: collapse; }
+.table th, .table td { padding:10px; border-bottom: 1px solid rgba(255,255,255,0.25); }
+
+/* --- modal simples --- */
+.modal { position: fixed; inset: 0; display:none; }
+.modal.open { display:block; }
+.modal__backdrop { position:absolute; inset:0; background: rgba(0,0,0,.6); }
+.modal__dialog { position:relative; margin: 8vh auto; max-width: 820px; background:#fff; border-radius:16px; padding:16px; }
+.modal__header { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+.modal__close { border:none; background:transparent; font-size:20px; cursor:pointer; }
+
+/* --- botões primários e “neutros” para ações --- */
+.button { background:var(--primary); color:#fff; border:none; border-radius:12px; padding:10px 14px; cursor:pointer; font-weight:600; }
+.button--ghost { background:#fff; color:#a92a1f; }
+

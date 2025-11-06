@@ -14,7 +14,7 @@
 <header>
   <div class="header-inner">
     <a class="logo" href="./index.html"><img src="./img/logo-icon.svg" alt=""><span>EduSphere</span></a>
-    <nav><a id="logout" href="#">Sair</a></nav>
+    <button id="btnLogout" class="button" style="margin-left:auto">Sair</button>
   </div>
 </header>
 
@@ -46,5 +46,10 @@
     </form>
   </div>
 </main>
+
+<script>
+  document.getElementById('btnLogout')?.addEventListener('click', ()=> Auth.signOut('./index.html'));
+</script>
+
 </body>
 </html>

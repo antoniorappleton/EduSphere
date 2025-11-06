@@ -1,65 +1,38 @@
-// =============================
-// Helpers de autenticação e perfil (app_users)
-// =============================
+// Espera pelo supabase global e expõe helpers
+(function initAuth() {
+  if (!window.supabase || !window.supabase.auth)
+    return setTimeout(initAuth, 25);
 
-async function signIn(email, password) {
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
-  if (error) throw error;
-  return data;
-}
-
-async function signUp(email, password) {
-  const { data, error } = await supabase.auth.signUp({ email, password });
-  if (error) throw error;
-  return data;
-}
-
-async function signOut() {
-  await supabase.auth.signOut();
-}
-
-// -----------------------------
-// Sessão e Utilizador
-// -----------------------------
-
-async function getSession() {
-  const { data } = await supabase.auth.getSession();
-  return data.session;
-}
-
-async function getAppUser() {
-  const session = await getSession();
-  if (!session) return null;
-  const { data, error } = await supabase
-    .from("app_users")
-    .select("*")
-    .eq("user_id", session.user.id)
-    .maybeSingle();
-  if (error) return null;
-  return data; // { user_id, role, aluno_id, pai_id, explicador_id, ... }
-}
-
-// -----------------------------
-// Redirecionamento seguro por role
-// -----------------------------
-async function routeByRole() {
-  const session = await getSession();
-  if (!session) {
-    location.href = "./login.html";
-    return;
+  async function getSessionUser() {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    return user || null;
   }
-  const appUser = await getAppUser();
-  if (!appUser || !appUser.role) {
-    console.log(
-      "Sessão válida mas app_user ainda não criado — permanece na página atual."
-    );
-    return;
-  }
-  if (appUser.role === "admin") location.href = "./admin.html";
-  else if (appUser.role === "explicador") location.href = "./explicador.html";
-  else location.href = "./aluno.html";
-}
 
+  async function requireRole(role, redirect = "./login.html") {
+    const user = await getSessionUser();
+    if (!user) {
+      location.href = redirect;
+      return null;
+    }
+    const { data, error } = await supabase
+      .from("app_users")
+      .select("role")
+      .eq("user_id", user.id)
+      .single();
+    if (error || !data || data.role !== role) {
+      location.href = redirect;
+      return null;
+    }
+    return user; // autorizado
+  }
+
+  async function signOut(to = "./index.html") {
+    await supabase.auth.signOut();
+    location.href = to;
+  }
+
+  // expor
+  window.Auth = { getSessionUser, requireRole, signOut };
+})();

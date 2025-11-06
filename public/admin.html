@@ -1,62 +1,53 @@
-<!doctype html>
-<html lang="pt">
-<head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <link rel="stylesheet" href="../styles.css"/>
-  <title>EduSphere — Admin</title>
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-  <script src="../public/js/supabaseClient.js"></script>
-  <script defer src="../public/js/pages/admin.js"></script>
-</head>
-<body class="home">
-<header>
-  <div class="header-inner">
-    <a class="logo" href="../index.html"><img src="/public/img/logo-icon.svg" alt=""><span>EduSphere</span></a>
+<!-- FORM CRIAR EXPLICADOR -->
+<form id="fNewExpl" class="auth__form" style="margin-bottom:12px;">
+  <div class="grid2">
+    <input name="nome"     placeholder="Nome" required />
+    <input name="apelido"  placeholder="Apelido" />
+    <input name="email"    type="email" placeholder="Email" required />
+    <input name="password" type="password" placeholder="Password" minlength="6" required />
+    <input name="contacto" placeholder="Contacto (opcional)" />
+    <input name="max"      type="number" min="0" placeholder="Limite de alunos (0 = sem limite)" />
   </div>
-</header>
+  <button class="button" type="submit">Criar Explicador</button>
+  <div id="signupExplMsg" class="auth__msg"></div>
+</form>
 
-<div class="capa__overlay"></div>
+<!-- DASHBOARD -->
+<div class="card" style="background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);color:#fff;">
+  <h2 style="margin-top:0">Explicadores</h2>
+  <table class="table" id="tblExpl" style="color:#fff">
+    <thead>
+      <tr>
+        <th>Nome</th><th>Apelido</th><th>Email</th><th>Contacto</th><th>Limite</th><th style="width:1%"></th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
 
-<main class="auth">
-  <!-- Painel de Login -->
-  <section class="auth__panel" id="adminLogin" style="display:block">
-    <h1>Entrar (Admin)</h1>
-    <form id="fAdminLogin" class="auth__form">
-      <input type="email" name="email" placeholder="Email" required />
-      <input type="password" name="password" placeholder="Password" required />
-      <button class="button" type="submit">Entrar</button>
-      <div id="msgAdmin" class="auth__msg"></div>
-    </form>
-  </section>
-
-  <!-- Painel de Gestão -->
-  <section class="auth__panel" id="adminPanel" style="display:none">
-    <h1>Gestão de Explicadores</h1>
-
-    <form id="fNewExpl" class="auth__form" style="margin-bottom:12px;">
+<!-- MODAL EDIT -->
+<div class="modal" id="editModal" aria-hidden="true">
+  <div class="modal__backdrop"></div>
+  <section class="modal__dialog">
+    <header class="modal__header">
+      <h2>Editar Explicador</h2>
+      <button class="modal__close" id="editClose">×</button>
+    </header>
+    <form id="fEditExpl" class="auth__form">
+      <input type="hidden" name="id_explicador" />
       <div class="grid2">
-        <input name="nome" placeholder="Nome" required />
-        <input name="contacto" placeholder="Contacto (opcional)" />
-        <input type="email" name="email" placeholder="Email" required />
-        <input type="password" name="password" placeholder="Password" minlength="6" required />
+        <input name="nome"     placeholder="Nome" required />
+        <input name="apelido"  placeholder="Apelido" />
+        <input name="email"    type="email" placeholder="Email" required />
+        <input name="contacto" placeholder="Contacto" />
+        <input name="max"      type="number" min="0" placeholder="Limite de alunos" />
       </div>
-      <button class="button" type="submit">Criar Explicador</button>
-      <div id="msgNew" class="auth__msg"></div>
+      <button class="button">Guardar</button>
+      <div id="editMsg" class="auth__msg"></div>
     </form>
-
-    <div class="card" style="background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);color:#fff;">
-      <h2 style="margin-top:0">Explicadores</h2>
-      <table class="table" id="tblExpl" style="color:#fff">
-        <thead><tr><th>Nome</th><th>Email</th><th>Contacto</th><th style="width:1%"></th></tr></thead>
-        <tbody></tbody>
-      </table>
-    </div>
   </section>
-</main>
+</div>
 
-<footer>© <span id="y"></span> EduSphere</footer>
-<script>document.getElementById('y').textContent=new Date().getFullYear()</script>
-</body>
-</html>
+<script>
+  document.getElementById('btnLogout')?.addEventListener('click', ()=> Auth.signOut('./index.html'));
+</script>

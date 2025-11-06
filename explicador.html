@@ -59,6 +59,9 @@
 </main>
 
 <footer>© <span id="y"></span> EduSphere</footer>
-<script>document.getElementById('y').textContent=new Date().getFullYear()</script>
+<script>
+  document.getElementById('y').textContent=new Date().getFullYear()
+  document.getElementById('btnLogout')?.addEventListener('click', ()=> Auth.signOut('./index.html'));
+</script>
 </body>
 </html>
