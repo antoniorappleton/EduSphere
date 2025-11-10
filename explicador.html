@@ -6,14 +6,15 @@
   <link rel="stylesheet" href="./styles.css"/>
   <title>EduSphere — Explicador</title>
 
+  <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="./public/js/supabaseClient.js"></script>
-  <script defer src="./public/js/pages/explicador.js"></script>
 </head>
 <body class="home">
 <header>
   <div class="header-inner">
     <a class="logo" href="./index.html"><img src="/public/img/logo-icon.svg" alt=""><span>EduSphere</span></a>
+    <button id="btnLogout" class="button" style="margin-left:auto; display:none">Sair</button>
   </div>
 </header>
 
@@ -21,9 +22,9 @@
 
 <main class="auth">
   <!-- Login Explicador -->
-  <section class="auth__panel" id="explLogin" style="display:block">
+  <section class="auth__panel" id="explLogin" style="display:none">
     <h1>Entrar (Explicador)</h1>
-    <form id="fExplLogin" class="auth__form">
+    <form id="fExplLogin" class="auth__form" autocomplete="on">
       <input type="email" name="email" placeholder="Email" required />
       <input type="password" name="password" placeholder="Password" required />
       <button class="button" type="submit">Entrar</button>
@@ -33,8 +34,15 @@
 
   <!-- Painel Explicador -->
   <section class="auth__panel" id="explPanel" style="display:none">
-    <h1>Alunos</h1>
+    <h1>Meus Alunos</h1>
 
+    <div class="card" id="quotaCard">
+      <p><strong>Limite de alunos:</strong> <span id="limite">—</span></p>
+      <p><strong>Ativos:</strong> <span id="contagem">0</span></p>
+      <p><strong>Restantes:</strong> <span id="restantes">—</span></p>
+    </div>
+
+    <!-- Criar Aluno -->
     <form id="fNewAluno" class="auth__form" style="margin-bottom:12px;">
       <div class="grid2">
         <input name="nome" placeholder="Nome" required />
@@ -44,14 +52,13 @@
         <input type="email" name="email" placeholder="Email (login do aluno)" required />
         <input type="password" name="password" placeholder="Password" minlength="6" required />
       </div>
-      <button class="button" type="submit">Criar Aluno</button>
+      <button id="btnCreateAluno" class="button" type="submit">Criar Aluno</button>
       <div id="msgNewAluno" class="auth__msg"></div>
     </form>
 
-    <div class="card" style="background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);color:#fff;">
-      <h2 style="margin-top:0">Meus Alunos</h2>
-      <table class="table" id="tblAlunos" style="color:#fff">
-        <thead><tr><th>Nome</th><th>Email</th><th>Ano</th><th style="width:1%"></th></tr></thead>
+    <div class="card">
+      <table class="table" id="tblAlunos">
+        <thead><tr><th>Nome</th><th>Email</th><th>Ano</th></tr></thead>
         <tbody></tbody>
       </table>
     </div>
@@ -59,9 +66,220 @@
 </main>
 
 <footer>© <span id="y"></span> EduSphere</footer>
+
 <script>
-  document.getElementById('y').textContent=new Date().getFullYear()
-  document.getElementById('btnLogout')?.addEventListener('click', ()=> Auth.signOut('./index.html'));
+  const $  = (s) => document.querySelector(s);
+
+  // Elementos
+  const elYear      = $('#y');
+  const btnLogout   = $('#btnLogout');
+  const loginBox    = $('#explLogin');
+  const panel       = $('#explPanel');
+  const msgLogin    = $('#msgExplLogin');
+  const formLogin   = $('#fExplLogin');
+
+  const formNew     = $('#fNewAluno');
+  const msgNewAluno = $('#msgNewAluno');
+  const btnCreate   = $('#btnCreateAluno');
+
+  const elLimite    = $('#limite');
+  const elContagem  = $('#contagem');
+  const elRestantes = $('#restantes');
+  const tblBody     = $('#tblAlunos tbody');
+
+  elYear.textContent = new Date().getFullYear();
+
+  // Estado do explicador
+  let EXPLICADOR = { userId:null, id_explicador:null, max:0 };
+
+  // Helpers
+  async function hasRole(uid, roleName){
+    const { data, error } = await supabase
+      .from('app_users')
+      .select('role')
+      .eq('user_id', uid)
+      .eq('role', roleName)
+      .maybeSingle();
+    if (error) { console.error('hasRole error', error); return false; }
+    return !!data;
+  }
+
+  async function getExplRow(uid){
+    const { data, error } = await supabase
+      .from('explicadores')
+      .select('id_explicador, max')
+      .eq('user_id', uid)
+      .maybeSingle();
+    if (error) throw error;
+    return data || null;
+  }
+
+  function setState({ loading=false, isExpl=false, isAuthed=false }){
+    if (loading){
+      loginBox.style.display = 'block'; panel.style.display = 'none';
+      msgLogin.textContent = 'A verificar sessão...';
+      btnLogout.style.display = 'none';
+      return;
+    }
+    if (isAuthed && isExpl){
+      loginBox.style.display = 'none'; panel.style.display = 'block';
+      msgLogin.textContent = '';
+      btnLogout.style.display = 'inline-block';
+    } else {
+      loginBox.style.display = 'block'; panel.style.display = 'none';
+      btnLogout.style.display = 'none';
+    }
+  }
+
+  // Quota UI
+  function updateQuotaUI(total){
+    const max = Number(EXPLICADOR.max || 0);
+    elContagem.textContent = String(total);
+    if (!max){
+      elLimite.textContent = 'Sem limite';
+      elRestantes.textContent = '—';
+      btnCreate.disabled = false; btnCreate.title = '';
+      return;
+    }
+    elLimite.textContent = String(max);
+    const rest = Math.max(0, max - total);
+    elRestantes.textContent = String(rest);
+    btnCreate.disabled = rest <= 0;
+    btnCreate.title = rest <= 0 ? 'Limite atingido.' : '';
+  }
+
+  // Listar alunos
+  async function loadAlunos(){
+    if (!EXPLICADOR.id_explicador) return;
+    const { data, error } = await supabase
+      .from('alunos')
+      .select('nome, apelido, email, ano')
+      .eq('id_explicador', EXPLICADOR.id_explicador)
+      .order('nome', { ascending: true });
+
+    if (error){
+      console.error(error);
+      tblBody.innerHTML = '<tr><td colspan="3">Erro a carregar alunos.</td></tr>';
+      updateQuotaUI(0);
+      return;
+    }
+    if (!data?.length){
+      tblBody.innerHTML = '<tr><td colspan="3">Sem alunos ainda.</td></tr>';
+      updateQuotaUI(0);
+      return;
+    }
+    tblBody.innerHTML = data.map(a => {
+      const nome = [a.nome, a.apelido].filter(Boolean).join(' ');
+      return `<tr><td>${nome || '-'}</td><td>${a.email || '-'}</td><td>${a.ano ?? '-'}</td></tr>`;
+    }).join('');
+    updateQuotaUI(data.length);
+  }
+
+  // Criar aluno via Edge Function
+  async function createAluno(payload){
+    try{
+      const { data, error } = await supabase.functions.invoke('expl-alunos', {
+        body: { action: 'create_aluno', payload }
+      });
+      if (error) throw error;
+      return { ok:true, data };
+    }catch(err){
+      return { ok:false, error: err };
+    }
+  }
+
+  // Login
+  formLogin?.addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    msgLogin.textContent = 'A entrar...';
+    const email = formLogin.email.value.trim();
+    const password = formLogin.password.value.trim();
+
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error){ msgLogin.textContent = 'Credenciais inválidas.'; return; }
+
+    if (!(await hasRole(data.user.id, 'explicador'))){
+      await supabase.auth.signOut().catch(()=>{});
+      msgLogin.textContent = 'Esta conta não é de explicador.'; return;
+    }
+
+    const exp = await getExplRow(data.user.id);
+    EXPLICADOR = { userId:data.user.id, id_explicador: exp?.id_explicador || null, max: exp?.max ?? 0 };
+    setState({ isExpl:true, isAuthed:true });
+    await loadAlunos();
+  });
+
+  // Logout
+  btnLogout?.addEventListener('click', async () => {
+    await supabase.auth.signOut().catch(()=>{});
+    window.location.href = './index.html';
+  });
+
+  // Sessão inicial
+  (async () => {
+    setState({ loading:true });
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user){ setState({ isExpl:false, isAuthed:false }); return; }
+
+    if (!(await hasRole(session.user.id, 'explicador'))){
+      await supabase.auth.signOut().catch(()=>{});
+      setState({ isExpl:false, isAuthed:false });
+      msgLogin.textContent = 'Conta sem permissões de explicador.';
+      return;
+    }
+    const exp = await getExplRow(session.user.id);
+    EXPLICADOR = { userId:session.user.id, id_explicador: exp?.id_explicador || null, max: exp?.max ?? 0 };
+    setState({ isExpl:true, isAuthed:true });
+    await loadAlunos();
+  })();
+
+  // Criar novo aluno
+  formNew?.addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    msgNewAluno.textContent = '';
+
+    if (!EXPLICADOR.id_explicador){ msgNewAluno.textContent = 'Perfil de explicador inválido.'; return; }
+
+    const max = Number(EXPLICADOR.max || 0);
+    const atuais = Number(elContagem.textContent || 0);
+    if (max && atuais >= max){ msgNewAluno.textContent = 'Limite de alunos atingido.'; return; }
+
+    const f = ev.target;
+    const payload = {
+      nome: f.nome.value.trim(),
+      apelido: f.apelido.value.trim() || null,
+      contacto: f.contacto.value.trim() || null,
+      ano: f.ano.value ? Number(f.ano.value) : null,
+      email: f.email.value.trim(),
+      password: f.password.value,
+      id_explicador: EXPLICADOR.id_explicador
+    };
+
+    if (!payload.nome || !payload.email || !payload.password){
+      msgNewAluno.textContent = 'Preenche pelo menos Nome, Email e Password.'; return;
+    }
+
+    btnCreate.disabled = true;
+    msgNewAluno.textContent = 'A criar aluno...';
+
+    const { ok, error } = await createAluno(payload);
+    if (!ok){
+      console.error(error);
+      msgNewAluno.textContent = 'Não foi possível criar o aluno.';
+      btnCreate.disabled=false; return;
+    }
+
+    msgNewAluno.style.color = '#126b3a';
+    msgNewAluno.textContent = 'Aluno criado com sucesso!';
+    f.reset();
+    await loadAlunos();
+    btnCreate.disabled = false;
+  });
+
+  // Listener auth (multi-abas)
+  supabase.auth.onAuthStateChange(async (_evt, session) => {
+    if (!session?.user){ setState({ isExpl:false, isAuthed:false }); }
+  });
 </script>
 </body>
 </html>

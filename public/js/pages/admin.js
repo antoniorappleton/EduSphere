@@ -1,265 +1,320 @@
-// /public/js/pages/admin.js
+/* public/js/admin.js
+   Gestão de Explicadores (Admin) – alinhado com Edge Function 'admin-users'
+*/
+
 (function () {
-  const s = window.supabase;
-  const $ = (q) => document.querySelector(q);
+  const $ = (s) => document.querySelector(s);
 
-  // UI refs
-  const ui = {
-    loginPanel: $("#adminLogin"),
-    adminPanel: $("#adminPanel"),
-    msgLogin: $("#msgAdmin"),
-    formLogin: $("#fAdminLogin"),
-    formNew: $("#fNewExpl"),
-    msgNew: $("#signupExplMsg"),
-    tableBody: $("#tblExpl tbody"),
-    editModal: $("#editModal"),
-    editClose: $("#editClose"),
-    formEdit: $("#fEditExpl"),
-    editMsg: $("#editMsg"),
-    btnLogout: $("#btnLogout"),
-  };
+  const formNew = $("#fNewExpl");
+  const msgNew = $("#signupExplMsg");
+  const tblBody = $("#tblExpl tbody");
 
-  // ---------- helpers ----------
-  function showLogin() {
-    ui.loginPanel.style.display = "block";
-    ui.adminPanel.style.display = "none";
-  }
-  function showAdmin() {
-    ui.loginPanel.style.display = "none";
-    ui.adminPanel.style.display = "block";
-  }
-  function openModal() {
-    ui.editModal.classList.add("open");
-    ui.editModal.setAttribute("aria-hidden", "false");
-  }
-  function closeModal() {
-    ui.editModal.classList.remove("open");
-    ui.editModal.setAttribute("aria-hidden", "true");
-    if (ui.editMsg) ui.editMsg.textContent = "";
-    ui.formEdit?.reset();
-  }
+  const editModal = $("#editModal");
+  const editClose = $("#editClose");
+  const formEdit = $("#fEditExpl");
+  const msgEdit = $("#editMsg");
 
-  async function isAdmin() {
-    const {
-      data: { user },
-    } = await s.auth.getUser();
-    if (!user) return false;
-    const { data, error } = await s
+  let FUNCTION_AVAILABLE = true;
+  let CURRENT_ADMIN_UID = null;
+  let CACHE_LIST = [];
+  let EDITING = null;
+
+  async function hasRole(uid, roleName) {
+    const { data, error } = await supabase
       .from("app_users")
       .select("role")
-      .eq("user_id", user.id)
-      .single();
-    if (error) return false;
-    return data?.role === "admin";
+      .eq("user_id", uid)
+      .eq("role", roleName)
+      .limit(1); // sem .single()
+    if (error) {
+      console.error("hasRole error", error);
+      return false;
+    }
+    return Array.isArray(data) && data.length > 0;
+  }
+  async function isAdmin(uid) {
+    return hasRole(uid, "admin");
   }
 
-  async function ensureAdminUI() {
-    if (await isAdmin()) {
-      showAdmin();
-      await loadExplicadores();
-    } else {
-      showLogin();
+  async function callAdminUsers(action, payload) {
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-users", {
+        body: { action, payload },
+      });
+      if (error) throw error;
+      FUNCTION_AVAILABLE = true;
+      return { ok: true, data };
+    } catch (err) {
+      console.warn("Edge Function admin-users indisponível/erro:", err);
+      FUNCTION_AVAILABLE = false;
+      return { ok: false, error: err };
     }
   }
 
-  // ---------- boot ----------
-  document.addEventListener("DOMContentLoaded", ensureAdminUI);
-
-  // também reage a mudanças de sessão (login/logout noutra aba, etc.)
-  s.auth.onAuthStateChange(async (_evt) => {
-    await ensureAdminUI();
-  });
-
-  // ---------- login ----------
-  ui.formLogin?.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    ui.msgLogin.textContent = "";
-    const email = e.target.email.value.trim();
-    const password = e.target.password.value;
-
-    const { error } = await s.auth.signInWithPassword({ email, password });
-    if (error) {
-      ui.msgLogin.textContent = error.message;
-      return;
+  // LIST
+  async function listExplicadores() {
+    if (FUNCTION_AVAILABLE) {
+      const res = await callAdminUsers("list_explicadores", {});
+      if (res.ok && Array.isArray(res.data)) return res.data;
     }
-    // validar role
-    if (!(await isAdmin())) {
-      await s.auth.signOut();
-      ui.msgLogin.textContent =
-        "Acesso negado. Esta conta não é de administrador.";
-      showLogin();
-      return;
-    }
-    await ensureAdminUI();
-  });
-
-  // ---------- logout ----------
-  ui.btnLogout?.addEventListener("click", async () => {
-    await s.auth.signOut();
-    // volta à home e obriga novo login depois
-    location.href = "../index.html";
-  });
-
-  // ---------- criar explicador ----------
-  ui.formNew?.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    ui.msgNew.textContent = "";
-
-    const payload = {
-      nome: e.target.nome.value.trim(),
-      apelido: e.target.apelido.value.trim() || null,
-      email: e.target.email.value.trim(),
-      password: e.target.password.value,
-      contacto: e.target.contacto.value.trim() || null,
-      max_alunos: e.target.max.value ? Number(e.target.max.value) : 0,
-    };
-
-    // validações mínimas
-    if (!payload.nome || !payload.email || !payload.password) {
-      ui.msgNew.textContent = "Preenche nome, email e password.";
-      return;
-    }
-
-    const { error } = await s.functions.invoke("admin-users", {
-      body: { action: "create_explicador", payload },
-    });
-
-    if (error) {
-      ui.msgNew.textContent = error.message || "Falha ao criar explicador.";
-      return;
-    }
-    ui.msgNew.style.color = "#d3ffe5";
-    ui.msgNew.textContent = "Explicador criado com sucesso.";
-    e.target.reset();
-    await loadExplicadores();
-  });
-
-  // ---------- carregar lista ----------
-  async function loadExplicadores() {
-    if (!ui.tableBody) return;
-    ui.tableBody.innerHTML = '<tr><td colspan="6">A carregar…</td></tr>';
-
-    const { data, error } = await s
+    // fallback direto (precisa policy de SELECT para admins)
+    const { data, error } = await supabase
       .from("explicadores")
-      .select("id_explicador,user_id,nome,apelido,email,contacto,max_alunos")
-      .order("apelido", { nullsFirst: true })
-      .order("nome");
-
-    if (error) {
-      ui.tableBody.innerHTML = `<tr><td colspan="6">Erro: ${error.message}</td></tr>`;
-      return;
-    }
-
-    if (!data || data.length === 0) {
-      ui.tableBody.innerHTML =
-        '<tr><td colspan="6">Sem explicadores.</td></tr>';
-      return;
-    }
-
-    ui.tableBody.innerHTML = "";
-    data.forEach((r) => {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${r.nome ?? ""}</td>
-        <td>${r.apelido ?? ""}</td>
-        <td>${r.email ?? ""}</td>
-        <td>${r.contacto ?? ""}</td>
-        <td>${r.max_alunos ?? 0}</td>
-        <td style="display:flex; gap:6px; justify-content:flex-end">
-          <button class="button btn-edit" data-id="${
-            r.id_explicador
-          }">Editar</button>
-          <button class="button btn-pass" data-user="${
-            r.user_id
-          }" style="background:#fff;color:#a92a1f">Password</button>
-          <button class="button btn-del"  data-user="${
-            r.user_id
-          }" style="background:#fff;color:#a92a1f">Eliminar</button>
-        </td>
-      `;
-      ui.tableBody.appendChild(tr);
-    });
+      .select("id_explicador, user_id, nome, apelido, email, contacto, max")
+      .order("nome", { ascending: true });
+    if (error) throw error;
+    return data || [];
   }
 
-  // ---------- ações na tabela ----------
-  $("#tblExpl")?.addEventListener("click", async (e) => {
-    const b = e.target.closest("button");
-    if (!b) return;
+  function renderRows(list) {
+    if (!list.length) {
+      tblBody.innerHTML = '<tr><td colspan="6">Sem explicadores.</td></tr>';
+      return;
+    }
+    tblBody.innerHTML = list
+      .map((e) => {
+        const self = e.user_id && e.user_id === CURRENT_ADMIN_UID;
+        const dis = self
+          ? 'disabled title="Não podes aplicar esta ação a ti próprio."'
+          : "";
+        return `
+        <tr data-id="${e.id_explicador}">
+          <td>${e.nome ?? "-"}</td>
+          <td>${e.apelido ?? "-"}</td>
+          <td>${e.email ?? "-"}</td>
+          <td>${e.contacto ?? "-"}</td>
+          <td>${Number(e.max ?? 0)}</td>
+          <td style="white-space:nowrap;display:flex;gap:6px;justify-content:flex-end;">
+            <button class="button button--ghost btn-edit" data-id="${
+              e.id_explicador
+            }">Editar</button>
+            <button class="button button--ghost btn-reset" data-id="${
+              e.id_explicador
+            }" ${dis}>Reset PW</button>
+            <button class="button button--ghost btn-del"   data-id="${
+              e.id_explicador
+            }" ${dis}>Eliminar</button>
+          </td>
+        </tr>
+      `;
+      })
+      .join("");
 
-    // EDITAR
-    if (b.classList.contains("btn-edit")) {
-      const id = b.dataset.id;
-      const { data, error } = await s
-        .from("explicadores")
-        .select("id_explicador,nome,apelido,email,contacto,max_alunos")
-        .eq("id_explicador", id)
-        .single();
-      if (error || !data) return alert(error?.message || "Não encontrado.");
-      ui.formEdit.id_explicador.value = data.id_explicador;
-      ui.formEdit.nome.value = data.nome ?? "";
-      ui.formEdit.apelido.value = data.apelido ?? "";
-      ui.formEdit.email.value = data.email ?? "";
-      ui.formEdit.contacto.value = data.contacto ?? "";
-      ui.formEdit.max.value = data.max_alunos ?? 0;
-      openModal();
+    tblBody
+      .querySelectorAll(".btn-edit")
+      .forEach((b) =>
+        b.addEventListener("click", () => openEdit(b.dataset.id))
+      );
+    tblBody
+      .querySelectorAll(".btn-reset")
+      .forEach((b) =>
+        b.addEventListener("click", () => onResetPassword(b.dataset.id))
+      );
+    tblBody
+      .querySelectorAll(".btn-del")
+      .forEach((b) =>
+        b.addEventListener("click", () => onDeleteExpl(b.dataset.id))
+      );
+  }
+
+  async function refreshList() {
+    tblBody.innerHTML = '<tr><td colspan="6">A carregar…</td></tr>';
+    try {
+      CACHE_LIST = await listExplicadores();
+      renderRows(CACHE_LIST);
+    } catch (e) {
+      console.error(e);
+      tblBody.innerHTML = '<tr><td colspan="6">Erro a carregar.</td></tr>';
+    }
+  }
+
+  // CREATE
+  formNew?.addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    msgNew.textContent = "";
+    const btn = formNew.querySelector('button[type="submit"]');
+    btn.disabled = true;
+
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session?.user || !(await isAdmin(session.user.id))) {
+      msgNew.textContent = "Sem permissões de administrador.";
+      btn.disabled = false;
       return;
     }
 
-    // RESET PASSWORD
-    if (b.classList.contains("btn-pass")) {
-      const user_id = b.dataset.user;
-      const np = prompt("Nova password (>= 6 chars):");
-      if (!np) return;
-      const { error } = await s.functions.invoke("admin-users", {
-        body: {
-          action: "update_password",
-          payload: { user_id, new_password: np },
-        },
-      });
-      if (error) return alert(error.message);
-      alert("Password atualizada.");
-      return;
-    }
-
-    // ELIMINAR
-    if (b.classList.contains("btn-del")) {
-      const user_id = b.dataset.user;
-      if (!confirm("Eliminar este explicador e respetiva conta?")) return;
-      const { error } = await s.functions.invoke("admin-users", {
-        body: { action: "delete_user", payload: { user_id } },
-      });
-      if (error) return alert(error.message);
-      await loadExplicadores();
-      return;
-    }
-  });
-
-  // ---------- guardar edição ----------
-  ui.formEdit?.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    ui.editMsg.textContent = "";
-    const p = {
-      id_explicador: e.target.id_explicador.value,
-      nome: e.target.nome.value.trim(),
-      apelido: e.target.apelido.value.trim() || null,
-      email: e.target.email.value.trim(),
-      contacto: e.target.contacto.value.trim() || null,
-      max_alunos: e.target.max.value ? Number(e.target.max.value) : 0,
+    const f = ev.target;
+    const payload = {
+      nome: f.nome.value.trim(),
+      apelido: f.apelido.value.trim() || null,
+      email: f.email.value.trim(),
+      password: f.password.value,
+      contacto: f.contacto.value.trim() || null,
+      max: f.max.value ? Number(f.max.value) : 0,
     };
-    const { error } = await s.functions.invoke("admin-users", {
-      body: { action: "update_explicador", payload: p },
-    });
-    if (error) {
-      ui.editMsg.textContent = error.message;
+    if (!payload.nome || !payload.email || !payload.password) {
+      msgNew.textContent = "Preenche pelo menos Nome, Email e Password.";
+      btn.disabled = false;
       return;
     }
-    closeModal();
-    await loadExplicadores();
+
+    msgNew.textContent = "A criar explicador...";
+    const res = await callAdminUsers("create_explicador", payload);
+    if (!res.ok) {
+      const detail =
+        res.error?.message ||
+        res.error?.error ||
+        JSON.stringify(res.error || {});
+      msgNew.textContent = `Falhou a criação no backend: ${detail}`;
+      btn.disabled = false;
+      return;
+    }
+    msgNew.style.color = "#126b3a";
+    msgNew.textContent = "Explicador criado com sucesso.";
+    f.reset();
+    btn.disabled = false;
+    await refreshList();
   });
 
-  // modal close handlers
-  ui.editClose?.addEventListener("click", closeModal);
-  ui.editModal?.addEventListener("click", (e) => {
+  // EDIT
+  function openModal() {
+    editModal.classList.add("open");
+    editModal.setAttribute("aria-hidden", "false");
+  }
+  function closeModal() {
+    editModal.classList.remove("open");
+    editModal.setAttribute("aria-hidden", "true");
+    msgEdit.textContent = "";
+  }
+  editClose?.addEventListener("click", closeModal);
+  editModal?.addEventListener("click", (e) => {
     if (e.target.classList.contains("modal__backdrop")) closeModal();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && editModal.classList.contains("open"))
+      closeModal();
+  });
+
+  function openEdit(id) {
+    const row = CACHE_LIST.find((x) => x.id_explicador === id);
+    if (!row) return;
+    EDITING = { ...row };
+    formEdit.id_explicador.value = row.id_explicador;
+    formEdit.nome.value = row.nome ?? "";
+    formEdit.apelido.value = row.apelido ?? "";
+    formEdit.email.value = row.email ?? "";
+    formEdit.contacto.value = row.contacto ?? "";
+    formEdit.max.value = Number(row.max ?? 0);
+    msgEdit.textContent = "";
+    openModal();
+  }
+
+  formEdit?.addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    msgEdit.textContent = "";
+
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session?.user || !(await isAdmin(session.user.id))) {
+      msgEdit.textContent = "Sem permissões de administrador.";
+      return;
+    }
+
+    const f = ev.target;
+    const payload = {
+      id_explicador: f.id_explicador.value,
+      nome: f.nome.value.trim(),
+      apelido: f.apelido.value.trim() || null,
+      email: f.email.value.trim(),
+      contacto: f.contacto.value.trim() || null,
+      max: f.max.value ? Number(f.max.value) : 0,
+    };
+    if (!payload.id_explicador || !payload.nome || !payload.email) {
+      msgEdit.textContent = "Preenche pelo menos Nome e Email.";
+      return;
+    }
+
+    msgEdit.textContent = "A guardar...";
+    const res = await callAdminUsers("update_explicador", payload);
+    if (!res.ok) {
+      const detail =
+        res.error?.message ||
+        res.error?.error ||
+        JSON.stringify(res.error || {});
+      msgEdit.textContent = `Falhou a atualização no backend: ${detail}`;
+      return;
+    }
+    msgEdit.style.color = "#126b3a";
+    msgEdit.textContent = "Alterações guardadas!";
+    await refreshList();
+    setTimeout(closeModal, 600);
+  });
+
+  // RESET PASSWORD (para outros users)
+  async function onResetPassword(id_explicador) {
+    const row = CACHE_LIST.find((x) => x.id_explicador === id_explicador);
+    if (!row) return;
+    if (row.user_id === CURRENT_ADMIN_UID) {
+      alert(
+        "Por segurança, não podes fazer reset à tua própria password aqui."
+      );
+      return;
+    }
+    const nova = prompt(`Nova password para ${row.nome || "utilizador"}:`);
+    if (!nova) return;
+
+    const res = await callAdminUsers("reset_password", {
+      id_explicador,
+      new_password: nova,
+    });
+    if (!res.ok) {
+      const detail =
+        res.error?.message ||
+        res.error?.error ||
+        JSON.stringify(res.error || {});
+      alert("Falhou reset password: " + detail);
+      return;
+    }
+    alert("Password atualizada.");
+  }
+
+  // DELETE (para outros users)
+  async function onDeleteExpl(id_explicador) {
+    const row = CACHE_LIST.find((x) => x.id_explicador === id_explicador);
+    if (!row) return;
+    if (row.user_id === CURRENT_ADMIN_UID) {
+      alert("Não podes eliminar a tua própria conta aqui.");
+      return;
+    }
+    if (
+      !confirm(
+        `Eliminar o explicador "${row.nome || ""} ${row.apelido || ""}"?`
+      )
+    )
+      return;
+
+    const res = await callAdminUsers("delete_explicador", { id_explicador });
+    if (!res.ok) {
+      const detail =
+        res.error?.message ||
+        res.error?.error ||
+        JSON.stringify(res.error || {});
+      alert("Falhou a eliminação: " + detail);
+      return;
+    }
+    await refreshList();
+  }
+
+  // BOOT
+  document.addEventListener("DOMContentLoaded", async () => {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    CURRENT_ADMIN_UID = session?.user?.id || null;
+    if (CURRENT_ADMIN_UID && (await isAdmin(CURRENT_ADMIN_UID))) {
+      await refreshList();
+    }
   });
 })();

@@ -5,13 +5,11 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>EduSphere — Administração</title>
 
-  <!-- estilos -->
   <link rel="stylesheet" href="../styles.css"/>
 
-  <!-- Supabase UMD + cliente do projeto -->
+  <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="./js/supabaseClient.js"></script>
-  <script src="./js/auth.js"></script>
 </head>
 <body class="home">
   <header>
@@ -24,11 +22,10 @@
     </div>
   </header>
 
-  <!-- overlay para escurecer a imagem de fundo -->
   <div class="capa__overlay"></div>
 
   <main class="auth">
-    <!-- Painel de login (aparece se não estiver autenticado como admin) -->
+    <!-- Login Admin -->
     <section class="auth__panel" id="adminLogin" style="display:none">
       <h1>Entrar (Admin)</h1>
       <form id="fAdminLogin" class="auth__form">
@@ -39,11 +36,10 @@
       </form>
     </section>
 
-    <!-- Painel principal do Admin -->
+    <!-- Painel Admin -->
     <section class="auth__panel" id="adminPanel" style="display:none">
-      <h1>Gestão de Explicadores</h1>
+      <h1>Criar conta de Professor</h1>
 
-      <!-- FORM CRIAR EXPLICADOR -->
       <form id="fNewExpl" class="auth__form" style="margin-bottom:12px;">
         <div class="grid2">
           <input name="nome"     placeholder="Nome" required />
@@ -57,27 +53,24 @@
         <div id="signupExplMsg" class="auth__msg"></div>
       </form>
 
-      <!-- DASHBOARD -->
-      <div class="card" style="background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);color:#fff;">
-        <h2 style="margin-top:0">Explicadores</h2>
-        <table class="table" id="tblExpl" style="color:#fff">
-          <thead>
-            <tr>
-              <th>Nome</th>
-              <th>Apelido</th>
-              <th>Email</th>
-              <th>Contacto</th>
-              <th>Limite</th>
-              <th style="width:1%"></th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
+      <h2 style="margin-top:0">Gerir conta do Professor</h2>
+      <table class="table" id="tblExpl" style="color:#040404">
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Apelido</th>
+            <th>Email</th>
+            <th>Contacto</th>
+            <th>Limite</th>
+            <th style="width:1%"></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
     </section>
   </main>
 
-  <!-- MODAL EDIT -->
+  <!-- Modal Editar -->
   <div class="modal" id="editModal" aria-hidden="true">
     <div class="modal__backdrop"></div>
     <section class="modal__dialog">
@@ -103,14 +96,57 @@
   <footer>© <span id="y"></span> EduSphere</footer>
 
   <script>
-    // ano no footer
-    document.getElementById('y').textContent = new Date().getFullYear();
+    // guardar/mostrar UI (guard simples)
+    async function isAdmin(uid){
+      const { data, error } = await supabase
+        .from('app_users')
+        .select('role')
+        .eq('user_id', uid)
+        .eq('role', 'admin')
+        .limit(1);
+      if (error) return false;
+      return Array.isArray(data) && data.length>0;
+    }
+
+    async function ensureAdminUI(){
+      const login = document.getElementById('adminLogin');
+      const panel = document.getElementById('adminPanel');
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user){ login.style.display='block'; panel.style.display='none'; return; }
+      if (await isAdmin(session.user.id)){ login.style.display='none'; panel.style.display='block'; }
+      else { await supabase.auth.signOut().catch(()=>{}); login.style.display='block'; panel.style.display='none'; }
+    }
+    document.addEventListener('DOMContentLoaded', ensureAdminUI);
+
+    // login inline
+    document.getElementById('fAdminLogin')?.addEventListener('submit', async (ev)=>{
+      ev.preventDefault();
+      const msg = document.getElementById('msgAdmin');
+      msg.textContent = 'A entrar...';
+      const email = ev.target.email.value.trim();
+      const password = ev.target.password.value;
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error){ msg.textContent='Credenciais inválidas.'; return; }
+      if (await isAdmin(data.user.id)){
+        document.getElementById('adminLogin').style.display='none';
+        document.getElementById('adminPanel').style.display='block';
+      } else {
+        await supabase.auth.signOut().catch(()=>{});
+        msg.textContent='Esta conta não tem permissões de administrador.';
+      }
+    });
 
     // logout
-    document.getElementById('btnLogout')?.addEventListener('click', ()=> Auth.signOut('../'));
+    document.getElementById('btnLogout')?.addEventListener('click', async ()=>{
+      await supabase.auth.signOut().catch(()=>{});
+      window.location.href = '../index.html';
+    });
+
+    // footer
+    document.getElementById('y').textContent = new Date().getFullYear();
   </script>
 
-  <!-- Lógica específica desta página -->
+  <!-- JS específico do admin -->
   <script defer src="./js/pages/admin.js"></script>
 </body>
 </html>
