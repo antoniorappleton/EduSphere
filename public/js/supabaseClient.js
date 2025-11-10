@@ -7,16 +7,8 @@ const SUPABASE_ANON_KEY =
 
 // função que aguarda a lib @supabase carregar
 (function initSupabase() {
-  if (typeof window.supabase === "undefined") {
-    // tenta novamente em 50 ms até a lib estar disponível
-    return setTimeout(initSupabase, 50);
-  }
-
-  // cria o cliente global
-  window.supabase = window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_ANON_KEY
-  );
-
-  console.log("✅ Supabase client inicializado:", window.supabase);
+  if (typeof window.supabase === "undefined") return setTimeout(initSupabase, 50);
+  window.SB = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  console.log("✅ Supabase client inicializado");
 })();
+
