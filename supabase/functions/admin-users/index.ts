@@ -68,6 +68,15 @@ serve(async (req) => {
       return new Response(JSON.stringify(data ?? []), { status: 200, headers: cors(origin) });
     }
 
+    // --------- block/unblock explicador ------
+    // pseudo-código dentro da Edge Function
+    if (action === "set_block") {
+      const { id_explicador, is_blocked, blocked_until } = body.payload;
+      const { data, error } = await supabase
+        .from("explicadores")
+        .update({ is_blocked, blocked_until })
+        .eq("id_explicador", id_explicador);
+    }
     // -------- CREATE --------
     if (action === "create_explicador") {
       const { nome, apelido = null, contacto = null, email, password, max = 0 } = payload || {};

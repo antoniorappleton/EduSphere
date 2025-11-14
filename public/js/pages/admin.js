@@ -60,7 +60,9 @@
     // fallback direto (precisa policy de SELECT para admins)
     const { data, error } = await supabase
       .from("explicadores")
-      .select("id_explicador, user_id, nome, apelido, email, contacto, max")
+      .select(
+        "id_explicador, user_id, nome, apelido, email, contacto, max, is_blocked, blocked_until"
+      )
       .order("nome", { ascending: true });
     if (error) throw error;
     return data || [];
@@ -77,26 +79,42 @@
         const dis = self
           ? 'disabled title="Não podes aplicar esta ação a ti próprio."'
           : "";
-        return `
-        <tr data-id="${e.id_explicador}">
-          <td>${e.nome ?? "-"}</td>
-          <td>${e.apelido ?? "-"}</td>
-          <td>${e.email ?? "-"}</td>
-          <td>${e.contacto ?? "-"}</td>
-          <td>${Number(e.max ?? 0)}</td>
-          <td style="white-space:nowrap;display:flex;gap:6px;justify-content:flex-end;">
-            <button class="button button--ghost btn-edit" data-id="${
-              e.id_explicador
-            }">Editar</button>
-            <button class="button button--ghost btn-reset" data-id="${
-              e.id_explicador
-            }" ${dis}>Reset PW</button>
-            <button class="button button--ghost btn-del"   data-id="${
-              e.id_explicador
-            }" ${dis}>Eliminar</button>
-          </td>
-        </tr>
-      `;
+          return `
+            <tr data-id="${e.id_explicador}">
+              <td>${e.nome ?? "-"}</td>
+              <td>${e.apelido ?? "-"}</td>
+              <td>${e.email ?? "-"}</td>
+              <td>${e.contacto ?? "-"}</td>
+              <td>${Number(e.max ?? 0)}</td>
+              <td>
+                ${
+                  e.is_blocked
+                    ? `Bloqueado${
+                        e.blocked_until
+                          ? ` até ${new Date(e.blocked_until).toLocaleDateString()}`
+                          : ""
+                      }`
+                    : "Ativo"
+                }
+              </td>
+              <td style="white-space:nowrap;display:flex;gap:6px;justify-content:flex-end;">
+                <button class="button button--ghost btn-edit" data-id="${
+                  e.id_explicador
+                }">Editar</button>
+                <button class="button button--ghost btn-reset" data-id="${
+                  e.id_explicador
+                }" ${dis}>Reset PW</button>
+                <button class="button button--ghost btn-block" data-id="${
+                  e.id_explicador
+                }" ${dis}>
+                  ${e.is_blocked ? "Desbloquear" : "Bloquear"}
+                </button>
+                <button class="button button--ghost btn-del"   data-id="${
+                  e.id_explicador
+                }" ${dis}>Eliminar</button>
+              </td>
+            </tr>
+          `;
       })
       .join("");
 
@@ -114,7 +132,13 @@
       .querySelectorAll(".btn-del")
       .forEach((b) =>
         b.addEventListener("click", () => onDeleteExpl(b.dataset.id))
+    );
+    tblBody
+      .querySelectorAll(".btn-block")
+      .forEach((b) =>
+        b.addEventListener("click", () => onToggleBlock(b.dataset.id))
       );
+
   }
 
   async function refreshList() {
@@ -302,6 +326,59 @@
         res.error?.error ||
         JSON.stringify(res.error || {});
       alert("Falhou a eliminação: " + detail);
+      return;
+    }
+    await refreshList();
+  }
+
+  //Botão bloquear/desbloquear
+  async function onToggleBlock(id_explicador) {
+    const row = CACHE_LIST.find((x) => x.id_explicador === id_explicador);
+    if (!row) return;
+    if (row.user_id === CURRENT_ADMIN_UID) {
+      alert("Não podes bloquear a tua própria conta.");
+      return;
+    }
+
+    const currentlyBlocked = !!row.is_blocked;
+    let payload;
+
+    if (currentlyBlocked) {
+      // Desbloquear
+      if (
+        !confirm(
+          `Desbloquear o explicador "${row.nome || ""} ${row.apelido || ""}"?`
+        )
+      )
+        return;
+      payload = { id_explicador, is_blocked: false, blocked_until: null };
+    } else {
+      // Bloquear até uma data
+      const days = prompt(
+        `Bloquear o explicador "${row.nome || ""} ${
+          row.apelido || ""
+        }" por quantos dias? (0 = indefinido)`
+      );
+      if (days === null) return;
+
+      const n = Number(days);
+      let blocked_until = null;
+      if (!Number.isNaN(n) && n > 0) {
+        const d = new Date();
+        d.setDate(d.getDate() + n);
+        blocked_until = d.toISOString();
+      }
+
+      payload = { id_explicador, is_blocked: true, blocked_until };
+    }
+
+    const res = await callAdminUsers("set_block", payload);
+    if (!res.ok) {
+      const detail =
+        res.error?.message ||
+        res.error?.error ||
+        JSON.stringify(res.error || {});
+      alert("Falhou a atualização de bloqueio: " + detail);
       return;
     }
     await refreshList();
