@@ -6,14 +6,18 @@
   <link rel="stylesheet" href="./styles.css"/>
   <title>EduSphere — Explicador</title>
 
-  <!-- Supabase -->
+  <!-- Supabase UMD + client -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="./public/js/supabaseClient.js"></script>
 </head>
+
 <body class="home">
 <header>
   <div class="header-inner">
-    <a class="logo" href="./index.html"><img src="/public/img/logo-icon.svg" alt=""><span>EduSphere</span></a>
+    <a class="logo" href="./index.html">
+      <img src="/public/img/logo-icon.svg" alt="">
+      <span>EduSphere</span>
+    </a>
     <button id="btnLogout" class="button" style="margin-left:auto; display:none">Sair</button>
   </div>
 </header>
@@ -21,46 +25,176 @@
 <div class="capa__overlay"></div>
 
 <main class="auth">
-  <!-- Login Explicador -->
-  <section class="auth__panel" id="explLogin" style="display:none">
+
+  <!-- ========= LOGIN DO EXPLICADOR ========= -->
+  <section class="auth__panel" id="explLogin">
     <h1>Entrar (Explicador)</h1>
     <form id="fExplLogin" class="auth__form" autocomplete="on">
-      <input type="email" name="email" placeholder="Email" required />
+      <input type="email"   name="email"    placeholder="Email"    required />
       <input type="password" name="password" placeholder="Password" required />
       <button class="button" type="submit">Entrar</button>
       <div id="msgExplLogin" class="auth__msg"></div>
     </form>
   </section>
 
-  <!-- Painel Explicador -->
+  <!-- ========= PAINEL DO EXPLICADOR ========= -->
   <section class="auth__panel" id="explPanel" style="display:none">
-    <h1>Meus Alunos</h1>
 
-    <div class="card" id="quotaCard">
-      <p><strong>Limite de alunos:</strong> <span id="limite">—</span></p>
-      <p><strong>Ativos:</strong> <span id="contagem">0</span></p>
-      <p><strong>Restantes:</strong> <span id="restantes">—</span></p>
-    </div>
+    <div class="expl-layout">
+      <!-- Sidebar -->
+      <aside class="expl-sidebar">
+        <div class="expl-brand">
+          <span class="expl-logo">E</span>
+          <div>
+            <p class="expl-app-name">EduSphere</p>
+            <p class="expl-app-sub">Painel do Professor</p>
+          </div>
+        </div>
 
-    <!-- Criar Aluno -->
-    <form id="fNewAluno" class="auth__form" style="margin-bottom:12px;">
-      <div class="grid2">
-        <input name="nome" placeholder="Nome" required />
-        <input name="apelido" placeholder="Apelido (opcional)" />
-        <input name="contacto" placeholder="Contacto (opcional)" />
-        <input type="number" name="ano" placeholder="Ano escolaridade (opcional)" />
-        <input type="email" name="email" placeholder="Email (login do aluno)" required />
-        <input type="password" name="password" placeholder="Password" minlength="6" required />
+        <nav class="expl-nav">
+          <button class="expl-nav-item expl-nav-item--active"><span>Dashboard</span></button>
+          <button class="expl-nav-item"><span>Alunos</span></button>
+          <button class="expl-nav-item"><span>Calendário</span></button>
+          <button class="expl-nav-item"><span>Faturação</span></button>
+          <button class="expl-nav-item"><span>Relatórios</span></button>
+        </nav>
+      </aside>
+
+      <!-- Conteúdo principal -->
+      <div class="expl-main">
+        <!-- Header -->
+        <header class="expl-header">
+          <div class="expl-header-left">
+            <h1 class="expl-title">
+              Olá, <span id="expl-nome-header">Professor</span>
+            </h1>
+            <p class="expl-subtitle">Aqui está o resumo da sua atividade.</p>
+          </div>
+
+          <div class="expl-header-right">
+            <button class="expl-notifications" aria-label="Notificações">
+              🔔
+              <span class="expl-badge" id="expl-notif-count">0</span>
+            </button>
+            <div class="expl-user">
+              <img src="https://via.placeholder.com/40" class="expl-avatar" alt="Foto do explicador">
+              <div>
+                <p class="expl-user-name" id="expl-nome-mini">Professor</p>
+                <p class="expl-user-role">Explicador</p>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <!-- Área principal -->
+        <div class="expl-content">
+
+          <!-- Resumo financeiro (neste momento placeholders, depois ligas à BD) -->
+          <section class="expl-section">
+            <h2 class="expl-section-title">Resumo financeiro</h2>
+            <div class="expl-cards">
+              <article class="expl-card">
+                <p class="expl-card-label">Total faturado (este mês)</p>
+                <p class="expl-card-value" id="card-total-mes">€ 0,00</p>
+              </article>
+
+              <article class="expl-card">
+                <p class="expl-card-label">Mensalidades pendentes</p>
+                <p class="expl-card-value expl-card-value--warning" id="card-pendentes">
+                  € 0,00
+                </p>
+              </article>
+
+              <article class="expl-card">
+                <p class="expl-card-label">Pagamentos recebidos</p>
+                <p class="expl-card-value expl-card-value--success" id="card-recebidos">
+                  0 / 0
+                </p>
+              </article>
+            </div>
+          </section>
+
+          <!-- Secção Meus Alunos: quota + formulário + tabela -->
+          <section class="expl-section">
+            <div class="expl-section-header">
+              <h2 class="expl-section-title">Meus Alunos</h2>
+              <button class="expl-link-button" type="button" id="btn-scroll-lista">
+                Ver lista
+              </button>
+            </div>
+
+            <div class="expl-grid-2">
+              <!-- Coluna esquerda: quota + formulário -->
+              <div class="expl-card">
+
+                <h3 style="margin-bottom:.5rem;">Quota de alunos</h3>
+                <div class="card" id="quotaCard">
+                  <p><strong>Limite:</strong> <span id="limite">—</span></p>
+                  <p><strong>Ativos:</strong> <span id="contagem">0</span></p>
+                  <p><strong>Restantes:</strong> <span id="restantes">—</span></p>
+                </div>
+
+                <h3 style="margin:1rem 0 .5rem;">Criar novo aluno</h3>
+                <form id="fNewAluno" class="auth__form" style="margin-bottom:0;">
+                  <div class="grid2">
+                    <input name="nome"      placeholder="Nome"                 required />
+                    <input name="apelido"   placeholder="Apelido (opcional)" />
+                    <input name="contacto"  placeholder="Contacto (opcional)" />
+                    <input type="number" name="ano" min="1" max="12"
+                           placeholder="Ano escolaridade (opcional)" />
+                    <input type="email"   name="email"
+                           placeholder="Email (login do aluno)" required />
+                    <input type="password" name="password" minlength="6"
+                           placeholder="Password" required />
+                  </div>
+                  <button id="btnCreateAluno" class="button" type="submit">
+                    Criar Aluno
+                  </button>
+                  <div id="msgNewAluno" class="auth__msg"></div>
+                </form>
+              </div>
+
+              <!-- Coluna direita: tabela de alunos -->
+              <div class="expl-card" id="lista-alunos-card">
+                <h3 style="margin-bottom:.5rem;">Lista de alunos</h3>
+                <div class="table-wrapper">
+                  <table class="table" id="tblAlunos">
+                    <thead>
+                      <tr>
+                        <th>Nome</th>
+                        <th>Email</th>
+                        <th>Ano</th>
+                      </tr>
+                    </thead>
+                    <tbody></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Calendário + Relatórios (placeholders) -->
+          <section class="expl-section expl-grid-2">
+            <div>
+              <h2 class="expl-section-title">Calendário</h2>
+              <div class="expl-card expl-calendar-placeholder">
+                <p>Calendário de explicações (a integrar)</p>
+              </div>
+            </div>
+
+            <div>
+              <h2 class="expl-section-title">Relatórios</h2>
+              <div class="expl-card expl-chart-placeholder">
+                <p>Gráficos de faturação e alunos ativos (a integrar)</p>
+              </div>
+            </div>
+          </section>
+
+        </div>
+
+        <!-- Botão flutuante para centrar no formulário de aluno -->
+        <button class="expl-fab" id="btn-add-aluno" type="button">+</button>
       </div>
-      <button id="btnCreateAluno" class="button" type="submit">Criar Aluno</button>
-      <div id="msgNewAluno" class="auth__msg"></div>
-    </form>
-
-    <div class="card">
-      <table class="table" id="tblAlunos">
-        <thead><tr><th>Nome</th><th>Email</th><th>Ano</th></tr></thead>
-        <tbody></tbody>
-      </table>
     </div>
   </section>
 </main>
@@ -70,7 +204,7 @@
 <script>
   const $  = (s) => document.querySelector(s);
 
-  // Elementos
+  // Elementos globais
   const elYear      = $('#y');
   const btnLogout   = $('#btnLogout');
   const loginBox    = $('#explLogin');
@@ -87,12 +221,18 @@
   const elRestantes = $('#restantes');
   const tblBody     = $('#tblAlunos tbody');
 
+  const btnFab      = $('#btn-add-aluno');
+  const btnScrollLista = $('#btn-scroll-lista');
+
+  const elNomeHeader = $('#expl-nome-header');
+  const elNomeMini   = $('#expl-nome-mini');
+
   elYear.textContent = new Date().getFullYear();
 
   // Estado do explicador
   let EXPLICADOR = { userId:null, id_explicador:null, max:0 };
 
-  // Helpers
+  // Helpers Supabase
   async function hasRole(uid, roleName){
     const { data, error } = await supabase
       .from('app_users')
@@ -100,65 +240,76 @@
       .eq('user_id', uid)
       .eq('role', roleName)
       .maybeSingle();
-    if (error) { console.error('hasRole error', error); return false; }
+    if (error) {
+      console.error('hasRole error', error);
+      return false;
+    }
     return !!data;
   }
 
   async function getExplRow(uid){
     const { data, error } = await supabase
       .from('explicadores')
-      .select('id_explicador, max')
+      .select('id_explicador, nome, apelido, max')
       .eq('user_id', uid)
       .maybeSingle();
     if (error) throw error;
     return data || null;
   }
 
+
   function setState({ loading=false, isExpl=false, isAuthed=false }){
     if (loading){
-      loginBox.style.display = 'block'; panel.style.display = 'none';
-      msgLogin.textContent = 'A verificar sessão...';
+      loginBox.style.display = 'block';
+      panel.style.display    = 'none';
+      msgLogin.textContent   = 'A verificar sessão...';
       btnLogout.style.display = 'none';
       return;
     }
     if (isAuthed && isExpl){
-      loginBox.style.display = 'none'; panel.style.display = 'block';
-      msgLogin.textContent = '';
-      btnLogout.style.display = 'inline-block';
+      loginBox.style.display = 'none';
+      panel.style.display    = 'block';
+      msgLogin.textContent   = '';
+      btnLogout.style.display= 'inline-block';
     } else {
-      loginBox.style.display = 'block'; panel.style.display = 'none';
-      btnLogout.style.display = 'none';
+      loginBox.style.display = 'block';
+      panel.style.display    = 'none';
+      btnLogout.style.display= 'none';
     }
   }
 
-  // Quota UI
+  // UI da quota
   function updateQuotaUI(total){
     const max = Number(EXPLICADOR.max || 0);
     elContagem.textContent = String(total);
+
     if (!max){
-      elLimite.textContent = 'Sem limite';
+      elLimite.textContent    = 'Sem limite';
       elRestantes.textContent = '—';
-      btnCreate.disabled = false; btnCreate.title = '';
+      btnCreate.disabled      = false;
+      btnCreate.title         = '';
       return;
     }
     elLimite.textContent = String(max);
     const rest = Math.max(0, max - total);
     elRestantes.textContent = String(rest);
     btnCreate.disabled = rest <= 0;
-    btnCreate.title = rest <= 0 ? 'Limite atingido.' : '';
+    btnCreate.title    = rest <= 0 ? 'Limite de alunos atingido.' : '';
   }
 
-  // Listar alunos
+  // Listar alunos deste explicador
   async function loadAlunos(){
     if (!EXPLICADOR.id_explicador) return;
+
     const { data, error } = await supabase
       .from('alunos')
       .select('nome, apelido, email, ano')
       .eq('id_explicador', EXPLICADOR.id_explicador)
       .order('nome', { ascending: true });
 
+
     if (error){
-      console.error(error);
+      console.error('loadAlunos error', error);
       tblBody.innerHTML = '<tr><td colspan="3">Erro a carregar alunos.</td></tr>';
       updateQuotaUI(0);
       return;
@@ -168,10 +319,13 @@
       updateQuotaUI(0);
       return;
     }
+
     tblBody.innerHTML = data.map(a => {
       const nome = [a.nome, a.apelido].filter(Boolean).join(' ');
-      return `<tr><td>${nome || '-'}</td><td>${a.email || '-'}</td><td>${a.ano ?? '-'}</td></tr>`;
+      const ano = a.ano ?? '-';
+      return `<tr><td>${nome || '-'}</td><td>${a.email || '-'}</td><td>${ano}</td></tr>`;
     }).join('');
+
     updateQuotaUI(data.length);
   }
 
@@ -188,47 +342,81 @@
     }
   }
 
-  // Login
+  // LOGIN
   formLogin?.addEventListener('submit', async (ev) => {
     ev.preventDefault();
     msgLogin.textContent = 'A entrar...';
-    const email = formLogin.email.value.trim();
+
+    const email    = formLogin.email.value.trim();
     const password = formLogin.password.value.trim();
 
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error){ msgLogin.textContent = 'Credenciais inválidas.'; return; }
-
-    if (!(await hasRole(data.user.id, 'explicador'))){
-      await supabase.auth.signOut().catch(()=>{});
-      msgLogin.textContent = 'Esta conta não é de explicador.'; return;
+    if (error){
+      console.error(error);
+      msgLogin.textContent = 'Credenciais inválidas.';
+      return;
     }
 
-    const exp = await getExplRow(data.user.id);
-    EXPLICADOR = { userId:data.user.id, id_explicador: exp?.id_explicador || null, max: exp?.max ?? 0 };
+    const user = data.user;
+    if (!(await hasRole(user.id, 'explicador'))){
+      await supabase.auth.signOut().catch(()=>{});
+      msgLogin.textContent = 'Esta conta não é de explicador.';
+      return;
+    }
+
+    const exp = await getExplRow(user.id);
+    EXPLICADOR = {
+      userId: user.id,
+      id_explicador: exp?.id_explicador || null,
+      max: exp?.max ?? 0
+    };
+
+
+    // Atualizar nome no header
+    const nomeCompleto = [exp?.nome, exp?.apelido].filter(Boolean).join(' ') || 'Professor';
+    elNomeHeader.textContent = nomeCompleto;
+    elNomeMini.textContent   = nomeCompleto;
+
     setState({ isExpl:true, isAuthed:true });
     await loadAlunos();
   });
 
-  // Logout
+  // LOGOUT
   btnLogout?.addEventListener('click', async () => {
     await supabase.auth.signOut().catch(()=>{});
     window.location.href = './index.html';
   });
 
-  // Sessão inicial
+  // Sessão inicial (auto-login se sessão já existe)
   (async () => {
     setState({ loading:true });
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user){ setState({ isExpl:false, isAuthed:false }); return; }
 
-    if (!(await hasRole(session.user.id, 'explicador'))){
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user){
+      setState({ isExpl:false, isAuthed:false });
+      return;
+    }
+
+    const user = session.user;
+    if (!(await hasRole(user.id, 'explicador'))){
       await supabase.auth.signOut().catch(()=>{});
       setState({ isExpl:false, isAuthed:false });
       msgLogin.textContent = 'Conta sem permissões de explicador.';
       return;
     }
-    const exp = await getExplRow(session.user.id);
-    EXPLICADOR = { userId:session.user.id, id_explicador: exp?.id_explicador || null, max: exp?.max ?? 0 };
+
+    const exp = await getExplRow(user.id);
+      EXPLICADOR = {
+        userId: user.id,
+        id_explicador: exp?.id_explicador || null,
+        max: exp?.max ?? 0
+    };
+
+
+    const nomeCompleto = [exp?.nome, exp?.apelido].filter(Boolean).join(' ') || 'Professor';
+    elNomeHeader.textContent = nomeCompleto;
+    elNomeMini.textContent   = nomeCompleto;
+
     setState({ isExpl:true, isAuthed:true });
     await loadAlunos();
   })();
@@ -237,26 +425,34 @@
   formNew?.addEventListener('submit', async (ev) => {
     ev.preventDefault();
     msgNewAluno.textContent = '';
+    msgNewAluno.style.color = '';
 
-    if (!EXPLICADOR.id_explicador){ msgNewAluno.textContent = 'Perfil de explicador inválido.'; return; }
+    if (!EXPLICADOR.id_explicador){
+      msgNewAluno.textContent = 'Perfil de explicador inválido.';
+      return;
+    }
 
-    const max = Number(EXPLICADOR.max || 0);
-    const atuais = Number(elContagem.textContent || 0);
-    if (max && atuais >= max){ msgNewAluno.textContent = 'Limite de alunos atingido.'; return; }
+    const max     = Number(EXPLICADOR.max || 0);
+    const atuais  = Number(elContagem.textContent || 0);
+    if (max && atuais >= max){
+      msgNewAluno.textContent = 'Limite de alunos atingido.';
+      return;
+    }
 
     const f = ev.target;
     const payload = {
-      nome: f.nome.value.trim(),
-      apelido: f.apelido.value.trim() || null,
+      nome:     f.nome.value.trim(),
+      apelido:  f.apelido.value.trim()  || null,
       contacto: f.contacto.value.trim() || null,
-      ano: f.ano.value ? Number(f.ano.value) : null,
-      email: f.email.value.trim(),
+      ano:      f.ano.value ? Number(f.ano.value) : null,
+      email:    f.email.value.trim(),
       password: f.password.value,
-      id_explicador: EXPLICADOR.id_explicador
+      explicador_id: EXPLICADOR.id_explicador
     };
 
     if (!payload.nome || !payload.email || !payload.password){
-      msgNewAluno.textContent = 'Preenche pelo menos Nome, Email e Password.'; return;
+      msgNewAluno.textContent = 'Preenche pelo menos Nome, Email e Password.';
+      return;
     }
 
     btnCreate.disabled = true;
@@ -266,7 +462,8 @@
     if (!ok){
       console.error(error);
       msgNewAluno.textContent = 'Não foi possível criar o aluno.';
-      btnCreate.disabled=false; return;
+      btnCreate.disabled = false;
+      return;
     }
 
     msgNewAluno.style.color = '#126b3a';
@@ -276,9 +473,19 @@
     btnCreate.disabled = false;
   });
 
+  // FAB: scroll até ao formulário
+  btnFab?.addEventListener('click', () => {
+    formNew?.scrollIntoView({ behavior:'smooth', block:'start' });
+  });
+  btnScrollLista?.addEventListener('click', () => {
+    document.querySelector('#lista-alunos-card')?.scrollIntoView({ behavior:'smooth', block:'start' });
+  });
+
   // Listener auth (multi-abas)
   supabase.auth.onAuthStateChange(async (_evt, session) => {
-    if (!session?.user){ setState({ isExpl:false, isAuthed:false }); }
+    if (!session?.user){
+      setState({ isExpl:false, isAuthed:false });
+    }
   });
 </script>
 </body>
