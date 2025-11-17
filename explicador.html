@@ -184,12 +184,12 @@
       <button class="modal__close" type="button" data-modal-close>&times;</button>
     </div>
     <p class="auth__hint">Preencha os dados do aluno para criar a conta de acesso.</p>
-    <form id="fNewAluno" class="auth__form">
+    <form id="fNewAluno" class="auth__form" style="margin-bottom:12px;">
       <div class="grid2">
         <input name="nome" placeholder="Nome do aluno" required />
-        <input name="apelido" placeholder="Apelido" />
+        <input name="apelido" placeholder="Apelido (opcional)" />
 
-        <input name="telemovel" placeholder="Telemóvel" />
+        <input name="telemovel" placeholder="Telemóvel (opcional)" />
         <input type="number" name="ano" placeholder="Ano de escolaridade" />
 
         <input type="number" name="idade" placeholder="Idade (opcional)" />
@@ -202,14 +202,16 @@
         <input name="nome_pai_cache" placeholder="Nome do encarregado de educação" />
         <input name="contacto_pai_cache" placeholder="Contacto do encarregado" />
 
-        <input type="email" name="email" placeholder="Email (login)" required />
+        <input type="email" name="email" placeholder="Email (login do aluno)" required />
         <input name="username" placeholder="Username (opcional)" />
 
         <input type="password" name="password" placeholder="Password" minlength="6" required />
       </div>
+
       <button id="btnCreateAluno" class="button" type="submit">Criar Aluno</button>
       <div id="msgNewAluno" class="auth__msg"></div>
     </form>
+
 
   </div>
 </div>
@@ -456,55 +458,62 @@
 
   // ---------- submit novo aluno ----------
   formNew?.addEventListener('submit', async (ev) => {
-    ev.preventDefault();
-    msgNewAluno.textContent = '';
-    msgNewAluno.style.color = '';
+  ev.preventDefault();
+  msgNewAluno.textContent = '';
 
-    if (!EXPLICADOR.id_explicador){
-      msgNewAluno.textContent = 'Perfil de explicador inválido.';
-      return;
-    }
+  if (!EXPLICADOR.id_explicador) {
+    msgNewAluno.textContent = 'Perfil de explicador inválido.';
+    return;
+  }
 
-    const max     = Number(EXPLICADOR.max || 0);
-    const atuais  = Number(elContagem.textContent || 0);
-    if (max && atuais >= max){
-      msgNewAluno.textContent = 'Limite de alunos atingido.';
-      return;
-    }
+  const f = ev.target;
 
-    const f = ev.target;
-    const payload = {
-      nome:     f.nome.value.trim(),
-      apelido:  f.apelido.value.trim()  || null,
-      contacto: f.contacto.value.trim() || null,
-      ano:      f.ano.value ? Number(f.ano.value) : null,
-      email:    f.email.value.trim(),
-      password: f.password.value
-    };
+  const payload = {
+    nome: f.nome?.value.trim() || "",
+    apelido: f.apelido?.value.trim() || null,
+    telemovel: f.telemovel?.value.trim() || null,
+    ano: f.ano?.value ? Number(f.ano.value) : null,
+    idade: f.idade?.value ? Number(f.idade.value) : null,
+    dia_semana_preferido: f.dia_semana_preferido?.value.trim() || null,
+    valor_explicacao: f.valor_explicacao?.value
+      ? Number(f.valor_explicacao.value)
+      : null,
+    sessoes_mes: f.sessoes_mes?.value
+      ? Number(f.sessoes_mes.value)
+      : null,
+    nome_pai_cache: f.nome_pai_cache?.value.trim() || null,
+    contacto_pai_cache: f.contacto_pai_cache?.value.trim() || null,
+    email: f.email?.value.trim() || "",
+    username: f.username?.value.trim() || null,
+    password: f.password?.value || "",
+    is_active: true,
+  };
 
-    if (!payload.nome || !payload.email || !payload.password){
-      msgNewAluno.textContent = 'Preenche pelo menos Nome, Email e Password.';
-      return;
-    }
+  if (!payload.nome || !payload.email || !payload.password) {
+    msgNewAluno.textContent = 'Preenche pelo menos Nome, Email e Password.';
+    return;
+  }
 
-    btnCreate.disabled = true;
-    msgNewAluno.textContent = 'A criar aluno...';
+  btnCreate.disabled = true;
+  msgNewAluno.textContent = 'A criar aluno...';
 
-    const { ok, error } = await createAluno(payload);
-    if (!ok){
-      console.error('createAluno UI error:', error);
-      msgNewAluno.textContent = error || 'Não foi possível criar o aluno.';
-      btnCreate.disabled = false;
-      return;
-    }
-
-    msgNewAluno.style.color = '#126b3a';
-    msgNewAluno.textContent = 'Aluno criado com sucesso!';
-    f.reset();
-    await loadAlunos();
-    btnCreate.disabled = false;
-    setTimeout(() => closeModal(modalAddAluno), 600);
+  const { data, error } = await supabase.functions.invoke('expl-alunos', {
+    body: { action: 'create_aluno', payload }
   });
+
+  if (error) {
+    console.error(error);
+    msgNewAluno.textContent = 'Não foi possível criar o aluno.';
+    btnCreate.disabled = false;
+    return;
+  }
+
+  msgNewAluno.style.color = '#126b3a';
+  msgNewAluno.textContent = 'Aluno criado com sucesso!';
+  f.reset();
+  await loadAlunos();
+  btnCreate.disabled = false;
+});
 
   // ---------- navegação no header ----------
   const tabs = document.querySelectorAll('.expl-nav-btn');

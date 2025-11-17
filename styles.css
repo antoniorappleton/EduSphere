@@ -119,22 +119,31 @@ body.home footer{
 }
 
 /* ===== ÁREA DE AUTENTICAÇÃO / PAINÉIS ===== */
+/* Área dos painéis (login, admin, etc.) ocupa toda a largura útil */
 .auth{
   min-height: calc(100vh - 120px);
-  display:grid; place-items:center;
-  padding:24px 16px; position:relative; z-index:1;
+  display:flex;
+  justify-content:center;
+  align-items:flex-start;
+  padding:24px 32px;
+  position:relative;
+  z-index:1;
+  width:100%;
 }
 
+/* Painel “de vidro” mais largo e proporcional ao ecrã */
 .auth__panel{
-  width:100%; max-width:1000px;
+  width:100%;
+  max-width: 1300px;              /* ↑ aumenta a largura máxima */
   background: rgba(255,255,255,0.25);
   backdrop-filter: blur(8px) saturate(130%);
   border: 1px solid rgba(255,255,255,0.30);
   border-radius: 14px;
-  padding: 22px 18px;
-  color:#fff; /* headings podem ficar claros na home */
+  padding: 26px 28px;             /* um pouco mais de respiro */
+  color:#fff;
   box-shadow: 0 14px 34px rgba(0,0,0,.25);
 }
+
 
 .auth__panel h1{
   margin:0 0 6px; font-family:'Poppins',sans-serif; font-weight:600; font-size:1.4rem;
@@ -234,21 +243,72 @@ body.home .auth__panel .table td{
 #tblExpl {
   width: 100%;
   border-collapse: collapse;
-  table-layout: fixed;              /* garante que não “salta” para fora do card */
+  table-layout: auto;              /* deixa o browser distribuir melhor o espaço */
 }
 
+/* Cabeçalho + células */
 #tblExpl th,
 #tblExpl td {
-  padding: 0.6rem 0.8rem;
+  padding: 0.75rem 1rem;
   vertical-align: middle;
+  text-align: left;
+  white-space: nowrap;             /* evita quebras estranhas em palavras curtas */
+}
+
+/* Permite que a coluna Email tenha mais espaço e o texto não encavalite */
+#tblExpl th:nth-child(3),
+#tblExpl td:nth-child(3) {
+  width: 28%;
+}
+
+/* Coluna Contacto mais estreita */
+#tblExpl th:nth-child(4),
+#tblExpl td:nth-child(4) {
+  width: 14%;
+}
+
+/* Coluna Limite */
+#tblExpl th:nth-child(5),
+#tblExpl td:nth-child(5) {
+  width: 8%;
+}
+
+/* Coluna Estado */
+#tblExpl th:nth-child(6),
+#tblExpl td:nth-child(6) {
+  width: 10%;
+}
+
+/* Coluna das ações (botões) — ocupa o resto e alinha tudo à direita */
+#tblExpl th:last-child,
+#tblExpl td:last-child {
+  width: 20%;
 }
 
 /* Célula das ações (botões) */
 #tblExpl td.expl-actions {
   display: flex;
-  flex-wrap: wrap;                  /* se não couber numa linha, quebra para baixo */
-  gap: 0.4rem;
   justify-content: flex-end;
+  gap: 0.45rem;
+  flex-wrap: wrap;                 /* se ficar apertado, os botões saltam para baixo */
+}
+
+/* Botões do admin (mantém, só para garantir) */
+.btn-admin {
+  font-size: 0.8rem;
+  padding: 0.25rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+  white-space: nowrap;
+}
+
+#tblExpl td:nth-child(3) {
+  white-space: normal;
+  word-break: break-all;
 }
 
 /* Estilo base dos botões do admin */
