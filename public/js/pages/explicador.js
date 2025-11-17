@@ -52,37 +52,59 @@ async function loadHeaderInfo() {
   badge.textContent = `Capacidade: ${livre}`;
 }
 
-ui.fNew?.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  ui.msgNew.textContent = "";
+formNew?.addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  msgNewAluno.textContent = "";
 
-  // bloqueio no cliente se já atingiu limite
-  if (maxAlunos > 0) {
-    const { count } = await s
-      .from("alunos")
-      .select("id_aluno", { count: "exact", head: true })
-      .eq("id_explicador", myExplId);
-    if ((count || 0) >= maxAlunos) {
-      ui.msgNew.textContent = "Limite de alunos atingido. Fale com o Admin.";
-      return;
-    }
+  if (!EXPLICADOR.id_explicador) {
+    msgNewAluno.textContent = "Perfil de explicador inválido.";
+    return;
   }
 
-  const p = {
-    nome: e.target.nome.value.trim(),
-    apelido: e.target.apelido.value.trim() || null,
-    contacto: e.target.contacto.value.trim() || null,
-    email: e.target.email.value.trim(),
-    password: e.target.password.value,
-    ano_escolaridade: e.target.ano.value ? Number(e.target.ano.value) : null,
+  const f = ev.target;
+
+  const payload = {
+    nome: f.nome.value.trim(),
+    apelido: f.apelido.value.trim() || null,
+    telemovel: f.telemovel.value.trim() || null,
+    ano: f.ano.value ? Number(f.ano.value) : null,
+    idade: f.idade.value ? Number(f.idade.value) : null,
+    dia_semana_preferido: f.dia_semana_preferido.value.trim() || null,
+    valor_explicacao: f.valor_explicacao.value
+      ? Number(f.valor_explicacao.value)
+      : null,
+    sessoes_mes: f.sessoes_mes.value ? Number(f.sessoes_mes.value) : null,
+    nome_pai_cache: f.nome_pai_cache.value.trim() || null,
+    contacto_pai_cache: f.contacto_pai_cache.value.trim() || null,
+    email: f.email.value.trim(),
+    username: f.username.value.trim() || null,
+    password: f.password.value,
+    is_active: true, // por agora sempre ativo ao criar
   };
-  const { error } = await s.functions.invoke("expl-alunos", {
-    body: { action: "create_aluno", payload: p },
+
+  if (!payload.nome || !payload.email || !payload.password) {
+    msgNewAluno.textContent = "Preenche pelo menos Nome, Email e Password.";
+    return;
+  }
+
+  btnCreate.disabled = true;
+  msgNewAluno.textContent = "A criar aluno...";
+
+  const { data, error } = await supabase.functions.invoke("expl-alunos", {
+    body: { action: "create_aluno", payload },
   });
-  if (error) return (ui.msgNew.textContent = error.message);
-  ui.msgNew.style.color = "#d3ffe5";
-  ui.msgNew.textContent = "Aluno criado.";
-  e.target.reset();
-  await loadHeaderInfo();
-  load();
+
+  if (error) {
+    console.error(error);
+    msgNewAluno.textContent = "Não foi possível criar o aluno.";
+    btnCreate.disabled = false;
+    return;
+  }
+
+  msgNewAluno.style.color = "#126b3a";
+  msgNewAluno.textContent = "Aluno criado com sucesso!";
+  f.reset();
+  await loadAlunos();
+  btnCreate.disabled = false;
 });
+

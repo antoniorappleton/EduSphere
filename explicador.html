@@ -186,21 +186,31 @@
     <p class="auth__hint">Preencha os dados do aluno para criar a conta de acesso.</p>
     <form id="fNewAluno" class="auth__form">
       <div class="grid2">
-        <input name="nome"      placeholder="Nome"                 required />
-        <input name="apelido"   placeholder="Apelido (opcional)" />
-        <input name="contacto"  placeholder="Contacto (opcional)" />
-        <input type="number" name="ano" min="1" max="12"
-               placeholder="Ano escolaridade (opcional)" />
-        <input type="email"   name="email"
-               placeholder="Email (login do aluno)" required />
-        <input type="password" name="password" minlength="6"
-               placeholder="Password" required />
+        <input name="nome" placeholder="Nome do aluno" required />
+        <input name="apelido" placeholder="Apelido" />
+
+        <input name="telemovel" placeholder="Telemóvel" />
+        <input type="number" name="ano" placeholder="Ano de escolaridade" />
+
+        <input type="number" name="idade" placeholder="Idade (opcional)" />
+
+        <input name="dia_semana_preferido" placeholder="Dia preferido (ex.: Segunda)" />
+
+        <input type="number" step="0.01" name="valor_explicacao" placeholder="Valor por explicação (€)" />
+        <input type="number" name="sessoes_mes" placeholder="Sessões por mês" />
+
+        <input name="nome_pai_cache" placeholder="Nome do encarregado de educação" />
+        <input name="contacto_pai_cache" placeholder="Contacto do encarregado" />
+
+        <input type="email" name="email" placeholder="Email (login)" required />
+        <input name="username" placeholder="Username (opcional)" />
+
+        <input type="password" name="password" placeholder="Password" minlength="6" required />
       </div>
-      <button id="btnCreateAluno" class="button" type="submit">
-        Criar Aluno
-      </button>
+      <button id="btnCreateAluno" class="button" type="submit">Criar Aluno</button>
       <div id="msgNewAluno" class="auth__msg"></div>
     </form>
+
   </div>
 </div>
 
@@ -306,62 +316,52 @@
     }
   }
 
-// ---------- LISTAR ALUNOS via Edge Function ----------
-async function loadAlunos(){
-  if (!EXPLICADOR.id_explicador) return;
-
-  try {
+  // ---------- LISTAR ALUNOS via Edge Function ----------
+    async function loadAlunos() {
     const { data, error } = await supabase.functions.invoke('expl-alunos', {
       body: { action: 'list_alunos' }
     });
-    if (error) throw error;
 
-    const rows = Array.isArray(data) ? data : [];
-
-    if (!rows.length){
-      tblBody.innerHTML = `
-        <tr><td colspan="3" class="expl-table-empty">Sem alunos ainda.</td></tr>
-      `;
-      updateQuotaUI(0);
+    if (error) {
+      console.error('loadAlunos error', error);
+      tblBody.innerHTML = '<tr><td colspan="4">Erro a carregar alunos.</td></tr>';
       return;
     }
 
-    tblBody.innerHTML = rows.map(a => {
+    if (!data || !data.length) {
+      tblBody.innerHTML = '<tr><td colspan="4">Sem alunos ainda.</td></tr>';
+      return;
+    }
+
+    tblBody.innerHTML = data.map(a => {
       const nome = [a.nome, a.apelido].filter(Boolean).join(' ');
-      const ano  = (a.ano ?? a.ano_escolaridade) ?? '-';
+      const valor = a.valor_explicacao != null ? a.valor_explicacao.toFixed(2) : '-';
+      const sessoes = a.sessoes_mes != null ? a.sessoes_mes : '-';
+
       return `
         <tr>
           <td>${nome || '-'}</td>
-          <td>${a.email || '-'}</td>
-          <td>${ano}</td>
+          <td>${a.ano ?? '-'}</td>
+          <td>${valor === '-' ? '-' : '€ ' + valor}</td>
+          <td>${sessoes}</td>
         </tr>
       `;
     }).join('');
-
-    updateQuotaUI(rows.length);
-
-  } catch (err) {
-    console.error('loadAlunos error', err);
-    tblBody.innerHTML = `
-      <tr><td colspan="3" class="expl-table-empty">Erro a carregar alunos.</td></tr>
-    `;
-    updateQuotaUI(0);
   }
-}
 
-  // ---------- criar aluno via Edge Function ----------
-  async function createAluno(payload){
-    try{
-      const { data, error } = await supabase.functions.invoke('expl-alunos', {
-        body: { action: 'create_aluno', payload }
+  // ---------- CRIAR ALUNO (EDGE FUNCTION) ----------
+    async function createAluno(payload){
+      const { data, error } = await supabase.functions.invoke("expl-alunos", {
+        body: { action: "create_aluno", payload }
       });
-      if (error) throw error;
-      return { ok:true, data };
-    }catch(err){
-      return { ok:false, error: err };
-    }
-  }
 
+      if (error) {
+        console.error(error);
+        return { ok:false, error: error.message };
+      }
+
+      return { ok: true, data };
+    }
   // ---------- login ----------
   formLogin?.addEventListener('submit', async (ev) => {
     ev.preventDefault();
@@ -492,8 +492,8 @@ async function loadAlunos(){
 
     const { ok, error } = await createAluno(payload);
     if (!ok){
-      console.error(error);
-      msgNewAluno.textContent = 'Não foi possível criar o aluno.';
+      console.error('createAluno UI error:', error);
+      msgNewAluno.textContent = error || 'Não foi possível criar o aluno.';
       btnCreate.disabled = false;
       return;
     }
