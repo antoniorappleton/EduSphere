@@ -91,28 +91,37 @@
                   e.is_blocked
                     ? `Bloqueado${
                         e.blocked_until
-                          ? ` até ${new Date(e.blocked_until).toLocaleDateString()}`
+                          ? ` até ${new Date(
+                              e.blocked_until
+                            ).toLocaleDateString()}`
                           : ""
                       }`
                     : "Ativo"
                 }
               </td>
-              <td style="white-space:nowrap;display:flex;gap:6px;justify-content:flex-end;">
-                <button class="button button--ghost btn-edit" data-id="${
+              <td class="expl-actions">
+                <button class="btn-admin btn-admin--secondary btn-edit" data-id="${
                   e.id_explicador
-                }">Editar</button>
-                <button class="button button--ghost btn-reset" data-id="${
+                }">
+                  Editar
+                </button>
+                <button class="btn-admin btn-admin--secondary btn-reset" data-id="${
                   e.id_explicador
-                }" ${dis}>Reset PW</button>
-                <button class="button button--ghost btn-block" data-id="${
+                }" ${dis}>
+                  Reset PW
+                </button>
+                <button class="btn-admin btn-admin--warning btn-block" data-id="${
                   e.id_explicador
                 }" ${dis}>
                   ${e.is_blocked ? "Desbloquear" : "Bloquear"}
                 </button>
-                <button class="button button--ghost btn-del"   data-id="${
+                <button class="btn-admin btn-admin--danger btn-del" data-id="${
                   e.id_explicador
-                }" ${dis}>Eliminar</button>
+                }" ${dis}>
+                  Eliminar
+                </button>
               </td>
+
             </tr>
           `;
       })

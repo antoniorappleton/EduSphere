@@ -126,11 +126,102 @@ serve(async (req) => {
         });
       }
 
+      // devolve um array – é isto que o admin.js espera
       return new Response(JSON.stringify(data ?? []), {
         status: 200,
         headers: cors(origin),
       });
     }
+
+// -------- CREATE_EXPLICADOR --------
+if (action === "create_explicador") {
+  const {
+    nome,
+    apelido = null,
+    contacto = null,
+    email,
+    password,
+    max = 0,
+  } = payload || {};
+
+  if (!nome || !email || !password) {
+    return new Response(JSON.stringify({
+      error: "nome, email e password são obrigatórios",
+    }), {
+      status: 400,
+      headers: cors(origin),
+    });
+  }
+
+  // 1) cria user de Auth
+  const { data: created, error: e1 } = await svc.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+  });
+
+  if (e1) {
+    return new Response(JSON.stringify({ error: e1.message }), {
+      status: 400,
+      headers: cors(origin),
+    });
+  }
+
+  const uid = created?.user?.id;
+  if (!uid) {
+    return new Response(JSON.stringify({
+      error: "createUser não devolveu user.id",
+    }), {
+      status: 400,
+      headers: cors(origin),
+    });
+  }
+
+  // 2) registo na tabela explicadores
+  const { data: exp, error: e2 } = await svc
+    .from("explicadores")
+    .insert({
+      user_id: uid,
+      nome,
+      apelido,
+      contacto,
+      email,
+      max,
+      is_blocked: false,
+      blocked_until: null,
+    })
+    .select(
+      "id_explicador, user_id, nome, apelido, email, contacto, max, is_blocked, blocked_until"
+    )
+    .single();
+
+  if (e2) {
+    return new Response(JSON.stringify({ error: e2.message }), {
+      status: 400,
+      headers: cors(origin),
+    });
+  }
+
+  // 3) ligação em app_users
+  const { error: e3 } = await svc.from("app_users").insert({
+    user_id: uid,
+    role: "explicador",
+    ref_id: exp.id_explicador,
+  });
+
+  if (e3) {
+    return new Response(JSON.stringify({ error: e3.message }), {
+      status: 400,
+      headers: cors(origin),
+    });
+  }
+
+  return new Response(JSON.stringify(exp), {
+    status: 201,
+    headers: cors(origin),
+  });
+}
+
 
     // ==========================
     //   AÇÃO: BLOQUEAR / DESBLOQUEAR EXPLICADOR
@@ -173,90 +264,91 @@ serve(async (req) => {
     //   AÇÃO: CRIAR EXPLICADOR
     // ==========================
     if (action === "create_explicador") {
-      const {
-        nome,
-        apelido = null,
-        contacto = null,
-        email,
-        password,
-        max = 0,
-      } = payload || {};
+  const {
+    nome,
+    apelido = null,
+    contacto = null,
+    email,
+    password,
+    max = 0,
+  } = payload || {};
 
-      if (!nome || !email || !password) {
-        return new Response(
-          JSON.stringify({
-            error: "nome, email e password são obrigatórios",
-          }),
-          { status: 400, headers: cors(origin) }
-        );
-      }
+  if (!nome || !email || !password) {
+    return new Response(JSON.stringify({
+      error: "nome, email e password são obrigatórios",
+    }), {
+      status: 400,
+      headers: cors(origin),
+    });
+  }
 
-      // 1) Criar utilizador no Auth
-      const { data: created, error: e1 } = await svc.auth.admin.createUser({
-        email,
-        password,
-        email_confirm: true,
-      });
+  // 1) cria utilizador no Auth
+  const { data: created, error: e1 } = await svc.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+  });
+  if (e1) {
+    return new Response(JSON.stringify({ error: e1.message }), {
+      status: 400,
+      headers: cors(origin),
+    });
+  }
 
-      if (e1) {
-        return new Response(JSON.stringify({ error: e1.message }), {
-          status: 400,
-          headers: cors(origin),
-        });
-      }
+  const uid = created?.user?.id;
+  if (!uid) {
+    return new Response(JSON.stringify({
+      error: "createUser não devolveu user.id",
+    }), {
+      status: 400,
+      headers: cors(origin),
+    });
+  }
 
-      const uid = created?.user?.id;
-      if (!uid) {
-        return new Response(
-          JSON.stringify({ error: "createUser não devolveu user.id" }),
-          { status: 400, headers: cors(origin) }
-        );
-      }
+  // 2) registo em 'explicadores'
+  const { data: exp, error: e2 } = await svc
+    .from("explicadores")
+    .insert({
+      user_id: uid,
+      nome,
+      apelido,
+      contacto,
+      email,
+      max,
+      is_blocked: false,
+      blocked_until: null,
+    })
+    .select(
+      "id_explicador, user_id, nome, apelido, email, contacto, max, is_blocked, blocked_until"
+    )
+    .single();
 
-      // 2) Inserir na tabela explicadores
-      const { data: exp, error: e2 } = await svc
-        .from("explicadores")
-        .insert({
-          user_id: uid,
-          nome,
-          apelido,
-          contacto,
-          email,
-          max,
-          is_blocked: false,
-          blocked_until: null,
-        })
-        .select(
-          "id_explicador, user_id, nome, apelido, email, contacto, max, is_blocked, blocked_until"
-        )
-        .single();
+  if (e2) {
+    return new Response(JSON.stringify({ error: e2.message }), {
+      status: 400,
+      headers: cors(origin),
+    });
+  }
 
-      if (e2) {
-        return new Response(JSON.stringify({ error: e2.message }), {
-          status: 400,
-          headers: cors(origin),
-        });
-      }
+  // 3) ligação em 'app_users'
+  const { error: e3 } = await svc.from("app_users").insert({
+    user_id: uid,
+    role: "explicador",
+    ref_id: exp.id_explicador,
+  });
+  if (e3) {
+    return new Response(JSON.stringify({ error: e3.message }), {
+      status: 400,
+      headers: cors(origin),
+    });
+  }
 
-      // 3) Registar papel em app_users
-      const { error: e3 } = await svc.from("app_users").insert({
-        user_id: uid,
-        role: "explicador",
-        ref_id: exp.id_explicador,
-      });
-
-      if (e3) {
-        return new Response(JSON.stringify({ error: e3.message }), {
-          status: 400,
-          headers: cors(origin),
-        });
-      }
-
-      return new Response(JSON.stringify(exp), {
-        status: 201,
-        headers: cors(origin),
-      });
+  return new Response(JSON.stringify(exp), {
+    status: 201,
+    headers: cors(origin),
+  });
     }
+
 
     // ==========================
     //   AÇÃO: ATUALIZAR EXPLICADOR
