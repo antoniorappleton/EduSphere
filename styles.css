@@ -294,6 +294,12 @@ body.home .auth__panel .table td{
 }
 
 /* screen explicador */
+
+/* Esconder o header interno do painel do explicador */
+.expl-header-bar {
+  display: none;
+}
+
 :root {
   --expl-bg: #0f172a;
   --expl-bg-soft: rgba(15, 23, 42, 0.75);
@@ -378,7 +384,7 @@ body.home .auth__panel .table td{
 
 .expl-nav-item--active,
 .expl-nav-item:hover {
-  background: rgba(59, 130, 246, 0.15);
+  background: rgba(245, 246, 248, 0.15);
   color: var(--expl-text);
   transform: translateY(-1px);
 }
@@ -852,3 +858,20 @@ body.home .auth__panel .table td{
   margin-top: 0.5rem;
 }
 /*Fim do screen Aluno */
+
+/* Tabela dentro do card de alunos do explicador */
+.expl-card .table {
+  background: transparent;
+}
+
+.expl-card .table th,
+.expl-card .table td {
+  color:#fff;
+  border-bottom:1px solid rgba(255,255,255,0.18);
+}
+
+/* Mensagem de vazio/erro */
+.expl-table-empty{
+  text-align:center;
+  opacity:.9;
+}

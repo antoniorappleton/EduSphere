@@ -5,14 +5,12 @@
 import { serve } from "https://deno.land/std@0.223.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.47.10?target=deno";
 
-const URL = Deno.env.get("https://notktinqokknnbjwuuot.supabase.co");
-const ANON = Deno.env.get("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5vdGt0aW5xb2trbm5iand1dW90Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE1NTg2ODksImV4cCI6MjA3NzEzNDY4OX0.OIfmWOwXo8iegnqPGPz82pzU4atGad_glQ1Bidi0cLE");
-const SVC  = Deno.env.get("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5vdGt0aW5xb2trbm5iand1dW90Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MTU1ODY4OSwiZXhwIjoyMDc3MTM0Njg5fQ.hKAQ8_AlkLSPGFVnlo6tuhr10GBZvlxza0PScPNWN2I");
+const URL  = Deno.env.get("SUPABASE_URL");
+const ANON = Deno.env.get("SUPABASE_ANON_KEY");
+const SVC  = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
 if (!URL || !ANON || !SVC) {
-  throw new Error(
-    "Faltam SUPABASE_URL / SUPABASE_ANON_KEY / SUPABASE_SERVICE_ROLE_KEY nas env vars."
-  );
+  throw new Error("Faltam SUPABASE_URL / SUPABASE_ANON_KEY / SUPABASE_SERVICE_ROLE_KEY");
 }
 
 function cors(origin = "*") {
@@ -90,24 +88,24 @@ serve(async (req) => {
        LISTAR ALUNOS
        ======================= */
     if (action === "list_alunos") {
-      const { data, error } = await svc
-        .from("alunos")
-        .select("id_aluno, nome, apelido, email, ano, ano_escolaridade")
-        .eq("id_explicador", myExplId) // ou .eq("explicador_id", myExplId) se esse for o nome
-        .order("nome", { ascending: true });
+        const { data, error } = await svc
+          .from("alunos")
+          .select("id_aluno, nome, apelido, email, ano")  // ajusta 'ano' se na BD for ano_escolaridade
+          .eq("id_explicador", myExplId)                  // ou .eq("explicador_id", myExplId)
+          .order("nome", { ascending: true });
 
-      if (error) {
-        return new Response(JSON.stringify({ error: error.message }), {
-          status: 400,
+        if (error) {
+          return new Response(JSON.stringify({ error: error.message }), {
+            status: 400,
+            headers: cors(origin),
+          });
+        }
+
+        return new Response(JSON.stringify(data ?? []), {
+          status: 200,
           headers: cors(origin),
         });
       }
-
-      return new Response(JSON.stringify(data ?? []), {
-        status: 200,
-        headers: cors(origin),
-      });
-    }
 
     /* =======================
        CRIAR ALUNO

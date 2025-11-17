@@ -6,7 +6,7 @@
   <link rel="stylesheet" href="./styles.css"/>
   <title>EduSphere — Explicador</title>
 
-  <!-- Supabase UMD + client -->
+  <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="./public/js/supabaseClient.js"></script>
 </head>
@@ -18,6 +18,16 @@
       <img src="/public/img/logo-icon.svg" alt="">
       <span>EduSphere</span>
     </a>
+
+    <!-- NAV PRINCIPAL DO PAINEL (tabs) – só aparece depois do login -->
+    <nav id="explHeaderNav" class="expl-main-nav" style="display:none">
+      <button class="expl-nav-btn expl-nav-btn--active" data-target="dashboard">Dashboard</button>
+      <button class="expl-nav-btn" data-target="alunos">Alunos</button>
+      <button class="expl-nav-btn" data-target="calendario">Calendário</button>
+      <button class="expl-nav-btn" data-target="faturacao">Faturação</button>
+      <button class="expl-nav-btn" data-target="relatorios">Relatórios</button>
+    </nav>
+
     <button id="btnLogout" class="button" style="margin-left:auto; display:none">Sair</button>
   </div>
 </header>
@@ -26,213 +36,207 @@
 
 <main class="auth">
 
-  <!-- ========= LOGIN DO EXPLICADOR ========= -->
+  <!-- ========== LOGIN DO EXPLICADOR ========== -->
   <section class="auth__panel" id="explLogin">
     <h1>Entrar (Explicador)</h1>
+    <p class="auth__hint">Use as credenciais de professor para aceder ao painel.</p>
     <form id="fExplLogin" class="auth__form" autocomplete="on">
       <input type="email"   name="email"    placeholder="Email"    required />
-      <input type="password" name="password" placeholder="Password" required />
+      <input type="password"name="password" placeholder="Password" required />
       <button class="button" type="submit">Entrar</button>
       <div id="msgExplLogin" class="auth__msg"></div>
     </form>
   </section>
 
-  <!-- ========= PAINEL DO EXPLICADOR ========= -->
-  <section class="auth__panel" id="explPanel" style="display:none">
-
-    <div class="expl-layout">
-      <!-- Sidebar -->
-      <aside class="expl-sidebar">
-        <div class="expl-brand">
-          <span class="expl-logo">E</span>
-          <div>
-            <p class="expl-app-name">EduSphere</p>
-            <p class="expl-app-sub">Painel do Professor</p>
-          </div>
-        </div>
-
-        <nav class="expl-nav">
-          <button class="expl-nav-item expl-nav-item--active"><span>Dashboard</span></button>
-          <button class="expl-nav-item"><span>Alunos</span></button>
-          <button class="expl-nav-item"><span>Calendário</span></button>
-          <button class="expl-nav-item"><span>Faturação</span></button>
-          <button class="expl-nav-item"><span>Relatórios</span></button>
-        </nav>
-      </aside>
-
-      <!-- Conteúdo principal -->
-      <div class="expl-main">
-        <!-- Header -->
-        <header class="expl-header">
-          <div class="expl-header-left">
-            <h1 class="expl-title">
-              Olá, <span id="expl-nome-header">Professor</span>
-            </h1>
-            <p class="expl-subtitle">Aqui está o resumo da sua atividade.</p>
-          </div>
-
-          <div class="expl-header-right">
-            <button class="expl-notifications" aria-label="Notificações">
-              🔔
-              <span class="expl-badge" id="expl-notif-count">0</span>
-            </button>
-            <div class="expl-user">
-              <img src="https://via.placeholder.com/40" class="expl-avatar" alt="Foto do explicador">
-              <div>
-                <p class="expl-user-name" id="expl-nome-mini">Professor</p>
-                <p class="expl-user-role">Explicador</p>
-              </div>
-            </div>
-          </div>
-        </header>
-
-        <!-- Área principal -->
-        <div class="expl-content">
-
-          <!-- Resumo financeiro (neste momento placeholders, depois ligas à BD) -->
-          <section class="expl-section">
-            <h2 class="expl-section-title">Resumo financeiro</h2>
-            <div class="expl-cards">
-              <article class="expl-card">
-                <p class="expl-card-label">Total faturado (este mês)</p>
-                <p class="expl-card-value" id="card-total-mes">€ 0,00</p>
-              </article>
-
-              <article class="expl-card">
-                <p class="expl-card-label">Mensalidades pendentes</p>
-                <p class="expl-card-value expl-card-value--warning" id="card-pendentes">
-                  € 0,00
-                </p>
-              </article>
-
-              <article class="expl-card">
-                <p class="expl-card-label">Pagamentos recebidos</p>
-                <p class="expl-card-value expl-card-value--success" id="card-recebidos">
-                  0 / 0
-                </p>
-              </article>
-            </div>
-          </section>
-
-          <!-- Secção Meus Alunos: quota + formulário + tabela -->
-          <section class="expl-section">
-            <div class="expl-section-header">
-              <h2 class="expl-section-title">Meus Alunos</h2>
-              <button class="expl-link-button" type="button" id="btn-scroll-lista">
-                Ver lista
-              </button>
-            </div>
-
-            <div class="expl-grid-2">
-              <!-- Coluna esquerda: quota + formulário -->
-              <div class="expl-card">
-
-                <h3 style="margin-bottom:.5rem;">Quota de alunos</h3>
-                <div class="card" id="quotaCard">
-                  <p><strong>Limite:</strong> <span id="limite">—</span></p>
-                  <p><strong>Ativos:</strong> <span id="contagem">0</span></p>
-                  <p><strong>Restantes:</strong> <span id="restantes">—</span></p>
-                </div>
-
-                <h3 style="margin:1rem 0 .5rem;">Criar novo aluno</h3>
-                <form id="fNewAluno" class="auth__form" style="margin-bottom:0;">
-                  <div class="grid2">
-                    <input name="nome"      placeholder="Nome"                 required />
-                    <input name="apelido"   placeholder="Apelido (opcional)" />
-                    <input name="contacto"  placeholder="Contacto (opcional)" />
-                    <input type="number" name="ano" min="1" max="12"
-                           placeholder="Ano escolaridade (opcional)" />
-                    <input type="email"   name="email"
-                           placeholder="Email (login do aluno)" required />
-                    <input type="password" name="password" minlength="6"
-                           placeholder="Password" required />
-                  </div>
-                  <button id="btnCreateAluno" class="button" type="submit">
-                    Criar Aluno
-                  </button>
-                  <div id="msgNewAluno" class="auth__msg"></div>
-                </form>
-              </div>
-
-              <!-- Coluna direita: tabela de alunos -->
-              <div class="expl-card" id="lista-alunos-card">
-                <h3 style="margin-bottom:.5rem;">Lista de alunos</h3>
-                <div class="table-wrapper">
-                  <table class="table" id="tblAlunos">
-                    <thead>
-                      <tr>
-                        <th>Nome</th>
-                        <th>Email</th>
-                        <th>Ano</th>
-                      </tr>
-                    </thead>
-                    <tbody></tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <!-- Calendário + Relatórios (placeholders) -->
-          <section class="expl-section expl-grid-2">
-            <div>
-              <h2 class="expl-section-title">Calendário</h2>
-              <div class="expl-card expl-calendar-placeholder">
-                <p>Calendário de explicações (a integrar)</p>
-              </div>
-            </div>
-
-            <div>
-              <h2 class="expl-section-title">Relatórios</h2>
-              <div class="expl-card expl-chart-placeholder">
-                <p>Gráficos de faturação e alunos ativos (a integrar)</p>
-              </div>
-            </div>
-          </section>
-
-        </div>
-
-        <!-- Botão flutuante para centrar no formulário de aluno -->
-        <button class="expl-fab" id="btn-add-aluno" type="button">+</button>
+  <!-- ========== PAINEL DO EXPLICADOR (FULL PAGE) ========== -->
+  <section id="explPanel" class="expl-shell" style="display:none">
+    <!-- Header do painel -->
+    <header class="expl-header-bar">
+      <div class="expl-header-info">
+        <p class="expl-hello">
+          Olá, <span id="expl-nome-header">Professor</span>
+        </p>
+        <p class="expl-hello-sub">Aqui está o resumo da sua atividade.</p>
       </div>
+
+      <div class="expl-header-user">
+        <button class="expl-bell" aria-label="Notificações">
+          <span class="expl-bell-icon">🔔</span>
+          <span class="expl-bell-badge" id="expl-notif-count">0</span>
+        </button>
+        <div class="expl-header-avatar">
+          <div class="expl-avatar-circle">Foto</div>
+          <div class="expl-header-name">
+            <p id="expl-nome-mini">Professor</p>
+            <span>Explicador</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Conteúdo -->
+    <div class="expl-body">
+
+      <!-- DASHBOARD / FATURAÇÃO -->
+      <section class="expl-section" id="expl-sec-dashboard">
+        <h2 class="expl-section-title">Resumo financeiro</h2>
+        <div class="expl-cards">
+          <article class="expl-card">
+            <p class="expl-card-label">Total faturado (este mês)</p>
+            <p class="expl-card-value" id="card-total-mes">€ 0,00</p>
+          </article>
+
+          <article class="expl-card">
+            <p class="expl-card-label">Mensalidades pendentes</p>
+            <p class="expl-card-value expl-card-value--warning" id="card-pendentes">
+              € 0,00
+            </p>
+          </article>
+
+          <article class="expl-card">
+            <p class="expl-card-label">Pagamentos recebidos</p>
+            <p class="expl-card-value expl-card-value--success" id="card-recebidos">
+              0 / 0
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <!-- ALUNOS -->
+      <section class="expl-section" id="expl-sec-alunos">
+        <div class="expl-section-header">
+          <h2 class="expl-section-title">Meus Alunos</h2>
+          <button class="expl-link-button" type="button" id="btn-scroll-lista">
+            Ver lista
+          </button>
+        </div>
+
+        <div class="expl-grid-2">
+          <!-- Quota + ações -->
+          <div class="expl-card">
+            <h3 class="expl-subsection-title">Quota de alunos</h3>
+            <div class="expl-quota">
+              <p><strong>Limite:</strong> <span id="limite">—</span></p>
+              <p><strong>Ativos:</strong> <span id="contagem">0</span></p>
+              <p><strong>Restantes:</strong> <span id="restantes">—</span></p>
+            </div>
+
+            <h3 class="expl-subsection-title" style="margin-top:1rem;">Ações rápidas</h3>
+            <div class="expl-actions-row">
+              <button class="button secondary" type="button" id="btn-open-add-aluno">
+                + Adicionar aluno
+              </button>
+              <!-- futuros botões: Emitir fatura, Registar pagamento -->
+            </div>
+          </div>
+
+          <!-- Lista de alunos -->
+          <div class="expl-card" id="lista-alunos-card">
+            <h3 class="expl-subsection-title">Lista de alunos</h3>
+            <div class="table-wrapper">
+              <table class="table" id="tblAlunos">
+                <thead>
+                  <tr>
+                    <th>Nome</th>
+                    <th>Email</th>
+                    <th>Ano</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CALENDÁRIO + RELATÓRIOS -->
+      <section class="expl-section expl-grid-2" id="expl-sec-outros">
+        <div id="expl-sec-calendario">
+          <h2 class="expl-section-title">Calendário</h2>
+          <div class="expl-card expl-placeholder">
+            <p>Calendário de explicações (a integrar).</p>
+          </div>
+        </div>
+
+        <div id="expl-sec-relatorios">
+          <h2 class="expl-section-title">Relatórios</h2>
+          <div class="expl-card expl-placeholder">
+            <p>Gráficos de faturação e alunos ativos (a integrar).</p>
+          </div>
+        </div>
+      </section>
+
     </div>
+
+    <!-- Botão flutuante -->
+    <button class="expl-fab" id="btn-add-aluno" type="button">+</button>
   </section>
 </main>
 
 <footer>© <span id="y"></span> EduSphere</footer>
 
+<!-- ========== MODAL: ADICIONAR ALUNO ========== -->
+<div class="modal" id="modal-add-aluno">
+  <div class="modal__backdrop" data-modal-close></div>
+  <div class="modal__dialog">
+    <div class="modal__header">
+      <h2>Novo aluno</h2>
+      <button class="modal__close" type="button" data-modal-close>&times;</button>
+    </div>
+    <p class="auth__hint">Preencha os dados do aluno para criar a conta de acesso.</p>
+    <form id="fNewAluno" class="auth__form">
+      <div class="grid2">
+        <input name="nome"      placeholder="Nome"                 required />
+        <input name="apelido"   placeholder="Apelido (opcional)" />
+        <input name="contacto"  placeholder="Contacto (opcional)" />
+        <input type="number" name="ano" min="1" max="12"
+               placeholder="Ano escolaridade (opcional)" />
+        <input type="email"   name="email"
+               placeholder="Email (login do aluno)" required />
+        <input type="password" name="password" minlength="6"
+               placeholder="Password" required />
+      </div>
+      <button id="btnCreateAluno" class="button" type="submit">
+        Criar Aluno
+      </button>
+      <div id="msgNewAluno" class="auth__msg"></div>
+    </form>
+  </div>
+</div>
+
 <script>
   const $  = (s) => document.querySelector(s);
 
-  // Elementos globais
   const elYear      = $('#y');
   const btnLogout   = $('#btnLogout');
+  const headerNav   = $('#explHeaderNav');
   const loginBox    = $('#explLogin');
   const panel       = $('#explPanel');
   const msgLogin    = $('#msgExplLogin');
   const formLogin   = $('#fExplLogin');
 
-  const formNew     = $('#fNewAluno');
-  const msgNewAluno = $('#msgNewAluno');
-  const btnCreate   = $('#btnCreateAluno');
-
+  const tblBody     = $('#tblAlunos tbody');
   const elLimite    = $('#limite');
   const elContagem  = $('#contagem');
   const elRestantes = $('#restantes');
-  const tblBody     = $('#tblAlunos tbody');
-
-  const btnFab      = $('#btn-add-aluno');
-  const btnScrollLista = $('#btn-scroll-lista');
 
   const elNomeHeader = $('#expl-nome-header');
   const elNomeMini   = $('#expl-nome-mini');
 
+  const btnFab          = $('#btn-add-aluno');
+  const btnOpenAddAluno = $('#btn-open-add-aluno');
+  const btnScrollLista  = $('#btn-scroll-lista');
+
+  const modalAddAluno   = $('#modal-add-aluno');
+  const formNew         = $('#fNewAluno');
+  const msgNewAluno     = $('#msgNewAluno');
+  const btnCreate       = $('#btnCreateAluno');
+
   elYear.textContent = new Date().getFullYear();
 
-  // Estado do explicador
   let EXPLICADOR = { userId:null, id_explicador:null, max:0 };
 
-  // Helpers Supabase
+  // ---------- helpers supabase ----------
   async function hasRole(uid, roleName){
     const { data, error } = await supabase
       .from('app_users')
@@ -257,13 +261,13 @@
     return data || null;
   }
 
-
   function setState({ loading=false, isExpl=false, isAuthed=false }){
     if (loading){
       loginBox.style.display = 'block';
       panel.style.display    = 'none';
       msgLogin.textContent   = 'A verificar sessão...';
       btnLogout.style.display = 'none';
+      headerNav.style.display = 'none';
       return;
     }
     if (isAuthed && isExpl){
@@ -271,14 +275,18 @@
       panel.style.display    = 'block';
       msgLogin.textContent   = '';
       btnLogout.style.display= 'inline-block';
+      headerNav.style.display= 'flex';
+      document.querySelector('main.auth').style.display = 'block';
     } else {
       loginBox.style.display = 'block';
       panel.style.display    = 'none';
       btnLogout.style.display= 'none';
+      headerNav.style.display= 'none';
+      document.querySelector('main.auth').style.display = 'grid';
     }
   }
 
-  // UI da quota
+  // ---------- quota UI ----------
   function updateQuotaUI(total){
     const max = Number(EXPLICADOR.max || 0);
     elContagem.textContent = String(total);
@@ -286,50 +294,62 @@
     if (!max){
       elLimite.textContent    = 'Sem limite';
       elRestantes.textContent = '—';
-      btnCreate.disabled      = false;
-      btnCreate.title         = '';
+      btnCreate && (btnCreate.disabled = false);
       return;
     }
     elLimite.textContent = String(max);
     const rest = Math.max(0, max - total);
     elRestantes.textContent = String(rest);
-    btnCreate.disabled = rest <= 0;
-    btnCreate.title    = rest <= 0 ? 'Limite de alunos atingido.' : '';
+    if (btnCreate){
+      btnCreate.disabled = rest <= 0;
+      btnCreate.title    = rest <= 0 ? 'Limite de alunos atingido.' : '';
+    }
   }
 
-  // Listar alunos deste explicador
-  async function loadAlunos(){
-    if (!EXPLICADOR.id_explicador) return;
+// ---------- LISTAR ALUNOS via Edge Function ----------
+async function loadAlunos(){
+  if (!EXPLICADOR.id_explicador) return;
 
-    const { data, error } = await supabase
-      .from('alunos')
-      .select('nome, apelido, email, ano')
-      .eq('id_explicador', EXPLICADOR.id_explicador)
-      .order('nome', { ascending: true });
+  try {
+    const { data, error } = await supabase.functions.invoke('expl-alunos', {
+      body: { action: 'list_alunos' }
+    });
+    if (error) throw error;
 
+    const rows = Array.isArray(data) ? data : [];
 
-    if (error){
-      console.error('loadAlunos error', error);
-      tblBody.innerHTML = '<tr><td colspan="3">Erro a carregar alunos.</td></tr>';
+    if (!rows.length){
+      tblBody.innerHTML = `
+        <tr><td colspan="3" class="expl-table-empty">Sem alunos ainda.</td></tr>
+      `;
       updateQuotaUI(0);
       return;
     }
-    if (!data?.length){
-      tblBody.innerHTML = '<tr><td colspan="3">Sem alunos ainda.</td></tr>';
-      updateQuotaUI(0);
-      return;
-    }
 
-    tblBody.innerHTML = data.map(a => {
+    tblBody.innerHTML = rows.map(a => {
       const nome = [a.nome, a.apelido].filter(Boolean).join(' ');
-      const ano = a.ano ?? '-';
-      return `<tr><td>${nome || '-'}</td><td>${a.email || '-'}</td><td>${ano}</td></tr>`;
+      const ano  = (a.ano ?? a.ano_escolaridade) ?? '-';
+      return `
+        <tr>
+          <td>${nome || '-'}</td>
+          <td>${a.email || '-'}</td>
+          <td>${ano}</td>
+        </tr>
+      `;
     }).join('');
 
-    updateQuotaUI(data.length);
-  }
+    updateQuotaUI(rows.length);
 
-  // Criar aluno via Edge Function
+  } catch (err) {
+    console.error('loadAlunos error', err);
+    tblBody.innerHTML = `
+      <tr><td colspan="3" class="expl-table-empty">Erro a carregar alunos.</td></tr>
+    `;
+    updateQuotaUI(0);
+  }
+}
+
+  // ---------- criar aluno via Edge Function ----------
   async function createAluno(payload){
     try{
       const { data, error } = await supabase.functions.invoke('expl-alunos', {
@@ -342,7 +362,7 @@
     }
   }
 
-  // LOGIN
+  // ---------- login ----------
   formLogin?.addEventListener('submit', async (ev) => {
     ev.preventDefault();
     msgLogin.textContent = 'A entrar...';
@@ -371,8 +391,6 @@
       max: exp?.max ?? 0
     };
 
-
-    // Atualizar nome no header
     const nomeCompleto = [exp?.nome, exp?.apelido].filter(Boolean).join(' ') || 'Professor';
     elNomeHeader.textContent = nomeCompleto;
     elNomeMini.textContent   = nomeCompleto;
@@ -381,13 +399,13 @@
     await loadAlunos();
   });
 
-  // LOGOUT
+  // ---------- logout ----------
   btnLogout?.addEventListener('click', async () => {
     await supabase.auth.signOut().catch(()=>{});
     window.location.href = './index.html';
   });
 
-  // Sessão inicial (auto-login se sessão já existe)
+  // ---------- sessão inicial ----------
   (async () => {
     setState({ loading:true });
 
@@ -406,12 +424,11 @@
     }
 
     const exp = await getExplRow(user.id);
-      EXPLICADOR = {
-        userId: user.id,
-        id_explicador: exp?.id_explicador || null,
-        max: exp?.max ?? 0
+    EXPLICADOR = {
+      userId: user.id,
+      id_explicador: exp?.id_explicador || null,
+      max: exp?.max ?? 0
     };
-
 
     const nomeCompleto = [exp?.nome, exp?.apelido].filter(Boolean).join(' ') || 'Professor';
     elNomeHeader.textContent = nomeCompleto;
@@ -421,7 +438,23 @@
     await loadAlunos();
   })();
 
-  // Criar novo aluno
+  // ---------- modais ----------
+  function openModal(mod){ mod && mod.classList.add('open'); }
+  function closeModal(mod){ mod && mod.classList.remove('open'); }
+
+  modalAddAluno?.addEventListener('click', (ev) => {
+    if (ev.target.hasAttribute('data-modal-close')) {
+      closeModal(modalAddAluno);
+    }
+  });
+  $('#modal-add-aluno .modal__close')?.addEventListener('click', () => {
+    closeModal(modalAddAluno);
+  });
+
+  btnFab?.addEventListener('click', () => openModal(modalAddAluno));
+  btnOpenAddAluno?.addEventListener('click', () => openModal(modalAddAluno));
+
+  // ---------- submit novo aluno ----------
   formNew?.addEventListener('submit', async (ev) => {
     ev.preventDefault();
     msgNewAluno.textContent = '';
@@ -446,8 +479,7 @@
       contacto: f.contacto.value.trim() || null,
       ano:      f.ano.value ? Number(f.ano.value) : null,
       email:    f.email.value.trim(),
-      password: f.password.value,
-      explicador_id: EXPLICADOR.id_explicador
+      password: f.password.value
     };
 
     if (!payload.nome || !payload.email || !payload.password){
@@ -471,17 +503,36 @@
     f.reset();
     await loadAlunos();
     btnCreate.disabled = false;
+    setTimeout(() => closeModal(modalAddAluno), 600);
   });
 
-  // FAB: scroll até ao formulário
-  btnFab?.addEventListener('click', () => {
-    formNew?.scrollIntoView({ behavior:'smooth', block:'start' });
+  // ---------- navegação no header ----------
+  const tabs = document.querySelectorAll('.expl-nav-btn');
+  const sectionMap = {
+    dashboard:  document.getElementById('expl-sec-dashboard'),
+    alunos:     document.getElementById('expl-sec-alunos'),
+    calendario: document.getElementById('expl-sec-calendario'),
+    faturacao:  document.getElementById('expl-sec-dashboard'),
+    relatorios: document.getElementById('expl-sec-relatorios'),
+  };
+
+  tabs.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = btn.dataset.target;
+      tabs.forEach(t => t.classList.remove('expl-nav-btn--active', 'expl-tab--active'));
+      btn.classList.add('expl-nav-btn--active');
+      const sec = sectionMap[target];
+      if (sec) sec.scrollIntoView({ behavior:'smooth', block:'start' });
+    });
   });
+
   btnScrollLista?.addEventListener('click', () => {
-    document.querySelector('#lista-alunos-card')?.scrollIntoView({ behavior:'smooth', block:'start' });
+    document.querySelector('#lista-alunos-card')?.scrollIntoView({
+      behavior:'smooth',
+      block:'start'
+    });
   });
 
-  // Listener auth (multi-abas)
   supabase.auth.onAuthStateChange(async (_evt, session) => {
     if (!session?.user){
       setState({ isExpl:false, isAuthed:false });
