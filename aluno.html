@@ -40,12 +40,36 @@ document.getElementById('y').textContent = new Date().getFullYear();
 document.getElementById('btnLogout')?.addEventListener('click', ()=> Auth.signOut('./index.html'));
 
 (async ()=>{
-  const user = await Auth.requireRole('aluno', './login.html'); if(!user) return;
-  const { data: map } = await supabase.from('app_users').select('ref_id').eq('user_id', user.id).single();
-  const { data: aluno } = await supabase.from('alunos').select('nome,apelido,ano_escolaridade').eq('id_aluno', map.ref_id).single();
-  const t = aluno ? `${aluno.nome} ${aluno.apelido ?? ''} — Ano ${aluno.ano_escolaridade ?? 'n/d'}` : 'Perfil não encontrado';
+  const user = await Auth.requireRole('aluno', './login.html'); 
+  if(!user) return;
+
+  const { data: map, error: mapErr } = await supabase
+    .from('app_users')
+    .select('ref_id')
+    .eq('user_id', user.id)
+    .single();
+
+  console.log('DEBUG app_users map', { map, mapErr });
+
+  const { data: aluno, error: alunoErr } = await supabase
+    .from('alunos')
+    .select('id, nome, apelido, ano_escolaridade')   // <– aqui vamos ver se alguma coluna está errada
+    .eq('id', map.ref_id)
+    .single();
+
+  console.log('DEBUG aluno', { aluno, alunoErr });
+
+  if (alunoErr) {
+    console.error('Erro a carregar aluno', alunoErr);
+  }
+
+  const t = aluno
+    ? `${aluno.nome} ${aluno.apelido ?? ''} — Ano ${aluno.ano_escolaridade ?? 'n/d'}`
+    : 'Perfil não encontrado';
+
   document.getElementById('alunoInfo').textContent = t;
 })();
 </script>
+
 </body>
 </html>
