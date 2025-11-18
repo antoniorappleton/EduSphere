@@ -52,22 +52,21 @@ document.getElementById('btnLogout')?.addEventListener('click', ()=> Auth.signOu
   console.log('DEBUG app_users map', { map, mapErr });
 
   const { data: aluno, error: alunoErr } = await supabase
-    .from('alunos')
-    .select('id, nome, apelido, ano_escolaridade')   // <– aqui vamos ver se alguma coluna está errada
-    .eq('id', map.ref_id)
-    .single();
+  .from('alunos')
+  .select('id_aluno, nome, apelido, ano')
+  .eq('id_aluno', map.ref_id)
+  .single();
 
-  console.log('DEBUG aluno', { aluno, alunoErr });
+if (alunoErr) {
+  console.error('Erro a carregar aluno', alunoErr);
+}
 
-  if (alunoErr) {
-    console.error('Erro a carregar aluno', alunoErr);
-  }
+const t = aluno
+  ? `${aluno.nome} ${aluno.apelido ?? ''} — Ano ${aluno.ano ?? 'n/d'}`
+  : 'Perfil não encontrado';
 
-  const t = aluno
-    ? `${aluno.nome} ${aluno.apelido ?? ''} — Ano ${aluno.ano_escolaridade ?? 'n/d'}`
-    : 'Perfil não encontrado';
+document.getElementById('alunoInfo').textContent = t;
 
-  document.getElementById('alunoInfo').textContent = t;
 })();
 </script>
 
