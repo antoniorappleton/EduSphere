@@ -1000,3 +1000,44 @@ body.home .auth__panel .table td{
   box-shadow: none;
   transform: none;
 }
+
+/* screen aluno */
+/* Texto dentro dos cards do dashboard do aluno */
+.card h2,
+.card p,
+.card li,
+.card label,
+.card input,
+#tabPag th,
+#tabPag td,
+#alunoInfo {
+  color: #2b2b2b;
+}
+
+#tabPag th {
+  font-weight: 600;
+}
+
+/* Pequenos badges para estado/pagamento */
+.badge {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+}
+
+/* exemplos de cores por estado, adapta aos teus valores reais */
+.badge.PAGO {
+  background: rgba(18, 107, 58, 0.1);
+  color: #126b3a;
+}
+.badge.PARCIAL {
+  background: rgba(230, 162, 60, 0.15);
+  color: #b97315;
+}
+.badge.EM_ATRASO {
+  background: rgba(169, 42, 31, 0.15);
+  color: #a92a1f;
+}
+
+/* fim screen aluno*/

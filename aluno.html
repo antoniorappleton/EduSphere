@@ -1,8 +1,9 @@
 <!doctype html>
 <html lang="pt">
 <head>
-  <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <link rel="stylesheet" href="./styles.css"/>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="./styles.css" />
   <title>EduSphere — Área do Aluno</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="./public/js/supabaseClient.js"></script>
@@ -11,8 +12,12 @@
 <body class="home">
 <header>
   <div class="header-inner">
-    <a class="logo" href="./index.html"><img src="/public/img/logo-icon.svg" alt=""><span>EduSphere</span></a>
-    <button id="btnLogout" class="button" style="margin-left:auto">Sair</button>
+    <a class="logo" href="./index.html">
+      <img src="/public/img/logo-icon.svg" alt="">
+      <span>EduSphere</span>
+    </a>
+    <!-- usa id="logout" para o aluno.js apanhar -->
+    <button id="logout" class="button" style="margin-left:auto">Sair</button>
   </div>
 </header>
 <div class="capa__overlay"></div>
@@ -22,53 +27,100 @@
     <h1>Bem-vindo 👋</h1>
     <p id="alunoInfo">A carregar…</p>
 
+    <!-- Próximas explicações -->
     <div class="card">
       <h2>Próximas explicações</h2>
-      <p>(Brevemente)</p>
+      <div id="agenda">
+        <p>A carregar agenda…</p>
+      </div>
     </div>
 
+    <!-- Pagamentos -->
     <div class="card">
       <h2>Pagamentos</h2>
-      <p>(Brevemente)</p>
+      <div class="table-wrapper">
+        <table id="tabPag">
+          <thead>
+            <tr>
+              <th>Mês</th>
+              <th>Previsto</th>
+              <th>Pago</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td colspan="4">A carregar pagamentos…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Exercícios -->
+    <div class="card">
+      <h2>Exercícios</h2>
+      <ul id="exlist">
+        <li>A carregar exercícios…</li>
+      </ul>
+    </div>
+
+    <!-- Alterar password -->
+    <div class="card">
+      <h2>Alterar palavra-passe</h2>
+      <form id="fPwd">
+        <label for="pwd">Nova palavra-passe</label>
+        <input
+          type="password"
+          id="pwd"
+          name="pwd"
+          required
+          minlength="6"
+          autocomplete="new-password"
+        />
+        <button type="submit" class="button">Atualizar palavra-passe</button>
+        <p id="pwdMsg" class="form__msg"></p>
+      </form>
     </div>
   </section>
 </main>
 
 <footer>© <span id="y"></span> EduSphere</footer>
+
 <script>
-document.getElementById('y').textContent = new Date().getFullYear();
-document.getElementById('btnLogout')?.addEventListener('click', ()=> Auth.signOut('./index.html'));
+  // ano no footer
+  document.getElementById('y').textContent = new Date().getFullYear();
 
-(async ()=>{
-  const user = await Auth.requireRole('aluno', './login.html'); 
-  if(!user) return;
+  // manter o que já tinhas para carregar nome + ano do aluno
+  (async () => {
+    const user = await Auth.requireRole('aluno', './login.html');
+    if (!user) return;
 
-  const { data: map, error: mapErr } = await supabase
-    .from('app_users')
-    .select('ref_id')
-    .eq('user_id', user.id)
-    .single();
+    const { data: map, error: mapErr } = await supabase
+      .from('app_users')
+      .select('ref_id')
+      .eq('user_id', user.id)
+      .single();
 
-  console.log('DEBUG app_users map', { map, mapErr });
+    console.log('DEBUG app_users map', { map, mapErr });
 
-  const { data: aluno, error: alunoErr } = await supabase
-  .from('alunos')
-  .select('id_aluno, nome, apelido, ano')
-  .eq('id_aluno', map.ref_id)
-  .single();
+    const { data: aluno, error: alunoErr } = await supabase
+      .from('alunos')
+      .select('id_aluno, nome, apelido, ano')
+      .eq('id_aluno', map.ref_id)
+      .single();
 
-if (alunoErr) {
-  console.error('Erro a carregar aluno', alunoErr);
-}
+    if (alunoErr) {
+      console.error('Erro a carregar aluno', alunoErr);
+    }
 
-const t = aluno
-  ? `${aluno.nome} ${aluno.apelido ?? ''} — Ano ${aluno.ano ?? 'n/d'}`
-  : 'Perfil não encontrado';
+    const t = aluno
+      ? `${aluno.nome} ${aluno.apelido ?? ''} — Ano ${aluno.ano ?? 'n/d'}`
+      : 'Perfil não encontrado';
 
-document.getElementById('alunoInfo').textContent = t;
-
-})();
+    document.getElementById('alunoInfo').textContent = t;
+  })();
 </script>
 
+<!-- script com a lógica de agenda/pagamentos/exercícios/password -->
+<script src="./public/js/pages/aluno.js"></script>
 </body>
 </html>

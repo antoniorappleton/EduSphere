@@ -91,4 +91,5 @@
     await signOut();
     location.href = "./login.html";
   });
+
 })();
