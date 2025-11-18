@@ -14,6 +14,11 @@
   const formEdit = $("#fEditExpl");
   const msgEdit = $("#editMsg");
 
+  // elementos de resumo
+  const statTotal = document.getElementById("stat-total");
+  const statAtivos = document.getElementById("stat-ativos");
+  const statBloqueados = document.getElementById("stat-bloqueados");
+
   let FUNCTION_AVAILABLE = true;
   let CURRENT_ADMIN_UID = null;
   let CACHE_LIST = [];
@@ -25,13 +30,14 @@
       .select("role")
       .eq("user_id", uid)
       .eq("role", roleName)
-      .limit(1); // sem .single()
+      .limit(1);
     if (error) {
       console.error("hasRole error", error);
       return false;
     }
     return Array.isArray(data) && data.length > 0;
   }
+
   async function isAdmin(uid) {
     return hasRole(uid, "admin");
   }
@@ -68,65 +74,80 @@
     return data || [];
   }
 
+  function updateStats(list) {
+    if (!statTotal || !statAtivos || !statBloqueados) return;
+    const total = list.length;
+    const bloqueados = list.filter((e) => !!e.is_blocked).length;
+    const ativos = total - bloqueados;
+    statTotal.textContent = String(total);
+    statAtivos.textContent = String(ativos);
+    statBloqueados.textContent = String(bloqueados);
+  }
+
   function renderRows(list) {
     if (!list.length) {
-      tblBody.innerHTML = '<tr><td colspan="6">Sem explicadores.</td></tr>';
+      tblBody.innerHTML = '<tr><td colspan="8">Sem explicadores.</td></tr>';
+      updateStats([]);
       return;
     }
+
     tblBody.innerHTML = list
       .map((e) => {
         const self = e.user_id && e.user_id === CURRENT_ADMIN_UID;
         const dis = self
           ? 'disabled title="Não podes aplicar esta ação a ti próprio."'
           : "";
-          return `
-            <tr data-id="${e.id_explicador}">
-              <td>${e.nome ?? "-"}</td>
-              <td>${e.apelido ?? "-"}</td>
-              <td>${e.email ?? "-"}</td>
-              <td>${e.contacto ?? "-"}</td>
-              <td>${Number(e.max ?? 0)}</td>
-              <td>
-                ${
-                  e.is_blocked
-                    ? `Bloqueado${
-                        e.blocked_until
-                          ? ` até ${new Date(
-                              e.blocked_until
-                            ).toLocaleDateString()}`
-                          : ""
-                      }`
-                    : "Ativo"
-                }
-              </td>
-              <td class="expl-actions">
-                <button class="btn-admin btn-admin--secondary btn-edit" data-id="${
-                  e.id_explicador
-                }">
-                  Editar
-                </button>
-                <button class="btn-admin btn-admin--secondary btn-reset" data-id="${
-                  e.id_explicador
-                }" ${dis}>
-                  Reset PW
-                </button>
-                <button class="btn-admin btn-admin--warning btn-block" data-id="${
-                  e.id_explicador
-                }" ${dis}>
-                  ${e.is_blocked ? "Desbloquear" : "Bloquear"}
-                </button>
-                <button class="btn-admin btn-admin--danger btn-del" data-id="${
-                  e.id_explicador
-                }" ${dis}>
-                  Eliminar
-                </button>
-              </td>
 
-            </tr>
-          `;
+        const temLogin = !!e.user_id;
+        const permissaoLabel = temLogin
+          ? "Explicador (login ativo)"
+          : "Sem login (sem utilizador ligado)";
+
+        const estadoLabel = e.is_blocked
+          ? `Bloqueado${
+              e.blocked_until
+                ? ` até ${new Date(e.blocked_until).toLocaleDateString()}`
+                : ""
+            }`
+          : "Ativo";
+
+        return `
+          <tr data-id="${e.id_explicador}">
+            <td>${e.nome ?? "-"}</td>
+            <td>${e.apelido ?? "-"}</td>
+            <td>${e.email ?? "-"}</td>
+            <td>${e.contacto ?? "-"}</td>
+            <td>${Number(e.max ?? 0)}</td>
+            <td>${permissaoLabel}</td>
+            <td>${estadoLabel}</td>
+            <td class="expl-actions">
+              <button class="btn-admin btn-admin--secondary btn-edit" data-id="${
+                e.id_explicador
+              }">
+                Editar
+              </button>
+              <button class="btn-admin btn-admin--secondary btn-reset" data-id="${
+                e.id_explicador
+              }" ${dis}>
+                Reset PW
+              </button>
+              <button class="btn-admin btn-admin--warning btn-block" data-id="${
+                e.id_explicador
+              }" ${dis}>
+                ${e.is_blocked ? "Desbloquear" : "Bloquear"}
+              </button>
+              <button class="btn-admin btn-admin--danger btn-del" data-id="${
+                e.id_explicador
+              }" ${dis}>
+                Eliminar
+              </button>
+            </td>
+          </tr>
+        `;
       })
       .join("");
 
+    // ligar botões
     tblBody
       .querySelectorAll(".btn-edit")
       .forEach((b) =>
@@ -141,23 +162,25 @@
       .querySelectorAll(".btn-del")
       .forEach((b) =>
         b.addEventListener("click", () => onDeleteExpl(b.dataset.id))
-    );
+      );
     tblBody
       .querySelectorAll(".btn-block")
       .forEach((b) =>
         b.addEventListener("click", () => onToggleBlock(b.dataset.id))
       );
 
+    updateStats(list);
   }
 
   async function refreshList() {
-    tblBody.innerHTML = '<tr><td colspan="6">A carregar…</td></tr>';
+    tblBody.innerHTML = '<tr><td colspan="8">A carregar…</td></tr>';
     try {
       CACHE_LIST = await listExplicadores();
       renderRows(CACHE_LIST);
     } catch (e) {
       console.error(e);
-      tblBody.innerHTML = '<tr><td colspan="6">Erro a carregar.</td></tr>';
+      tblBody.innerHTML = '<tr><td colspan="8">Erro a carregar.</td></tr>';
+      updateStats([]);
     }
   }
 
@@ -340,7 +363,7 @@
     await refreshList();
   }
 
-  //Botão bloquear/desbloquear
+  // Botão bloquear/desbloquear
   async function onToggleBlock(id_explicador) {
     const row = CACHE_LIST.find((x) => x.id_explicador === id_explicador);
     if (!row) return;

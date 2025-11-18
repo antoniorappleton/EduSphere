@@ -24,52 +24,102 @@
 
   <div class="capa__overlay"></div>
 
-  <main class="auth">
-    <!-- Login Admin -->
-    <section class="auth__panel" id="adminLogin" style="display:none">
-      <h1>Entrar (Admin)</h1>
-      <form id="fAdminLogin" class="auth__form">
-        <input name="email" type="email" placeholder="Email" required/>
-        <input name="password" type="password" placeholder="Password" required/>
-        <button class="button" type="submit">Entrar</button>
-        <div id="msgAdmin" class="auth__msg"></div>
-      </form>
-    </section>
+  <main class="admin-main">
 
-    <!-- Painel Admin -->
-    <section class="auth__panel" id="adminPanel" style="display:none">
-      <h1>Criar conta de Professor</h1>
+  <!-- LOGIN ADMIN (continua em cartão único) -->
+  <section class="auth__panel admin-login-card" id="adminLogin" style="display:none">
+    <h1>Entrar (Admin)</h1>
+    <form id="fAdminLogin" class="auth__form">
+      <input name="email" type="email" placeholder="Email" required/>
+      <input name="password" type="password" placeholder="Password" required/>
+      <button class="button" type="submit">Entrar</button>
+      <div id="msgAdmin" class="auth__msg"></div>
+    </form>
+  </section>
 
-      <form id="fNewExpl" class="auth__form" style="margin-bottom:12px;">
-        <div class="grid2">
-          <input name="nome"     placeholder="Nome" required />
-          <input name="apelido"  placeholder="Apelido" />
-          <input name="email"    type="email" placeholder="Email" required />
-          <input name="password" type="password" placeholder="Password" minlength="6" required />
-          <input name="contacto" placeholder="Contacto (opcional)" />
-          <input name="max"      type="number" min="0" placeholder="Limite de alunos (0 = sem limite)" />
+  <!-- PAINEL ADMIN EM CARTÕES -->
+  <section id="adminPanel" class="admin-panel" style="display:none">
+
+    <header class="admin-panel__header">
+      <div>
+        <h1>Painel de Administração</h1>
+        <p class="auth__hint">
+          Gerir contas de explicador, permissões de acesso e estado das contas (ativo/bloqueado).
+        </p>
+      </div>
+    </header>
+
+    <div class="admin-grid">
+
+      <!-- CARTÃO 1: CRIAR CONTA -->
+      <section class="admin-card">
+        <h2>Criar conta de Professor</h2>
+
+        <form id="fNewExpl" class="auth__form admin-form">
+          <div class="admin-form__grid">
+            <input name="nome"     placeholder="Nome" required />
+            <input name="apelido"  placeholder="Apelido" />
+            <input name="email"    type="email" placeholder="Email" required />
+            <input name="password" type="password" placeholder="Password" minlength="6" required />
+            <input name="contacto" placeholder="Contacto (opcional)" />
+            <input name="max"      type="number" min="0" placeholder="Limite de alunos (0 = sem limite)" />
+          </div>
+          <button class="button" type="submit">Criar Explicador</button>
+          <div id="signupExplMsg" class="auth__msg"></div>
+        </form>
+      </section>
+
+      <!-- CARTÃO 2: RESUMO + TABELA -->
+      <section class="admin-card">
+        <header class="admin-card__header">
+          <div>
+            <h2>Gerir conta do Professor</h2>
+            <p class="auth__hint">
+              Nesta tabela consegues ver o estado da conta, se tem login associado e aplicar ações
+              como bloquear, reset de password ou eliminação.
+            </p>
+          </div>
+        </header>
+
+        <!-- mini-cards de resumo -->
+        <div class="admin-stats-row">
+          <div class="admin-stat">
+            <p class="admin-stat__label">Total de explicadores</p>
+            <p class="admin-stat__value" id="stat-total">0</p>
+          </div>
+          <div class="admin-stat">
+            <p class="admin-stat__label">Ativos</p>
+            <p class="admin-stat__value" id="stat-ativos">0</p>
+          </div>
+          <div class="admin-stat admin-stat--warning">
+            <p class="admin-stat__label">Bloqueados</p>
+            <p class="admin-stat__value" id="stat-bloqueados">0</p>
+          </div>
         </div>
-        <button class="button" type="submit">Criar Explicador</button>
-        <div id="signupExplMsg" class="auth__msg"></div>
-      </form>
 
-      <h2 style="margin-top:0">Gerir conta do Professor</h2>
-      <table class="table" id="tblExpl" style="color:#040404">
-        <thead>
+        <!-- tabela -->
+        <div class="admin-table-wrapper">
+          <table class="table" id="tblExpl">
+            <thead>
             <tr>
               <th>Nome</th>
               <th>Apelido</th>
               <th>Email</th>
               <th>Contacto</th>
               <th>Limite</th>
+              <th>Permissão / Login</th>
               <th>Estado</th>
               <th style="width:1%"></th>
             </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </section>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </section>
   </main>
+
 
   <!-- Modal Editar -->
   <div class="modal" id="editModal" aria-hidden="true">
@@ -97,7 +147,7 @@
   <footer>© <span id="y"></span> EduSphere</footer>
 
   <script>
-    // guardar/mostrar UI (guard simples)
+    // verificar se é admin e mostrar ecrã certo
     async function isAdmin(uid){
       const { data, error } = await supabase
         .from('app_users')

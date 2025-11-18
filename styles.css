@@ -119,7 +119,6 @@ body.home footer{
 }
 
 /* ===== ÁREA DE AUTENTICAÇÃO / PAINÉIS ===== */
-/* Área dos painéis (login, admin, etc.) ocupa toda a largura útil */
 .auth{
   min-height: calc(100vh - 120px);
   display:flex;
@@ -131,19 +130,18 @@ body.home footer{
   width:100%;
 }
 
-/* Painel “de vidro” mais largo e proporcional ao ecrã */
+/* Painel “de vidro” genérico (login, etc.) */
 .auth__panel{
   width:100%;
-  max-width: 1300px;              /* ↑ aumenta a largura máxima */
+  max-width: 1300px;
   background: rgba(255,255,255,0.25);
   backdrop-filter: blur(8px) saturate(130%);
   border: 1px solid rgba(255,255,255,0.30);
   border-radius: 14px;
-  padding: 26px 28px;             /* um pouco mais de respiro */
+  padding: 26px 28px;
   color:#fff;
   box-shadow: 0 14px 34px rgba(0,0,0,.25);
 }
-
 
 .auth__panel h1{
   margin:0 0 6px; font-family:'Poppins',sans-serif; font-weight:600; font-size:1.4rem;
@@ -153,9 +151,9 @@ body.home footer{
 
 .auth__form{ display:grid; gap:10px; }
 
-/* CONTRASTE CORRIGIDO: inputs visíveis na .home */
+/* Inputs em home (painel vidro) */
 body.home .auth__panel .auth__form input,
-body.home .auth__panel .auth__form select,
+body.home .auth__panel .auth__panel select,
 body.home .auth__panel .auth__form textarea{
   width:100%;
   background:#fff;
@@ -218,7 +216,7 @@ body.home .auth__panel .table td{
 .grid2{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
 @media (max-width:700px){ .grid2{ grid-template-columns:1fr; } }
 
-/* ===== MODAL (versão única) ===== */
+/* ===== MODAL ===== */
 .modal{ position:fixed; inset:0; display:none; z-index:50; }
 .modal.open{ display:grid; place-items:center; }
 .modal__backdrop{ position:absolute; inset:0; background:rgba(0,0,0,.6); backdrop-filter:blur(2px); }
@@ -239,61 +237,52 @@ body.home .auth__panel .table td{
 .tab--active{ background:#fff; color: rgb(118,0,0); }
 .tabpane{ display:none; } .tabpane--active{ display:block; }
 
-/* Tabela de explicadores */
+/* ===== TABELA EXPLICADORES + BOTÕES ADMIN ===== */
+
 #tblExpl {
   width: 100%;
   border-collapse: collapse;
-  table-layout: auto;              /* deixa o browser distribuir melhor o espaço */
+  table-layout: auto;
 }
 
-/* Cabeçalho + células */
 #tblExpl th,
 #tblExpl td {
   padding: 0.75rem 1rem;
   vertical-align: middle;
   text-align: left;
-  white-space: nowrap;             /* evita quebras estranhas em palavras curtas */
 }
 
-/* Permite que a coluna Email tenha mais espaço e o texto não encavalite */
+/* larguras aproximadas */
 #tblExpl th:nth-child(3),
-#tblExpl td:nth-child(3) {
-  width: 28%;
-}
+#tblExpl td:nth-child(3) { width: 28%; }
 
-/* Coluna Contacto mais estreita */
 #tblExpl th:nth-child(4),
-#tblExpl td:nth-child(4) {
-  width: 14%;
-}
+#tblExpl td:nth-child(4) { width: 14%; }
 
-/* Coluna Limite */
 #tblExpl th:nth-child(5),
-#tblExpl td:nth-child(5) {
-  width: 8%;
-}
+#tblExpl td:nth-child(5) { width: 8%; }
 
-/* Coluna Estado */
 #tblExpl th:nth-child(6),
-#tblExpl td:nth-child(6) {
-  width: 10%;
-}
+#tblExpl td:nth-child(6) { width: 10%; }
 
-/* Coluna das ações (botões) — ocupa o resto e alinha tudo à direita */
 #tblExpl th:last-child,
-#tblExpl td:last-child {
-  width: 20%;
+#tblExpl td:last-child { width: 20%; }
+
+/* email quebra bem */
+#tblExpl td:nth-child(3) {
+  white-space: normal;
+  word-break: break-all;
 }
 
-/* Célula das ações (botões) */
+/* célula das ações */
 #tblExpl td.expl-actions {
   display: flex;
   justify-content: flex-end;
   gap: 0.45rem;
-  flex-wrap: wrap;                 /* se ficar apertado, os botões saltam para baixo */
+  flex-wrap: wrap;
 }
 
-/* Botões do admin (mantém, só para garantir) */
+/* Botões do admin (definidos uma única vez) */
 .btn-admin {
   font-size: 0.8rem;
   padding: 0.25rem 0.8rem;
@@ -305,47 +294,22 @@ body.home .auth__panel .table td{
   transition: background 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
   white-space: nowrap;
 }
-
-#tblExpl td:nth-child(3) {
-  white-space: normal;
-  word-break: break-all;
-}
-
-/* Estilo base dos botões do admin */
-.btn-admin {
-  font-size: 0.8rem;
-  padding: 0.25rem 0.8rem;
-  border-radius: 999px;             /* pill */
-  border: 1px solid transparent;
-  background: rgba(255, 255, 255, 0.08);
-  color: #ffffff;
-  cursor: pointer;
-  transition: background 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
-  white-space: nowrap;
-}
-
 .btn-admin:hover {
   background: rgba(255, 255, 255, 0.16);
   transform: translateY(-1px);
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
 }
-
-/* Variações de cor */
 .btn-admin--secondary {
   border-color: rgba(255, 255, 255, 0.5);
 }
-
 .btn-admin--warning {
   border-color: #ffb347;
   color: #ffb347;
 }
-
 .btn-admin--danger {
   border-color: #ff6b6b;
   color: #ff6b6b;
 }
-
-/* Botão desativado (quando é o próprio admin) */
 .btn-admin[disabled] {
   opacity: 0.5;
   cursor: default;
@@ -353,13 +317,12 @@ body.home .auth__panel .table td{
   transform: none;
 }
 
-/* screen explicador */
+/* ===== SCREEN EXPLICADOR ===== */
 
-/* Esconder o header interno do painel do explicador */
-.expl-header-bar {
-  display: none;
-}
+/* esconder header interno antigo */
+.expl-header-bar { display:none; }
 
+/* tokens específicos explicador */
 :root {
   --expl-bg: #0f172a;
   --expl-bg-soft: rgba(15, 23, 42, 0.75);
@@ -382,11 +345,8 @@ body.home .auth__panel .table td{
   color: var(--expl-text);
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
-
 @media (max-width: 900px) {
-  .expl-layout {
-    grid-template-columns: 1fr;
-  }
+  .expl-layout { grid-template-columns: 1fr; }
 }
 
 /* Sidebar */
@@ -398,13 +358,11 @@ body.home .auth__panel .table td{
   flex-direction: column;
   gap: 1.5rem;
 }
-
 .expl-brand {
   display: flex;
   align-items: center;
   gap: 0.75rem;
 }
-
 .expl-logo {
   width: 36px;
   height: 36px;
@@ -415,21 +373,16 @@ body.home .auth__panel .table td{
   background: linear-gradient(135deg, #3b82f6, #22c55e);
   font-weight: 700;
 }
-
-.expl-app-name {
-  font-weight: 600;
-}
+.expl-app-name { font-weight: 600; }
 .expl-app-sub {
   font-size: 0.8rem;
   color: var(--expl-text-soft);
 }
-
 .expl-nav {
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
 }
-
 .expl-nav-item {
   border: none;
   border-radius: 999px;
@@ -441,7 +394,6 @@ body.home .auth__panel .table td{
   font-size: 0.9rem;
   transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
 }
-
 .expl-nav-item--active,
 .expl-nav-item:hover {
   background: rgba(245, 246, 248, 0.15);
@@ -465,24 +417,20 @@ body.home .auth__panel .table td{
   padding: 0 0 1.25rem;
   border-bottom: 1px solid var(--expl-border);
 }
-
 .expl-title {
   font-size: 1.4rem;
   margin: 0;
 }
-
 .expl-subtitle {
   margin: 0.1rem 0 0;
   color: var(--expl-text-soft);
   font-size: 0.9rem;
 }
-
 .expl-header-right {
   display: flex;
   align-items: center;
   gap: 1rem;
 }
-
 .expl-notifications {
   position: relative;
   width: 36px;
@@ -496,7 +444,6 @@ body.home .auth__panel .table td{
   justify-content: center;
   cursor: pointer;
 }
-
 .expl-badge {
   position: absolute;
   top: -4px;
@@ -512,13 +459,11 @@ body.home .auth__panel .table td{
   align-items: center;
   justify-content: center;
 }
-
 .expl-user {
   display: flex;
   align-items: center;
   gap: 0.6rem;
 }
-
 .expl-avatar {
   width: 40px;
   height: 40px;
@@ -526,7 +471,6 @@ body.home .auth__panel .table td{
   object-fit: cover;
   border: 2px solid rgba(59, 130, 246, 0.7);
 }
-
 .expl-user-name {
   font-size: 0.95rem;
   margin: 0;
@@ -544,18 +488,15 @@ body.home .auth__panel .table td{
   flex-direction: column;
   gap: 1.5rem;
 }
-
 .expl-section-title {
-  font-size: 1.0rem;
+  font-size: 1rem;
   margin-bottom: 0.6rem;
 }
-
 .expl-section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
-
 .expl-link-button {
   background: transparent;
   border: none;
@@ -570,7 +511,6 @@ body.home .auth__panel .table td{
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 1rem;
 }
-
 .expl-card {
   background: var(--expl-card);
   border-radius: 1rem;
@@ -578,24 +518,17 @@ body.home .auth__panel .table td{
   padding: 0.9rem 1rem;
   box-shadow: 0 12px 25px rgba(15, 23, 42, 0.45);
 }
-
 .expl-card-label {
   font-size: 0.8rem;
   color: var(--expl-text-soft);
   margin-bottom: 0.25rem;
 }
-
 .expl-card-value {
   font-size: 1.1rem;
   font-weight: 600;
 }
-
-.expl-card-value--success {
-  color: var(--expl-success);
-}
-.expl-card-value--warning {
-  color: var(--expl-warning);
-}
+.expl-card-value--success { color: var(--expl-success); }
+.expl-card-value--warning { color: var(--expl-warning); }
 
 /* Lista de alunos */
 .expl-students {
@@ -603,7 +536,6 @@ body.home .auth__panel .table td{
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 0.9rem;
 }
-
 .expl-student-card {
   background: var(--expl-card);
   border-radius: 1rem;
@@ -613,13 +545,11 @@ body.home .auth__panel .table td{
   flex-direction: column;
   gap: 0.4rem;
 }
-
 .expl-student-main {
   display: flex;
   align-items: center;
   gap: 0.6rem;
 }
-
 .expl-student-name {
   margin: 0;
   font-size: 0.95rem;
@@ -629,7 +559,6 @@ body.home .auth__panel .table td{
   font-size: 0.8rem;
   color: var(--expl-text-soft);
 }
-
 .expl-student-meta {
   display: flex;
   flex-direction: column;
@@ -637,11 +566,7 @@ body.home .auth__panel .table td{
   gap: 0.1rem;
   font-size: 0.8rem;
 }
-
-.expl-student-payment span {
-  font-weight: 500;
-}
-
+.expl-student-payment span { font-weight: 500; }
 .expl-badge--success {
   background: rgba(34, 197, 94, 0.12);
   color: var(--expl-success);
@@ -649,7 +574,6 @@ body.home .auth__panel .table td{
   padding: 0.1rem 0.6rem;
   font-size: 0.75rem;
 }
-
 .expl-student-button {
   align-self: flex-end;
   margin-top: 0.2rem;
@@ -668,11 +592,8 @@ body.home .auth__panel .table td{
   gap: 1rem;
 }
 @media (min-width: 900px) {
-  .expl-grid-2 {
-    grid-template-columns: 1.1fr 1fr;
-  }
+  .expl-grid-2 { grid-template-columns: 1.1fr 1fr; }
 }
-
 .expl-calendar-placeholder,
 .expl-chart-placeholder {
   min-height: 180px;
@@ -696,9 +617,21 @@ body.home .auth__panel .table td{
   font-size: 1.6rem;
   cursor: pointer;
   box-shadow: 0 18px 35px rgba(15, 23, 42, 0.75);
-}/*Fim do screen explicador*/
+}
 
-/* Sreen Aluno */
+/* Tabela dentro do card de alunos do explicador */
+.expl-card .table {
+  background: transparent;
+}
+.expl-card .table th,
+.expl-card .table td {
+  color:#fff;
+  border-bottom:1px solid rgba(255,255,255,0.18);
+}
+.expl-table-empty{ text-align:center; opacity:.9; }
+
+/* ===== SCREEN ALUNO ===== */
+
 .aluno-shell {
   min-height: 100vh;
   background: linear-gradient(135deg, #e0f2fe, #f5f3ff);
@@ -714,20 +647,17 @@ body.home .auth__panel .table td{
   align-items: center;
   margin-bottom: 1.2rem;
 }
-
 .aluno-header-left {
   display: flex;
   align-items: center;
   gap: 0.75rem;
 }
-
 .aluno-avatar {
   width: 44px;
   height: 44px;
   border-radius: 999px;
   object-fit: cover;
 }
-
 .aluno-name {
   margin: 0;
   font-weight: 600;
@@ -737,7 +667,6 @@ body.home .auth__panel .table td{
   font-size: 0.85rem;
   color: #64748b;
 }
-
 .aluno-logout {
   border-radius: 999px;
   border: none;
@@ -753,18 +682,15 @@ body.home .auth__panel .table td{
   flex-direction: column;
   gap: 1.3rem;
 }
-
 .aluno-section-title {
   font-size: 1rem;
   margin-bottom: 0.5rem;
 }
-
 .aluno-section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
-
 .aluno-link-button {
   border: none;
   background: transparent;
@@ -779,20 +705,17 @@ body.home .auth__panel .table td{
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 0.8rem;
 }
-
 .aluno-card {
   background: rgba(255, 255, 255, 0.9);
   border-radius: 0.9rem;
   padding: 0.7rem 0.9rem;
   box-shadow: 0 8px 18px rgba(148, 163, 184, 0.35);
 }
-
 .aluno-card-label {
   font-size: 0.8rem;
   color: #64748b;
   margin-bottom: 0.1rem;
 }
-
 .aluno-card-value {
   font-size: 1rem;
   font-weight: 600;
@@ -818,19 +741,16 @@ body.home .auth__panel .table td{
 .aluno-table-wrapper {
   padding: 0.4rem 0.6rem;
 }
-
 .aluno-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.85rem;
 }
-
 .aluno-table th,
 .aluno-table td {
   padding: 0.4rem 0.25rem;
   text-align: left;
 }
-
 .aluno-table thead {
   border-bottom: 1px solid #e2e8f0;
 }
@@ -845,7 +765,6 @@ body.home .auth__panel .table td{
     grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
   }
 }
-
 .aluno-calendar-placeholder {
   min-height: 160px;
   display: flex;
@@ -860,43 +779,34 @@ body.home .auth__panel .table td{
   flex-direction: column;
   gap: 0.5rem;
 }
-
 .aluno-messages-list {
   max-height: 210px;
   overflow-y: auto;
   padding-right: 0.25rem;
 }
-
 .aluno-message {
   padding: 0.4rem 0.6rem;
   border-radius: 0.7rem;
   margin-bottom: 0.3rem;
   font-size: 0.85rem;
 }
-
-.aluno-message--from-teacher {
-  background: #eff6ff;
-}
+.aluno-message--from-teacher { background: #eff6ff; }
 .aluno-message--from-student {
   background: #dcfce7;
   align-self: flex-end;
 }
-
 .aluno-message-author {
   margin: 0 0 0.15rem;
   font-weight: 600;
   font-size: 0.8rem;
 }
-.aluno-message-text {
-  margin: 0;
-}
+.aluno-message-text { margin: 0; }
 
 .aluno-message-form {
   display: flex;
   gap: 0.4rem;
   margin-top: 0.4rem;
 }
-
 .aluno-message-form input {
   flex: 1;
   border-radius: 999px;
@@ -904,7 +814,6 @@ body.home .auth__panel .table td{
   padding: 0.3rem 0.7rem;
   font-size: 0.85rem;
 }
-
 .aluno-button {
   border-radius: 999px;
   border: none;
@@ -913,25 +822,181 @@ body.home .auth__panel .table td{
   color: #fff;
   cursor: pointer;
 }
+.aluno-presenca { margin-top: 0.5rem; }
 
-.aluno-presenca {
-  margin-top: 0.5rem;
+/* ===== ADMIN LAYOUT EM CARTÕES ===== */
+
+.admin-main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 16px 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
-/*Fim do screen Aluno */
 
-/* Tabela dentro do card de alunos do explicador */
-.expl-card .table {
+/* cartão de login */
+.admin-login-card {
+  max-width: 420px;
+  margin: 40px auto 0;
+}
+
+/* header painel admin */
+.admin-panel__header { margin-bottom: 8px; }
+
+.admin-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+@media (min-width: 960px) {
+  .admin-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* cartão base */
+.admin-card {
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 18px;
+  padding: 20px 22px 24px;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.18);
+  backdrop-filter: blur(18px);
+}
+
+/* formulário dentro do cartão */
+.admin-form { margin-top: 12px; }
+.admin-form__grid {
+  display: grid;
+  gap: 12px;
+}
+@media (min-width: 900px) {
+  .admin-form__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* stats em pequenos cartões */
+.admin-stats-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin: 8px 0 16px;
+}
+.admin-stat {
+  background: #f5f6fb;
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+.admin-stat__label {
+  font-size: 0.8rem;
+  color: #555;
+  margin-bottom: 4px;
+}
+.admin-stat__value {
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+.admin-stat--warning .admin-stat__value {
+  color: #c4512d;
+}
+
+/* wrapper da tabela para permitir scroll horizontal em ecrãs pequenos */
+.admin-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+/* se algum estilo antigo da .auth__panel interferir, limpamos no contexto admin */
+.admin-panel .auth__panel {
   background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+/* --- FIX: header do Painel de Administração sem rectângulo --- */
+.admin-panel__header{
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 0 0 12px !important;
 }
 
-.expl-card .table th,
-.expl-card .table td {
-  color:#fff;
-  border-bottom:1px solid rgba(255,255,255,0.18);
+/* Mantemos o texto claro sobre o fundo desfocado da home */
+.admin-panel__header h1,
+.admin-panel__header p{
+  color: #ffffff;
+}
+/* --- FIX: texto escuro nos cartões do admin --- */
+
+/* texto base escuro dentro dos cards */
+#adminPanel .admin-card{
+  color: #222;
 }
 
-/* Mensagem de vazio/erro */
-.expl-table-empty{
-  text-align:center;
-  opacity:.9;
+/* headings, labels, estatísticas e tabela em texto escuro */
+#adminPanel .admin-card h2,
+#adminPanel .admin-card p,
+#adminPanel .admin-card .admin-stat__label,
+#adminPanel .admin-card .admin-stat__value,
+#adminPanel .admin-card th,
+#adminPanel .admin-card td{
+  color: #222;
+}
+
+/* fundo dos mini-cards de stats */
+#adminPanel .admin-card .admin-stat{
+  background: #f5f6fb;
+}
+
+/* tabela com texto escuro, só neste painel */
+#adminPanel .admin-card .table{
+  background: #ffffff;
+}
+#adminPanel .admin-card .table th,
+#adminPanel .admin-card .table td{
+  color: #222;
+  border-bottom: 1px solid #eee;
+}
+/* --- FIX: botões de ação no painel de Administração (fundo claro) --- */
+
+/* estilo base só dentro do painel admin */
+#adminPanel .btn-admin{
+  background: #ffffff;
+  color: #333;
+  border-radius: 999px;
+  border: 1px solid #d0d7e2;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+}
+
+#adminPanel .btn-admin:hover{
+  background: #f3f4f6;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 6px rgba(148, 163, 184, 0.35);
+}
+
+/* variações de cor */
+#adminPanel .btn-admin--secondary{
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+#adminPanel .btn-admin--warning{
+  border-color: #fbbf24;
+  background: #fffbeb;
+  color: #92400e;
+}
+
+#adminPanel .btn-admin--danger{
+  border-color: #fb7185;
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+/* estado disabled continua visível mas “apagado” */
+#adminPanel .btn-admin[disabled]{
+  opacity: .55;
+  cursor: default;
+  box-shadow: none;
+  transform: none;
 }
