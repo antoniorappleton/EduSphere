@@ -185,15 +185,12 @@
   // Primeiro render do calendário
   renderCalendario();
 
-  // -------------------------------------------------------------
   // 5) Pagamentos + Resumo rápido (próxima mensalidade)
-  //    Fonte: view v_pagamentos_detalhe (RLS por aluno)
-  // -------------------------------------------------------------
   const { data: pagos, error: pagosErr } = await supabase
-  .from("v_pagamentos_detalhe")
-  .select("*")
-  .order("ano", { ascending: true })
-  .order("mes", { ascending: true });
+    .from("v_pagamentos_detalhe")
+    .select("*")
+    .order("ano", { ascending: true })
+    .order("mes", { ascending: true });
 
   const tbody = document.querySelector("#tabPag tbody");
 
@@ -219,22 +216,31 @@
         lista
           .map(
             (p) => `
-        <tr data-ano="${p.ano}" data-mes="${p.mes}">
-          <td>${String(p.mes).padStart(2, "0")}/${p.ano}</td>
-          <td>${Number(p.valor_previsto).toFixed(2)} €</td>
-          <td>${Number(p.valor_pago).toFixed(2)} €</td>
-          <td><span class="badge ${p.estado}">${p.estado}</span></td>
-        </tr>
-      `
+          <tr data-ano="${p.ano}" data-mes="${p.mes}">
+            <td>${String(p.mes).padStart(2, "0")}/${p.ano}</td>
+            <td>${Number(p.valor_previsto).toFixed(2)} €</td>
+            <td>${Number(p.valor_pago).toFixed(2)} €</td>
+            <td><span class="badge ${p.estado}">${p.estado}</span></td>
+          </tr>
+        `
           )
           .join("") || '<tr><td colspan="4">Sem movimentos.</td></tr>';
 
-      // ------- Cálculo do "próximo" pagamento relevante para o resumo rápido -------
+      // ------- Cálculo do "próximo" pagamento e total em falta -------
 
       // Prioridade: 1) EM_ATRASO  2) PARCIAL  3) último mês registado
       const emAtraso = lista.filter((p) => p.estado === "EM_ATRASO");
       const parcial = lista.filter((p) => p.estado === "PARCIAL");
       let alvo = null;
+
+      // Total global em falta (todas as mensalidades)
+      let totalEmFalta = 0;
+      lista.forEach((p) => {
+        const previsto = Number(p.valor_previsto) || 0;
+        const pago = Number(p.valor_pago) || 0;
+        const falta = Math.max(previsto - pago, 0);
+        totalEmFalta += falta;
+      });
 
       const ordenar = (a, b) => {
         if (a.ano === b.ano) return a.mes - b.mes;
@@ -244,18 +250,32 @@
       if (emAtraso.length) {
         alvo = emAtraso.sort(ordenar)[0];
         if (resumoHint) {
-          resumoHint.textContent =
-            "Tens mensalidades em atraso. Dá prioridade a esta.";
+          resumoHint.textContent = `Tens mensalidades em atraso. Em falta: € ${totalEmFalta.toFixed(
+            2
+          )}.`;
         }
       } else if (parcial.length) {
         alvo = parcial.sort(ordenar)[0];
         if (resumoHint) {
-          resumoHint.textContent = "Tens uma mensalidade paga parcialmente.";
+          resumoHint.textContent = `Tens uma mensalidade paga parcialmente. Em falta: € ${totalEmFalta.toFixed(
+            2
+          )}.`;
         }
       } else if (lista.length) {
         alvo = lista.sort(ordenar)[lista.length - 1];
         if (resumoHint) {
-          resumoHint.textContent = "Todas as mensalidades estão em dia.";
+          if (totalEmFalta > 0) {
+            resumoHint.textContent = `Todas as mensalidades estão registadas, mas ainda há € ${totalEmFalta.toFixed(
+              2
+            )} por pagar.`;
+          } else {
+            resumoHint.textContent = "Todas as mensalidades estão em dia. ✅";
+          }
+        }
+      } else {
+        if (resumoHint) {
+          resumoHint.textContent =
+            "Ainda não existem mensalidades registadas para a tua conta.";
         }
       }
 
@@ -282,10 +302,6 @@
         if (resumoEstado) resumoEstado.textContent = "—";
         if (resumoValor) resumoValor.textContent = "—";
         if (btnFat) btnFat.disabled = true;
-        if (resumoHint) {
-          resumoHint.textContent =
-            "Ainda não existem mensalidades registadas para a tua conta.";
-        }
       }
     }
   }

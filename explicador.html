@@ -100,6 +100,59 @@
             </p>
           </article>
         </div>
+                <!-- Tabelas de previsto vs realizado -->
+        <div class="expl-grid-2" style="margin-top:1.5rem;">
+          <!-- Por aluno -->
+          <article class="expl-card">
+            <h3 class="expl-subsection-title">
+              Previsto vs realizado por aluno (ano atual)
+            </h3>
+            <div class="table-wrapper">
+              <table class="table" id="tblPrevRealAlunos">
+                <thead>
+                  <tr>
+                    <th>Aluno</th>
+                    <th>Previsto (€)</th>
+                    <th>Realizado (€)</th>
+                    <th>% Cobrança</th>
+                    <th>Em falta (€)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td colspan="5">Sem dados de faturação ainda.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+
+          <!-- Por grupo (ano de escolaridade) -->
+          <article class="expl-card">
+            <h3 class="expl-subsection-title">
+              Previsto vs realizado por ano de escolaridade
+            </h3>
+            <div class="table-wrapper">
+              <table class="table" id="tblPrevRealGrupos">
+                <thead>
+                  <tr>
+                    <th>Ano</th>
+                    <th>Previsto (€)</th>
+                    <th>Realizado (€)</th>
+                    <th>% Cobrança</th>
+                    <th>Em falta (€)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td colspan="5">Sem dados de faturação ainda.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+        </div>
+
       </section>
 
       <!-- ALUNOS -->
@@ -249,7 +302,6 @@
 
 <script>
   const $  = (s) => document.querySelector(s);
-
   const elYear      = $('#y');
   const btnLogout   = $('#btnLogout');
   const headerNav   = $('#explHeaderNav');
@@ -279,7 +331,7 @@
 
   let EXPLICADOR = { userId:null, id_explicador:null, max:0 };
   let ALUNOS_CACHE = []; // cache dos alunos carregados para permitir clique e detalhes
-
+  let PAGAMENTOS_CACHE = [];
 
   // ---------- helpers supabase ----------
   async function hasRole(uid, roleName){
@@ -333,7 +385,7 @@
   }
 
   // ---------- Painel de detalhes por aluno ----------
-async function mostrarPainelAluno(aluno) {
+  async function mostrarPainelAluno(aluno) {
   const card = document.getElementById("aluno-detail-card");
   if (!card) return;
 
@@ -367,6 +419,10 @@ async function mostrarPainelAluno(aluno) {
   // ---- carregar resumo de pagamentos deste aluno ----
   if (!EXPLICADOR.id_explicador) return;
 
+  const elPrevistoMes = document.getElementById("aluno-detail-previsto-mes");
+  const elPagoMes     = document.getElementById("aluno-detail-pago-mes");
+  const elEmFalta     = document.getElementById("aluno-detail-emfalta");
+
   try {
     const now = new Date();
     const anoAtual = now.getFullYear();
@@ -380,43 +436,55 @@ async function mostrarPainelAluno(aluno) {
 
     if (error) {
       console.error("Erro a carregar pagamentos do aluno", error);
-      document.getElementById("aluno-detail-previsto-mes").textContent = "—";
-      document.getElementById("aluno-detail-pago-mes").textContent = "—";
-      document.getElementById("aluno-detail-emfalta").textContent = "—";
+      if (elPrevistoMes) elPrevistoMes.textContent = "—";
+      if (elPagoMes)     elPagoMes.textContent     = "—";
+      if (elEmFalta)     elEmFalta.textContent     = "—";
       return;
     }
 
     let previstoMes = 0;
-    let pagoMes = 0;
+    let pagoMes     = 0;
     let emFaltaTotal = 0;
 
     (data || []).forEach((p) => {
       const previsto = Number(p.valor_previsto) || 0;
-      const pago = Number(p.valor_pago) || 0;
-      const falta = Math.max(previsto - pago, 0);
+      const pago     = Number(p.valor_pago) || 0;
+      const falta    = Math.max(previsto - pago, 0);
 
       if (p.ano === anoAtual && p.mes === mesAtual) {
         previstoMes += previsto;
-        pagoMes += pago;
+        pagoMes     += pago;
       }
 
       emFaltaTotal += falta;
     });
 
-    document.getElementById(
-      "aluno-detail-previsto-mes"
-    ).textContent = `€ ${previstoMes.toFixed(2)}`;
-    document.getElementById(
-      "aluno-detail-pago-mes"
-    ).textContent = `€ ${pagoMes.toFixed(2)}`;
-    document.getElementById(
-      "aluno-detail-emfalta"
-    ).textContent = `€ ${emFaltaTotal.toFixed(2)}`;
+    // Fallback: se ainda não há registos em pagamentos, estima a mensalidade
+    // com base em valor_explicacao * sessoes_mes
+    if ((!data || data.length === 0) &&
+        aluno.valor_explicacao != null &&
+        aluno.sessoes_mes != null) {
+
+      const estimado = Number(aluno.valor_explicacao) * Number(aluno.sessoes_mes);
+
+      previstoMes   = estimado;
+      pagoMes       = 0;
+      emFaltaTotal  = estimado;
+    }
+
+    if (elPrevistoMes) {
+      elPrevistoMes.textContent = `€ ${previstoMes.toFixed(2)}`;
+    }
+    if (elPagoMes) {
+      elPagoMes.textContent     = `€ ${pagoMes.toFixed(2)}`;
+    }
+    if (elEmFalta) {
+      elEmFalta.textContent     = `€ ${emFaltaTotal.toFixed(2)}`;
+    }
   } catch (err) {
     console.error("Erro inesperado ao calcular resumo do aluno", err);
   }
 }
-
 
   // ---------- quota UI ----------
   function updateQuotaUI(total){
@@ -499,61 +567,238 @@ async function mostrarPainelAluno(aluno) {
   }
 
   // ---------- KPI financeiros (cards do dashboard) ----------
-async function loadKpisFinanceiros() {
-  if (!EXPLICADOR.id_explicador) return;
+  async function loadKpisFinanceiros() {
+    if (!EXPLICADOR.id_explicador) return;
 
-  const cardTotalMes = document.getElementById("card-total-mes");
-  const cardPendentes = document.getElementById("card-pendentes");
-  const cardRecebidos = document.getElementById("card-recebidos");
+    const cardTotalMes  = document.getElementById("card-total-mes");
+    const cardPendentes = document.getElementById("card-pendentes");
+    const cardRecebidos = document.getElementById("card-recebidos");
 
-  try {
-    const { data, error } = await supabase
-      .from("v_pagamentos_detalhe")
-      .select("ano, mes, valor_previsto, valor_pago, estado")
-      .eq("id_explicador", EXPLICADOR.id_explicador);
+    try {
+      const { data, error } = await supabase
+        .from("v_pagamentos_detalhe")
+        .select("ano, mes, id_aluno, aluno_nome, valor_previsto, valor_pago, estado")
+        .eq("id_explicador", EXPLICADOR.id_explicador);
 
-    if (error) {
-      console.error("Erro a carregar KPI financeiros", error);
-      return;
-    }
-
-    const now = new Date();
-    const anoAtual = now.getFullYear();
-    const mesAtual = now.getMonth() + 1;
-
-    let totalMes = 0;
-    let pendentes = 0;
-    let pagosMes = 0;
-    let totalMesCount = 0;
-
-    (data || []).forEach((p) => {
-      const previsto = Number(p.valor_previsto) || 0;
-      const pago = Number(p.valor_pago) || 0;
-      const falta = Math.max(previsto - pago, 0);
-
-      // KPI 1: Total faturado este mês (consideramos valor_pago)
-      if (p.ano === anoAtual && p.mes === mesAtual) {
-        totalMes += pago;
-        totalMesCount++;
-        if (p.estado === "PAGO") pagosMes++;
+      if (error) {
+        console.error("Erro a carregar KPI financeiros", error);
+        return;
       }
 
-      // KPI 2: Mensalidades pendentes (valor em falta em todos os meses)
-      pendentes += falta;
-    });
+      // guardar em cache para outras visões (por aluno / por grupo)
+      PAGAMENTOS_CACHE = data || [];
 
-    if (cardTotalMes) {
-      cardTotalMes.textContent = `€ ${totalMes.toFixed(2)}`;
+      const now = new Date();
+      const anoAtual = now.getFullYear();
+      const mesAtual = now.getMonth() + 1;
+
+      // Acumuladores
+      let previstoMesAtual    = 0;
+      let realizadoMesAtual   = 0;
+      let previstoAnoAtual    = 0;
+      let realizadoAnoAtual   = 0;
+      let pendenteTotal       = 0;
+      let totalMensalidadesMes = 0;
+      let mensalidadesPagasMes = 0;
+
+      const alunosComPendencias = new Set();
+
+      (PAGAMENTOS_CACHE).forEach((p) => {
+        const previsto = Number(p.valor_previsto) || 0;
+        const pago     = Number(p.valor_pago) || 0;
+        const falta    = Math.max(previsto - pago, 0);
+
+        // Faturação anual (prevista vs realizada)
+        if (p.ano === anoAtual) {
+          previstoAnoAtual  += previsto;
+          realizadoAnoAtual += pago;
+        }
+
+        // Faturação mensal (mês corrente)
+        if (p.ano === anoAtual && p.mes === mesAtual) {
+          previstoMesAtual  += previsto;
+          realizadoMesAtual += pago;
+          totalMensalidadesMes++;
+          if (p.estado === "PAGO" && previsto > 0) {
+            mensalidadesPagasMes++;
+          }
+        }
+
+        // Pendentes + alunos em falta
+        pendenteTotal += falta;
+        if (falta > 0 && p.id_aluno) {
+          alunosComPendencias.add(p.id_aluno);
+        }
+      });
+
+      // ---- Card 1: Total faturado (este mês) ----
+      if (cardTotalMes) {
+        cardTotalMes.textContent =
+          `€ ${realizadoMesAtual.toFixed(2)} de € ${previstoMesAtual.toFixed(2)}`;
+        cardTotalMes.title =
+          `Previsto para este mês: € ${previstoMesAtual.toFixed(2)} · ` +
+          `Realizado: € ${realizadoMesAtual.toFixed(2)}`;
+      }
+
+      // ---- Card 2: Mensalidades pendentes ----
+      if (cardPendentes) {
+        const nAlunosPend = alunosComPendencias.size;
+        const labelAlunos =
+          nAlunosPend === 0
+            ? "Nenhum aluno em falta"
+            : nAlunosPend === 1
+            ? "1 aluno em falta"
+            : `${nAlunosPend} alunos em falta`;
+
+        cardPendentes.textContent =
+          `€ ${pendenteTotal.toFixed(2)} (${labelAlunos})`;
+        cardPendentes.title =
+          "Valor total ainda por receber (todas as mensalidades com PARCIAL ou EM_ATRASO).";
+      }
+
+      // ---- Card 3: Pagamentos recebidos ----
+      const taxaCobrancaAno =
+        previstoAnoAtual > 0
+          ? (realizadoAnoAtual / previstoAnoAtual) * 100
+          : 0;
+
+      if (cardRecebidos) {
+        const baseMes =
+          totalMensalidadesMes > 0
+            ? `${mensalidadesPagasMes} / ${totalMensalidadesMes}`
+            : "0 / 0";
+
+        cardRecebidos.textContent =
+          `${baseMes} (${taxaCobrancaAno.toFixed(0)}%)`;
+        cardRecebidos.title =
+          `Taxa de cobrança anual: ${taxaCobrancaAno.toFixed(
+            1
+          )}% (realizado vs previsto).`;
+      }
+
+      // depois de ter a cache preenchida, desenhar tabelas previsto vs realizado
+      renderPrevistoRealizado();
+    } catch (err) {
+      console.error("Erro inesperado em loadKpisFinanceiros", err);
     }
-    if (cardPendentes) {
-      cardPendentes.textContent = `€ ${pendentes.toFixed(2)}`;
-    }
-    if (cardRecebidos) {
-      cardRecebidos.textContent = `${pagosMes} / ${totalMesCount}`;
-    }
-  } catch (err) {
-    console.error("Erro inesperado em loadKpisFinanceiros", err);
   }
+
+  // ---------- Tabelas de Previsto vs Realizado (por aluno e por grupo) ----------
+  function renderPrevistoRealizado() {
+  const tbodyAlunos = document.querySelector("#tblPrevRealAlunos tbody");
+  const tbodyGrupos = document.querySelector("#tblPrevRealGrupos tbody");
+
+  if (!tbodyAlunos || !tbodyGrupos) return;
+
+  const now = new Date();
+  const anoAtual = now.getFullYear();
+
+  // --- 1) Agregação por aluno (ano atual) ---
+  const porAluno = new Map(); // key: id_aluno -> { nome, previsto, pago }
+
+  (PAGAMENTOS_CACHE || []).forEach((p) => {
+    if (p.ano !== anoAtual) return;
+
+    const id = p.id_aluno;
+    if (!id) return;
+
+    const previsto = Number(p.valor_previsto) || 0;
+    const pago     = Number(p.valor_pago) || 0;
+
+    if (!porAluno.has(id)) {
+      porAluno.set(id, {
+        id_aluno: id,
+        nome: p.aluno_nome || "Aluno",
+        previsto: 0,
+        pago: 0,
+      });
+    }
+    const reg = porAluno.get(id);
+    reg.previsteo;
+    reg.previsto += previsto;
+    reg.pago     += pago;
+  });
+
+  // se não houver dados, mostra mensagem amigável
+  if (!porAluno.size) {
+    tbodyAlunos.innerHTML =
+      '<tr><td colspan="5">Ainda não existem registos de faturação para este ano.</td></tr>';
+    tbodyGrupos.innerHTML =
+      '<tr><td colspan="5">Ainda não existem registos de faturação para este ano.</td></tr>';
+    return;
+  }
+
+  // ordenar alunos pelo previsto (descendente)
+  const listaAlunos = Array.from(porAluno.values()).sort(
+    (a, b) => b.previsto - a.previsto
+  );
+
+  tbodyAlunos.innerHTML = listaAlunos
+    .map((a) => {
+      const falta = Math.max(a.previsto - a.pago, 0);
+      const perc  = a.previsto > 0 ? (a.pago / a.previsto) * 100 : 0;
+
+      return `
+        <tr>
+          <td>${a.nome}</td>
+          <td>€ ${a.previsto.toFixed(2)}</td>
+          <td>€ ${a.pago.toFixed(2)}</td>
+          <td>${perc.toFixed(0)}%</td>
+          <td>€ ${falta.toFixed(2)}</td>
+        </tr>
+      `;
+    })
+    .join("");
+
+  // --- 2) Agregação por grupo (ano de escolaridade) ---
+  // usa ALUNOS_CACHE para saber o ano de cada aluno
+  const anoPorAluno = new Map();
+  (ALUNOS_CACHE || []).forEach((al) => {
+    if (al.id_aluno) {
+      anoPorAluno.set(al.id_aluno, al.ano ?? al.ano_escolaridade ?? "—");
+    }
+  });
+
+  const porGrupo = new Map(); // key: ano -> { ano, previsto, pago }
+
+  listaAlunos.forEach((a) => {
+    const anoEsc = anoPorAluno.get(a.id_aluno) ?? "—";
+    if (!porGrupo.has(anoEsc)) {
+      porGrupo.set(anoEsc, {
+        ano: anoEsc,
+        previsto: 0,
+        pago: 0,
+      });
+    }
+    const g = porGrupo.get(anoEsc);
+    g.previsto += a.previsto;
+    g.pago     += a.pago;
+  });
+
+  const listaGrupos = Array.from(porGrupo.values()).sort((a, b) => {
+    // ordenar por ano numérico quando possível
+    const na = Number(a.ano);
+    const nb = Number(b.ano);
+    if (!isNaN(na) && !isNaN(nb)) return na - nb;
+    return String(a.ano).localeCompare(String(b.ano));
+  });
+
+  tbodyGrupos.innerHTML = listaGrupos
+    .map((g) => {
+      const falta = Math.max(g.previsto - g.pago, 0);
+      const perc  = g.previsto > 0 ? (g.pago / g.previsto) * 100 : 0;
+
+      return `
+        <tr>
+          <td>${g.ano}</td>
+          <td>€ ${g.previsto.toFixed(2)}</td>
+          <td>€ ${g.pago.toFixed(2)}</td>
+          <td>${perc.toFixed(0)}%</td>
+          <td>€ ${falta.toFixed(2)}</td>
+        </tr>
+      `;
+    })
+    .join("");
 }
 
   // ---------- CRIAR ALUNO (EDGE FUNCTION) ----------
