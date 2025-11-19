@@ -27,6 +27,31 @@
     <h1>Bem-vindo 👋</h1>
     <p id="alunoInfo">A carregar…</p>
 
+        <!-- RESUMO RÁPIDO -->
+    <div class="card card--highlight" id="resumoRapido">
+      <h2>Resumo rápido</h2>
+      <div class="resumo-grid">
+        <div>
+          <p class="resumo-label">Próxima mensalidade</p>
+          <p class="resumo-value" id="resumoMesLabel">—</p>
+        </div>
+        <div>
+          <p class="resumo-label">Estado</p>
+          <p class="resumo-badge" id="resumoEstado">—</p>
+        </div>
+        <div>
+          <p class="resumo-label">Valor</p>
+          <p class="resumo-value" id="resumoValor">—</p>
+        </div>
+        <div class="resumo-actions">
+          <button id="btnDownloadFatura" class="button secondary" disabled>
+            📄 Download fatura
+          </button>
+        </div>
+      </div>
+      <p class="resumo-hint" id="resumoHint"></p>
+    </div>
+
     <!-- Próximas explicações -->
     <div class="card">
       <h2>Próximas explicações</h2>
@@ -34,6 +59,23 @@
         <p>A carregar agenda…</p>
       </div>
     </div>
+
+        <!-- Calendário interativo -->
+    <div class="card">
+      <h2>Calendário de explicações</h2>
+      <div class="calendario-header">
+        <button id="calPrev" class="icon-button" type="button">◀</button>
+        <p id="calMesTitulo"></p>
+        <button id="calNext" class="icon-button" type="button">▶</button>
+      </div>
+      <ul id="calList" class="cal-list">
+        <li>A carregar calendário…</li>
+      </ul>
+      <p class="cal-hint">
+        Confirma a tua presença nas sessões futuras para ajudar o explicador a planear.
+      </p>
+    </div>
+
 
     <!-- Pagamentos -->
     <div class="card">
@@ -62,6 +104,23 @@
         <li>A carregar exercícios…</li>
       </ul>
     </div>
+
+        <!-- Mensagens com o explicador -->
+    <div class="card">
+      <h2>Mensagens</h2>
+      <div id="msgList" class="msg-list">
+        <p>A carregar conversas…</p>
+      </div>
+
+      <form id="fMsg" class="msg-form">
+        <label for="msgInput">Enviar mensagem ao explicador</label>
+        <textarea id="msgInput" name="msg" rows="3" required
+          placeholder="Escreve aqui a tua mensagem…"></textarea>
+        <button type="submit" class="button">Enviar</button>
+        <p id="msgStatus" class="form__msg"></p>
+      </form>
+    </div>
+
 
     <!-- Alterar password -->
     <div class="card">
@@ -120,6 +179,8 @@
   })();
 </script>
 
+<!-- Toast / feedback visual -->
+<div id="toast" class="toast" aria-live="polite" aria-atomic="true"></div>
 <!-- script com a lógica de agenda/pagamentos/exercícios/password -->
 <script src="./public/js/pages/aluno.js"></script>
 </body>
