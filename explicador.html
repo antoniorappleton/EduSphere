@@ -909,14 +909,14 @@
   btnOpenAddAluno?.addEventListener('click', () => openModal(modalAddAluno));
 
   // ---------- submit novo aluno ----------
-  formNew?.addEventListener('submit', async (ev) => {
-  ev.preventDefault();
-  msgNewAluno.textContent = '';
+  formNew?.addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    msgNewAluno.textContent = "";
 
-  if (!EXPLICADOR.id_explicador) {
-    msgNewAluno.textContent = 'Perfil de explicador inválido.';
-    return;
-  }
+    if (!EXPLICADOR.id_explicador) {
+      msgNewAluno.textContent = "Perfil de explicador inválido.";
+      return;
+    }
 
   const f = ev.target;
 
@@ -942,26 +942,55 @@
   };
 
   if (!payload.nome || !payload.email || !payload.password) {
-    msgNewAluno.textContent = 'Preenche pelo menos Nome, Email e Password.';
+    msgNewAluno.textContent =
+      "Preenche pelo menos Nome, Email e Password.";
     return;
   }
 
   btnCreate.disabled = true;
-  msgNewAluno.textContent = 'A criar aluno...';
+  msgNewAluno.textContent = "A criar aluno...";
 
-  const { data, error } = await supabase.functions.invoke('expl-alunos', {
-    body: { action: 'create_aluno', payload }
+  // ⬇️ AQUI é onde definimos *data* e *error*
+  const { data, error } = await supabase.functions.invoke("expl-alunos", {
+    body: { action: "create_aluno", payload },
   });
 
+  // Tratamento de erro com leitura do body da Edge Function
   if (error) {
-    console.error(error);
-    msgNewAluno.textContent = 'Não foi possível criar o aluno.';
+    let extra = "";
+
+    if (error.context) {
+      try {
+        // Response do fetch
+        const resp = error.context;
+        const raw = await resp.text();
+        console.log("Erro bruto da função expl-alunos:", raw);
+
+        try {
+          const json = JSON.parse(raw);
+          if (json?.error) {
+            extra = " " + json.error;
+          } else {
+            extra = " " + raw;
+          }
+        } catch {
+          extra = " " + raw;
+        }
+      } catch (e) {
+        console.warn("Não consegui ler o body da resposta da função", e);
+      }
+    }
+
+    console.error("create_aluno error", error);
+    msgNewAluno.textContent =
+      "Não foi possível criar o aluno." + extra;
     btnCreate.disabled = false;
     return;
   }
 
-  msgNewAluno.style.color = '#126b3a';
-  msgNewAluno.textContent = 'Aluno criado com sucesso!';
+  // Sucesso
+  msgNewAluno.style.color = "#126b3a";
+  msgNewAluno.textContent = "Aluno criado com sucesso!";
   f.reset();
   await loadAlunos();
   btnCreate.disabled = false;
