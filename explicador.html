@@ -76,84 +76,60 @@
 
     <!-- Conteúdo -->
     <div class="expl-body">
+      <!-- Resumo mensal: Pendentes vs Pagas (mês atual) -->
+      <div class="expl-grid-2" style="margin-top:1.5rem;">
+        <!-- Mensalidades em falta (mês atual) -->
+        <article class="expl-card">
+          <h3 class="expl-subsection-title">
+            Mensalidades em falta (mês atual)
+          </h3>
+          <div class="table-wrapper">
+            <table class="table" id="tblMensalidadesPendentes">
+              <thead>
+              <tr>
+                <th>Aluno</th>
+                <th>Mês</th>
+                <th>Previsto (€)</th>
+                <th>Pago (€)</th>
+                <th>Em falta (€)</th>
+                <th>Estado</th>
+                <th>Avisado</th>
+              </tr>
+              </thead>
+              <tbody>
+              <tr>
+                <td colspan="7">Ainda não existem mensalidades em falta neste mês.</td>
+              </tr>
+              </tbody>
+            </table>
+          </div>
+        </article>
 
-      <!-- DASHBOARD / FATURAÇÃO -->
-      <section class="expl-section" id="expl-sec-dashboard">
-        <h2 class="expl-section-title">Resumo financeiro</h2>
-        <div class="expl-cards">
-          <article class="expl-card">
-            <p class="expl-card-label">Total faturado (este mês)</p>
-            <p class="expl-card-value" id="card-total-mes">€ 0,00</p>
-          </article>
-
-          <article class="expl-card">
-            <p class="expl-card-label">Mensalidades pendentes</p>
-            <p class="expl-card-value expl-card-value--warning" id="card-pendentes">
-              € 0,00
-            </p>
-          </article>
-
-          <article class="expl-card">
-            <p class="expl-card-label">Pagamentos recebidos</p>
-            <p class="expl-card-value expl-card-value--success" id="card-recebidos">
-              0 / 0
-            </p>
-          </article>
-        </div>
-                <!-- Tabelas de previsto vs realizado -->
-        <div class="expl-grid-2" style="margin-top:1.5rem;">
-          <!-- Por aluno -->
-          <article class="expl-card">
-            <h3 class="expl-subsection-title">
-              Previsto vs realizado por aluno (ano atual)
-            </h3>
-            <div class="table-wrapper">
-              <table class="table" id="tblPrevRealAlunos">
-                <thead>
-                  <tr>
-                    <th>Aluno</th>
-                    <th>Previsto (€)</th>
-                    <th>Realizado (€)</th>
-                    <th>% Cobrança</th>
-                    <th>Em falta (€)</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td colspan="5">Sem dados de faturação ainda.</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </article>
-
-          <!-- Por grupo (ano de escolaridade) -->
-          <article class="expl-card">
-            <h3 class="expl-subsection-title">
-              Previsto vs realizado por ano de escolaridade
-            </h3>
-            <div class="table-wrapper">
-              <table class="table" id="tblPrevRealGrupos">
-                <thead>
-                  <tr>
-                    <th>Ano</th>
-                    <th>Previsto (€)</th>
-                    <th>Realizado (€)</th>
-                    <th>% Cobrança</th>
-                    <th>Em falta (€)</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td colspan="5">Sem dados de faturação ainda.</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </article>
-        </div>
-
-      </section>
+        <!-- Mensalidades pagas (mês atual) -->
+        <article class="expl-card">
+          <h3 class="expl-subsection-title">
+            Mensalidades pagas (mês atual)
+          </h3>
+          <div class="table-wrapper">
+            <table class="table" id="tblMensalidadesPagas">
+              <thead>
+              <tr>
+                <th>Aluno</th>
+                <th>Mês</th>
+                <th>Pago (€)</th>
+                <th>Previsto (€)</th>
+                <th>Estado</th>
+              </tr>
+              </thead>
+              <tbody>
+              <tr>
+                <td colspan="5">Ainda não existem mensalidades pagas neste mês.</td>
+              </tr>
+              </tbody>
+            </table>
+          </div>
+        </article>
+      </div>
 
       <!-- ALUNOS -->
       <section class="expl-section" id="expl-sec-alunos">
@@ -179,7 +155,6 @@
               <button class="button secondary" type="button" id="btn-open-add-aluno">
                 + Adicionar aluno
               </button>
-              <!-- futuros botões: Emitir fatura, Registar pagamento -->
             </div>
           </div>
 
@@ -189,48 +164,61 @@
             <div class="table-wrapper">
               <table class="table" id="tblAlunos">
                 <thead>
-                  <tr>
-                    <th>Nome</th>
-                    <th>Email</th>
-                    <th>Ano</th>
-                  </tr>
+                <tr>
+                  <th>Nome</th>
+                  <th>Email</th>
+                  <th>Ano</th>
+                </tr>
                 </thead>
                 <tbody></tbody>
               </table>
             </div>
           </div>
         </div>
-                    <!-- Painel de detalhes do aluno (aparece ao clicar numa linha) -->
-      <div class="expl-card expl-aluno-detail" id="aluno-detail-card" style="margin-top:1.5rem; display:none">
-        <h3 class="expl-subsection-title">
-          Detalhes do aluno:
-          <span id="aluno-detail-nome" class="expl-aluno-detail__nome">—</span>
-        </h3>
 
-        <p id="aluno-detail-meta" class="expl-aluno-detail__meta"></p>
+        <!-- Painel de detalhes do aluno (aparece ao clicar numa linha) -->
+        <div class="expl-card expl-aluno-detail" id="aluno-detail-card" style="margin-top:1.5rem; display:none">
+          <h3 class="expl-subsection-title">
+            Detalhes do aluno:
+            <span id="aluno-detail-nome" class="expl-aluno-detail__nome">—</span>
+          </h3>
 
-        <div class="expl-grid-2">
-          <div>
-            <h4 class="expl-subsection-title">Informação básica</h4>
-            <ul class="expl-detail-list">
-              <li><strong>Email:</strong> <span id="aluno-detail-email">—</span></li>
-              <li><strong>Telemóvel:</strong> <span id="aluno-detail-tel">—</span></li>
-              <li><strong>Ano:</strong> <span id="aluno-detail-ano">—</span></li>
-              <li><strong>Valor explicação:</strong> <span id="aluno-detail-valor">—</span></li>
-              <li><strong>Sessões / mês:</strong> <span id="aluno-detail-sessoes">—</span></li>
-            </ul>
-          </div>
+          <p id="aluno-detail-meta" class="expl-aluno-detail__meta"></p>
 
-          <div>
-            <h4 class="expl-subsection-title">Resumo de mensalidades</h4>
-            <ul class="expl-detail-list">
-              <li><strong>Valor previsto (mês atual):</strong> <span id="aluno-detail-previsto-mes">—</span></li>
-              <li><strong>Valor pago (mês atual):</strong> <span id="aluno-detail-pago-mes">—</span></li>
-              <li><strong>Em falta (total):</strong> <span id="aluno-detail-emfalta">—</span></li>
-            </ul>
+          <div class="expl-grid-2">
+            <div>
+              <h4 class="expl-subsection-title">Informação básica</h4>
+              <ul class="expl-detail-list">
+                <li><strong>Email:</strong> <span id="aluno-detail-email">—</span></li>
+                <li><strong>Telemóvel:</strong> <span id="aluno-detail-tel">—</span></li>
+                <li><strong>Ano:</strong> <span id="aluno-detail-ano">—</span></li>
+                <li><strong>Valor explicação:</strong> <span id="aluno-detail-valor">—</span></li>
+                <li><strong>Sessões / mês:</strong> <span id="aluno-detail-sessoes">—</span></li>
+              </ul>
+
+              <div class="expl-actions-row" style="margin-top:1rem;">
+                <button class="button secondary" type="button" id="btn-iniciar-faturacao">
+                  Iniciar faturação
+                </button>
+                <button class="button secondary" type="button" id="btn-registar-pagamento">
+                  Registar pagamento
+                </button>
+                <button class="button" type="button" id="btn-editar-aluno">
+                  Editar aluno
+                </button>
+              </div>
+
+
+            <div>
+              <h4 class="expl-subsection-title">Resumo de mensalidades</h4>
+              <ul class="expl-detail-list">
+                <li><strong>Valor previsto (mês atual):</strong> <span id="aluno-detail-previsto-mes">—</span></li>
+                <li><strong>Valor pago (mês atual):</strong> <span id="aluno-detail-pago-mes">—</span></li>
+                <li><strong>Em falta (total):</strong> <span id="aluno-detail-emfalta">—</span></li>
+              </ul>
+            </div>
           </div>
         </div>
-      </div>
       </section>
 
       <!-- CALENDÁRIO + RELATÓRIOS -->
@@ -295,13 +283,52 @@
       <button id="btnCreateAluno" class="button" type="submit">Criar Aluno</button>
       <div id="msgNewAluno" class="auth__msg"></div>
     </form>
-
-
   </div>
 </div>
 
+<!-- ========== MODAL: EDITAR ALUNO ========== -->
+<div class="modal" id="modal-edit-aluno">
+  <div class="modal__backdrop" data-modal-close></div>
+  <div class="modal__dialog">
+    <div class="modal__header">
+      <h2>Editar aluno</h2>
+      <button class="modal__close" type="button" data-modal-close>&times;</button>
+    </div>
+    <p class="auth__hint">Atualize os dados do aluno.</p>
+    <form id="fEditAluno" class="auth__form" style="margin-bottom:12px;">
+      <div class="grid2">
+        <input name="nome_edit" placeholder="Nome do aluno" required />
+        <input name="apelido_edit" placeholder="Apelido (opcional)" />
+
+        <input name="telemovel_edit" placeholder="Telemóvel (opcional)" />
+        <input type="number" name="ano_edit" placeholder="Ano de escolaridade" />
+
+        <input type="number" name="idade_edit" placeholder="Idade (opcional)" />
+
+        <input name="dia_semana_preferido_edit" placeholder="Dia preferido (ex.: Segunda)" />
+
+        <input type="number" step="0.01" name="valor_explicacao_edit" placeholder="Valor por explicação (€)" />
+        <input type="number" name="sessoes_mes_edit" placeholder="Sessões por mês" />
+
+        <input name="nome_pai_cache_edit" placeholder="Nome do encarregado de educação" />
+        <input name="contacto_pai_cache_edit" placeholder="Contacto do encarregado" />
+
+        <input type="email" name="email_edit" placeholder="Email (login do aluno)" required />
+        <input name="username_edit" placeholder="Username (opcional)" />
+
+        <input type="password" name="password_edit" placeholder="Nova password (opcional)" minlength="6" />
+      </div>
+
+      <button id="btnSaveEditAluno" class="button" type="submit">Guardar alterações</button>
+      <div id="msgEditAluno" class="auth__msg"></div>
+    </form>
+  </div>
+</div>
+
+
 <script>
   const $  = (s) => document.querySelector(s);
+
   const elYear      = $('#y');
   const btnLogout   = $('#btnLogout');
   const headerNav   = $('#explHeaderNav');
@@ -327,11 +354,15 @@
   const msgNewAluno     = $('#msgNewAluno');
   const btnCreate       = $('#btnCreateAluno');
 
+  const btnIniciarFat   = document.getElementById("btn-iniciar-faturacao");
+  const btnRegistarPag  = document.getElementById("btn-registar-pagamento");
+
   elYear.textContent = new Date().getFullYear();
 
-  let EXPLICADOR = { userId:null, id_explicador:null, max:0 };
-  let ALUNOS_CACHE = []; // cache dos alunos carregados para permitir clique e detalhes
+  let EXPLICADOR      = { userId:null, id_explicador:null, max:0 };
+  let ALUNOS_CACHE    = []; // cache dos alunos para detalhes
   let PAGAMENTOS_CACHE = [];
+  let ALUNO_ATUAL     = null; // aluno selecionado na lista
 
   // ---------- helpers supabase ----------
   async function hasRole(uid, roleName){
@@ -357,7 +388,6 @@
     if (error) throw error;
     return data || null;
   }
-
 
   function setState({ loading=false, isExpl=false, isAuthed=false }){
     if (loading){
@@ -386,105 +416,106 @@
 
   // ---------- Painel de detalhes por aluno ----------
   async function mostrarPainelAluno(aluno) {
-  const card = document.getElementById("aluno-detail-card");
-  if (!card) return;
+    ALUNO_ATUAL = aluno;
 
-  const nomeCompleto = [aluno.nome, aluno.apelido].filter(Boolean).join(" ");
-  document.getElementById("aluno-detail-nome").textContent =
-    nomeCompleto || "Aluno";
+    const card = document.getElementById("aluno-detail-card");
+    if (!card) return;
 
-  document.getElementById("aluno-detail-meta").textContent =
-    aluno.username ? `Username: ${aluno.username}` : "";
+    const nomeCompleto = [aluno.nome, aluno.apelido].filter(Boolean).join(" ");
+    document.getElementById("aluno-detail-nome").textContent =
+      nomeCompleto || "Aluno";
 
-  document.getElementById("aluno-detail-email").textContent =
-    aluno.email || "—";
-  document.getElementById("aluno-detail-tel").textContent =
-    aluno.telemovel || "—";
-  document.getElementById("aluno-detail-ano").textContent =
-    aluno.ano ?? "—";
+    document.getElementById("aluno-detail-meta").textContent =
+      aluno.username ? `Username: ${aluno.username}` : "";
 
-  const valorExp =
-    aluno.valor_explicacao != null
-      ? `€ ${Number(aluno.valor_explicacao).toFixed(2)}`
-      : "—";
-  document.getElementById("aluno-detail-valor").textContent = valorExp;
+    document.getElementById("aluno-detail-email").textContent =
+      aluno.email || "—";
+    document.getElementById("aluno-detail-tel").textContent =
+      aluno.telemovel || "—";
+    document.getElementById("aluno-detail-ano").textContent =
+      aluno.ano ?? "—";
 
-  const sessoes =
-    aluno.sessoes_mes != null ? String(aluno.sessoes_mes) : "—";
-  document.getElementById("aluno-detail-sessoes").textContent = sessoes;
+    const valorExp =
+      aluno.valor_explicacao != null
+        ? `€ ${Number(aluno.valor_explicacao).toFixed(2)}`
+        : "—";
+    document.getElementById("aluno-detail-valor").textContent = valorExp;
 
-  // mostrar card
-  card.style.display = "block";
+    const sessoes =
+      aluno.sessoes_mes != null ? String(aluno.sessoes_mes) : "—";
+    document.getElementById("aluno-detail-sessoes").textContent = sessoes;
 
-  // ---- carregar resumo de pagamentos deste aluno ----
-  if (!EXPLICADOR.id_explicador) return;
+    // mostrar card
+    card.style.display = "block";
 
-  const elPrevistoMes = document.getElementById("aluno-detail-previsto-mes");
-  const elPagoMes     = document.getElementById("aluno-detail-pago-mes");
-  const elEmFalta     = document.getElementById("aluno-detail-emfalta");
+    // ---- carregar resumo de pagamentos deste aluno ----
+    if (!EXPLICADOR.id_explicador) return;
 
-  try {
-    const now = new Date();
-    const anoAtual = now.getFullYear();
-    const mesAtual = now.getMonth() + 1;
+    const elPrevistoMes = document.getElementById("aluno-detail-previsto-mes");
+    const elPagoMes     = document.getElementById("aluno-detail-pago-mes");
+    const elEmFalta     = document.getElementById("aluno-detail-emfalta");
 
-    const { data, error } = await supabase
-      .from("v_pagamentos_detalhe")
-      .select("ano, mes, valor_previsto, valor_pago, estado")
-      .eq("id_explicador", EXPLICADOR.id_explicador)
-      .eq("id_aluno", aluno.id_aluno);
+    try {
+      const now = new Date();
+      const anoAtual = now.getFullYear();
+      const mesAtual = now.getMonth() + 1;
 
-    if (error) {
-      console.error("Erro a carregar pagamentos do aluno", error);
-      if (elPrevistoMes) elPrevistoMes.textContent = "—";
-      if (elPagoMes)     elPagoMes.textContent     = "—";
-      if (elEmFalta)     elEmFalta.textContent     = "—";
-      return;
-    }
+      const { data, error } = await supabase
+        .from("v_pagamentos_detalhe")
+        .select("ano, mes, valor_previsto, valor_pago, estado")
+        .eq("id_explicador", EXPLICADOR.id_explicador)
+        .eq("id_aluno", aluno.id_aluno);
 
-    let previstoMes = 0;
-    let pagoMes     = 0;
-    let emFaltaTotal = 0;
-
-    (data || []).forEach((p) => {
-      const previsto = Number(p.valor_previsto) || 0;
-      const pago     = Number(p.valor_pago) || 0;
-      const falta    = Math.max(previsto - pago, 0);
-
-      if (p.ano === anoAtual && p.mes === mesAtual) {
-        previstoMes += previsto;
-        pagoMes     += pago;
+      if (error) {
+        console.error("Erro a carregar pagamentos do aluno", error);
+        if (elPrevistoMes) elPrevistoMes.textContent = "—";
+        if (elPagoMes)     elPagoMes.textContent     = "—";
+        if (elEmFalta)     elEmFalta.textContent     = "—";
+        return;
       }
 
-      emFaltaTotal += falta;
-    });
+      let previstoMes = 0;
+      let pagoMes     = 0;
+      let emFaltaTotal = 0;
 
-    // Fallback: se ainda não há registos em pagamentos, estima a mensalidade
-    // com base em valor_explicacao * sessoes_mes
-    if ((!data || data.length === 0) &&
-        aluno.valor_explicacao != null &&
-        aluno.sessoes_mes != null) {
+      (data || []).forEach((p) => {
+        const previsto = Number(p.valor_previsto) || 0;
+        const pago     = Number(p.valor_pago) || 0;
+        const falta    = Math.max(previsto - pago, 0);
 
-      const estimado = Number(aluno.valor_explicacao) * Number(aluno.sessoes_mes);
+        if (p.ano === anoAtual && p.mes === mesAtual) {
+          previstoMes += previsto;
+          pagoMes     += pago;
+        }
 
-      previstoMes   = estimado;
-      pagoMes       = 0;
-      emFaltaTotal  = estimado;
-    }
+        emFaltaTotal += falta;
+      });
 
-    if (elPrevistoMes) {
-      elPrevistoMes.textContent = `€ ${previstoMes.toFixed(2)}`;
+      // Fallback: se ainda não há registos em pagamentos, estima a mensalidade
+      if ((!data || data.length === 0) &&
+          aluno.valor_explicacao != null &&
+          aluno.sessoes_mes != null) {
+
+        const estimado = Number(aluno.valor_explicacao) * Number(aluno.sessoes_mes);
+
+        previstoMes   = estimado;
+        pagoMes       = 0;
+        emFaltaTotal  = estimado;
+      }
+
+      if (elPrevistoMes) {
+        elPrevistoMes.textContent = `€ ${previstoMes.toFixed(2)}`;
+      }
+      if (elPagoMes) {
+        elPagoMes.textContent     = `€ ${pagoMes.toFixed(2)}`;
+      }
+      if (elEmFalta) {
+        elEmFalta.textContent     = `€ ${emFaltaTotal.toFixed(2)}`;
+      }
+    } catch (err) {
+      console.error("Erro inesperado ao calcular resumo do aluno", err);
     }
-    if (elPagoMes) {
-      elPagoMes.textContent     = `€ ${pagoMes.toFixed(2)}`;
-    }
-    if (elEmFalta) {
-      elEmFalta.textContent     = `€ ${emFaltaTotal.toFixed(2)}`;
-    }
-  } catch (err) {
-    console.error("Erro inesperado ao calcular resumo do aluno", err);
   }
-}
 
   // ---------- quota UI ----------
   function updateQuotaUI(total){
@@ -505,6 +536,7 @@
       btnCreate.title    = rest <= 0 ? 'Limite de alunos atingido.' : '';
     }
   }
+
   // ---------- LISTAR ALUNOS via Edge Function ----------
   async function loadAlunos() {
     const { data, error } = await supabase.functions.invoke("expl-alunos", {
@@ -533,11 +565,6 @@
     tblBody.innerHTML = data
       .map((a) => {
         const nome = [a.nome, a.apelido].filter(Boolean).join(" ");
-        const valor =
-          a.valor_explicacao != null
-            ? Number(a.valor_explicacao).toFixed(2)
-            : "-";
-        const sessoes = a.sessoes_mes != null ? a.sessoes_mes : "-";
 
         return `
           <tr class="linha-aluno" data-id-aluno="${a.id_aluno}">
@@ -558,7 +585,7 @@
       .forEach((row) => {
         row.addEventListener("click", () => {
           const idAluno = row.dataset.idAluno;
-          const aluno = ALUNOS_CACHE.find((a) => a.id_aluno === idAluno);
+          const aluno = ALUNOS_CACHE.find((a) => String(a.id_aluno) === String(idAluno));
           if (aluno) {
             mostrarPainelAluno(aluno);
           }
@@ -566,7 +593,136 @@
       });
   }
 
-  // ---------- KPI financeiros (cards do dashboard) ----------
+  // ---------- Resumo mensal: pendentes vs pagas (mês atual) ----------
+  function renderResumoMensal() {
+    const tbodyPend = document.querySelector("#tblMensalidadesPendentes tbody");
+    const tbodyPagas = document.querySelector("#tblMensalidadesPagas tbody");
+
+    if (!tbodyPend || !tbodyPagas) return;
+
+    const now = new Date();
+    const anoAtual = now.getFullYear();
+    const mesAtual = now.getMonth() + 1;
+
+    const nomesMeses = [
+      "Janeiro","Fevereiro","Março","Abril","Maio","Junho",
+      "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro",
+    ];
+    const mesLabel = nomesMeses[mesAtual - 1] || String(mesAtual);
+
+    const pendentes = [];
+    const pagas = [];
+
+    let totalPrevistoPend = 0;
+    let totalFaltaPend = 0;
+    let totalPagoPagas = 0;
+    let totalPrevistoPagas = 0;
+
+    (PAGAMENTOS_CACHE || []).forEach((p) => {
+      if (p.ano !== anoAtual || p.mes !== mesAtual) return;
+
+      const previsto = Number(p.valor_previsto) || 0;
+      const pago = Number(p.valor_pago) || 0;
+      const falta = Math.max(previsto - pago, 0);
+
+      if (previsto === 0 && pago === 0) return;
+
+      const avisadoLabel = "—"; // placeholder
+
+      if (falta > 0) {
+        pendentes.push({
+          aluno: p.aluno_nome || "Aluno",
+          previsto,
+          pago,
+          falta,
+          estado: p.estado || "",
+          mes: mesLabel,
+          avisado: avisadoLabel,
+        });
+        totalPrevistoPend += previsto;
+        totalFaltaPend += falta;
+      } else {
+        pagas.push({
+          aluno: p.aluno_nome || "Aluno",
+          previsto,
+          pago,
+          estado: p.estado || "",
+          mes: mesLabel,
+        });
+        totalPagoPagas += pago;
+        totalPrevistoPagas += previsto;
+      }
+    });
+
+    // --- Tabela de pendentes ---
+    if (!pendentes.length) {
+      tbodyPend.innerHTML =
+        '<tr><td colspan="7">Ainda não existem mensalidades em falta neste mês.</td></tr>';
+    } else {
+      const rowsPend = pendentes
+        .map(
+          (r) => `
+        <tr>
+          <td>${r.aluno}</td>
+          <td>${r.mes}</td>
+          <td>€ ${r.previsto.toFixed(2)}</td>
+          <td>€ ${r.pago.toFixed(2)}</td>
+          <td>€ ${r.falta.toFixed(2)}</td>
+          <td>${r.estado}</td>
+          <td>${r.avisado}</td>
+        </tr>
+      `
+        )
+        .join("");
+
+      const totalRow = `
+      <tr>
+        <td><strong>Total</strong></td>
+        <td>${mesLabel}</td>
+        <td><strong>€ ${totalPrevistoPend.toFixed(2)}</strong></td>
+        <td></td>
+        <td><strong>€ ${totalFaltaPend.toFixed(2)}</strong></td>
+        <td colspan="2"></td>
+      </tr>
+    `;
+
+      tbodyPend.innerHTML = rowsPend + totalRow;
+    }
+
+    // --- Tabela de pagas ---
+    if (!pagas.length) {
+      tbodyPagas.innerHTML =
+        '<tr><td colspan="5">Ainda não existem mensalidades pagas neste mês.</td></tr>';
+    } else {
+      const rowsPagas = pagas
+        .map(
+          (r) => `
+        <tr>
+          <td>${r.aluno}</td>
+          <td>${r.mes}</td>
+          <td>€ ${r.pago.toFixed(2)}</td>
+          <td>€ ${r.previsto.toFixed(2)}</td>
+          <td>${r.estado}</td>
+        </tr>
+      `
+        )
+        .join("");
+
+      const totalRowPagas = `
+      <tr>
+        <td><strong>Total</strong></td>
+        <td>${mesLabel}</td>
+        <td><strong>€ ${totalPagoPagas.toFixed(2)}</strong></td>
+        <td><strong>€ ${totalPrevistoPagas.toFixed(2)}</strong></td>
+        <td></td>
+      </tr>
+    `;
+
+      tbodyPagas.innerHTML = rowsPagas + totalRowPagas;
+    }
+  }
+
+  // ---------- KPI financeiros (se mantiveres os cards antigos) ----------
   async function loadKpisFinanceiros() {
     if (!EXPLICADOR.id_explicador) return;
 
@@ -585,14 +741,12 @@
         return;
       }
 
-      // guardar em cache para outras visões (por aluno / por grupo)
       PAGAMENTOS_CACHE = data || [];
 
       const now = new Date();
       const anoAtual = now.getFullYear();
       const mesAtual = now.getMonth() + 1;
 
-      // Acumuladores
       let previstoMesAtual    = 0;
       let realizadoMesAtual   = 0;
       let previstoAnoAtual    = 0;
@@ -608,13 +762,11 @@
         const pago     = Number(p.valor_pago) || 0;
         const falta    = Math.max(previsto - pago, 0);
 
-        // Faturação anual (prevista vs realizada)
         if (p.ano === anoAtual) {
           previstoAnoAtual  += previsto;
           realizadoAnoAtual += pago;
         }
 
-        // Faturação mensal (mês corrente)
         if (p.ano === anoAtual && p.mes === mesAtual) {
           previstoMesAtual  += previsto;
           realizadoMesAtual += pago;
@@ -624,14 +776,13 @@
           }
         }
 
-        // Pendentes + alunos em falta
         pendenteTotal += falta;
         if (falta > 0 && p.id_aluno) {
           alunosComPendencias.add(p.id_aluno);
         }
       });
 
-      // ---- Card 1: Total faturado (este mês) ----
+      // Estes cards só funcionam se existirem no HTML (senão ignoram)
       if (cardTotalMes) {
         cardTotalMes.textContent =
           `€ ${realizadoMesAtual.toFixed(2)} de € ${previstoMesAtual.toFixed(2)}`;
@@ -640,7 +791,6 @@
           `Realizado: € ${realizadoMesAtual.toFixed(2)}`;
       }
 
-      // ---- Card 2: Mensalidades pendentes ----
       if (cardPendentes) {
         const nAlunosPend = alunosComPendencias.size;
         const labelAlunos =
@@ -656,7 +806,6 @@
           "Valor total ainda por receber (todas as mensalidades com PARCIAL ou EM_ATRASO).";
       }
 
-      // ---- Card 3: Pagamentos recebidos ----
       const taxaCobrancaAno =
         previstoAnoAtual > 0
           ? (realizadoAnoAtual / previstoAnoAtual) * 100
@@ -676,144 +825,27 @@
           )}% (realizado vs previsto).`;
       }
 
-      // depois de ter a cache preenchida, desenhar tabelas previsto vs realizado
-      renderPrevistoRealizado();
+      // atualizar também os cartões de "Mensalidades em falta/pagas"
+      renderResumoMensal();
     } catch (err) {
       console.error("Erro inesperado em loadKpisFinanceiros", err);
     }
   }
 
-  // ---------- Tabelas de Previsto vs Realizado (por aluno e por grupo) ----------
-  function renderPrevistoRealizado() {
-  const tbodyAlunos = document.querySelector("#tblPrevRealAlunos tbody");
-  const tbodyGrupos = document.querySelector("#tblPrevRealGrupos tbody");
+  // ---------- CRIAR ALUNO (EDGE FUNCTION) ----------
+  async function createAluno(payload){
+    const { data, error } = await supabase.functions.invoke("expl-alunos", {
+      body: { action: "create_aluno", payload }
+    });
 
-  if (!tbodyAlunos || !tbodyGrupos) return;
-
-  const now = new Date();
-  const anoAtual = now.getFullYear();
-
-  // --- 1) Agregação por aluno (ano atual) ---
-  const porAluno = new Map(); // key: id_aluno -> { nome, previsto, pago }
-
-  (PAGAMENTOS_CACHE || []).forEach((p) => {
-    if (p.ano !== anoAtual) return;
-
-    const id = p.id_aluno;
-    if (!id) return;
-
-    const previsto = Number(p.valor_previsto) || 0;
-    const pago     = Number(p.valor_pago) || 0;
-
-    if (!porAluno.has(id)) {
-      porAluno.set(id, {
-        id_aluno: id,
-        nome: p.aluno_nome || "Aluno",
-        previsto: 0,
-        pago: 0,
-      });
+    if (error) {
+      console.error(error);
+      return { ok:false, error: error.message };
     }
-    const reg = porAluno.get(id);
-    reg.previsteo;
-    reg.previsto += previsto;
-    reg.pago     += pago;
-  });
 
-  // se não houver dados, mostra mensagem amigável
-  if (!porAluno.size) {
-    tbodyAlunos.innerHTML =
-      '<tr><td colspan="5">Ainda não existem registos de faturação para este ano.</td></tr>';
-    tbodyGrupos.innerHTML =
-      '<tr><td colspan="5">Ainda não existem registos de faturação para este ano.</td></tr>';
-    return;
+    return { ok: true, data };
   }
 
-  // ordenar alunos pelo previsto (descendente)
-  const listaAlunos = Array.from(porAluno.values()).sort(
-    (a, b) => b.previsto - a.previsto
-  );
-
-  tbodyAlunos.innerHTML = listaAlunos
-    .map((a) => {
-      const falta = Math.max(a.previsto - a.pago, 0);
-      const perc  = a.previsto > 0 ? (a.pago / a.previsto) * 100 : 0;
-
-      return `
-        <tr>
-          <td>${a.nome}</td>
-          <td>€ ${a.previsto.toFixed(2)}</td>
-          <td>€ ${a.pago.toFixed(2)}</td>
-          <td>${perc.toFixed(0)}%</td>
-          <td>€ ${falta.toFixed(2)}</td>
-        </tr>
-      `;
-    })
-    .join("");
-
-  // --- 2) Agregação por grupo (ano de escolaridade) ---
-  // usa ALUNOS_CACHE para saber o ano de cada aluno
-  const anoPorAluno = new Map();
-  (ALUNOS_CACHE || []).forEach((al) => {
-    if (al.id_aluno) {
-      anoPorAluno.set(al.id_aluno, al.ano ?? al.ano_escolaridade ?? "—");
-    }
-  });
-
-  const porGrupo = new Map(); // key: ano -> { ano, previsto, pago }
-
-  listaAlunos.forEach((a) => {
-    const anoEsc = anoPorAluno.get(a.id_aluno) ?? "—";
-    if (!porGrupo.has(anoEsc)) {
-      porGrupo.set(anoEsc, {
-        ano: anoEsc,
-        previsto: 0,
-        pago: 0,
-      });
-    }
-    const g = porGrupo.get(anoEsc);
-    g.previsto += a.previsto;
-    g.pago     += a.pago;
-  });
-
-  const listaGrupos = Array.from(porGrupo.values()).sort((a, b) => {
-    // ordenar por ano numérico quando possível
-    const na = Number(a.ano);
-    const nb = Number(b.ano);
-    if (!isNaN(na) && !isNaN(nb)) return na - nb;
-    return String(a.ano).localeCompare(String(b.ano));
-  });
-
-  tbodyGrupos.innerHTML = listaGrupos
-    .map((g) => {
-      const falta = Math.max(g.previsto - g.pago, 0);
-      const perc  = g.previsto > 0 ? (g.pago / g.previsto) * 100 : 0;
-
-      return `
-        <tr>
-          <td>${g.ano}</td>
-          <td>€ ${g.previsto.toFixed(2)}</td>
-          <td>€ ${g.pago.toFixed(2)}</td>
-          <td>${perc.toFixed(0)}%</td>
-          <td>€ ${falta.toFixed(2)}</td>
-        </tr>
-      `;
-    })
-    .join("");
-}
-
-  // ---------- CRIAR ALUNO (EDGE FUNCTION) ----------
-    async function createAluno(payload){
-      const { data, error } = await supabase.functions.invoke("expl-alunos", {
-        body: { action: "create_aluno", payload }
-      });
-
-      if (error) {
-        console.error(error);
-        return { ok:false, error: error.message };
-      }
-
-      return { ok: true, data };
-    }
   // ---------- login ----------
   formLogin?.addEventListener('submit', async (ev) => {
     ev.preventDefault();
@@ -918,91 +950,88 @@
       return;
     }
 
-  const f = ev.target;
+    const f = ev.target;
 
-  const payload = {
-    nome: f.nome?.value.trim() || "",
-    apelido: f.apelido?.value.trim() || null,
-    telemovel: f.telemovel?.value.trim() || null,
-    ano: f.ano?.value ? Number(f.ano.value) : null,
-    idade: f.idade?.value ? Number(f.idade.value) : null,
-    dia_semana_preferido: f.dia_semana_preferido?.value.trim() || null,
-    valor_explicacao: f.valor_explicacao?.value
-      ? Number(f.valor_explicacao.value)
-      : null,
-    sessoes_mes: f.sessoes_mes?.value
-      ? Number(f.sessoes_mes.value)
-      : null,
-    nome_pai_cache: f.nome_pai_cache?.value.trim() || null,
-    contacto_pai_cache: f.contacto_pai_cache?.value.trim() || null,
-    email: f.email?.value.trim() || "",
-    username: f.username?.value.trim() || null,
-    password: f.password?.value || "",
-    is_active: true,
-  };
+    const payload = {
+      nome: f.nome?.value.trim() || "",
+      apelido: f.apelido?.value.trim() || null,
+      telemovel: f.telemovel?.value.trim() || null,
+      ano: f.ano?.value ? Number(f.ano.value) : null,
+      idade: f.idade?.value ? Number(f.idade.value) : null,
+      dia_semana_preferido: f.dia_semana_preferido?.value.trim() || null,
+      valor_explicacao: f.valor_explicacao?.value
+        ? Number(f.valor_explicacao.value)
+        : null,
+      sessoes_mes: f.sessoes_mes?.value
+        ? Number(f.sessoes_mes.value)
+        : null,
+      nome_pai_cache: f.nome_pai_cache?.value.trim() || null,
+      contacto_pai_cache: f.contacto_pai_cache?.value.trim() || null,
+      email: f.email?.value.trim() || "",
+      username: f.username?.value.trim() || null,
+      password: f.password?.value || "",
+      is_active: true,
+    };
 
-  if (!payload.nome || !payload.email || !payload.password) {
-    msgNewAluno.textContent =
-      "Preenche pelo menos Nome, Email e Password.";
-    return;
-  }
-
-  btnCreate.disabled = true;
-  msgNewAluno.textContent = "A criar aluno...";
-
-  // ⬇️ AQUI é onde definimos *data* e *error*
-  const { data, error } = await supabase.functions.invoke("expl-alunos", {
-    body: { action: "create_aluno", payload },
-  });
-
-  // Tratamento de erro com leitura do body da Edge Function
-  if (error) {
-    let extra = "";
-
-    if (error.context) {
-      try {
-        // Response do fetch
-        const resp = error.context;
-        const raw = await resp.text();
-        console.log("Erro bruto da função expl-alunos:", raw);
-
-        try {
-          const json = JSON.parse(raw);
-          if (json?.error) {
-            extra = " " + json.error;
-          } else {
-            extra = " " + raw;
-          }
-        } catch {
-          extra = " " + raw;
-        }
-      } catch (e) {
-        console.warn("Não consegui ler o body da resposta da função", e);
-      }
+    if (!payload.nome || !payload.email || !payload.password) {
+      msgNewAluno.textContent =
+        "Preenche pelo menos Nome, Email e Password.";
+      return;
     }
 
-    console.error("create_aluno error", error);
-    msgNewAluno.textContent =
-      "Não foi possível criar o aluno." + extra;
-    btnCreate.disabled = false;
-    return;
-  }
+    btnCreate.disabled = true;
+    msgNewAluno.textContent = "A criar aluno...";
 
-  // Sucesso
-  msgNewAluno.style.color = "#126b3a";
-  msgNewAluno.textContent = "Aluno criado com sucesso!";
-  f.reset();
-  await loadAlunos();
-  btnCreate.disabled = false;
-});
+    const { data, error } = await supabase.functions.invoke("expl-alunos", {
+      body: { action: "create_aluno", payload },
+    });
+
+    if (error) {
+      let extra = "";
+
+      if (error.context) {
+        try {
+          const resp = error.context;
+          const raw = await resp.text();
+          console.log("Erro bruto da função expl-alunos:", raw);
+
+          try {
+            const json = JSON.parse(raw);
+            if (json?.error) {
+              extra = " " + json.error;
+            } else {
+              extra = " " + raw;
+            }
+          } catch {
+            extra = " " + raw;
+          }
+        } catch (e) {
+          console.warn("Não consegui ler o body da resposta da função", e);
+        }
+      }
+
+      console.error("create_aluno error", error);
+      msgNewAluno.textContent =
+        "Não foi possível criar o aluno." + extra;
+      btnCreate.disabled = false;
+      return;
+    }
+
+    msgNewAluno.style.color = "#126b3a";
+    msgNewAluno.textContent = "Aluno criado com sucesso!";
+    f.reset();
+    await loadAlunos();
+    await loadKpisFinanceiros();
+    btnCreate.disabled = false;
+  });
 
   // ---------- navegação no header ----------
   const tabs = document.querySelectorAll('.expl-nav-btn');
   const sectionMap = {
-    dashboard:  document.getElementById('expl-sec-dashboard'),
+    dashboard:  document.querySelector('.expl-body'),
     alunos:     document.getElementById('expl-sec-alunos'),
     calendario: document.getElementById('expl-sec-calendario'),
-    faturacao:  document.getElementById('expl-sec-dashboard'),
+    faturacao:  document.querySelector('.expl-body'),
     relatorios: document.getElementById('expl-sec-relatorios'),
   };
 
@@ -1026,6 +1055,153 @@
   supabase.auth.onAuthStateChange(async (_evt, session) => {
     if (!session?.user){
       setState({ isExpl:false, isAuthed:false });
+    }
+  });
+
+  // -------- Iniciar faturação do aluno selecionado --------
+  btnIniciarFat?.addEventListener("click", async () => {
+    if (!ALUNO_ATUAL || !ALUNO_ATUAL.id_aluno) {
+      alert("Seleciona um aluno na lista primeiro.");
+      return;
+    }
+
+    const agora = new Date();
+    const anoAtual = agora.getFullYear();
+    const mesAtual = agora.getMonth() + 1;
+
+    const anoStr = prompt("Ano de início da faturação:", String(anoAtual));
+    const mesStr = prompt("Mês de início (1-12):", String(mesAtual));
+    const diaStr = prompt("Dia de pagamento (1-31):", "5");
+
+    const ano = Number(anoStr);
+    const mes = Number(mesStr);
+    const dia = Number(diaStr);
+
+    if (!ano || !mes || mes < 1 || mes > 12 || !dia || dia < 1 || dia > 31) {
+      alert("Valores de ano/mês/dia inválidos.");
+      return;
+    }
+
+    msgNewAluno.textContent = "A iniciar faturação...";
+    try {
+      const { data, error } = await supabase.functions.invoke("expl-alunos", {
+        body: {
+          action: "iniciar_faturacao_aluno",
+          payload: {
+            aluno_id: ALUNO_ATUAL.id_aluno,
+            ano,
+            mes,
+            dia_pagamento: dia,
+          },
+        },
+      });
+
+      if (error) {
+        let extra = "";
+        if (error.context) {
+          try {
+            const raw = await error.context.text();
+            console.log("Erro iniciar_faturacao_aluno:", raw);
+            try {
+              const json = JSON.parse(raw);
+              if (json?.error) extra = " " + json.error;
+            } catch {
+              extra = " " + raw;
+            }
+          } catch {}
+        }
+        alert("Não foi possível iniciar a faturação." + extra);
+        msgNewAluno.textContent = "";
+        return;
+      }
+
+      alert("Faturação iniciada para este aluno.");
+      msgNewAluno.textContent = "";
+      await loadKpisFinanceiros();
+      await loadAlunos();
+      const alunoAtualizado = ALUNOS_CACHE.find(
+        (a) => String(a.id_aluno) === String(ALUNO_ATUAL.id_aluno)
+      );
+      if (alunoAtualizado) {
+        mostrarPainelAluno(alunoAtualizado);
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Erro inesperado ao iniciar faturação.");
+      msgNewAluno.textContent = "";
+    }
+  });
+
+  // -------- Registar pagamento para o aluno selecionado --------
+  btnRegistarPag?.addEventListener("click", async () => {
+    if (!ALUNO_ATUAL || !ALUNO_ATUAL.id_aluno) {
+      alert("Seleciona um aluno na lista primeiro.");
+      return;
+    }
+
+    const agora = new Date();
+    const anoAtual = agora.getFullYear();
+    const mesAtual = agora.getMonth() + 1;
+
+    const anoStr = prompt("Ano do pagamento:", String(anoAtual));
+    const mesStr = prompt("Mês do pagamento (1-12):", String(mesAtual));
+    const valorStr = prompt("Valor a registar (€):", "");
+
+    const ano = Number(anoStr);
+    const mes = Number(mesStr);
+    const valor = Number(valorStr);
+
+    if (!ano || !mes || mes < 1 || mes > 12 || !valor || valor <= 0) {
+      alert("Valores de ano/mês/valor inválidos.");
+      return;
+    }
+
+    msgNewAluno.textContent = "A registar pagamento...";
+    try {
+      const { data, error } = await supabase.functions.invoke("expl-alunos", {
+        body: {
+          action: "registar_pagamento_aluno",
+          payload: {
+            aluno_id: ALUNO_ATUAL.id_aluno,
+            ano,
+            mes,
+            valor,
+          },
+        },
+      });
+
+      if (error) {
+        let extra = "";
+        if (error.context) {
+          try {
+            const raw = await error.context.text();
+            console.log("Erro registar_pagamento_aluno:", raw);
+            try {
+              const json = JSON.parse(raw);
+              if (json?.error) extra = " " + json.error;
+            } catch {
+              extra = " " + raw;
+            }
+          } catch {}
+        }
+        alert("Não foi possível registar o pagamento." + extra);
+        msgNewAluno.textContent = "";
+        return;
+      }
+
+      alert("Pagamento registado com sucesso.");
+      msgNewAluno.textContent = "";
+      await loadKpisFinanceiros();
+      const alunoAtualizado = ALUNOS_CACHE.find(
+        (a) => String(a.id_aluno) === String(ALUNO_ATUAL.id_aluno)
+      );
+      if (alunoAtualizado) {
+        mostrarPainelAluno(alunoAtualizado);
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Erro inesperado ao registar pagamento.");
+      msgNewAluno.textContent = "";
     }
   });
 </script>
