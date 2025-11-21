@@ -1,112 +1,138 @@
 // @ts-nocheck
 // Edge Function: expl-alunos
-// Ações suportadas: list_alunos | create_aluno
-
+// Ações suportadas:
+//   - list_alunos
+//   - create_aluno
+//   - update_aluno
+//   - iniciar_faturacao_aluno
+//   - registar_pagamento_aluno
+//   - update_pagamento_aluno
+//   - list_sessoes_aluno
+//   - upsert_sessao_aluno
+//   - delete_sessao_aluno
 import { serve } from "https://deno.land/std@0.223.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.47.10?target=deno";
-
-const URL  = Deno.env.get("SUPABASE_URL");
+const URL = Deno.env.get("SUPABASE_URL");
 const ANON = Deno.env.get("SUPABASE_ANON_KEY");
-const SVC  = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-
+const SVC = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 if (!URL || !ANON || !SVC) {
   throw new Error("Faltam SUPABASE_URL / SUPABASE_ANON_KEY / SUPABASE_SERVICE_ROLE_KEY");
 }
-
 function cors(origin = "*") {
   return {
     "Access-Control-Allow-Origin": origin,
-    "Access-Control-Allow-Headers":
-      "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Content-Type": "application/json",
+    "Content-Type": "application/json"
   };
 }
-
-serve(async (req) => {
+serve(async (req)=>{
   const origin = req.headers.get("Origin") ?? "*";
-
   // Preflight CORS
   if (req.method === "OPTIONS") {
-    return new Response("ok", { status: 200, headers: cors(origin) });
+    return new Response("ok", {
+      status: 200,
+      headers: cors(origin)
+    });
   }
-
   if (req.method !== "POST") {
-    return new Response(
-      JSON.stringify({ error: "Método não suportado. Usa POST." }),
-      { status: 405, headers: cors(origin) },
-    );
+    return new Response(JSON.stringify({
+      error: "Método não suportado. Usa POST."
+    }), {
+      status: 405,
+      headers: cors(origin)
+    });
   }
-
   try {
-    // 1) Cliente autenticado (JWT do explicador) – usa ANON
-    const userClient = createClient(URL, ANON, {
-      global: {
-        headers: {
-          Authorization: req.headers.get("Authorization") || "",
-        },
-      },
-      auth: { persistSession: false },
-    });
-
-    const { data: me, error: meErr } = await userClient.auth.getUser();
-    if (meErr || !me?.user) {
-      console.error("auth.getUser error", meErr);
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+    // 1) Extrair token do header Authorization
+    const authHeader = req.headers.get("Authorization") ?? "";
+    const token = authHeader.startsWith("Bearer ") ? authHeader.slice("Bearer ".length) : "";
+    if (!token) {
+      console.error("Authorization header em falta ou sem Bearer token");
+      return new Response(JSON.stringify({
+        error: "Unauthorized"
+      }), {
         status: 401,
-        headers: cors(origin),
+        headers: cors(origin)
       });
     }
-    const myUid = me.user.id;
-
-    // 2) Service client (ignora RLS) – usa SERVICE_ROLE
-    const svc = createClient(URL, SVC, { auth: { persistSession: false } });
-
-    // 3) Confirmar role = explicador + obter ref_id (id_explicador) em app_users
-    const { data: roleRow, error: roleErr } = await svc
-      .from("app_users")
-      .select("role, ref_id")
-      .eq("user_id", myUid)
-      .maybeSingle();
-
-    if (roleErr) {
-      console.error("Erro a ler app_users", roleErr);
-      return new Response(JSON.stringify({ error: roleErr.message }), {
-        status: 400,
-        headers: cors(origin),
-      });
-    }
-
-    if (!roleRow || roleRow.role !== "explicador") {
-      console.error("Utilizador sem role de explicador", myUid, roleRow);
-      return new Response(JSON.stringify({ error: "Forbidden" }), {
-        status: 403,
-        headers: cors(origin),
-      });
-    }
-
-    const myExplId = roleRow.ref_id; // deve apontar para explicadores.id_explicador
-
-    // 4) Ler ação/payload do body
-    const { action, payload } = await req.json().catch((e) => {
-      console.error("Body JSON inválido", e);
-      return { action: null, payload: null };
+    // 2) Cliente autenticado (usa ANON + token)
+    const userClient = createClient(URL, ANON, {
+      auth: {
+        persistSession: false
+      }
     });
-
-    if (!action) {
-      return new Response(JSON.stringify({ error: "Campo 'action' em falta" }), {
-        status: 400,
-        headers: cors(origin),
+    const { data: { user: me }, error: meErr } = await userClient.auth.getUser(token);
+    if (meErr || !me) {
+      console.error("auth.getUser error", meErr);
+      return new Response(JSON.stringify({
+        error: "Unauthorized"
+      }), {
+        status: 401,
+        headers: cors(origin)
       });
     }
-
+    const myUid = me.id;
+    // 3) Service client (ignora RLS)
+    const svc = createClient(URL, SVC, {
+      auth: {
+        persistSession: false
+      }
+    });
+    // 4) Encontrar o explicador na tabela "explicadores"
+    const { data: explRow, error: explErr } = await svc.from("explicadores").select("id_explicador").eq("user_id", myUid).maybeSingle();
+    if (explErr) {
+      console.error("Erro a carregar explicador", explErr);
+      return new Response(JSON.stringify({
+        error: explErr.message
+      }), {
+        status: 400,
+        headers: cors(origin)
+      });
+    }
+    if (!explRow) {
+      console.error("Nenhum explicador associado a este user_id", myUid);
+      return new Response(JSON.stringify({
+        error: "Explicador não encontrado para este utilizador"
+      }), {
+        status: 403,
+        headers: cors(origin)
+      });
+    }
+    const myExplId = explRow.id_explicador;
+    // 5) Ler ação/payload do body
+    const { action, payload } = await req.json().catch((e)=>{
+      console.error("Body JSON inválido", e);
+      return {
+        action: null,
+        payload: null
+      };
+    });
+    if (!action) {
+      return new Response(JSON.stringify({
+        error: "Campo 'action' em falta"
+      }), {
+        status: 400,
+        headers: cors(origin)
+      });
+    }
+    /* ======================================================
+       HELPER: carregar aluno do explicador
+       ====================================================== */ async function getAlunoDoExpl(alunoId) {
+      const { data, error } = await svc.from("alunos").select("id_aluno, id_explicador, nome, apelido, valor_explicacao, sessoes_mes, faturacao_ativa, faturacao_inicio, dia_pagamento").eq("id_aluno", alunoId).eq("id_explicador", myExplId).maybeSingle();
+      if (error) {
+        console.error("Erro a carregar aluno", error);
+        throw new Error(error.message);
+      }
+      if (!data) {
+        throw new Error("Aluno não encontrado para este explicador.");
+      }
+      return data;
+    }
     /* =======================
        LISTAR ALUNOS
-       ======================= */
-    if (action === "list_alunos") {
-      const { data, error } = await svc
-        .from("alunos")
-        .select(`
+       ======================= */ if (action === "list_alunos") {
+      const { data, error } = await svc.from("alunos").select(`
           id_aluno,
           nome,
           apelido,
@@ -122,166 +148,701 @@ serve(async (req) => {
           id_explicador,
           user_id,
           is_active,
-          username
-        `)
-        .eq("id_explicador", myExplId)
-        .order("nome", { ascending: true });
-
+          username,
+          faturacao_ativa,
+          faturacao_inicio,
+          dia_pagamento
+        `).eq("id_explicador", myExplId).order("nome", {
+        ascending: true
+      });
       if (error) {
         console.error("Erro em list_alunos", error);
-        return new Response(JSON.stringify({ error: error.message }), {
+        return new Response(JSON.stringify({
+          error: error.message
+        }), {
           status: 400,
-          headers: cors(origin),
+          headers: cors(origin)
         });
       }
-
-      // O frontend já espera exatamente estes campos
       return new Response(JSON.stringify(data ?? []), {
         status: 200,
-        headers: cors(origin),
+        headers: cors(origin)
       });
     }
-
     /* =======================
        CRIAR ALUNO
-       ======================= */
-    if (action === "create_aluno") {
+       ======================= */ if (action === "create_aluno") {
       const p = payload || {};
-
-      // Normalizar/limpar campos
-      const aluno = {
-        nome: (p.nome || "").trim(),
-        apelido: p.apelido ? String(p.apelido).trim() : null,
-        telemovel: p.telemovel ? String(p.telemovel).trim() : null,
-        ano: p.ano != null && p.ano !== "" ? Number(p.ano) : null,
-        idade: p.idade != null && p.idade !== "" ? Number(p.idade) : null,
-        dia_semana_preferido: p.dia_semana_preferido
-          ? String(p.dia_semana_preferido).trim()
-          : null,
-        valor_explicacao:
-          p.valor_explicacao != null && p.valor_explicacao !== ""
-            ? Number(p.valor_explicacao)
-            : null,
-        sessoes_mes:
-          p.sessoes_mes != null && p.sessoes_mes !== ""
-            ? Number(p.sessoes_mes)
-            : null,
-        nome_pai_cache: p.nome_pai_cache
-          ? String(p.nome_pai_cache).trim()
-          : null,
-        contacto_pai_cache: p.contacto_pai_cache
-          ? String(p.contacto_pai_cache).trim()
-          : null,
-        email: (p.email || "").trim(),
-        username: p.username ? String(p.username).trim() : null,
-        password: String(p.password || ""),
-        is_active: typeof p.is_active === "boolean" ? p.is_active : true,
-      };
-
-      if (!aluno.nome || !aluno.email || !aluno.password) {
-        return new Response(
-          JSON.stringify({
-            error: "nome, email e password são obrigatórios",
-          }),
-          { status: 400, headers: cors(origin) },
-        );
-      }
-
-      // 1) Criar utilizador Auth (aluno)
-      const { data: au, error: authErr } = await svc.auth.admin.createUser({
-        email: aluno.email,
-        password: aluno.password,
-        email_confirm: true,
-      });
-
-      if (authErr) {
-        console.error("Erro em createUser (aluno)", authErr);
-        return new Response(JSON.stringify({ error: authErr.message }), {
+      const nome = (p.nome || "").trim();
+      const email = (p.email || "").trim();
+      const password = String(p.password || "");
+      if (!nome || !email || !password) {
+        return new Response(JSON.stringify({
+          error: "nome, email e password são obrigatórios"
+        }), {
           status: 400,
-          headers: cors(origin),
+          headers: cors(origin)
         });
       }
-
+      // 1) Criar utilizador Auth para o aluno
+      const { data: au, error: authErr } = await svc.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true
+      });
+      if (authErr) {
+        console.error("Erro em createUser (aluno)", authErr);
+        return new Response(JSON.stringify({
+          error: authErr.message
+        }), {
+          status: 400,
+          headers: cors(origin)
+        });
+      }
       const alunoUid = au?.user?.id;
       if (!alunoUid) {
         console.error("createUser não devolveu user.id");
-        return new Response(
-          JSON.stringify({ error: "createUser não devolveu user.id" }),
-          { status: 400, headers: cors(origin) },
-        );
-      }
-
-      // 2) Inserir em "alunos"
-      const { data: row, error: insErr } = await svc
-        .from("alunos")
-        .insert({
-          id_explicador: myExplId,
-          user_id: alunoUid,
-          nome: aluno.nome,
-          apelido: aluno.apelido,
-          telemovel: aluno.telemovel,
-          ano: aluno.ano,
-          idade: aluno.idade,
-          dia_semana_preferido: aluno.dia_semana_preferido,
-          valor_explicacao: aluno.valor_explicacao,
-          sessoes_mes: aluno.sessoes_mes,
-          nome_pai_cache: aluno.nome_pai_cache,
-          contacto_pai_cache: aluno.contacto_pai_cache,
-          email: aluno.email,
-          is_active: aluno.is_active,
-          username: aluno.username,
-        })
-        .select("id_aluno")
-        .single();
-
-      if (insErr) {
-        console.error("Erro ao inserir em alunos", insErr);
-        await svc.auth.admin.deleteUser(alunoUid).catch(() => {});
-        return new Response(JSON.stringify({ error: insErr.message }), {
+        return new Response(JSON.stringify({
+          error: "createUser não devolveu user.id"
+        }), {
           status: 400,
-          headers: cors(origin),
+          headers: cors(origin)
         });
       }
-
+      // 2) Inserir em "alunos"
+      const { data: row, error: insErr } = await svc.from("alunos").insert({
+        id_explicador: myExplId,
+        user_id: alunoUid,
+        nome,
+        apelido: p.apelido?.trim() || null,
+        telemovel: p.telemovel?.trim() || null,
+        ano: p.ano != null && p.ano !== "" ? Number(p.ano) : null,
+        idade: p.idade != null && p.idade !== "" ? Number(p.idade) : null,
+        dia_semana_preferido: p.dia_semana_preferido?.trim() || null,
+        valor_explicacao: p.valor_explicacao != null && p.valor_explicacao !== "" ? Number(p.valor_explicacao) : null,
+        sessoes_mes: p.sessoes_mes != null && p.sessoes_mes !== "" ? Number(p.sessoes_mes) : null,
+        nome_pai_cache: p.nome_pai_cache?.trim() || null,
+        contacto_pai_cache: p.contacto_pai_cache?.trim() || null,
+        email,
+        username: p.username?.trim() || null,
+        is_active: p.is_active ?? true,
+        faturacao_ativa: false,
+        faturacao_inicio: null,
+        dia_pagamento: null
+      }).select("id_aluno").single();
+      if (insErr) {
+        console.error("Erro ao inserir em alunos", insErr);
+        await svc.auth.admin.deleteUser(alunoUid).catch(()=>{});
+        return new Response(JSON.stringify({
+          error: insErr.message
+        }), {
+          status: 400,
+          headers: cors(origin)
+        });
+      }
       // 3) Registo em app_users (role = aluno)
       const { error: roleInsErr } = await svc.from("app_users").insert({
         user_id: alunoUid,
         role: "aluno",
-        ref_id: row.id_aluno,
+        ref_id: row.id_aluno
       });
-
       if (roleInsErr) {
         console.error("Erro ao inserir em app_users (aluno)", roleInsErr);
-        await svc.from("alunos").delete().eq("id_aluno", row.id_aluno).catch(() => {});
-        await svc.auth.admin.deleteUser(alunoUid).catch(() => {});
-        return new Response(JSON.stringify({ error: roleInsErr.message }), {
+        await svc.from("alunos").delete().eq("id_aluno", row.id_aluno).catch(()=>{});
+        await svc.auth.admin.deleteUser(alunoUid).catch(()=>{});
+        return new Response(JSON.stringify({
+          error: roleInsErr.message
+        }), {
           status: 400,
-          headers: cors(origin),
+          headers: cors(origin)
         });
       }
-
-      return new Response(JSON.stringify({ id_aluno: row.id_aluno }), {
+      return new Response(JSON.stringify({
+        id_aluno: row.id_aluno
+      }), {
         status: 201,
-        headers: cors(origin),
+        headers: cors(origin)
       });
     }
-
+    /* =======================
+       ATUALIZAR ALUNO
+       ======================= */ if (action === "update_aluno") {
+      const p = payload || {};
+      const id_aluno = p.id_aluno;
+      // 1) validar id_aluno (UUID string)
+      if (!id_aluno || typeof id_aluno !== "string") {
+        return new Response(JSON.stringify({
+          error: "id_aluno em falta ou inválido"
+        }), {
+          status: 400,
+          headers: cors(origin)
+        });
+      }
+      // 2) garantir que o aluno existe e pertence a ESTE explicador
+      const { data: alunoRow, error: alunoErr } = await svc.from("alunos").select("id_aluno, id_explicador, user_id, email").eq("id_aluno", id_aluno).maybeSingle();
+      if (alunoErr) {
+        console.error("update_aluno: erro ao carregar aluno", alunoErr);
+        return new Response(JSON.stringify({
+          error: alunoErr.message
+        }), {
+          status: 400,
+          headers: cors(origin)
+        });
+      }
+      if (!alunoRow) {
+        return new Response(JSON.stringify({
+          error: "Aluno não encontrado"
+        }), {
+          status: 404,
+          headers: cors(origin)
+        });
+      }
+      if (alunoRow.id_explicador !== myExplId) {
+        return new Response(JSON.stringify({
+          error: "Forbidden"
+        }), {
+          status: 403,
+          headers: cors(origin)
+        });
+      }
+      // 3) preparar dados para UPDATE na tabela alunos
+      const updates = {};
+      const trimOrNull = (v)=>typeof v === "string" ? v.trim() || null : v === "" ? null : v;
+      if (typeof p.nome !== "undefined") updates.nome = trimOrNull(p.nome);
+      if (typeof p.apelido !== "undefined") updates.apelido = trimOrNull(p.apelido);
+      if (typeof p.telemovel !== "undefined") updates.telemovel = trimOrNull(p.telemovel);
+      if (typeof p.ano !== "undefined") {
+        updates.ano = p.ano === null || p.ano === "" ? null : Number(p.ano);
+      }
+      if (typeof p.idade !== "undefined") {
+        updates.idade = p.idade === null || p.idade === "" ? null : Number(p.idade);
+      }
+      if (typeof p.dia_semana_preferido !== "undefined") {
+        updates.dia_semana_preferido = trimOrNull(p.dia_semana_preferido);
+      }
+      if (typeof p.valor_explicacao !== "undefined") {
+        updates.valor_explicacao = p.valor_explicacao === null || p.valor_explicacao === "" ? null : Number(p.valor_explicacao);
+      }
+      if (typeof p.sessoes_mes !== "undefined") {
+        updates.sessoes_mes = p.sessoes_mes === null || p.sessoes_mes === "" ? null : Number(p.sessoes_mes);
+      }
+      if (typeof p.nome_pai_cache !== "undefined") {
+        updates.nome_pai_cache = trimOrNull(p.nome_pai_cache);
+      }
+      if (typeof p.contacto_pai_cache !== "undefined") {
+        updates.contacto_pai_cache = trimOrNull(p.contacto_pai_cache);
+      }
+      if (typeof p.username !== "undefined") {
+        updates.username = trimOrNull(p.username);
+      }
+      if (typeof p.is_active !== "undefined") {
+        updates.is_active = !!p.is_active;
+      }
+      // 4) tratar email / password também na AUTH se for preciso
+      let newEmail;
+      if (typeof p.email !== "undefined") {
+        const e = String(p.email || "").trim();
+        updates.email = e || null;
+        if (e && e !== alunoRow.email) {
+          newEmail = e;
+        }
+      }
+      const newPassword = typeof p.password === "string" && p.password.trim().length >= 6 ? p.password.trim() : undefined;
+      // 5) UPDATE na tabela alunos
+      if (Object.keys(updates).length > 0) {
+        const { error: updErr } = await svc.from("alunos").update(updates).eq("id_aluno", id_aluno);
+        if (updErr) {
+          console.error("update_aluno: erro no update alunos", updErr);
+          return new Response(JSON.stringify({
+            error: updErr.message
+          }), {
+            status: 400,
+            headers: cors(origin)
+          });
+        }
+      }
+      // 6) Atualizar utilizador AUTH (email e/ou password)
+      if (newEmail || newPassword) {
+        const authUpdate = {};
+        if (newEmail) authUpdate.email = newEmail;
+        if (newPassword) authUpdate.password = newPassword;
+        const { error: authUpdErr } = await svc.auth.admin.updateUserById(alunoRow.user_id, authUpdate);
+        if (authUpdErr) {
+          console.error("update_aluno: erro ao atualizar Auth", authUpdErr);
+          return new Response(JSON.stringify({
+            error: authUpdErr.message
+          }), {
+            status: 400,
+            headers: cors(origin)
+          });
+        }
+      }
+      return new Response(JSON.stringify({
+        id_aluno
+      }), {
+        status: 200,
+        headers: cors(origin)
+      });
+    }
+    /* =======================
+   INICIAR FATURAÇÃO DO ALUNO
+   payload: { aluno_id, ano, mes, dia_pagamento }
+   ======================= */ if (action === "iniciar_faturacao_aluno") {
+      const p = payload || {};
+      const alunoId = String(p.aluno_id || "").trim();
+      const ano = Number(p.ano);
+      const mes = Number(p.mes);
+      const diaPag = p.dia_pagamento != null ? Number(p.dia_pagamento) : 1;
+      // validações básicas
+      if (!alunoId || !ano || !mes || mes < 1 || mes > 12) {
+        return new Response(JSON.stringify({
+          error: "aluno_id, ano e mes (1-12) são obrigatórios"
+        }), {
+          status: 400,
+          headers: cors(origin)
+        });
+      }
+      if (isNaN(diaPag) || diaPag < 1 || diaPag > 31) {
+        return new Response(JSON.stringify({
+          error: "dia_pagamento deve ser entre 1 e 31"
+        }), {
+          status: 400,
+          headers: cors(origin)
+        });
+      }
+      // garante que o aluno é mesmo deste explicador + lê dados base
+      const aluno = await getAlunoDoExpl(alunoId);
+      const valorExp = Number(aluno.valor_explicacao) || 0;
+      const sessoesMes = Number(aluno.sessoes_mes) || 0;
+      const valorPrevDefault = valorExp * sessoesMes; // pode ser 0
+      // primeiro dia do mês/ano escolhidos (YYYY-MM-DD)
+      const inicio = new Date(ano, mes - 1, 1).toISOString().slice(0, 10);
+      // 1) Atualizar o aluno para marcar faturação ativa
+      const { error: upAlunoErr } = await svc.from("alunos").update({
+        faturacao_ativa: true,
+        faturacao_inicio: inicio,
+        dia_pagamento: diaPag
+      }).eq("id_aluno", alunoId).eq("id_explicador", myExplId);
+      if (upAlunoErr) {
+        console.error("Erro ao atualizar aluno (faturacao_ativa)", upAlunoErr);
+        return new Response(JSON.stringify({
+          error: upAlunoErr.message
+        }), {
+          status: 400,
+          headers: cors(origin)
+        });
+      }
+      // 2) Criar/ajustar o registo de pagamentos desse mês
+      const { data: pagRow, error: pagErr } = await svc.from("pagamentos").select("valor_previsto, valor_pago").eq("id_aluno", alunoId).eq("id_explicador", myExplId).eq("ano", ano).eq("mes", mes).maybeSingle();
+      if (pagErr) {
+        console.error("Erro ao ler pagamentos em iniciar_faturacao_aluno", pagErr);
+        return new Response(JSON.stringify({
+          error: pagErr.message
+        }), {
+          status: 400,
+          headers: cors(origin)
+        });
+      }
+      if (!pagRow) {
+        // ainda não havia registo para esse mês -> criar
+        const estadoInicial = valorPrevDefault <= 0 ? "PAGO" : "PENDENTE"; // se não há valor previsto, considera “sem dívida”
+        const { error: insPagErr } = await svc.from("pagamentos").insert({
+          id_aluno: alunoId,
+          id_explicador: myExplId,
+          ano,
+          mes,
+          valor_previsto: valorPrevDefault,
+          valor_pago: 0,
+          data_pagamento: null,
+          estado: estadoInicial
+        });
+        if (insPagErr) {
+          console.error("Erro a criar pagamento inicial", insPagErr);
+          return new Response(JSON.stringify({
+            error: insPagErr.message
+          }), {
+            status: 400,
+            headers: cors(origin)
+          });
+        }
+      } else {
+        // já existe registo para esse mês -> atualizar valor_previsto e estado
+        const atualPago = Number(pagRow.valor_pago) || 0;
+        const novoPrevisto = valorPrevDefault || Number(pagRow.valor_previsto) || 0;
+        let novoEstado = "PENDENTE";
+        if (atualPago > 0 && atualPago < novoPrevisto) {
+          novoEstado = "PARCIAL";
+        }
+        if (novoPrevisto > 0 && atualPago >= novoPrevisto) {
+          novoEstado = "PAGO";
+        }
+        if (novoPrevisto === 0 && atualPago === 0) {
+          novoEstado = "PAGO"; // sem valor a pagar
+        }
+        const { error: updPagErr } = await svc.from("pagamentos").update({
+          valor_previsto: novoPrevisto,
+          estado: novoEstado
+        }).eq("id_aluno", alunoId).eq("id_explicador", myExplId).eq("ano", ano).eq("mes", mes);
+        if (updPagErr) {
+          console.error("Erro a atualizar pagamento inicial", updPagErr);
+          return new Response(JSON.stringify({
+            error: updPagErr.message
+          }), {
+            status: 400,
+            headers: cors(origin)
+          });
+        }
+      }
+      return new Response(JSON.stringify({
+        ok: true
+      }), {
+        status: 200,
+        headers: cors(origin)
+      });
+    }
+    /* =======================
+       REGISTAR PAGAMENTO
+       payload: { aluno_id, ano, mes, valor, data_pagamento? }
+       ======================= */ if (action === "registar_pagamento_aluno") {
+      const p = payload || {};
+      const alunoId = String(p.aluno_id || "").trim();
+      const ano = Number(p.ano);
+      const mes = Number(p.mes);
+      const valor = Number(p.valor);
+      const dataPag = p.data_pagamento ? String(p.data_pagamento) : new Date().toISOString().slice(0, 10);
+      if (!alunoId || !ano || !mes || !valor || valor <= 0) {
+        return new Response(JSON.stringify({
+          error: "aluno_id, ano, mes e valor (>0) são obrigatórios"
+        }), {
+          status: 400,
+          headers: cors(origin)
+        });
+      }
+      const aluno = await getAlunoDoExpl(alunoId);
+      const valorExp = Number(aluno.valor_explicacao) || 0;
+      const sessoesMes = Number(aluno.sessoes_mes) || 0;
+      const valorPrevDefault1 = valorExp * sessoesMes;
+      const { data: pagRow, error: pagErr } = await svc.from("pagamentos").select("valor_previsto, valor_pago, estado").eq("id_aluno", alunoId).eq("id_explicador", myExplId).eq("ano", ano).eq("mes", mes).maybeSingle();
+      if (pagErr) {
+        console.error("Erro ao ler pagamentos", pagErr);
+        return new Response(JSON.stringify({
+          error: pagErr.message
+        }), {
+          status: 400,
+          headers: cors(origin)
+        });
+      }
+      let atualPrev = valorPrevDefault1;
+      let atualPago = 0;
+      if (!pagRow) {
+        const { error: insPagErr } = await svc.from("pagamentos").insert({
+          id_aluno: alunoId,
+          id_explicador: myExplId,
+          ano,
+          mes,
+          valor_previsto: valorPrevDefault1,
+          valor_pago: 0,
+          data_pagamento: null,
+          estado: "PARCIAL"
+        });
+        if (insPagErr) {
+          console.error("Erro a criar pagamento no registar_pagamento", insPagErr);
+          return new Response(JSON.stringify({
+            error: insPagErr.message
+          }), {
+            status: 400,
+            headers: cors(origin)
+          });
+        }
+      } else {
+        atualPrev = Number(pagRow.valor_previsto) || valorPrevDefault1;
+        atualPago = Number(pagRow.valor_pago) || 0;
+      }
+      const novoPago = atualPago + valor;
+      let novoEstado = "PENDENTE"; // ou o nome que tiveres no enum para “não pago totalmente”
+      if (novoPago >= atualPrev && atualPrev > 0) {
+        novoEstado = "PAGO";
+      }
+      const { error: updErr } = await svc.from("pagamentos").update({
+        valor_previsto: atualPrev,
+        valor_pago: novoPago,
+        data_pagamento: dataPag,
+        estado: novoEstado
+      }).eq("id_aluno", alunoId).eq("id_explicador", myExplId).eq("ano", ano).eq("mes", mes);
+      if (updErr) {
+        console.error("Erro a atualizar pagamento", updErr);
+        return new Response(JSON.stringify({
+          error: updErr.message
+        }), {
+          status: 400,
+          headers: cors(origin)
+        });
+      }
+      return new Response(JSON.stringify({
+        ok: true,
+        valor_previsto: atualPrev,
+        valor_pago: novoPago,
+        estado: novoEstado
+      }), {
+        status: 200,
+        headers: cors(origin)
+      });
+    }
+    /* =======================
+       ATUALIZAR PAGAMENTO (valor pago)
+       payload: { aluno_id, ano, mes, valor_pago }
+       ======================= */ if (action === "update_pagamento_aluno") {
+      const p = payload || {};
+      const alunoId = String(p.aluno_id || "").trim();
+      const ano = Number(p.ano);
+      const mes = Number(p.mes);
+      const valorPago = p.valor_pago !== null && p.valor_pago !== undefined && p.valor_pago !== "" ? Number(p.valor_pago) : null;
+      if (!alunoId || !ano || !mes || mes < 1 || mes > 12) {
+        return new Response(JSON.stringify({
+          error: "aluno_id, ano e mes (1-12) são obrigatórios"
+        }), {
+          status: 400,
+          headers: cors(origin)
+        });
+      }
+      if (valorPago === null || isNaN(valorPago) || valorPago < 0) {
+        return new Response(JSON.stringify({
+          error: "valor_pago inválido"
+        }), {
+          status: 400,
+          headers: cors(origin)
+        });
+      }
+      const aluno = await getAlunoDoExpl(alunoId);
+      if (aluno.id_explicador !== myExplId) {
+        return new Response(JSON.stringify({
+          error: "Forbidden"
+        }), {
+          status: 403,
+          headers: cors(origin)
+        });
+      }
+      const { error: updErr } = await svc.from("pagamentos").update({
+        valor_pago: valorPago
+      }).eq("id_aluno", alunoId).eq("id_explicador", myExplId).eq("ano", ano).eq("mes", mes);
+      if (updErr) {
+        console.error("update_pagamento_aluno: erro no update", updErr);
+        return new Response(JSON.stringify({
+          error: updErr.message
+        }), {
+          status: 400,
+          headers: cors(origin)
+        });
+      }
+      return new Response(JSON.stringify({
+        ok: true
+      }), {
+        status: 200,
+        headers: cors(origin)
+      });
+    }
+    /* =======================
+   LISTAR TODAS AS SESSÕES DO EXPLICADOR
+   (para o calendário / resumos)
+   ======================= */ if (action === "list_sessoes_explicador") {
+      // Todas as sessões deste explicador,
+      // opcionalmente já enriquecidas com nome do aluno numa VIEW
+      const { data, error } = await svc.from("v_sessoes_detalhe") // ou "sessoes_explicacao" se não tiveres view
+      .select(`
+      id_sessao,
+      id_explicador,
+      id_aluno,
+      aluno_nome,
+      data,
+      hora_inicio,
+      hora_fim,
+      duracao_min,
+      estado
+    `).eq("id_explicador", myExplId).order("data", {
+        ascending: true
+      }).order("hora_inicio", {
+        ascending: true
+      });
+      if (error) {
+        console.error("list_sessoes_explicador error", error);
+        return new Response(JSON.stringify({
+          error: error.message
+        }), {
+          status: 400,
+          headers: cors(origin)
+        });
+      }
+      return new Response(JSON.stringify(data ?? []), {
+        status: 200,
+        headers: cors(origin)
+      });
+    }
+    /* =======================
+       LISTAR SESSÕES DE UM ALUNO
+       payload: { aluno_id }
+       ======================= */ if (action === "list_sessoes_aluno") {
+      const p = payload || {};
+      const alunoId = String(p.aluno_id || "").trim();
+      if (!alunoId) {
+        return new Response(JSON.stringify({
+          error: "aluno_id em falta ou inválido"
+        }), {
+          status: 400,
+          headers: cors(origin)
+        });
+      }
+      const aluno = await getAlunoDoExpl(alunoId);
+      if (aluno.id_explicador !== myExplId) {
+        return new Response(JSON.stringify({
+          error: "Aluno não encontrado ou forbidden"
+        }), {
+          status: 403,
+          headers: cors(origin)
+        });
+      }
+      const { data, error } = await svc.from("sessoes_explicacao").select("id_sessao, data, hora_inicio, hora_fim, duracao_min, estado, observacoes").eq("id_explicador", myExplId).eq("id_aluno", alunoId).order("data", {
+        ascending: true
+      });
+      if (error) {
+        console.error("list_sessoes_aluno error", error);
+        return new Response(JSON.stringify({
+          error: error.message
+        }), {
+          status: 400,
+          headers: cors(origin)
+        });
+      }
+      return new Response(JSON.stringify(data ?? []), {
+        status: 200,
+        headers: cors(origin)
+      });
+    }
+    /* =======================
+       CRIAR / EDITAR SESSÃO (UPSERT)
+       payload:
+         criar:  { aluno_id, data, hora_inicio?, hora_fim?, duracao_min?, estado?, observacoes? }
+         editar: { id_sessao, aluno_id, data, ... }
+       ======================= */ if (action === "upsert_sessao_aluno") {
+      const p = payload || {};
+      const idSessao = p.id_sessao || null;
+      const alunoId = String(p.aluno_id || "").trim();
+      const dataStr = p.data;
+      const horaIni = p.hora_inicio;
+      const horaFim = p.hora_fim;
+      const dur = p.duracao_min;
+      const estado = p.estado || "AGENDADA";
+      const obs = p.observacoes || null;
+      if (!alunoId || !dataStr) {
+        return new Response(JSON.stringify({
+          error: "aluno_id e data são obrigatórios"
+        }), {
+          status: 400,
+          headers: cors(origin)
+        });
+      }
+      const aluno = await getAlunoDoExpl(alunoId);
+      if (aluno.id_explicador !== myExplId) {
+        return new Response(JSON.stringify({
+          error: "Aluno não encontrado ou forbidden"
+        }), {
+          status: 403,
+          headers: cors(origin)
+        });
+      }
+      const payloadSessao = {
+        id_explicador: myExplId,
+        id_aluno: alunoId,
+        data: dataStr,
+        estado
+      };
+      if (horaIni) payloadSessao.hora_inicio = horaIni;
+      if (horaFim) payloadSessao.hora_fim = horaFim;
+      if (dur !== undefined && dur !== null && dur !== "") {
+        payloadSessao.duracao_min = Number(dur);
+      }
+      if (obs) payloadSessao.observacoes = obs;
+      if (!idSessao) {
+        const { data, error } = await svc.from("sessoes_explicacao").insert(payloadSessao).select("id_sessao").single();
+        if (error) {
+          console.error("upsert_sessao_aluno (insert) error", error);
+          return new Response(JSON.stringify({
+            error: error.message
+          }), {
+            status: 400,
+            headers: cors(origin)
+          });
+        }
+        return new Response(JSON.stringify({
+          id_sessao: data.id_sessao
+        }), {
+          status: 201,
+          headers: cors(origin)
+        });
+      } else {
+        const { error } = await svc.from("sessoes_explicacao").update(payloadSessao).eq("id_sessao", idSessao).eq("id_explicador", myExplId).eq("id_aluno", alunoId);
+        if (error) {
+          console.error("upsert_sessao_aluno (update) error", error);
+          return new Response(JSON.stringify({
+            error: error.message
+          }), {
+            status: 400,
+            headers: cors(origin)
+          });
+        }
+        return new Response(JSON.stringify({
+          id_sessao: idSessao
+        }), {
+          status: 200,
+          headers: cors(origin)
+        });
+      }
+    }
+    /* =======================
+       APAGAR SESSÃO
+       payload: { id_sessao }
+       ======================= */ if (action === "delete_sessao_aluno") {
+      const p = payload || {};
+      const idSessao = String(p.id_sessao || "").trim();
+      if (!idSessao) {
+        return new Response(JSON.stringify({
+          error: "id_sessao em falta ou inválido"
+        }), {
+          status: 400,
+          headers: cors(origin)
+        });
+      }
+      const { error } = await svc.from("sessoes_explicacao").delete().eq("id_sessao", idSessao).eq("id_explicador", myExplId);
+      if (error) {
+        console.error("delete_sessao_aluno error", error);
+        return new Response(JSON.stringify({
+          error: error.message
+        }), {
+          status: 400,
+          headers: cors(origin)
+        });
+      }
+      return new Response(JSON.stringify({
+        ok: true
+      }), {
+        status: 200,
+        headers: cors(origin)
+      });
+    }
     // ação desconhecida
-    return new Response(JSON.stringify({ error: "ação inválida" }), {
+    return new Response(JSON.stringify({
+      error: "ação inválida"
+    }), {
       status: 400,
-      headers: cors(origin),
+      headers: cors(origin)
     });
   } catch (e) {
-    const msg =
-      e instanceof Error
-        ? e.message
-        : typeof e === "string"
-        ? e
-        : JSON.stringify(e);
+    const msg = e instanceof Error ? e.message : typeof e === "string" ? e : JSON.stringify(e);
     console.error("Erro inesperado na função expl-alunos", msg);
-    return new Response(JSON.stringify({ error: msg }), {
+    return new Response(JSON.stringify({
+      error: msg
+    }), {
       status: 500,
-      headers: cors(origin),
+      headers: cors(origin)
     });
   }
 });

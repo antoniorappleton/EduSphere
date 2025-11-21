@@ -16,6 +16,22 @@
     return;
   }
 
+  // descobrir o id_aluno associado a este utilizador
+  const { data: map, error: mapErr } = await supabase
+    .from("app_users")
+    .select("ref_id")
+    .eq("user_id", user.id)
+    .eq("role", "aluno")
+    .single();
+
+  if (mapErr || !map) {
+    console.error("Mapeamento app_users não encontrado para este aluno", mapErr);
+    // podes redirecionar ou mostrar erro amigável se quiseres
+  }
+
+const alunoId = map?.ref_id;
+
+
   // -------------------------------------------------------------
   // 2) Helpers de UI (toast / feedback visual)
   // -------------------------------------------------------------
@@ -187,10 +203,12 @@
 
   // 5) Pagamentos + Resumo rápido (próxima mensalidade)
   const { data: pagos, error: pagosErr } = await supabase
-    .from("v_pagamentos_detalhe")
-    .select("*")
-    .order("ano", { ascending: true })
-    .order("mes", { ascending: true });
+  .from("v_pagamentos_detalhe")
+  .select("*")
+  .eq("id_aluno", alunoId)   // <-- filtro pelo aluno logado
+  .order("ano", { ascending: true })
+  .order("mes", { ascending: true });
+
 
   const tbody = document.querySelector("#tabPag tbody");
 
