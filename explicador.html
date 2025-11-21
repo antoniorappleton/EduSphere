@@ -316,27 +316,19 @@
                 </span>
               </li>
             </ul>
-                        <!-- MINI CALENDÁRIO SEMANAL -->
-            <div class="expl-week-calendar" id="week-calendar">
-              <header class="expl-week-calendar__header">
-                <button type="button" class="expl-link-chip" id="week-prev">
-                  &larr; Semana anterior
-                </button>
-                <p class="expl-week-calendar__label">
-                  <strong id="week-label">Semana atual</strong>
-                </p>
-                <button type="button" class="expl-link-chip" id="week-next">
-                  Próxima semana &rarr;
-                </button>
+            <!-- CALENDÁRIO SEMANAL EM GRELHA -->
+            <div class="calendar-week" id="calendar-week">
+              <header class="calendar-week__nav">
+                <button id="week-prev" class="calendar-btn">&larr;</button>
+                <h3 id="week-label" class="calendar-week__title">Semana atual</h3>
+                <button id="week-next" class="calendar-btn">&rarr;</button>
               </header>
 
-              <div class="expl-week-calendar__grid" id="week-grid">
+              <div class="calendar-week__grid" id="calendar-grid">
                 <!-- preenchido via JS -->
-                <p class="expl-week-calendar__empty">
-                  Ainda não existem sessões registadas para esta semana.
-                </p>
               </div>
             </div>
+
 
             <button type="button" class="expl-link-chip">
               <span class="expl-link-chip-icon">📅</span>
@@ -1890,78 +1882,63 @@
   // RENDER CALENDÁRIO SEMANAL
   // ------------------------------------------------------------------
   function renderCalendarioSemanal() {
-    if (!weekGrid) return;
+  const grid = document.getElementById("calendar-grid");
+  const label = document.getElementById("week-label");
+  if (!grid) return;
 
-    // se ainda não há dados de sessões
-    if (!SESSOES_EXPLICADOR || SESSOES_EXPLICADOR.length === 0) {
-      weekGrid.innerHTML =
-        '<p class="expl-week-calendar__empty">Ainda não existem sessões registadas para esta semana.</p>';
-      if (weekLabel) weekLabel.textContent = 'Semana atual';
-      return;
-    }
+  const hoje = new Date();
+  const inicio = getInicioSemana(hoje);
+  inicio.setDate(inicio.getDate() + semanaOffset * 7);
 
-    const hoje = new Date();
-    const inicioSemanaBase = getInicioSemana(hoje);
-    inicioSemanaBase.setDate(inicioSemanaBase.getDate() + 7 * semanaOffset);
-
-    const diasSemana = [];
-    for (let i = 0; i < 7; i++) {
-      const d = new Date(inicioSemanaBase);
-      d.setDate(inicioSemanaBase.getDate() + i);
-      diasSemana.push(d);
-    }
-
-    if (weekLabel) {
-      const opts = { day: '2-digit', month: '2-digit' };
-      const inicioLabel = diasSemana[0].toLocaleDateString('pt-PT', opts);
-      const fimLabel    = diasSemana[6].toLocaleDateString('pt-PT', opts);
-      weekLabel.textContent = `Semana ${inicioLabel} – ${fimLabel}`;
-    }
-
-    const html = diasSemana.map((d, idx) => {
-      const dateStr = d.toISOString().slice(0, 10);
-      const sessoesDia = SESSOES_EXPLICADOR
-        .filter(s => s.data === dateStr)
-        .sort((a, b) => (a.hora_inicio || '').localeCompare(b.hora_inicio || ''));
-
-      const labelData = d.toLocaleDateString('pt-PT', {
-        day: '2-digit',
-        month: '2-digit'
-      });
-
-      let items;
-      if (!sessoesDia.length) {
-        items = '<li class="expl-week-day__empty">Sem sessões.</li>';
-      } else {
-        items = sessoesDia.map(s => {
-          const hora   = s.hora_inicio ? s.hora_inicio.slice(0, 5) : '--:--';
-          const nome   = s.aluno_nome || 'Aluno';
-          const estado = s.estado || '';
-          return `
-            <li class="expl-week-day__item">
-              <time class="expl-week-day__time">${hora}</time>
-              <span class="expl-week-day__aluno">${nome}</span>
-              <span class="expl-week-badge">${estado}</span>
-            </li>
-          `;
-        }).join('');
-      }
-
-      return `
-        <div class="expl-week-day">
-          <h4 class="expl-week-day__title">
-            ${NOMES_DIAS_CURTOS[idx]}
-            <span class="expl-week-day__date">${labelData}</span>
-          </h4>
-          <ul class="expl-week-day__list">
-            ${items}
-          </ul>
-        </div>
-      `;
-    }).join('');
-
-    weekGrid.innerHTML = html;
+  const dias = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(inicio);
+    d.setDate(inicio.getDate() + i);
+    dias.push(d);
   }
+
+  const fmt = { day: "2-digit", month: "2-digit" };
+  label.textContent = `Semana ${dias[0].toLocaleDateString("pt-PT", fmt)} – ${dias[6].toLocaleDateString("pt-PT", fmt)}`;
+
+  const nomes = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
+
+  grid.innerHTML = dias.map((d, idx) => {
+    const dataStr = d.toISOString().slice(0, 10);
+    const sessoes = SESSOES_EXPLICADOR.filter(s => s.data === dataStr);
+
+    // bolinhas por tipo
+    const temRealizada = sessoes.some(s => s.estado === "REALIZADA");
+    const temAgendada  = sessoes.some(s => s.estado === "AGENDADA");
+    const temExtra     = sessoes.some(s => s.estado === "EXTRA");
+
+    const dotsHTML = `
+      ${temRealizada ? `<span class="dot dot-green"></span>` : ""}
+      ${temAgendada  ? `<span class="dot dot-yellow"></span>` : ""}
+      ${temExtra     ? `<span class="dot dot-orange"></span>` : ""}
+    `.trim();
+
+    const lista = sessoes.length === 0
+      ? `<p class="calendar-empty">Sem sessões</p>`
+      : sessoes.map(s => `
+          <div class="calendar-session">
+            <strong>${s.hora_inicio?.slice(0,5) || "--:--"}</strong>
+            <span>${s.aluno_nome}</span>
+          </div>
+        `).join("");
+
+    return `
+      <div class="calendar-day">
+        <div class="calendar-day__header">
+          <span class="calendar-day__weekday">${nomes[idx]}</span>
+          <span class="calendar-day__date">${d.toLocaleDateString("pt-PT", fmt)}</span>
+        </div>
+
+        <div class="calendar-day__dots">${dotsHTML}</div>
+        <div class="calendar-day__list">${lista}</div>
+      </div>
+    `;
+  }).join("");
+}
 
   // navegação de semanas
   btnWeekPrev?.addEventListener('click', () => {

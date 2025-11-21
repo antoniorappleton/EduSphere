@@ -983,3 +983,81 @@ body.home .expl-fab {
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.12);
   transform: translateY(-1px);
 }
+/* ===== CALENDÁRIO SEMANAL ===== */
+
+.calendar-week {
+  margin-top: 20px;
+  background: #ffffffaa;
+  padding: 18px;
+  border-radius: 14px;
+  backdrop-filter: blur(6px);
+}
+
+.calendar-week__nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.calendar-week__title {
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.calendar-btn {
+  border: none;
+  background: #eee;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+.calendar-btn:hover {
+  background: #ddd;
+}
+
+/* GRID 7 DIAS */
+.calendar-week__grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 10px;
+}
+
+/* DIA */
+.calendar-day {
+  background: white;
+  border-radius: 12px;
+  padding: 10px;
+  box-shadow: 0 2px 4px #0001;
+  min-height: 120px;
+}
+
+.calendar-day__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+  margin-bottom: 8px;
+}
+
+.calendar-day__weekday {
+  font-weight: 600;
+}
+
+.calendar-day__date {
+  opacity: 0.6;
+}
+
+/* BOLINHAS */
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 4px;
+}
+
+.dot-green  { background: #2ecc71; }   /* REALIZADA */
+.dot-yellow { background: #f1c40f; }   /* AGENDADA */
+.dot-orange { background: #e67e22; }   /* EXTRA */
