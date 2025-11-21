@@ -19,8 +19,8 @@
       <span>EduSphere</span>
     </a>
 
-    <!-- NAV PRINCIPAL DO PAINEL (tabs) – só aparece depois do login -->
-    <nav id="explHeaderNav" class="expl-main-nav" style="display:none">
+    <!-- NAV SUPERIOR (se quiseres usar no futuro; não está ligado ao JS) -->
+    <nav id="explTopNav" class="expl-main-nav" style="display:none">
       <button class="expl-nav-btn expl-nav-btn--active" data-target="dashboard">Dashboard</button>
       <button class="expl-nav-btn" data-target="alunos">Alunos</button>
       <button class="expl-nav-btn" data-target="calendario">Calendário</button>
@@ -48,22 +48,22 @@
     </form>
   </section>
 
-    <!-- ========== PAINEL DO EXPLICADOR (FULL PAGE) ========== -->
+  <!-- ========== PAINEL DO EXPLICADOR (FULL PAGE) ========== -->
   <section id="explPanel" class="expl-shell" style="display:none">
-      <!-- IMPORTANTE: manter o mesmo #explHeaderNav e .expl-nav-btn -->
-      <nav id="explHeaderNav" class="expl-sidebar-nav" style="display:none">
-        <button class="expl-nav-btn expl-nav-btn--active" data-target="dashboard">
-          Dashboard
-        </button>
-        <button class="expl-nav-btn" data-target="alunos">Alunos</button>
-        <button class="expl-nav-btn" data-target="calendario">Calendário</button>
-        <button class="expl-nav-btn" data-target="faturacao">Faturação</button>
-        <button class="expl-nav-btn" data-target="relatorios">Relatórios</button>
-      </nav>
+    <!-- NAV LATERAL PRINCIPAL -->
+    <nav id="explSidebarNav" class="expl-sidebar-nav" style="display:none">
+      <button class="expl-nav-btn expl-nav-btn--active" data-target="dashboard">
+        Dashboard
+      </button>
+      <button class="expl-nav-btn" data-target="alunos">Alunos</button>
+      <button class="expl-nav-btn" data-target="calendario">Calendário</button>
+      <button class="expl-nav-btn" data-target="faturacao">Faturação</button>
+      <button class="expl-nav-btn" data-target="relatorios">Relatórios</button>
+    </nav>
 
     <!-- CONTEÚDO PRINCIPAL -->
     <div class="expl-main">
-      <!-- Top bar com saudação + utilizador -->
+      <!-- Top bar com saudação + utilizador (está escondida no CSS) -->
       <header class="expl-header-bar">
         <div class="expl-header-info">
           <h1 class="expl-page-title">Dashboard</h1>
@@ -234,7 +234,7 @@
           </div>
         </section>
 
-        <!-- RESUMO MENSALIDADES (as tuas tabelas já existentes) -->
+        <!-- RESUMO MENSALIDADES -->
         <section class="expl-section">
           <div class="expl-grid-2" style="margin-top:1.5rem;">
             <article class="expl-card">
@@ -477,12 +477,24 @@
 
 
 <script>
-  // helper DOM – TEM DE SER O PRIMEIRO
+  // ---------- helper DOM ----------
   const $ = (s) => document.querySelector(s);
+
+  // Pagamento modal refs
+  const modalPag        = $('#modal-pagamento-aluno');
+  const formPag         = $('#fPagamentoAluno');
+  const msgPag          = $('#msgPagamentoAluno');
+  const btnSavePag      = $('#btnSavePagamento');
+  const pagModalTitle   = $('#pag-modal-title');
+  const pagModalHint    = $('#pag-modal-hint');
+  const inputAno        = formPag ? formPag.ano : null;
+  const inputMes        = formPag ? formPag.mes : null;
+  const inputDiaPag     = formPag ? formPag.dia_pagamento : null;
+  const inputValor      = formPag ? formPag.valor : null;
 
   const elYear      = $('#y');
   const btnLogout   = $('#btnLogout');
-  const headerNav   = $('#explHeaderNav');
+  const headerNav   = $('#explSidebarNav');
   const loginBox    = $('#explLogin');
   const panel       = $('#explPanel');
   const msgLogin    = $('#msgExplLogin');
@@ -526,10 +538,10 @@
   elYear.textContent = new Date().getFullYear();
 
   let EXPLICADOR       = { userId:null, id_explicador:null, max:0 };
-  let ALUNOS_CACHE     = []; // cache dos alunos para detalhes
+  let ALUNOS_CACHE     = [];
   let PAGAMENTOS_CACHE = [];
-  let ALUNO_ATUAL      = null; // aluno selecionado na lista
-  let SESSAO_ATUAL_ID  = null; // sessão selecionada no modal
+  let ALUNO_ATUAL      = null;
+  let SESSAO_ATUAL_ID  = null;
 
   // ---------- helpers supabase ----------
   async function hasRole(uid, roleName){
@@ -567,7 +579,7 @@
     }
     if (isAuthed && isExpl){
       loginBox.style.display = 'none';
-      panel.style.display    = 'block';
+      panel.style.display    = 'flex';
       msgLogin.textContent   = '';
       btnLogout.style.display= 'inline-block';
       headerNav.style.display= 'flex';
@@ -601,7 +613,7 @@
     }
   }
 
-  // ---------- LISTAR ALUNOS via Edge Function ----------
+  // ---------- LISTAR ALUNOS ----------
   async function loadAlunos() {
     const { data, error } = await supabase.functions.invoke("expl-alunos", {
       body: { action: "list_alunos" },
@@ -654,7 +666,7 @@
       });
   }
 
-  // ---------- RESUMO MENSAL: PENDENTES VS PAGAS (MÊS ATUAL) ----------
+  // ---------- RESUMO MENSAL ----------
   function renderResumoMensal() {
     const tbodyPend = document.querySelector("#tblMensalidadesPendentes tbody");
     const tbodyPagas = document.querySelector("#tblMensalidadesPagas tbody");
@@ -688,7 +700,7 @@
 
       if (previsto === 0 && pago === 0) return;
 
-      const avisadoLabel = "—"; // placeholder
+      const avisadoLabel = "—";
 
       if (falta > 0) {
         pendentes.push({
@@ -715,7 +727,7 @@
       }
     });
 
-    // --- Tabela de pendentes ---
+    // Tabela de pendentes
     if (!pendentes.length) {
       tbodyPend.innerHTML =
         '<tr><td colspan="7">Ainda não existem mensalidades em falta neste mês.</td></tr>';
@@ -750,7 +762,7 @@
       tbodyPend.innerHTML = rowsPend + totalRow;
     }
 
-    // --- Tabela de pagas ---
+    // Tabela de pagas
     if (!pagas.length) {
       tbodyPagas.innerHTML =
         '<tr><td colspan="5">Ainda não existem mensalidades pagas neste mês.</td></tr>';
@@ -787,9 +799,9 @@
   async function loadKpisFinanceiros() {
     if (!EXPLICADOR.id_explicador) return;
 
+    const cardTotalPrev = document.getElementById("card-total-previsto");
     const cardTotalMes  = document.getElementById("card-total-mes");
     const cardPendentes = document.getElementById("card-pendentes");
-    const cardRecebidos = document.getElementById("card-recebidos");
 
     try {
       const { data, error } = await supabase
@@ -813,9 +825,6 @@
       let previstoAnoAtual    = 0;
       let realizadoAnoAtual   = 0;
       let pendenteTotal       = 0;
-      let totalMensalidadesMes = 0;
-      let mensalidadesPagasMes = 0;
-
       const alunosComPendencias = new Set();
 
       (PAGAMENTOS_CACHE).forEach((p) => {
@@ -831,10 +840,6 @@
         if (p.ano === anoAtual && p.mes === mesAtual) {
           previstoMesAtual  += previsto;
           realizadoMesAtual += pago;
-          totalMensalidadesMes++;
-          if (p.estado === "PAGO" && previsto > 0) {
-            mensalidadesPagasMes++;
-          }
         }
 
         pendenteTotal += falta;
@@ -843,12 +848,13 @@
         }
       });
 
+      if (cardTotalPrev) {
+        cardTotalPrev.textContent = `€ ${previstoMesAtual.toFixed(2)}`;
+      }
+
       if (cardTotalMes) {
         cardTotalMes.textContent =
           `€ ${realizadoMesAtual.toFixed(2)} de € ${previstoMesAtual.toFixed(2)}`;
-        cardTotalMes.title =
-          `Previsto para este mês: € ${previstoMesAtual.toFixed(2)} · ` +
-          `Realizado: € ${realizadoMesAtual.toFixed(2)}`;
       }
 
       if (cardPendentes) {
@@ -862,27 +868,6 @@
 
         cardPendentes.textContent =
           `€ ${pendenteTotal.toFixed(2)} (${labelAlunos})`;
-        cardPendentes.title =
-          "Valor total ainda por receber (todas as mensalidades com PARCIAL ou EM_ATRASO).";
-      }
-
-      const taxaCobrancaAno =
-        previstoAnoAtual > 0
-          ? (realizadoAnoAtual / previstoAnoAtual) * 100
-          : 0;
-
-      if (cardRecebidos) {
-        const baseMes =
-          totalMensalidadesMes > 0
-            ? `${mensalidadesPagasMes} / ${totalMensalidadesMes}`
-            : "0 / 0";
-
-        cardRecebidos.textContent =
-          `${baseMes} (${taxaCobrancaAno.toFixed(0)}%)`;
-        cardRecebidos.title =
-          `Taxa de cobrança anual: ${taxaCobrancaAno.toFixed(
-            1
-          )}% (realizado vs previsto).`;
       }
 
       renderResumoMensal();
@@ -939,7 +924,7 @@
       .join("");
 
     // clicar para editar
-    tblSessoesBody.querySelectorAll("tr.linha-sessao").forEach((row, idx) => {
+    tblSessoesBody.querySelectorAll("tr.linha-sessao").forEach((row) => {
       row.addEventListener("click", () => {
         const idSessao = row.dataset.idSessao;
         const sessao = (data || []).find(
@@ -951,6 +936,178 @@
       });
     });
   }
+
+  // ---------- OPEN/CLOSE MODAL ----------
+  function openModal(mod){ mod && mod.classList.add('open'); }
+  function closeModal(mod){ mod && mod.classList.remove('open'); }
+
+  // ---------- MODAL PAGAMENTO: ABRIR ----------
+  function abrirModalPagamento(modo) {
+    if (!formPag) return;
+    if (!ALUNO_ATUAL || !ALUNO_ATUAL.id_aluno) {
+      alert("Seleciona primeiro um aluno na lista.");
+      return;
+    }
+
+    const agora = new Date();
+
+    inputAno.value = String(agora.getFullYear());
+    inputMes.value = String(agora.getMonth() + 1);
+    inputDiaPag.value = "";
+    inputValor.value = "";
+
+    formPag.modo.value = modo;
+    msgPag.textContent = "";
+    msgPag.style.color = "";
+
+    inputDiaPag.style.display = "none";
+    inputValor.style.display = "none";
+
+    if (modo === "iniciar") {
+      pagModalTitle.textContent = "Iniciar faturação";
+      pagModalHint.textContent  =
+        "Defina o mês/ano de início e o dia de pagamento da mensalidade.";
+      inputDiaPag.style.display = "block";
+      btnSavePag.textContent    = "Iniciar faturação";
+
+    } else if (modo === "registar") {
+      pagModalTitle.textContent = "Registar pagamento";
+      pagModalHint.textContent  =
+        "Regista um pagamento a acrescentar ao valor já pago nesse mês.";
+      inputValor.style.display  = "block";
+      btnSavePag.textContent    = "Registar pagamento";
+
+    } else { // "editar"
+      pagModalTitle.textContent = "Editar pagamento";
+      pagModalHint.textContent  =
+        "Substitui o valor pago nesse mês pelo valor indicado.";
+      inputValor.style.display  = "block";
+      btnSavePag.textContent    = "Guardar alterações";
+    }
+
+    openModal(modalPag);
+  }
+
+  btnIniciarFat?.addEventListener("click", () => abrirModalPagamento("iniciar"));
+  btnRegistarPag?.addEventListener("click", () => abrirModalPagamento("registar"));
+  btnEditarPag?.addEventListener("click", () => abrirModalPagamento("editar"));
+
+  // Fechar modal pagamento
+  $('#modal-pagamento-aluno .modal__close')?.addEventListener('click', () => {
+    closeModal(modalPag);
+  });
+  modalPag?.addEventListener('click', (ev) => {
+    if (ev.target.hasAttribute('data-modal-close')) {
+      closeModal(modalPag);
+    }
+  });
+
+  // ---------- SUBMIT MODAL PAGAMENTO ----------
+  formPag?.addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    if (!ALUNO_ATUAL || !ALUNO_ATUAL.id_aluno) {
+      msgPag.textContent = "Nenhum aluno selecionado.";
+      return;
+    }
+
+    const modo  = formPag.modo.value; // iniciar | registar | editar
+    const ano   = Number(inputAno.value);
+    const mes   = Number(inputMes.value);
+    const dia   = inputDiaPag.value ? Number(inputDiaPag.value) : null;
+    const valor = inputValor.value ? Number(inputValor.value) : null;
+
+    if (!ano || !mes || mes < 1 || mes > 12) {
+      msgPag.textContent = "Ano ou mês inválidos.";
+      return;
+    }
+
+    if (modo === "iniciar") {
+      if (!dia || dia < 1 || dia > 31) {
+        msgPag.textContent = "Dia de pagamento inválido.";
+        return;
+      }
+    } else { // registar / editar
+      if (valor === null || isNaN(valor) || valor < 0) {
+        msgPag.textContent = "Valor inválido.";
+        return;
+      }
+    }
+
+    btnSavePag.disabled = true;
+    msgPag.textContent  = "A guardar...";
+
+    try {
+      let action, payload;
+
+      if (modo === "iniciar") {
+        action = "iniciar_faturacao_aluno";
+        payload = {
+          aluno_id: ALUNO_ATUAL.id_aluno,
+          ano,
+          mes,
+          dia_pagamento: dia,
+        };
+      } else if (modo === "registar") {
+        action = "registar_pagamento_aluno";
+        payload = {
+          aluno_id: ALUNO_ATUAL.id_aluno,
+          ano,
+          mes,
+          valor,
+        };
+      } else {
+        action = "update_pagamento_aluno";
+        payload = {
+          aluno_id: ALUNO_ATUAL.id_aluno,
+          ano,
+          mes,
+          valor_pago: valor,
+        };
+      }
+
+      const { data, error } = await supabase.functions.invoke("expl-alunos", {
+        body: { action, payload },
+      });
+
+      if (error) {
+        let extra = "";
+        if (error.context) {
+          try {
+            const raw = await error.context.text();
+            console.log("Erro pagamento_aluno:", raw);
+            try {
+              const json = JSON.parse(raw);
+              if (json?.error) extra = " " + json.error;
+              else extra = " " + raw;
+            } catch {
+              extra = " " + raw;
+            }
+          } catch {}
+        }
+        msgPag.textContent = "Não foi possível guardar." + extra;
+        btnSavePag.disabled = false;
+        return;
+      }
+
+      msgPag.style.color = "#126b3a";
+      msgPag.textContent = "Guardado com sucesso.";
+
+      await loadKpisFinanceiros();
+      const alunoAtualizado = ALUNOS_CACHE.find(
+        (a) => String(a.id_aluno) === String(ALUNO_ATUAL.id_aluno)
+      );
+      if (alunoAtualizado) {
+        await mostrarPainelAluno(alunoAtualizado);
+      }
+
+      setTimeout(() => closeModal(modalPag), 600);
+    } catch (e) {
+      console.error("pagamento_aluno error", e);
+      msgPag.textContent = "Erro inesperado ao guardar.";
+    } finally {
+      btnSavePag.disabled = false;
+    }
+  });
 
   // ---------- Painel de detalhes por aluno ----------
   async function mostrarPainelAluno(aluno) {
@@ -1050,11 +1207,10 @@
       console.error("Erro inesperado ao calcular resumo do aluno", err);
     }
 
-    // carregar sessões deste aluno
     await loadSessoesAluno(aluno.id_aluno);
   }
 
-  // ---------- CRIAR ALUNO (EDGE FUNCTION) ----------
+  // ---------- CRIAR ALUNO ----------
   async function createAluno(payload){
     const { data, error } = await supabase.functions.invoke("expl-alunos", {
       body: { action: "create_aluno", payload }
@@ -1068,11 +1224,8 @@
     return { ok: true, data };
   }
 
-  // ---------- MODAIS ----------
-  function openModal(mod){ mod && mod.classList.add('open'); }
-  function closeModal(mod){ mod && mod.classList.remove('open'); }
-
-  // modal adicionar aluno
+  // ---------- MODAIS (add / edit / sessão) ----------
+  // adicionar aluno
   modalAddAluno?.addEventListener('click', (ev) => {
     if (ev.target.hasAttribute('data-modal-close')) {
       closeModal(modalAddAluno);
@@ -1085,7 +1238,7 @@
   btnFab?.addEventListener('click', () => openModal(modalAddAluno));
   btnOpenAddAluno?.addEventListener('click', () => openModal(modalAddAluno));
 
-  // modal editar aluno
+  // editar aluno
   $('#modal-edit-aluno .modal__close')?.addEventListener('click', () => {
     closeModal(modalEditAluno);
   });
@@ -1171,8 +1324,6 @@
       password: f.password_edit.value.trim() || undefined,
       is_active: true,
     };
-
-    console.log("UPDATE PAYLOAD:", payload);
 
     btnSaveEdit.disabled = true;
     msgEditAluno.textContent = "A guardar alterações...";
@@ -1423,227 +1574,7 @@
     }
   });
 
-  // -------- INICIAR FATURAÇÃO DO ALUNO SELECIONADO --------
-  btnIniciarFat?.addEventListener("click", async () => {
-    if (!ALUNO_ATUAL || !ALUNO_ATUAL.id_aluno) {
-      alert("Seleciona um aluno na lista primeiro.");
-      return;
-    }
-
-    const agora = new Date();
-    const anoAtual = agora.getFullYear();
-    const mesAtual = agora.getMonth() + 1;
-
-    const anoStr = prompt("Ano de início da faturação:", String(anoAtual));
-    const mesStr = prompt("Mês de início (1-12):", String(mesAtual));
-    const diaStr = prompt("Dia de pagamento (1-31):", "5");
-
-    const ano = Number(anoStr);
-    const mes = Number(mesStr);
-    const dia = Number(diaStr);
-
-    if (!ano || !mes || mes < 1 || mes > 12 || !dia || dia < 1 || dia > 31) {
-      alert("Valores de ano/mês/dia inválidos.");
-      return;
-    }
-
-    msgNewAluno.textContent = "A iniciar faturação...";
-    try {
-      const { data, error } = await supabase.functions.invoke("expl-alunos", {
-        body: {
-          action: "iniciar_faturacao_aluno",
-          payload: {
-            aluno_id: ALUNO_ATUAL.id_aluno,
-            ano,
-            mes,
-            dia_pagamento: dia,
-          },
-        },
-      });
-
-      if (error) {
-        let extra = "";
-        if (error.context) {
-          try {
-            const raw = await error.context.text();
-            console.log("Erro iniciar_faturacao_aluno:", raw);
-            try {
-              const json = JSON.parse(raw);
-              if (json?.error) extra = " " + json.error;
-            } catch {
-              extra = " " + raw;
-            }
-          } catch {}
-        }
-        alert("Não foi possível iniciar a faturação." + extra);
-        msgNewAluno.textContent = "";
-        return;
-      }
-
-      alert("Faturação iniciada para este aluno.");
-      msgNewAluno.textContent = "";
-      await loadKpisFinanceiros();
-      await loadAlunos();
-      const alunoAtualizado = ALUNOS_CACHE.find(
-        (a) => String(a.id_aluno) === String(ALUNO_ATUAL.id_aluno)
-      );
-      if (alunoAtualizado) {
-        mostrarPainelAluno(alunoAtualizado);
-      }
-    } catch (e) {
-      console.error(e);
-      alert("Erro inesperado ao iniciar faturação.");
-      msgNewAluno.textContent = "";
-    }
-  });
-
-  // -------- REGISTAR PAGAMENTO --------
-  btnRegistarPag?.addEventListener("click", async () => {
-    if (!ALUNO_ATUAL || !ALUNO_ATUAL.id_aluno) {
-      alert("Seleciona um aluno na lista primeiro.");
-      return;
-    }
-
-    const agora = new Date();
-    const anoAtual = agora.getFullYear();
-    const mesAtual = agora.getMonth() + 1;
-
-    const anoStr = prompt("Ano do pagamento:", String(anoAtual));
-    const mesStr = prompt("Mês do pagamento (1-12):", String(mesAtual));
-    const valorStr = prompt("Valor a registar (€):", "");
-
-    const ano = Number(anoStr);
-    const mes = Number(mesStr);
-    const valor = Number(valorStr);
-
-    if (!ano || !mes || mes < 1 || mes > 12 || !valor || valor <= 0) {
-      alert("Valores de ano/mês/valor inválidos.");
-      return;
-    }
-
-    msgNewAluno.textContent = "A registar pagamento...";
-    try {
-      const { data, error } = await supabase.functions.invoke("expl-alunos", {
-        body: {
-          action: "registar_pagamento_aluno",
-          payload: {
-            aluno_id: ALUNO_ATUAL.id_aluno,
-            ano,
-            mes,
-            valor,
-          },
-        },
-      });
-
-      if (error) {
-        let extra = "";
-        if (error.context) {
-          try {
-            const raw = await error.context.text();
-            console.log("Erro registar_pagamento_aluno:", raw);
-            try {
-              const json = JSON.parse(raw);
-              if (json?.error) extra = " " + json.error;
-            } catch {
-              extra = " " + raw;
-            }
-          } catch {}
-        }
-        alert("Não foi possível registar o pagamento." + extra);
-        msgNewAluno.textContent = "";
-        return;
-      }
-
-      alert("Pagamento registado com sucesso.");
-      msgNewAluno.textContent = "";
-      await loadKpisFinanceiros();
-      const alunoAtualizado = ALUNOS_CACHE.find(
-        (a) => String(a.id_aluno) === String(ALUNO_ATUAL.id_aluno)
-      );
-      if (alunoAtualizado) {
-        mostrarPainelAluno(alunoAtualizado);
-      }
-    } catch (e) {
-      console.error(e);
-      alert("Erro inesperado ao registar pagamento.");
-      msgNewAluno.textContent = "";
-    }
-  });
-
-  // -------- EDITAR PAGAMENTO (valor pago do mês) --------
-  btnEditarPag?.addEventListener("click", async () => {
-    if (!ALUNO_ATUAL || !ALUNO_ATUAL.id_aluno) {
-      alert("Seleciona um aluno na lista primeiro.");
-      return;
-    }
-
-    const agora = new Date();
-    const anoAtual = agora.getFullYear();
-    const mesAtual = agora.getMonth() + 1;
-
-    const anoStr = prompt("Ano do pagamento a editar:", String(anoAtual));
-    const mesStr = prompt("Mês do pagamento a editar (1-12):", String(mesAtual));
-    const valorStr = prompt("Novo valor pago (€):", "");
-
-    const ano = Number(anoStr);
-    const mes = Number(mesStr);
-    const valor = Number(valorStr);
-
-    if (!ano || !mes || mes < 1 || mes > 12 || isNaN(valor) || valor < 0) {
-      alert("Valores de ano/mês/valor inválidos.");
-      return;
-    }
-
-    msgNewAluno.textContent = "A atualizar pagamento...";
-    try {
-      const { data, error } = await supabase.functions.invoke("expl-alunos", {
-        body: {
-          action: "update_pagamento_aluno",
-          payload: {
-            aluno_id: ALUNO_ATUAL.id_aluno,
-            ano,
-            mes,
-            valor_pago: valor,
-          },
-        },
-      });
-
-      if (error) {
-        let extra = "";
-        if (error.context) {
-          try {
-            const raw = await error.context.text();
-            console.log("Erro update_pagamento_aluno:", raw);
-            try {
-              const json = JSON.parse(raw);
-              if (json?.error) extra = " " + json.error;
-            } catch {
-              extra = " " + raw;
-            }
-          } catch {}
-        }
-        alert("Não foi possível atualizar o pagamento." + extra);
-        msgNewAluno.textContent = "";
-        return;
-      }
-
-      alert("Pagamento atualizado com sucesso.");
-      msgNewAluno.textContent = "";
-      await loadKpisFinanceiros();
-      const alunoAtualizado = ALUNOS_CACHE.find(
-        (a) => String(a.id_aluno) === String(ALUNO_ATUAL.id_aluno)
-      );
-      if (alunoAtualizado) {
-        mostrarPainelAluno(alunoAtualizado);
-      }
-    } catch (e) {
-      console.error(e);
-      alert("Erro inesperado ao atualizar pagamento.");
-      msgNewAluno.textContent = "";
-    }
-  });
-
-  // -------- SESSÕES: ABRIR MODAL --------
+  // ---------- SESSÕES: ABRIR MODAL ----------
   function abrirModalSessao(sessao) {
     if (!formSessao) return;
 
@@ -1681,7 +1612,7 @@
     abrirModalSessao(null);
   });
 
-  // -------- SESSÕES: SUBMIT (UPSERT) --------
+  // ---------- SESSÕES: SUBMIT ----------
   formSessao?.addEventListener("submit", async (ev) => {
     ev.preventDefault();
     msgSessao.textContent = "";
@@ -1756,7 +1687,7 @@
     }
   });
 
-  // -------- SESSÕES: APAGAR --------
+  // ---------- SESSÕES: APAGAR ----------
   btnDeleteSessao?.addEventListener("click", async () => {
     if (!SESSAO_ATUAL_ID) {
       return;
