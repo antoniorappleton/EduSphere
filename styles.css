@@ -923,3 +923,63 @@ body.home .expl-fab {
     margin: 0 !important;
     border: none !important;
 }
+/* === Cartões "Calendário" e "Relatórios" refinados === */
+
+.expl-feature-list {
+  list-style: none;
+  margin: 12px 0 20px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.expl-feature-list li {
+  display: grid;
+  grid-template-columns: 140px minmax(0, 1fr);
+  align-items: flex-start;
+  column-gap: 12px;
+  row-gap: 4px;
+}
+
+@media (max-width: 640px) {
+  .expl-feature-list li {
+    grid-template-columns: 1fr;
+  }
+}
+
+.expl-feature-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #4b5563;
+}
+
+.expl-feature-value {
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+/* Botão “chip” no rodapé do cartão */
+.expl-link-chip {
+  margin-top: 12px;
+  border-radius: 999px;
+  border: 1px solid #d1d5db;
+  background: #f9fafb;
+  padding: 8px 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+}
+
+.expl-link-chip-icon {
+  font-size: 1rem;
+}
+
+.expl-link-chip:hover {
+  background: #eef2ff;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.12);
+  transform: translateY(-1px);
+}

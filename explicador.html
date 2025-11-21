@@ -291,24 +291,72 @@
 
         <!-- CALENDÁRIO + RELATÓRIOS -->
         <section class="expl-section expl-grid-2" id="expl-sec-outros">
-          <div id="expl-sec-calendario" class="expl-card expl-placeholder-card">
+          <!-- CARTÃO: CALENDÁRIO -->
+          <article id="expl-sec-calendario" class="expl-card expl-placeholder-card">
             <h2 class="expl-section-title">Calendário</h2>
-            <p>Próximas explicações agendadas.</p>
-            <div class="expl-placeholder">
-              <span class="expl-placeholder-icon">📅</span>
-              <span>Calendário de explicações</span>
-            </div>
-          </div>
+            <p class="expl-section-sub">Próximas explicações agendadas.</p>
 
-          <div id="expl-sec-relatorios" class="expl-card expl-placeholder-card">
+            <ul class="expl-feature-list">
+              <li>
+                <span class="expl-feature-label">Hoje</span>
+                <span class="expl-feature-value" id="cal-resumo-hoje">
+                  Assim que tiveres sessões marcadas para hoje, elas aparecem aqui.
+                </span>
+              </li>
+              <li>
+                <span class="expl-feature-label">Próximos 7 dias</span>
+                <span class="expl-feature-value" id="cal-resumo-semana">
+                  Usa o calendário para garantir que tens a semana equilibrada.
+                </span>
+              </li>
+              <li>
+                <span class="expl-feature-label">Sugestão</span>
+                <span class="expl-feature-value">
+                  Regista sempre as sessões logo que combinas o horário com o aluno.
+                </span>
+              </li>
+            </ul>
+
+            <button type="button" class="expl-link-chip">
+              <span class="expl-link-chip-icon">📅</span>
+              <span>Ir para o calendário de explicações</span>
+            </button>
+          </article>
+
+          <!-- CARTÃO: RELATÓRIOS -->
+          <article id="expl-sec-relatorios" class="expl-card expl-placeholder-card">
             <h2 class="expl-section-title">Relatórios</h2>
-            <p>Estatísticas e análises.</p>
-            <div class="expl-placeholder">
-              <span class="expl-placeholder-icon">📈</span>
-              <span>Gráficos de faturação e alunos ativos</span>
-            </div>
-          </div>
+            <p class="expl-section-sub">Estatísticas e análises da tua atividade.</p>
+
+            <ul class="expl-feature-list">
+              <li>
+                <span class="expl-feature-label">Resumo mensal</span>
+                <span class="expl-feature-value" id="rel-resumo-mensal">
+                  Acompanha num só local mensalidades pagas, em falta e total faturado.
+                </span>
+              </li>
+              <li>
+                <span class="expl-feature-label">Tendência anual</span>
+                <span class="expl-feature-value" id="rel-tendencia-anual">
+                  Vê a evolução da faturação ao longo do ano lectivo e identifica épocas fortes.
+                </span>
+              </li>
+              <li>
+                <span class="expl-feature-label">Alunos ativos</span>
+                <span class="expl-feature-value" id="rel-alunos-ativos">
+                  Controla rapidamente quantos alunos acompanhas e como evolui a tua carteira.
+                </span>
+              </li>
+            </ul>
+
+            <button type="button" class="expl-link-chip">
+              <span class="expl-link-chip-icon">📈</span>
+              <span>Ver gráficos e relatórios (brevemente)</span>
+            </button>
+          </article>
         </section>
+
+
       </div>
 
       <!-- Botão flutuante para novo aluno -->
@@ -795,6 +843,43 @@
     }
   }
 
+  // ---------- RELATÓRIOS: RESUMOS NO CARTÃO ----------
+  function updateResumoRelatorios({
+    previstoMesAtual = 0,
+    realizadoMesAtual = 0,
+    pendenteTotal = 0,
+    previstoAnoAtual = 0,
+    realizadoAnoAtual = 0,
+    nAlunosAtivos = 0,
+  } = {}) {
+    const elMensal   = document.querySelector('#rel-resumo-mensal');
+    const elTend     = document.querySelector('#rel-tendencia-anual');
+    const elAlunos   = document.querySelector('#rel-alunos-ativos');
+
+    if (elMensal) {
+      elMensal.textContent =
+        `Este mês: € ${realizadoMesAtual.toFixed(2)} recebidos ` +
+        `de € ${previstoMesAtual.toFixed(2)} previstos · ` +
+        `€ ${pendenteTotal.toFixed(2)} em falta.`;
+    }
+
+    if (elTend) {
+      elTend.textContent =
+        `Ano atual: € ${realizadoAnoAtual.toFixed(2)} faturados ` +
+        `de € ${previstoAnoAtual.toFixed(2)} previstos.`;
+    }
+
+    if (elAlunos) {
+      if (nAlunosAtivos <= 0) {
+        elAlunos.textContent = "Ainda não tens alunos ativos registados.";
+      } else if (nAlunosAtivos === 1) {
+        elAlunos.textContent = "A acompanhar 1 aluno ativo.";
+      } else {
+        elAlunos.textContent = `A acompanhar ${nAlunosAtivos} alunos ativos.`;
+      }
+    }
+  }
+
   // ---------- KPI financeiros ----------
   async function loadKpisFinanceiros() {
     if (!EXPLICADOR.id_explicador) return;
@@ -869,6 +954,17 @@
         cardPendentes.textContent =
           `€ ${pendenteTotal.toFixed(2)} (${labelAlunos})`;
       }
+
+      // Atualiza o cartão "Relatórios" com base nos mesmos dados
+      const nAlunosAtivos = (ALUNOS_CACHE || []).filter(a => a.is_active !== false).length;
+      updateResumoRelatorios({
+        previstoMesAtual,
+        realizadoMesAtual,
+        pendenteTotal,
+        previstoAnoAtual,
+        realizadoAnoAtual,
+        nAlunosAtivos,
+      });
 
       renderResumoMensal();
     } catch (err) {
@@ -1539,6 +1635,8 @@
     setState({ isExpl:true, isAuthed:true });
     await loadAlunos();
     await loadKpisFinanceiros();
+    await loadResumoCalendario();
+    await loadResumoCalendario();
   })();
 
   // ---------- NAVEGAÇÃO HEADER ----------
@@ -1745,6 +1843,59 @@
       btnDeleteSessao.disabled = false;
     }
   });
+//--------------------------------------------------------------------
+// CARREGAR RESUMO DE CALENDÁRIO
+//--------------------------------------------------------------------
+
+async function loadResumoCalendario() {
+  console.log("A carregar resumo de calendário...");
+
+  const { data, error } = await supabase.functions.invoke("expl-alunos", {
+    body: { action: "list_sessoes_explicador" },
+  });
+
+  if (error) {
+    console.error("Erro a carregar sessões do explicador", error);
+    return;
+  }
+
+  const sessoes = data || [];
+
+  // === HOJE ===
+  const hoje = new Date().toISOString().slice(0, 10);
+  const sessoesHoje = sessoes.filter(s => s.data === hoje);
+
+  let txtHoje = "Sem sessões registadas";
+  if (sessoesHoje.length > 0) {
+    const detalhes = sessoesHoje
+      .map(s => `${s.hora_inicio?.slice(0, 5)} ${s.aluno_nome}`)
+      .join(", ");
+
+    txtHoje = `${sessoesHoje.length} sessão(ões) hoje · ${detalhes}`;
+  }
+
+  document.querySelector("#cal-resumo-hoje").textContent = txtHoje;
+
+
+  // === PRÓXIMOS 7 DIAS ===
+  const hojeDate = new Date();
+  const seteDiasAntes = new Date();
+  seteDiasAntes.setDate(hojeDate.getDate() + 7);
+
+  const sessoesSemana = sessoes.filter(s => {
+    const dataSess = new Date(s.data);
+    return dataSess >= hojeDate && dataSess <= seteDiasAntes;
+  });
+
+  let txtSemana = "Agenda em branco por agora";
+  if (sessoesSemana.length > 0) {
+    const alunosUnicos = new Set(sessoesSemana.map(s => s.aluno_nome));
+    txtSemana = `${sessoesSemana.length} sessões nos próximos 7 dias · ${alunosUnicos.size} alunos diferentes`;
+  }
+
+  document.querySelector("#cal-resumo-semana").textContent = txtSemana;
+}
+
 </script>
 </body>
 </html>
