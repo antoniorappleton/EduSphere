@@ -437,6 +437,45 @@
   </div>
 </div>
 
+<!-- ========== MODAL: PAGAMENTO ALUNO ========== -->
+<div class="modal" id="modal-pagamento-aluno">
+  <div class="modal__backdrop" data-modal-close></div>
+  <div class="modal__dialog">
+    <div class="modal__header">
+      <h2 id="pag-modal-title">Registar pagamento</h2>
+      <button class="modal__close" type="button" data-modal-close>&times;</button>
+    </div>
+    <p class="auth__hint" id="pag-modal-hint">
+      Preencha os dados do pagamento deste aluno.
+    </p>
+
+    <form id="fPagamentoAluno" class="auth__form" style="margin-bottom:12px;">
+      <div class="grid2">
+        <input type="number" name="ano" placeholder="Ano" required />
+        <input type="number" name="mes" placeholder="Mês (1-12)" min="1" max="12" required />
+
+        <!-- só usado em INICIAR -->
+        <input type="number" name="dia_pagamento"
+               placeholder="Dia de pagamento (1-31)"
+               min="1" max="31"
+               style="display:none;" />
+
+        <!-- usado em REGISTAR / EDITAR -->
+        <input type="number" step="0.01" name="valor"
+               placeholder="Valor (€)" style="display:none;" />
+      </div>
+
+      <input type="hidden" name="modo" value="registar" />
+
+      <button id="btnSavePagamento" class="button" type="submit">
+        Guardar
+      </button>
+      <div id="msgPagamentoAluno" class="auth__msg"></div>
+    </form>
+  </div>
+</div>
+
+
 <script>
   // helper DOM – TEM DE SER O PRIMEIRO
   const $ = (s) => document.querySelector(s);
