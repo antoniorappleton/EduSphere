@@ -316,6 +316,27 @@
                 </span>
               </li>
             </ul>
+                        <!-- MINI CALENDÁRIO SEMANAL -->
+            <div class="expl-week-calendar" id="week-calendar">
+              <header class="expl-week-calendar__header">
+                <button type="button" class="expl-link-chip" id="week-prev">
+                  &larr; Semana anterior
+                </button>
+                <p class="expl-week-calendar__label">
+                  <strong id="week-label">Semana atual</strong>
+                </p>
+                <button type="button" class="expl-link-chip" id="week-next">
+                  Próxima semana &rarr;
+                </button>
+              </header>
+
+              <div class="expl-week-calendar__grid" id="week-grid">
+                <!-- preenchido via JS -->
+                <p class="expl-week-calendar__empty">
+                  Ainda não existem sessões registadas para esta semana.
+                </p>
+              </div>
+            </div>
 
             <button type="button" class="expl-link-chip">
               <span class="expl-link-chip-icon">📅</span>
@@ -528,6 +549,15 @@
   // ---------- helper DOM ----------
   const $ = (s) => document.querySelector(s);
 
+    let SESSOES_EXPLICADOR = [];
+  let semanaOffset = 0; // 0 = semana atual, -1 = anterior, +1 = próxima
+
+  const weekGrid    = document.querySelector('#week-grid');
+  const weekLabel   = document.querySelector('#week-label');
+  const btnWeekPrev = document.querySelector('#week-prev');
+  const btnWeekNext = document.querySelector('#week-next');
+
+
   // Pagamento modal refs
   const modalPag        = $('#modal-pagamento-aluno');
   const formPag         = $('#fPagamentoAluno');
@@ -590,6 +620,18 @@
   let PAGAMENTOS_CACHE = [];
   let ALUNO_ATUAL      = null;
   let SESSAO_ATUAL_ID  = null;
+
+    function getInicioSemana(date) {
+    const d = new Date(date);
+    const day = d.getDay(); // 0=Dom,1=Seg,...6=Sáb
+    const diff = (day + 6) % 7; // queremos começar em SEG
+    d.setDate(d.getDate() - diff);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
+
+  const NOMES_DIAS_CURTOS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+
 
   // ---------- helpers supabase ----------
   async function hasRole(uid, roleName){
@@ -1843,10 +1885,101 @@
       btnDeleteSessao.disabled = false;
     }
   });
+
+    // ------------------------------------------------------------------
+  // RENDER CALENDÁRIO SEMANAL
+  // ------------------------------------------------------------------
+  function renderCalendarioSemanal() {
+    if (!weekGrid) return;
+
+    // se ainda não há dados de sessões
+    if (!SESSOES_EXPLICADOR || SESSOES_EXPLICADOR.length === 0) {
+      weekGrid.innerHTML =
+        '<p class="expl-week-calendar__empty">Ainda não existem sessões registadas para esta semana.</p>';
+      if (weekLabel) weekLabel.textContent = 'Semana atual';
+      return;
+    }
+
+    const hoje = new Date();
+    const inicioSemanaBase = getInicioSemana(hoje);
+    inicioSemanaBase.setDate(inicioSemanaBase.getDate() + 7 * semanaOffset);
+
+    const diasSemana = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(inicioSemanaBase);
+      d.setDate(inicioSemanaBase.getDate() + i);
+      diasSemana.push(d);
+    }
+
+    if (weekLabel) {
+      const opts = { day: '2-digit', month: '2-digit' };
+      const inicioLabel = diasSemana[0].toLocaleDateString('pt-PT', opts);
+      const fimLabel    = diasSemana[6].toLocaleDateString('pt-PT', opts);
+      weekLabel.textContent = `Semana ${inicioLabel} – ${fimLabel}`;
+    }
+
+    const html = diasSemana.map((d, idx) => {
+      const dateStr = d.toISOString().slice(0, 10);
+      const sessoesDia = SESSOES_EXPLICADOR
+        .filter(s => s.data === dateStr)
+        .sort((a, b) => (a.hora_inicio || '').localeCompare(b.hora_inicio || ''));
+
+      const labelData = d.toLocaleDateString('pt-PT', {
+        day: '2-digit',
+        month: '2-digit'
+      });
+
+      let items;
+      if (!sessoesDia.length) {
+        items = '<li class="expl-week-day__empty">Sem sessões.</li>';
+      } else {
+        items = sessoesDia.map(s => {
+          const hora   = s.hora_inicio ? s.hora_inicio.slice(0, 5) : '--:--';
+          const nome   = s.aluno_nome || 'Aluno';
+          const estado = s.estado || '';
+          return `
+            <li class="expl-week-day__item">
+              <time class="expl-week-day__time">${hora}</time>
+              <span class="expl-week-day__aluno">${nome}</span>
+              <span class="expl-week-badge">${estado}</span>
+            </li>
+          `;
+        }).join('');
+      }
+
+      return `
+        <div class="expl-week-day">
+          <h4 class="expl-week-day__title">
+            ${NOMES_DIAS_CURTOS[idx]}
+            <span class="expl-week-day__date">${labelData}</span>
+          </h4>
+          <ul class="expl-week-day__list">
+            ${items}
+          </ul>
+        </div>
+      `;
+    }).join('');
+
+    weekGrid.innerHTML = html;
+  }
+
+  // navegação de semanas
+  btnWeekPrev?.addEventListener('click', () => {
+    semanaOffset -= 1;
+    renderCalendarioSemanal();
+  });
+
+  btnWeekNext?.addEventListener('click', () => {
+    semanaOffset += 1;
+    renderCalendarioSemanal();
+  });
+
 //--------------------------------------------------------------------
 // CARREGAR RESUMO DE CALENDÁRIO
 //--------------------------------------------------------------------
-
+//--------------------------------------------------------------------
+// CARREGAR RESUMO DE CALENDÁRIO
+//--------------------------------------------------------------------
 async function loadResumoCalendario() {
   console.log("A carregar resumo de calendário...");
 
@@ -1860,40 +1993,48 @@ async function loadResumoCalendario() {
   }
 
   const sessoes = data || [];
+  SESSOES_EXPLICADOR = sessoes;
 
   // === HOJE ===
-  const hoje = new Date().toISOString().slice(0, 10);
-  const sessoesHoje = sessoes.filter(s => s.data === hoje);
+  const hojeStr = new Date().toISOString().slice(0, 10);
+  const sessoesHoje = sessoes.filter(s => s.data === hojeStr);
 
   let txtHoje = "Sem sessões registadas";
   if (sessoesHoje.length > 0) {
     const detalhes = sessoesHoje
-      .map(s => `${s.hora_inicio?.slice(0, 5)} ${s.aluno_nome}`)
+      .map(s => `${s.hora_inicio?.slice(0, 5) || "--:--"} ${s.aluno_nome || ""}`.trim())
       .join(", ");
 
     txtHoje = `${sessoesHoje.length} sessão(ões) hoje · ${detalhes}`;
   }
 
-  document.querySelector("#cal-resumo-hoje").textContent = txtHoje;
-
+  const elHoje = document.querySelector("#cal-resumo-hoje");
+  if (elHoje) elHoje.textContent = txtHoje;
 
   // === PRÓXIMOS 7 DIAS ===
   const hojeDate = new Date();
-  const seteDiasAntes = new Date();
-  seteDiasAntes.setDate(hojeDate.getDate() + 7);
+  const seteDiasDepois = new Date();
+  seteDiasDepois.setDate(hojeDate.getDate() + 7);
 
   const sessoesSemana = sessoes.filter(s => {
     const dataSess = new Date(s.data);
-    return dataSess >= hojeDate && dataSess <= seteDiasAntes;
+    dataSess.setHours(0, 0, 0, 0);
+    return dataSess >= hojeDate && dataSess <= seteDiasDepois;
   });
 
   let txtSemana = "Agenda em branco por agora";
   if (sessoesSemana.length > 0) {
     const alunosUnicos = new Set(sessoesSemana.map(s => s.aluno_nome));
-    txtSemana = `${sessoesSemana.length} sessões nos próximos 7 dias · ${alunosUnicos.size} alunos diferentes`;
+    txtSemana =
+      `${sessoesSemana.length} sessões nos próximos 7 dias · ` +
+      `${alunosUnicos.size} aluno(s) diferente(s)`;
   }
 
-  document.querySelector("#cal-resumo-semana").textContent = txtSemana;
+  const elSemana = document.querySelector("#cal-resumo-semana");
+  if (elSemana) elSemana.textContent = txtSemana;
+
+  // === CALENDÁRIO SEMANAL ===
+  renderCalendarioSemanal();
 }
 
 </script>
