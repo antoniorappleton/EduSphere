@@ -48,202 +48,274 @@
     </form>
   </section>
 
-  <!-- ========== PAINEL DO EXPLICADOR (FULL PAGE) ========== -->
+    <!-- ========== PAINEL DO EXPLICADOR (FULL PAGE) ========== -->
   <section id="explPanel" class="expl-shell" style="display:none">
-    <!-- Header do painel -->
-    <header class="expl-header-bar">
-      <div class="expl-header-info">
-        <p class="expl-hello">
-          Olá, <span id="expl-nome-header">Professor</span>
-        </p>
-        <p class="expl-hello-sub">Aqui está o resumo da sua atividade.</p>
-      </div>
-
-      <div class="expl-header-user">
-        <button class="expl-bell" aria-label="Notificações">
-          <span class="expl-bell-icon">🔔</span>
-          <span class="expl-bell-badge" id="expl-notif-count">0</span>
+      <!-- IMPORTANTE: manter o mesmo #explHeaderNav e .expl-nav-btn -->
+      <nav id="explHeaderNav" class="expl-sidebar-nav" style="display:none">
+        <button class="expl-nav-btn expl-nav-btn--active" data-target="dashboard">
+          Dashboard
         </button>
-        <div class="expl-header-avatar">
-          <div class="expl-avatar-circle">Foto</div>
-          <div class="expl-header-name">
-            <p id="expl-nome-mini">Professor</p>
-            <span>Explicador</span>
-          </div>
+        <button class="expl-nav-btn" data-target="alunos">Alunos</button>
+        <button class="expl-nav-btn" data-target="calendario">Calendário</button>
+        <button class="expl-nav-btn" data-target="faturacao">Faturação</button>
+        <button class="expl-nav-btn" data-target="relatorios">Relatórios</button>
+      </nav>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <div class="expl-main">
+      <!-- Top bar com saudação + utilizador -->
+      <header class="expl-header-bar">
+        <div class="expl-header-info">
+          <h1 class="expl-page-title">Dashboard</h1>
+          <p class="expl-hello-sub">
+            Bem-vindo, <span id="expl-nome-header">Professor</span>
+          </p>
         </div>
-      </div>
-    </header>
 
-    <!-- Conteúdo -->
-    <div class="expl-body">
-      <!-- Resumo mensal: Pendentes vs Pagas (mês atual) -->
-      <div class="expl-grid-2" style="margin-top:1.5rem;">
-        <!-- Mensalidades em falta (mês atual) -->
-        <article class="expl-card">
-          <h3 class="expl-subsection-title">
-            Mensalidades em falta (mês atual)
-          </h3>
-          <div class="table-wrapper">
-            <table class="table" id="tblMensalidadesPendentes">
-              <thead>
-              <tr>
-                <th>Aluno</th>
-                <th>Mês</th>
-                <th>Previsto (€)</th>
-                <th>Pago (€)</th>
-                <th>Em falta (€)</th>
-                <th>Estado</th>
-                <th>Avisado</th>
-              </tr>
-              </thead>
-              <tbody>
-              <tr>
-                <td colspan="7">Ainda não existem mensalidades em falta neste mês.</td>
-              </tr>
-              </tbody>
-            </table>
-          </div>
-        </article>
-
-        <!-- Mensalidades pagas (mês atual) -->
-        <article class="expl-card">
-          <h3 class="expl-subsection-title">
-            Mensalidades pagas (mês atual)
-          </h3>
-          <div class="table-wrapper">
-            <table class="table" id="tblMensalidadesPagas">
-              <thead>
-              <tr>
-                <th>Aluno</th>
-                <th>Mês</th>
-                <th>Pago (€)</th>
-                <th>Previsto (€)</th>
-                <th>Estado</th>
-              </tr>
-              </thead>
-              <tbody>
-              <tr>
-                <td colspan="5">Ainda não existem mensalidades pagas neste mês.</td>
-              </tr>
-              </tbody>
-            </table>
-          </div>
-        </article>
-      </div>
-
-      <!-- ALUNOS -->
-      <section class="expl-section" id="expl-sec-alunos">
-        <div class="expl-section-header">
-          <h2 class="expl-section-title">Meus Alunos</h2>
-          <button class="expl-link-button" type="button" id="btn-scroll-lista">
-            Ver lista
+        <div class="expl-header-user">
+          <button class="expl-bell" aria-label="Notificações">
+            <span class="expl-bell-icon">🔔</span>
+            <span class="expl-bell-badge" id="expl-notif-count">0</span>
           </button>
-        </div>
-
-        <div class="expl-grid-2">
-          <!-- Quota + ações -->
-          <div class="expl-card">
-            <h3 class="expl-subsection-title">Quota de alunos</h3>
-            <div class="expl-quota">
-              <p><strong>Limite:</strong> <span id="limite">—</span></p>
-              <p><strong>Ativos:</strong> <span id="contagem">0</span></p>
-              <p><strong>Restantes:</strong> <span id="restantes">—</span></p>
-            </div>
-
-            <h3 class="expl-subsection-title" style="margin-top:1rem;">Ações rápidas</h3>
-            <div class="expl-actions-row">
-              <button class="button secondary" type="button" id="btn-open-add-aluno">
-                + Adicionar aluno
-              </button>
-            </div>
-          </div>
-
-          <!-- Lista de alunos -->
-          <div class="expl-card" id="lista-alunos-card">
-            <h3 class="expl-subsection-title">Lista de alunos</h3>
-            <div class="table-wrapper">
-              <table class="table" id="tblAlunos">
-                <thead>
-                <tr>
-                  <th>Nome</th>
-                  <th>Email</th>
-                  <th>Ano</th>
-                </tr>
-                </thead>
-                <tbody></tbody>
-              </table>
+          <div class="expl-header-avatar">
+            <div class="expl-avatar-circle">E</div>
+            <div class="expl-header-name">
+              <p id="expl-nome-mini">Professor</p>
+              <span>Explicador</span>
             </div>
           </div>
         </div>
+      </header>
 
-        <!-- Painel de detalhes do aluno (aparece ao clicar numa linha) -->
-        <div class="expl-card expl-aluno-detail" id="aluno-detail-card" style="margin-top:1.5rem; display:none">
-          <h3 class="expl-subsection-title">
-            Detalhes do aluno:
-            <span id="aluno-detail-nome" class="expl-aluno-detail__nome">—</span>
-          </h3>
+      <!-- Conteúdo scrollável -->
+      <div class="expl-body">
+        <!-- RESUMO FINANCEIRO -->
+        <section class="expl-section">
+          <h2 class="expl-section-title">Resumo financeiro</h2>
 
-          <p id="aluno-detail-meta" class="expl-aluno-detail__meta"></p>
+          <div class="expl-kpi-grid">
+            <article class="expl-card expl-kpi-card">
+              <p class="expl-kpi-label">Faturação prevista (mês atual)</p>
+              <p class="expl-kpi-value" id="card-total-previsto">—</p>
+            </article>
+
+            <article class="expl-card expl-kpi-card">
+              <p class="expl-kpi-label">Faturação realizada (mês atual)</p>
+              <p class="expl-kpi-value expl-kpi-value--green" id="card-total-mes">—</p>
+            </article>
+
+            <article class="expl-card expl-kpi-card">
+              <p class="expl-kpi-label">Pagamentos pendentes</p>
+              <p class="expl-kpi-value expl-kpi-value--red" id="card-pendentes">—</p>
+            </article>
+          </div>
+        </section>
+
+        <!-- ALUNOS + QUOTA -->
+        <section class="expl-section" id="expl-sec-alunos">
+          <div class="expl-section-header">
+            <h2 class="expl-section-title">Alunos <span class="expl-section-sub">(ativos)</span></h2>
+            <button class="expl-link-button" type="button" id="btn-scroll-lista">
+              Ver lista &rarr;
+            </button>
+          </div>
 
           <div class="expl-grid-2">
-            <div>
-              <h4 class="expl-subsection-title">Informação básica</h4>
-              <ul class="expl-detail-list">
-                <li><strong>Email:</strong> <span id="aluno-detail-email">—</span></li>
-                <li><strong>Telemóvel:</strong> <span id="aluno-detail-tel">—</span></li>
-                <li><strong>Ano:</strong> <span id="aluno-detail-ano">—</span></li>
-                <li><strong>Valor explicação:</strong> <span id="aluno-detail-valor">—</span></li>
-                <li><strong>Sessões / mês:</strong> <span id="aluno-detail-sessoes">—</span></li>
-              </ul>
+            <!-- Quota + ações -->
+            <div class="expl-card">
+              <h3 class="expl-subsection-title">Quota de alunos</h3>
+              <div class="expl-quota">
+                <p><strong>Limite:</strong> <span id="limite">—</span></p>
+                <p><strong>Ativos:</strong> <span id="contagem">0</span></p>
+                <p><strong>Restantes:</strong> <span id="restantes">—</span></p>
+              </div>
 
-                <div class="expl-actions-row" style="margin-top:1rem;">
-                <button class="button secondary" type="button" id="btn-iniciar-faturacao">
-                  Iniciar faturação
-                </button>
-                <button class="button secondary" type="button" id="btn-registar-pagamento">
-                  Registar pagamento
-                </button>
-                <button class="button" type="button" id="btn-editar-aluno">
-                  Editar aluno
+              <h3 class="expl-subsection-title" style="margin-top:1rem;">Ações rápidas</h3>
+              <div class="expl-actions-row">
+                <button class="button secondary" type="button" id="btn-open-add-aluno">
+                  + Adicionar aluno
                 </button>
               </div>
-            </div> <!-- fecha a coluna esquerda -->
+            </div>
 
-
-            <div>
-              <h4 class="expl-subsection-title">Resumo de mensalidades</h4>
-              <ul class="expl-detail-list">
-                <li><strong>Valor previsto (mês atual):</strong> <span id="aluno-detail-previsto-mes">—</span></li>
-                <li><strong>Valor pago (mês atual):</strong> <span id="aluno-detail-pago-mes">—</span></li>
-                <li><strong>Em falta (total):</strong> <span id="aluno-detail-emfalta">—</span></li>
-              </ul>
+            <!-- Lista de alunos -->
+            <div class="expl-card" id="lista-alunos-card">
+              <h3 class="expl-subsection-title">Lista de alunos</h3>
+              <div class="table-wrapper">
+                <table class="table" id="tblAlunos">
+                  <thead>
+                  <tr>
+                    <th>Nome</th>
+                    <th>Email</th>
+                    <th>Ano</th>
+                  </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
 
-      <!-- CALENDÁRIO + RELATÓRIOS -->
-      <section class="expl-section expl-grid-2" id="expl-sec-outros">
-        <div id="expl-sec-calendario">
-          <h2 class="expl-section-title">Calendário</h2>
-          <div class="expl-card expl-placeholder">
-            <p>Calendário de explicações (a integrar).</p>
+          <!-- Painel de detalhes do aluno (aparece ao clicar numa linha) -->
+          <div class="expl-card expl-aluno-detail" id="aluno-detail-card" style="margin-top:1.5rem; display:none">
+            <h3 class="expl-subsection-title">
+              Detalhes do aluno:
+              <span id="aluno-detail-nome" class="expl-aluno-detail__nome">—</span>
+            </h3>
+
+            <p id="aluno-detail-meta" class="expl-aluno-detail__meta"></p>
+
+            <div class="expl-grid-2">
+              <div>
+                <h4 class="expl-subsection-title">Informação básica</h4>
+                <ul class="expl-detail-list">
+                  <li><strong>Email:</strong> <span id="aluno-detail-email">—</span></li>
+                  <li><strong>Telemóvel:</strong> <span id="aluno-detail-tel">—</span></li>
+                  <li><strong>Ano:</strong> <span id="aluno-detail-ano">—</span></li>
+                  <li><strong>Valor explicação:</strong> <span id="aluno-detail-valor">—</span></li>
+                  <li><strong>Sessões / mês:</strong> <span id="aluno-detail-sessoes">—</span></li>
+                </ul>
+
+                <div class="expl-actions-row" style="margin-top:1rem;">
+                  <button class="button secondary" type="button" id="btn-iniciar-faturacao">
+                    Iniciar faturação
+                  </button>
+                  <button class="button secondary" type="button" id="btn-registar-pagamento">
+                    Registar pagamento
+                  </button>
+                  <button class="button secondary" type="button" id="btn-editar-pagamento">
+                    Editar pagamento
+                  </button>
+                  <button class="button" type="button" id="btn-editar-aluno">
+                    Editar aluno
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <h4 class="expl-subsection-title">Resumo de mensalidades</h4>
+                <ul class="expl-detail-list">
+                  <li><strong>Valor previsto (mês atual):</strong> <span id="aluno-detail-previsto-mes">—</span></li>
+                  <li><strong>Valor pago (mês atual):</strong> <span id="aluno-detail-pago-mes">—</span></li>
+                  <li><strong>Em falta (total):</strong> <span id="aluno-detail-emfalta">—</span></li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- Sessões do aluno -->
+            <div class="expl-subsection" style="margin-top:1.5rem;">
+              <div class="expl-section-header" style="margin-bottom:0.5rem;">
+                <h4 class="expl-subsection-title">Sessões de explicação</h4>
+                <button class="button secondary" type="button" id="btn-add-sessao">
+                  + Adicionar sessão
+                </button>
+              </div>
+
+              <div class="table-wrapper">
+                <table class="table" id="tblSessoesAluno">
+                  <thead>
+                  <tr>
+                    <th>Data</th>
+                    <th>Início</th>
+                    <th>Fim</th>
+                    <th>Duração (min)</th>
+                    <th>Estado</th>
+                  </tr>
+                  </thead>
+                  <tbody>
+                  <tr>
+                    <td colspan="5">Ainda não existem sessões registadas para este aluno.</td>
+                  </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
           </div>
-        </div>
+        </section>
 
-        <div id="expl-sec-relatorios">
-          <h2 class="expl-section-title">Relatórios</h2>
-          <div class="expl-card expl-placeholder">
-            <p>Gráficos de faturação e alunos ativos (a integrar).</p>
+        <!-- RESUMO MENSALIDADES (as tuas tabelas já existentes) -->
+        <section class="expl-section">
+          <div class="expl-grid-2" style="margin-top:1.5rem;">
+            <article class="expl-card">
+              <h3 class="expl-subsection-title">
+                Mensalidades em falta (mês atual)
+              </h3>
+              <div class="table-wrapper">
+                <table class="table" id="tblMensalidadesPendentes">
+                  <thead>
+                  <tr>
+                    <th>Aluno</th>
+                    <th>Mês</th>
+                    <th>Previsto (€)</th>
+                    <th>Pago (€)</th>
+                    <th>Em falta (€)</th>
+                    <th>Estado</th>
+                    <th>Avisado</th>
+                  </tr>
+                  </thead>
+                  <tbody>
+                  <tr>
+                    <td colspan="7">Ainda não existem mensalidades em falta neste mês.</td>
+                  </tr>
+                  </tbody>
+                </table>
+              </div>
+            </article>
+
+            <article class="expl-card">
+              <h3 class="expl-subsection-title">
+                Mensalidades pagas (mês atual)
+              </h3>
+              <div class="table-wrapper">
+                <table class="table" id="tblMensalidadesPagas">
+                  <thead>
+                  <tr>
+                    <th>Aluno</th>
+                    <th>Mês</th>
+                    <th>Pago (€)</th>
+                    <th>Previsto (€)</th>
+                    <th>Estado</th>
+                  </tr>
+                  </thead>
+                  <tbody>
+                  <tr>
+                    <td colspan="5">Ainda não existem mensalidades pagas neste mês.</td>
+                  </tr>
+                  </tbody>
+                </table>
+              </div>
+            </article>
           </div>
-        </div>
-      </section>
+        </section>
 
+        <!-- CALENDÁRIO + RELATÓRIOS -->
+        <section class="expl-section expl-grid-2" id="expl-sec-outros">
+          <div id="expl-sec-calendario" class="expl-card expl-placeholder-card">
+            <h2 class="expl-section-title">Calendário</h2>
+            <p>Próximas explicações agendadas.</p>
+            <div class="expl-placeholder">
+              <span class="expl-placeholder-icon">📅</span>
+              <span>Calendário de explicações</span>
+            </div>
+          </div>
+
+          <div id="expl-sec-relatorios" class="expl-card expl-placeholder-card">
+            <h2 class="expl-section-title">Relatórios</h2>
+            <p>Estatísticas e análises.</p>
+            <div class="expl-placeholder">
+              <span class="expl-placeholder-icon">📈</span>
+              <span>Gráficos de faturação e alunos ativos</span>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Botão flutuante para novo aluno -->
+      <button class="expl-fab" id="btn-add-aluno" type="button">+</button>
     </div>
-
-    <!-- Botão flutuante -->
-    <button class="expl-fab" id="btn-add-aluno" type="button">+</button>
   </section>
+
 </main>
 
 <footer>© <span id="y"></span> EduSphere</footer>
@@ -326,11 +398,49 @@
   </div>
 </div>
 
+<!-- ========== MODAL: SESSÃO (ADICIONAR / EDITAR) ========== -->
+<div class="modal" id="modal-sessao">
+  <div class="modal__backdrop" data-modal-close></div>
+  <div class="modal__dialog">
+    <div class="modal__header">
+      <h2>Sessão de explicação</h2>
+      <button class="modal__close" type="button" data-modal-close>&times;</button>
+    </div>
+    <p class="auth__hint">Registe ou edite uma sessão deste aluno.</p>
+    <form id="fSessao" class="auth__form" style="margin-bottom:12px;">
+      <div class="grid2">
+        <input type="date" name="data_sessao" placeholder="Data" required />
+        <input type="time" name="hora_inicio" placeholder="Hora início (opcional)" />
+
+        <input type="time" name="hora_fim" placeholder="Hora fim (opcional)" />
+        <input type="number" name="duracao_min" placeholder="Duração (min, opcional)" />
+
+        <select name="estado">
+          <option value="AGENDADA">Agendada</option>
+          <option value="REALIZADA">Realizada</option>
+          <option value="FALTOU">Faltou</option>
+          <option value="CANCELADA">Cancelada</option>
+        </select>
+
+        <input name="observacoes" placeholder="Observações (opcional)" />
+      </div>
+
+      <div class="expl-actions-row" style="margin-top:0.75rem;">
+        <button id="btnSaveSessao" class="button" type="submit">Guardar sessão</button>
+        <button id="btnDeleteSessao" class="button secondary" type="button" style="display:none;">
+          Apagar sessão
+        </button>
+      </div>
+
+      <div id="msgSessao" class="auth__msg"></div>
+    </form>
+  </div>
+</div>
+
 <script>
-  // helper de seletores – TEM DE SER O PRIMEIRO
+  // helper DOM – TEM DE SER O PRIMEIRO
   const $ = (s) => document.querySelector(s);
 
-  // ---------- refs básicas ----------
   const elYear      = $('#y');
   const btnLogout   = $('#btnLogout');
   const headerNav   = $('#explHeaderNav');
@@ -364,13 +474,23 @@
 
   const btnIniciarFat   = $('#btn-iniciar-faturacao');
   const btnRegistarPag  = $('#btn-registar-pagamento');
+  const btnEditarPag    = $('#btn-editar-pagamento');
+
+  const modalSessao     = $('#modal-sessao');
+  const formSessao      = $('#fSessao');
+  const msgSessao       = $('#msgSessao');
+  const btnSaveSessao   = $('#btnSaveSessao');
+  const btnDeleteSessao = $('#btnDeleteSessao');
+  const btnAddSessao    = $('#btn-add-sessao');
+  const tblSessoesBody  = $('#tblSessoesAluno tbody');
 
   elYear.textContent = new Date().getFullYear();
 
   let EXPLICADOR       = { userId:null, id_explicador:null, max:0 };
-  let ALUNOS_CACHE     = [];
+  let ALUNOS_CACHE     = []; // cache dos alunos para detalhes
   let PAGAMENTOS_CACHE = [];
-  let ALUNO_ATUAL      = null;
+  let ALUNO_ATUAL      = null; // aluno selecionado na lista
+  let SESSAO_ATUAL_ID  = null; // sessão selecionada no modal
 
   // ---------- helpers supabase ----------
   async function hasRole(uid, roleName){
@@ -422,108 +542,7 @@
     }
   }
 
-  // ---------- Painel de detalhes por aluno ----------
-  async function mostrarPainelAluno(aluno) {
-    ALUNO_ATUAL = aluno;
-
-    const card = document.getElementById("aluno-detail-card");
-    if (!card) return;
-
-    const nomeCompleto = [aluno.nome, aluno.apelido].filter(Boolean).join(" ");
-    document.getElementById("aluno-detail-nome").textContent =
-      nomeCompleto || "Aluno";
-
-    document.getElementById("aluno-detail-meta").textContent =
-      aluno.username ? `Username: ${aluno.username}` : "";
-
-    document.getElementById("aluno-detail-email").textContent =
-      aluno.email || "—";
-    document.getElementById("aluno-detail-tel").textContent =
-      aluno.telemovel || "—";
-    document.getElementById("aluno-detail-ano").textContent =
-      aluno.ano ?? "—";
-
-    const valorExp =
-      aluno.valor_explicacao != null
-        ? `€ ${Number(aluno.valor_explicacao).toFixed(2)}`
-        : "—";
-    document.getElementById("aluno-detail-valor").textContent = valorExp;
-
-    const sessoes =
-      aluno.sessoes_mes != null ? String(aluno.sessoes_mes) : "—";
-    document.getElementById("aluno-detail-sessoes").textContent = sessoes;
-
-    card.style.display = "block";
-
-    if (!EXPLICADOR.id_explicador) return;
-
-    const elPrevistoMes = document.getElementById("aluno-detail-previsto-mes");
-    const elPagoMes     = document.getElementById("aluno-detail-pago-mes");
-    const elEmFalta     = document.getElementById("aluno-detail-emfalta");
-
-    try {
-      const now = new Date();
-      const anoAtual = now.getFullYear();
-      const mesAtual = now.getMonth() + 1;
-
-      const { data, error } = await supabase
-        .from("v_pagamentos_detalhe")
-        .select("ano, mes, valor_previsto, valor_pago, estado")
-        .eq("id_explicador", EXPLICADOR.id_explicador)
-        .eq("id_aluno", aluno.id_aluno);
-
-      if (error) {
-        console.error("Erro a carregar pagamentos do aluno", error);
-        if (elPrevistoMes) elPrevistoMes.textContent = "—";
-        if (elPagoMes)     elPagoMes.textContent     = "—";
-        if (elEmFalta)     elEmFalta.textContent     = "—";
-        return;
-      }
-
-      let previstoMes = 0;
-      let pagoMes     = 0;
-      let emFaltaTotal = 0;
-
-      (data || []).forEach((p) => {
-        const previsto = Number(p.valor_previsto) || 0;
-        const pago     = Number(p.valor_pago) || 0;
-        const falta    = Math.max(previsto - pago, 0);
-
-        if (p.ano === anoAtual && p.mes === mesAtual) {
-          previstoMes += previsto;
-          pagoMes     += pago;
-        }
-
-        emFaltaTotal += falta;
-      });
-
-      // fallback se não há registos de pagamentos
-      if ((!data || data.length === 0) &&
-          aluno.valor_explicacao != null &&
-          aluno.sessoes_mes != null) {
-
-        const estimado = Number(aluno.valor_explicacao) * Number(aluno.sessoes_mes);
-
-        previstoMes   = estimado;
-        pagoMes       = 0;
-        emFaltaTotal  = estimado;
-      }
-
-      if (elPrevistoMes) {
-        elPrevistoMes.textContent = `€ ${previstoMes.toFixed(2)}`;
-      }
-      if (elPagoMes) {
-        elPagoMes.textContent     = `€ ${pagoMes.toFixed(2)}`;
-      }
-      if (elEmFalta) {
-        elEmFalta.textContent     = `€ ${emFaltaTotal.toFixed(2)}`;
-      }
-    } catch (err) {
-      console.error("Erro inesperado ao calcular resumo do aluno", err);
-    }
-  }
-
-  // ---------- quota UI ----------
+  // ---------- QUOTA UI ----------
   function updateQuotaUI(total){
     const max = Number(EXPLICADOR.max || 0);
     elContagem.textContent = String(total);
@@ -596,7 +615,7 @@
       });
   }
 
-  // ---------- Resumo mensal: pendentes vs pagas (mês atual) ----------
+  // ---------- RESUMO MENSAL: PENDENTES VS PAGAS (MÊS ATUAL) ----------
   function renderResumoMensal() {
     const tbodyPend = document.querySelector("#tblMensalidadesPendentes tbody");
     const tbodyPagas = document.querySelector("#tblMensalidadesPagas tbody");
@@ -630,7 +649,7 @@
 
       if (previsto === 0 && pago === 0) return;
 
-      const avisadoLabel = "—";
+      const avisadoLabel = "—"; // placeholder
 
       if (falta > 0) {
         pendentes.push({
@@ -833,6 +852,169 @@
     }
   }
 
+  // ---------- CARREGAR SESSÕES DO ALUNO ----------
+  async function loadSessoesAluno(alunoId) {
+    if (!tblSessoesBody) return;
+
+    tblSessoesBody.innerHTML =
+      '<tr><td colspan="5">A carregar sessões...</td></tr>';
+
+    const { data, error } = await supabase.functions.invoke("expl-alunos", {
+      body: {
+        action: "list_sessoes_aluno",
+        payload: { aluno_id: alunoId },
+      },
+    });
+
+    if (error) {
+      console.error("list_sessoes_aluno error", error);
+      tblSessoesBody.innerHTML =
+        '<tr><td colspan="5">Erro ao carregar sessões.</td></tr>';
+      return;
+    }
+
+    if (!data || !data.length) {
+      tblSessoesBody.innerHTML =
+        '<tr><td colspan="5">Ainda não existem sessões registadas para este aluno.</td></tr>';
+      return;
+    }
+
+    tblSessoesBody.innerHTML = data
+      .map((s) => {
+        const dataLabel = s.data || "—";
+        const hIni = s.hora_inicio || "—";
+        const hFim = s.hora_fim || "—";
+        const dur = s.duracao_min != null ? s.duracao_min : "—";
+        const est = s.estado || "—";
+
+        return `
+          <tr class="linha-sessao" data-id-sessao="${s.id_sessao}">
+            <td>${dataLabel}</td>
+            <td>${hIni}</td>
+            <td>${hFim}</td>
+            <td>${dur}</td>
+            <td>${est}</td>
+          </tr>
+        `;
+      })
+      .join("");
+
+    // clicar para editar
+    tblSessoesBody.querySelectorAll("tr.linha-sessao").forEach((row, idx) => {
+      row.addEventListener("click", () => {
+        const idSessao = row.dataset.idSessao;
+        const sessao = (data || []).find(
+          (s) => String(s.id_sessao) === String(idSessao),
+        );
+        if (sessao) {
+          abrirModalSessao(sessao);
+        }
+      });
+    });
+  }
+
+  // ---------- Painel de detalhes por aluno ----------
+  async function mostrarPainelAluno(aluno) {
+    ALUNO_ATUAL = aluno;
+
+    const card = document.getElementById("aluno-detail-card");
+    if (!card) return;
+
+    const nomeCompleto = [aluno.nome, aluno.apelido].filter(Boolean).join(" ");
+    document.getElementById("aluno-detail-nome").textContent =
+      nomeCompleto || "Aluno";
+
+    document.getElementById("aluno-detail-meta").textContent =
+      aluno.username ? `Username: ${aluno.username}` : "";
+
+    document.getElementById("aluno-detail-email").textContent =
+      aluno.email || "—";
+    document.getElementById("aluno-detail-tel").textContent =
+      aluno.telemovel || "—";
+    document.getElementById("aluno-detail-ano").textContent =
+      aluno.ano ?? "—";
+
+    const valorExp =
+      aluno.valor_explicacao != null
+        ? `€ ${Number(aluno.valor_explicacao).toFixed(2)}`
+        : "—";
+    document.getElementById("aluno-detail-valor").textContent = valorExp;
+
+    const sessoes =
+      aluno.sessoes_mes != null ? String(aluno.sessoes_mes) : "—";
+    document.getElementById("aluno-detail-sessoes").textContent = sessoes;
+
+    card.style.display = "block";
+
+    if (!EXPLICADOR.id_explicador) return;
+
+    const elPrevistoMes = document.getElementById("aluno-detail-previsto-mes");
+    const elPagoMes     = document.getElementById("aluno-detail-pago-mes");
+    const elEmFalta     = document.getElementById("aluno-detail-emfalta");
+
+    try {
+      const now = new Date();
+      const anoAtual = now.getFullYear();
+      const mesAtual = now.getMonth() + 1;
+
+      const { data, error } = await supabase
+        .from("v_pagamentos_detalhe")
+        .select("ano, mes, valor_previsto, valor_pago, estado")
+        .eq("id_explicador", EXPLICADOR.id_explicador)
+        .eq("id_aluno", aluno.id_aluno);
+
+      if (error) {
+        console.error("Erro a carregar pagamentos do aluno", error);
+        if (elPrevistoMes) elPrevistoMes.textContent = "—";
+        if (elPagoMes)     elPagoMes.textContent     = "—";
+        if (elEmFalta)     elEmFalta.textContent     = "—";
+        return;
+      }
+
+      let previstoMes = 0;
+      let pagoMes     = 0;
+      let emFaltaTotal = 0;
+
+      (data || []).forEach((p) => {
+        const previsto = Number(p.valor_previsto) || 0;
+        const pago     = Number(p.valor_pago) || 0;
+        const falta    = Math.max(previsto - pago, 0);
+
+        if (p.ano === anoAtual && p.mes === mesAtual) {
+          previstoMes += previsto;
+          pagoMes     += pago;
+        }
+
+        emFaltaTotal += falta;
+      });
+
+      if ((!data || data.length === 0) &&
+          aluno.valor_explicacao != null &&
+          aluno.sessoes_mes != null) {
+
+        const estimado = Number(aluno.valor_explicacao) * Number(aluno.sessoes_mes);
+        previstoMes   = estimado;
+        pagoMes       = 0;
+        emFaltaTotal  = estimado;
+      }
+
+      if (elPrevistoMes) {
+        elPrevistoMes.textContent = `€ ${previstoMes.toFixed(2)}`;
+      }
+      if (elPagoMes) {
+        elPagoMes.textContent     = `€ ${pagoMes.toFixed(2)}`;
+      }
+      if (elEmFalta) {
+        elEmFalta.textContent     = `€ ${emFaltaTotal.toFixed(2)}`;
+      }
+    } catch (err) {
+      console.error("Erro inesperado ao calcular resumo do aluno", err);
+    }
+
+    // carregar sessões deste aluno
+    await loadSessoesAluno(aluno.id_aluno);
+  }
+
   // ---------- CRIAR ALUNO (EDGE FUNCTION) ----------
   async function createAluno(payload){
     const { data, error } = await supabase.functions.invoke("expl-alunos", {
@@ -847,88 +1029,11 @@
     return { ok: true, data };
   }
 
-  // ---------- login ----------
-  formLogin?.addEventListener('submit', async (ev) => {
-    ev.preventDefault();
-    msgLogin.textContent = 'A entrar...';
-
-    const email    = formLogin.email.value.trim();
-    const password = formLogin.password.value.trim();
-
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error){
-      console.error(error);
-      msgLogin.textContent = 'Credenciais inválidas.';
-      return;
-    }
-
-    const user = data.user;
-    if (!(await hasRole(user.id, 'explicador'))){
-      await supabase.auth.signOut().catch(()=>{});
-      msgLogin.textContent = 'Esta conta não é de explicador.';
-      return;
-    }
-
-    const exp = await getExplRow(user.id);
-    EXPLICADOR = {
-      userId: user.id,
-      id_explicador: exp?.id_explicador || null,
-      max: exp?.max_alunos ?? 0
-    };
-
-    const nomeCompleto = [exp?.nome, exp?.apelido].filter(Boolean).join(' ') || 'Professor';
-    elNomeHeader.textContent = nomeCompleto;
-    elNomeMini.textContent   = nomeCompleto;
-
-    setState({ isExpl:true, isAuthed:true });
-    await loadAlunos();
-    await loadKpisFinanceiros();
-  });
-
-  // ---------- logout ----------
-  btnLogout?.addEventListener('click', async () => {
-    await supabase.auth.signOut().catch(()=>{});
-    window.location.href = './index.html';
-  });
-
-  // ---------- sessão inicial ----------
-  (async () => {
-    setState({ loading:true });
-
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user){
-      setState({ isExpl:false, isAuthed:false });
-      return;
-    }
-
-    const user = session.user;
-    if (!(await hasRole(user.id, 'explicador'))){
-      await supabase.auth.signOut().catch(()=>{});
-      setState({ isExpl:false, isAuthed:false });
-      msgLogin.textContent = 'Conta sem permissões de explicador.';
-      return;
-    }
-
-    const exp = await getExplRow(user.id);
-    EXPLICADOR = {
-      userId: user.id,
-      id_explicador: exp?.id_explicador || null,
-      max: exp?.max_alunos ?? 0
-    };
-
-    const nomeCompleto = [exp?.nome, exp?.apelido].filter(Boolean).join(' ') || 'Professor';
-    elNomeHeader.textContent = nomeCompleto;
-    elNomeMini.textContent   = nomeCompleto;
-
-    setState({ isExpl:true, isAuthed:true });
-    await loadAlunos();
-    await loadKpisFinanceiros();
-  })();
-
-  // ---------- modais ----------
+  // ---------- MODAIS ----------
   function openModal(mod){ mod && mod.classList.add('open'); }
   function closeModal(mod){ mod && mod.classList.remove('open'); }
 
+  // modal adicionar aluno
   modalAddAluno?.addEventListener('click', (ev) => {
     if (ev.target.hasAttribute('data-modal-close')) {
       closeModal(modalAddAluno);
@@ -941,7 +1046,7 @@
   btnFab?.addEventListener('click', () => openModal(modalAddAluno));
   btnOpenAddAluno?.addEventListener('click', () => openModal(modalAddAluno));
 
-  // abrir/fechar modal de edição
+  // modal editar aluno
   $('#modal-edit-aluno .modal__close')?.addEventListener('click', () => {
     closeModal(modalEditAluno);
   });
@@ -951,6 +1056,17 @@
     }
   });
 
+  // modal sessão
+  $('#modal-sessao .modal__close')?.addEventListener('click', () => {
+    closeModal(modalSessao);
+  });
+  modalSessao?.addEventListener('click', (ev) => {
+    if (ev.target.hasAttribute('data-modal-close')) {
+      closeModal(modalSessao);
+    }
+  });
+
+  // ---------- PREENCHER MODAL DE EDIÇÃO DO ALUNO ----------
   function preencherModalEdicao(aluno) {
     if (!formEdit || !aluno) return;
 
@@ -973,17 +1089,106 @@
     msgEditAluno.style.color = "";
   }
 
-  // abrir modal de edição a partir do botão
+  // abrir modal de edição ao clicar no botão
   btnEditarAluno?.addEventListener("click", () => {
-    if (!ALUNO_ATUAL || !ALUNO_ATUAL.id_aluno) {
-      alert("Seleciona um aluno na lista primeiro.");
+    if (!ALUNO_ATUAL) {
+      alert("Seleciona primeiro um aluno na lista.");
       return;
     }
     preencherModalEdicao(ALUNO_ATUAL);
     openModal(modalEditAluno);
   });
 
-  // ---------- submit novo aluno ----------
+  // ---------- SUBMIT EDITAR ALUNO ----------
+  formEdit?.addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    msgEditAluno.textContent = "";
+
+    if (!ALUNO_ATUAL || !ALUNO_ATUAL.id_aluno) {
+      msgEditAluno.textContent = "Nenhum aluno selecionado.";
+      return;
+    }
+
+    const f = ev.target;
+
+    const payload = {
+      id_aluno: ALUNO_ATUAL.id_aluno,
+      nome: f.nome_edit.value.trim() || null,
+      apelido: f.apelido_edit.value.trim() || null,
+      telemovel: f.telemovel_edit.value.trim() || null,
+      ano: f.ano_edit.value ? Number(f.ano_edit.value) : null,
+      idade: f.idade_edit.value ? Number(f.idade_edit.value) : null,
+      dia_semana_preferido: f.dia_semana_preferido_edit.value.trim() || null,
+      valor_explicacao: f.valor_explicacao_edit.value
+        ? Number(f.valor_explicacao_edit.value)
+        : null,
+      sessoes_mes: f.sessoes_mes_edit.value
+        ? Number(f.sessoes_mes_edit.value)
+        : null,
+      nome_pai_cache: f.nome_pai_cache_edit.value.trim() || null,
+      contacto_pai_cache: f.contacto_pai_cache_edit.value.trim() || null,
+      email: f.email_edit.value.trim() || null,
+      username: f.username_edit.value.trim() || null,
+      password: f.password_edit.value.trim() || undefined,
+      is_active: true,
+    };
+
+    console.log("UPDATE PAYLOAD:", payload);
+
+    btnSaveEdit.disabled = true;
+    msgEditAluno.textContent = "A guardar alterações...";
+
+    try {
+      const { data, error } = await supabase.functions.invoke("expl-alunos", {
+        body: {
+          action: "update_aluno",
+          payload,
+        },
+      });
+
+      if (error) {
+        let extra = "";
+        if (error.context) {
+          try {
+            const raw = await error.context.text();
+            console.log("Erro update_aluno:", raw);
+            try {
+              const json = JSON.parse(raw);
+              if (json?.error) extra = " " + json.error;
+            } catch {
+              extra = " " + raw;
+            }
+          } catch {}
+        }
+        msgEditAluno.textContent =
+          "Não foi possível guardar as alterações." + extra;
+        btnSaveEdit.disabled = false;
+        return;
+      }
+
+      msgEditAluno.style.color = "#126b3a";
+      msgEditAluno.textContent = "Alterações guardadas com sucesso.";
+
+      await loadAlunos();
+      const alunoAtualizado = ALUNOS_CACHE.find(
+        (a) => String(a.id_aluno) === String(ALUNO_ATUAL.id_aluno)
+      );
+      if (alunoAtualizado) {
+        mostrarPainelAluno(alunoAtualizado);
+      }
+
+      setTimeout(() => {
+        closeModal(modalEditAluno);
+      }, 600);
+    } catch (e) {
+      console.error("update_aluno error", e);
+      msgEditAluno.textContent = "Erro inesperado ao guardar alterações.";
+    } finally {
+      btnSaveEdit.disabled = false;
+    }
+  });
+
+  // ---------- SUBMIT NOVO ALUNO ----------
   formNew?.addEventListener("submit", async (ev) => {
     ev.preventDefault();
     msgNewAluno.textContent = "";
@@ -1068,86 +1273,85 @@
     btnCreate.disabled = false;
   });
 
-  // ---------- submit edição de aluno ----------
-  formEdit?.addEventListener("submit", async (ev) => {
+  // ---------- LOGIN ----------
+  formLogin?.addEventListener('submit', async (ev) => {
     ev.preventDefault();
-    msgEditAluno.textContent = "";
+    msgLogin.textContent = 'A entrar...';
 
-    if (!ALUNO_ATUAL || !ALUNO_ATUAL.id_aluno) {
-      msgEditAluno.textContent = "Nenhum aluno selecionado.";
+    const email    = formLogin.email.value.trim();
+    const password = formLogin.password.value.trim();
+
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error){
+      console.error(error);
+      msgLogin.textContent = 'Credenciais inválidas.';
       return;
     }
 
-    const f = ev.target;
+    const user = data.user;
+    if (!(await hasRole(user.id, 'explicador'))){
+      await supabase.auth.signOut().catch(()=>{});
+      msgLogin.textContent = 'Esta conta não é de explicador.';
+      return;
+    }
 
-    const payload = {
-      id_aluno: ALUNO_ATUAL.id_aluno,
-      nome: f.nome_edit.value.trim() || null,
-      apelido: f.apelido_edit.value.trim() || null,
-      telemovel: f.telemovel_edit.value.trim() || null,
-      ano: f.ano_edit.value ? Number(f.ano_edit.value) : null,
-      idade: f.idade_edit.value ? Number(f.idade_edit.value) : null,
-      dia_semana_preferido: f.dia_semana_preferido_edit.value.trim() || null,
-      valor_explicacao: f.valor_explicacao_edit.value
-        ? Number(f.valor_explicacao_edit.value)
-        : null,
-      sessoes_mes: f.sessoes_mes_edit.value
-        ? Number(f.sessoes_mes_edit.value)
-        : null,
-      nome_pai_cache: f.nome_pai_cache_edit.value.trim() || null,
-      contacto_pai_cache: f.contacto_pai_cache_edit.value.trim() || null,
-      username: f.username_edit.value.trim() || null,
-      novo_email: f.email_edit.value.trim() || null,
-      nova_password: f.password_edit.value || "",
-      is_active: true,
+    const exp = await getExplRow(user.id);
+    EXPLICADOR = {
+      userId: user.id,
+      id_explicador: exp?.id_explicador || null,
+      max: exp?.max_alunos ?? 0
     };
-    console.log("UPDATE PAYLOAD:", payload);
-    btnSaveEdit.disabled = true;
-    msgEditAluno.textContent = "A guardar alterações...";
 
-    const { data, error } = await supabase.functions.invoke("expl-alunos", {
-      body: { action: "update_aluno", payload },
-    });
+    const nomeCompleto = [exp?.nome, exp?.apelido].filter(Boolean).join(' ') || 'Professor';
+    elNomeHeader.textContent = nomeCompleto;
+    elNomeMini.textContent   = nomeCompleto;
 
-    if (error) {
-      let extra = "";
-      if (error.context) {
-        try {
-          const raw = await error.context.text();
-          console.log("Erro update_aluno:", raw);
-          try {
-            const json = JSON.parse(raw);
-            if (json?.error) extra = " " + json.error;
-          } catch {
-            extra = " " + raw;
-          }
-        } catch {}
-      }
-      console.error("update_aluno error", error);
-      msgEditAluno.textContent =
-        "Não foi possível guardar as alterações." + extra;
-      btnSaveEdit.disabled = false;
-      return;
-    }
-
-    msgEditAluno.style.color = "#126b3a";
-    msgEditAluno.textContent = "Dados do aluno atualizados.";
-
+    setState({ isExpl:true, isAuthed:true });
     await loadAlunos();
     await loadKpisFinanceiros();
-
-    const alunoAtualizado = ALUNOS_CACHE.find(
-      (a) => String(a.id_aluno) === String(ALUNO_ATUAL.id_aluno)
-    );
-    if (alunoAtualizado) {
-      mostrarPainelAluno(alunoAtualizado);
-    }
-
-    btnSaveEdit.disabled = false;
-    closeModal(modalEditAluno);
   });
 
-  // ---------- navegação no header ----------
+  // ---------- LOGOUT ----------
+  btnLogout?.addEventListener('click', async () => {
+    await supabase.auth.signOut().catch(()=>{});
+    window.location.href = './index.html';
+  });
+
+  // ---------- SESSÃO INICIAL ----------
+  (async () => {
+    setState({ loading:true });
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user){
+      setState({ isExpl:false, isAuthed:false });
+      return;
+    }
+
+    const user = session.user;
+    if (!(await hasRole(user.id, 'explicador'))){
+      await supabase.auth.signOut().catch(()=>{});
+      setState({ isExpl:false, isAuthed:false });
+      msgLogin.textContent = 'Conta sem permissões de explicador.';
+      return;
+    }
+
+    const exp = await getExplRow(user.id);
+    EXPLICADOR = {
+      userId: user.id,
+      id_explicador: exp?.id_explicador || null,
+      max: exp?.max_alunos ?? 0
+    };
+
+    const nomeCompleto = [exp?.nome, exp?.apelido].filter(Boolean).join(' ') || 'Professor';
+    elNomeHeader.textContent = nomeCompleto;
+    elNomeMini.textContent   = nomeCompleto;
+
+    setState({ isExpl:true, isAuthed:true });
+    await loadAlunos();
+    await loadKpisFinanceiros();
+  })();
+
+  // ---------- NAVEGAÇÃO HEADER ----------
   const tabs = document.querySelectorAll('.expl-nav-btn');
   const sectionMap = {
     dashboard:  document.querySelector('.expl-body'),
@@ -1180,7 +1384,7 @@
     }
   });
 
-  // -------- Iniciar faturação do aluno selecionado --------
+  // -------- INICIAR FATURAÇÃO DO ALUNO SELECIONADO --------
   btnIniciarFat?.addEventListener("click", async () => {
     if (!ALUNO_ATUAL || !ALUNO_ATUAL.id_aluno) {
       alert("Seleciona um aluno na lista primeiro.");
@@ -1254,7 +1458,7 @@
     }
   });
 
-  // -------- Registar pagamento para o aluno selecionado --------
+  // -------- REGISTAR PAGAMENTO --------
   btnRegistarPag?.addEventListener("click", async () => {
     if (!ALUNO_ATUAL || !ALUNO_ATUAL.id_aluno) {
       alert("Seleciona um aluno na lista primeiro.");
@@ -1324,6 +1528,251 @@
       console.error(e);
       alert("Erro inesperado ao registar pagamento.");
       msgNewAluno.textContent = "";
+    }
+  });
+
+  // -------- EDITAR PAGAMENTO (valor pago do mês) --------
+  btnEditarPag?.addEventListener("click", async () => {
+    if (!ALUNO_ATUAL || !ALUNO_ATUAL.id_aluno) {
+      alert("Seleciona um aluno na lista primeiro.");
+      return;
+    }
+
+    const agora = new Date();
+    const anoAtual = agora.getFullYear();
+    const mesAtual = agora.getMonth() + 1;
+
+    const anoStr = prompt("Ano do pagamento a editar:", String(anoAtual));
+    const mesStr = prompt("Mês do pagamento a editar (1-12):", String(mesAtual));
+    const valorStr = prompt("Novo valor pago (€):", "");
+
+    const ano = Number(anoStr);
+    const mes = Number(mesStr);
+    const valor = Number(valorStr);
+
+    if (!ano || !mes || mes < 1 || mes > 12 || isNaN(valor) || valor < 0) {
+      alert("Valores de ano/mês/valor inválidos.");
+      return;
+    }
+
+    msgNewAluno.textContent = "A atualizar pagamento...";
+    try {
+      const { data, error } = await supabase.functions.invoke("expl-alunos", {
+        body: {
+          action: "update_pagamento_aluno",
+          payload: {
+            aluno_id: ALUNO_ATUAL.id_aluno,
+            ano,
+            mes,
+            valor_pago: valor,
+          },
+        },
+      });
+
+      if (error) {
+        let extra = "";
+        if (error.context) {
+          try {
+            const raw = await error.context.text();
+            console.log("Erro update_pagamento_aluno:", raw);
+            try {
+              const json = JSON.parse(raw);
+              if (json?.error) extra = " " + json.error;
+            } catch {
+              extra = " " + raw;
+            }
+          } catch {}
+        }
+        alert("Não foi possível atualizar o pagamento." + extra);
+        msgNewAluno.textContent = "";
+        return;
+      }
+
+      alert("Pagamento atualizado com sucesso.");
+      msgNewAluno.textContent = "";
+      await loadKpisFinanceiros();
+      const alunoAtualizado = ALUNOS_CACHE.find(
+        (a) => String(a.id_aluno) === String(ALUNO_ATUAL.id_aluno)
+      );
+      if (alunoAtualizado) {
+        mostrarPainelAluno(alunoAtualizado);
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Erro inesperado ao atualizar pagamento.");
+      msgNewAluno.textContent = "";
+    }
+  });
+
+  // -------- SESSÕES: ABRIR MODAL --------
+  function abrirModalSessao(sessao) {
+    if (!formSessao) return;
+
+    if (sessao) {
+      SESSAO_ATUAL_ID = sessao.id_sessao;
+      formSessao.data_sessao.value = sessao.data || "";
+      formSessao.hora_inicio.value = sessao.hora_inicio || "";
+      formSessao.hora_fim.value = sessao.hora_fim || "";
+      formSessao.duracao_min.value =
+        sessao.duracao_min != null ? sessao.duracao_min : "";
+      formSessao.estado.value = sessao.estado || "AGENDADA";
+      formSessao.observacoes.value = sessao.observacoes || "";
+      btnDeleteSessao.style.display = "inline-block";
+    } else {
+      SESSAO_ATUAL_ID = null;
+      formSessao.data_sessao.value = "";
+      formSessao.hora_inicio.value = "";
+      formSessao.hora_fim.value = "";
+      formSessao.duracao_min.value = "";
+      formSessao.estado.value = "AGENDADA";
+      formSessao.observacoes.value = "";
+      btnDeleteSessao.style.display = "none";
+    }
+
+    msgSessao.textContent = "";
+    msgSessao.style.color = "";
+    openModal(modalSessao);
+  }
+
+  btnAddSessao?.addEventListener("click", () => {
+    if (!ALUNO_ATUAL || !ALUNO_ATUAL.id_aluno) {
+      alert("Seleciona primeiro um aluno na lista.");
+      return;
+    }
+    abrirModalSessao(null);
+  });
+
+  // -------- SESSÕES: SUBMIT (UPSERT) --------
+  formSessao?.addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    msgSessao.textContent = "";
+
+    if (!ALUNO_ATUAL || !ALUNO_ATUAL.id_aluno) {
+      msgSessao.textContent = "Nenhum aluno selecionado.";
+      return;
+    }
+
+    const f = ev.target;
+
+    const data = f.data_sessao.value;
+    if (!data) {
+      msgSessao.textContent = "Data é obrigatória.";
+      return;
+    }
+
+    const payload = {
+      id_sessao: SESSAO_ATUAL_ID || undefined,
+      aluno_id: ALUNO_ATUAL.id_aluno,
+      data,
+      hora_inicio: f.hora_inicio.value || null,
+      hora_fim: f.hora_fim.value || null,
+      duracao_min: f.duracao_min.value || null,
+      estado: f.estado.value || "AGENDADA",
+      observacoes: f.observacoes.value || null,
+    };
+
+    btnSaveSessao.disabled = true;
+    msgSessao.textContent = "A guardar sessão...";
+
+    try {
+      const { data, error } = await supabase.functions.invoke("expl-alunos", {
+        body: {
+          action: "upsert_sessao_aluno",
+          payload,
+        },
+      });
+
+      if (error) {
+        let extra = "";
+        if (error.context) {
+          try {
+            const raw = await error.context.text();
+            console.log("Erro upsert_sessao_aluno:", raw);
+            try {
+              const json = JSON.parse(raw);
+              if (json?.error) extra = " " + json.error;
+            } catch {
+              extra = " " + raw;
+            }
+          } catch {}
+        }
+        msgSessao.textContent =
+          "Não foi possível guardar a sessão." + extra;
+        btnSaveSessao.disabled = false;
+        return;
+      }
+
+      msgSessao.style.color = "#126b3a";
+      msgSessao.textContent = "Sessão guardada com sucesso.";
+
+      await loadSessoesAluno(ALUNO_ATUAL.id_aluno);
+      setTimeout(() => {
+        closeModal(modalSessao);
+      }, 500);
+    } catch (e) {
+      console.error("upsert_sessao_aluno error", e);
+      msgSessao.textContent = "Erro inesperado ao guardar sessão.";
+    } finally {
+      btnSaveSessao.disabled = false;
+    }
+  });
+
+  // -------- SESSÕES: APAGAR --------
+  btnDeleteSessao?.addEventListener("click", async () => {
+    if (!SESSAO_ATUAL_ID) {
+      return;
+    }
+    if (!ALUNO_ATUAL || !ALUNO_ATUAL.id_aluno) {
+      alert("Nenhum aluno selecionado.");
+      return;
+    }
+
+    const conf = confirm("Tens a certeza que queres apagar esta sessão?");
+    if (!conf) return;
+
+    msgSessao.textContent = "A apagar sessão...";
+    btnDeleteSessao.disabled = true;
+
+    try {
+      const { data, error } = await supabase.functions.invoke("expl-alunos", {
+        body: {
+          action: "delete_sessao_aluno",
+          payload: { id_sessao: SESSAO_ATUAL_ID },
+        },
+      });
+
+      if (error) {
+        let extra = "";
+        if (error.context) {
+          try {
+            const raw = await error.context.text();
+            console.log("Erro delete_sessao_aluno:", raw);
+            try {
+              const json = JSON.parse(raw);
+              if (json?.error) extra = " " + json.error;
+            } catch {
+              extra = " " + raw;
+            }
+          } catch {}
+        }
+        msgSessao.textContent =
+          "Não foi possível apagar a sessão." + extra;
+        btnDeleteSessao.disabled = false;
+        return;
+      }
+
+      msgSessao.style.color = "#126b3a";
+      msgSessao.textContent = "Sessão apagada com sucesso.";
+
+      await loadSessoesAluno(ALUNO_ATUAL.id_aluno);
+      setTimeout(() => {
+        closeModal(modalSessao);
+      }, 400);
+    } catch (e) {
+      console.error("delete_sessao_aluno error", e);
+      msgSessao.textContent = "Erro inesperado ao apagar sessão.";
+    } finally {
+      btnDeleteSessao.disabled = false;
     }
   });
 </script>
