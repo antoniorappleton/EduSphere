@@ -20,9 +20,9 @@
         <span>EduSphere</span>
       </a>
       <nav>
-        <a href="./login.html">Login</a>
-        <a id="navExplicador" href="./explicador.html">Explicador</a>
-        <a href="./public/admin.html">Admin</a>
+        <a href="./login.html" id="navAluno">Aluno</a>
+        <a href="./explicador.html" id="navExplicador">Explicador</a>
+        <a href="./public/admin.html" id="navAdmin">Admin</a>
       </nav>
     </div>
   </header>
@@ -50,6 +50,48 @@
     </section>
   </div>
 
+  <!-- Modal Aluno (LOGIN) -->
+  <div class="modal" id="alunoModal" aria-hidden="true">
+    <div class="modal__backdrop"></div>
+    <section class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="alunoTitle">
+      <header class="modal__header">
+        <h2 id="alunoTitle">Aluno</h2>
+        <button class="modal__close" id="alunoClose" aria-label="Fechar">×</button>
+      </header>
+
+      <form id="fAlunoLogin" class="auth__form" autocomplete="on">
+        <input type="email" name="email" placeholder="Email do aluno" required />
+        <input type="password" name="password" placeholder="Password" required />
+        <button class="button" type="submit">Entrar</button>
+        <div id="alunoLoginMsg" class="auth__msg"></div>
+      </form>
+      <p class="auth__hint" style="margin-top:8px">
+        As credenciais são criadas pelo teu <strong>explicador</strong>.
+      </p>
+    </section>
+  </div>
+
+  <!-- Modal Admin (LOGIN) -->
+  <div class="modal" id="adminModal" aria-hidden="true">
+    <div class="modal__backdrop"></div>
+    <section class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="adminTitle">
+      <header class="modal__header">
+        <h2 id="adminTitle">Admin</h2>
+        <button class="modal__close" id="adminClose" aria-label="Fechar">×</button>
+      </header>
+
+      <form id="fAdminLoginModal" class="auth__form" autocomplete="on">
+        <input type="email" name="email" placeholder="Email" required />
+        <input type="password" name="password" placeholder="Password" required />
+        <button class="button" type="submit">Entrar</button>
+        <div id="adminLoginMsg" class="auth__msg"></div>
+      </form>
+      <p class="auth__hint" style="margin-top:8px">
+        Acesso reservado à equipa de <strong>administração</strong>.
+      </p>
+    </section>
+  </div>
+
   <footer>© <span id="y"></span> EduSphere | by antonioappleton</footer>
 
   <script>
@@ -57,80 +99,200 @@
     $('#y').textContent = new Date().getFullYear();
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./service-worker.js').catch(()=>{});
+      navigator.serviceWorker.register('./service-worker.js').catch(() => {});
     }
 
     // Helper: verificar papel
-    async function hasRole(uid, roleName){
+    async function hasRole(uid, roleName) {
       const { data, error } = await supabase
         .from('app_users')
         .select('role')
         .eq('user_id', uid)
         .eq('role', roleName)
         .maybeSingle(); // 0/1 → nunca 406
-      if (error) { console.error('hasRole error', error); return false; }
+      if (error) {
+        console.error('hasRole error', error);
+        return false;
+      }
       return !!data;
     }
 
-    // Modal
-    const navExpl = $('#navExplicador');
-    const modal   = $('#explModal');
-    const closeBtn= $('#explClose');
+    /* ==========
+      MODAL GENERIC HELPERS
+      ========== */
+    function openModal(el) {
+      el.classList.add('open');
+      el.setAttribute('aria-hidden', 'false');
+    }
+    function closeModal(el) {
+      el.classList.remove('open');
+      el.setAttribute('aria-hidden', 'true');
+    }
 
-    function openModal(){ modal.classList.add('open'); modal.setAttribute('aria-hidden','false'); }
-    function closeModal(){ modal.classList.remove('open'); modal.setAttribute('aria-hidden','true'); }
+    /* ==========
+      LOGIN EXPLICADOR (MODAL)
+      ========== */
+
+    const navExpl = $('#navExplicador');
+    const explModal = $('#explModal');
+    const explClose = $('#explClose');
 
     navExpl?.addEventListener('click', async (e) => {
-      // bloquear logo a navegação normal do <a>
-      e.preventDefault();
+      e.preventDefault(); // bloquear navegação normal
 
       const href = navExpl.getAttribute('href') || './explicador.html';
-
       const { data: { session } } = await supabase.auth.getSession();
       const isExpl = session?.user && await hasRole(session.user.id, 'explicador');
 
       if (isExpl) {
-        // já é explicador → vamos nós próprios para a página
         window.location.href = href;
         return;
       }
-
-      // não é explicador → abrir modal de login
-      openModal();
+      openModal(explModal);
     });
 
+    explClose?.addEventListener('click', () => closeModal(explModal));
+    explModal?.addEventListener('click', (e) => {
+      if (e.target.classList.contains('modal__backdrop')) closeModal(explModal);
+    });
 
-    closeBtn?.addEventListener('click', closeModal);
-    modal?.addEventListener('click', (e)=>{ if(e.target.classList.contains('modal__backdrop')) closeModal(); });
-    document.addEventListener('keydown', (e)=>{ if(e.key==='Escape' && modal.classList.contains('open')) closeModal(); });
-
-    // Login do Explicador no modal
-    const form = document.getElementById('fExplLogin');
-    form?.addEventListener('submit', async (e) => {
+    const fExpl = document.getElementById('fExplLogin');
+    fExpl?.addEventListener('submit', async (e) => {
       e.preventDefault();
       const msg = document.getElementById('explLoginMsg');
       msg.textContent = 'A entrar...';
 
-      const email = form.email.value.trim();
-      const password = form.password.value;
+      const email = fExpl.email.value.trim();
+      const password = fExpl.password.value;
 
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error){ msg.textContent = 'Credenciais inválidas.'; return; }
+      if (error) {
+        msg.textContent = 'Credenciais inválidas.';
+        return;
+      }
 
-      if (!(await hasRole(data.user.id, 'explicador'))){
-        await supabase.auth.signOut().catch(()=>{});
-        msg.textContent = 'Esta conta não é de explicador.'; return;
+      if (!(await hasRole(data.user.id, 'explicador'))) {
+        await supabase.auth.signOut().catch(() => {});
+        msg.textContent = 'Esta conta não é de explicador.';
+        return;
       }
       window.location.href = './explicador.html';
     });
 
-    // Redireção se já for explicador autenticado
+    /* ==========
+      LOGIN ALUNO (MODAL)
+      ========== */
+
+    const navAluno = $('#navAluno');
+    const alunoModal = $('#alunoModal');
+    const alunoClose = $('#alunoClose');
+
+    navAluno?.addEventListener('click', async (e) => {
+      e.preventDefault();
+
+      const href = navAluno.getAttribute('href') || './aluno.html';
+      const { data: { session } } = await supabase.auth.getSession();
+      const isAluno = session?.user && await hasRole(session.user.id, 'aluno');
+
+      if (isAluno) {
+        window.location.href = href;
+        return;
+      }
+      openModal(alunoModal);
+    });
+
+    alunoClose?.addEventListener('click', () => closeModal(alunoModal));
+    alunoModal?.addEventListener('click', (e) => {
+      if (e.target.classList.contains('modal__backdrop')) closeModal(alunoModal);
+    });
+
+    const fAluno = document.getElementById('fAlunoLogin');
+    fAluno?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const msg = document.getElementById('alunoLoginMsg');
+      msg.textContent = 'A entrar...';
+
+      const email = fAluno.email.value.trim();
+      const password = fAluno.password.value;
+
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        msg.textContent = 'Credenciais inválidas.';
+        return;
+      }
+
+      if (!(await hasRole(data.user.id, 'aluno'))) {
+        await supabase.auth.signOut().catch(() => {});
+        msg.textContent = 'Esta conta não é de aluno.';
+        return;
+      }
+      window.location.href = './aluno.html';
+    });
+
+    /* ==========
+      LOGIN ADMIN (MODAL)
+      ========== */
+
+    const navAdmin = $('#navAdmin');
+    const adminModal = $('#adminModal');
+    const adminClose = $('#adminClose');
+
+    navAdmin?.addEventListener('click', async (e) => {
+      e.preventDefault();
+
+      const href = navAdmin.getAttribute('href') || './public/admin.html';
+      const { data: { session } } = await supabase.auth.getSession();
+      const isAdmin = session?.user && await hasRole(session.user.id, 'admin');
+
+      if (isAdmin) {
+        window.location.href = href;
+        return;
+      }
+      openModal(adminModal);
+    });
+
+    adminClose?.addEventListener('click', () => closeModal(adminModal));
+    adminModal?.addEventListener('click', (e) => {
+      if (e.target.classList.contains('modal__backdrop')) closeModal(adminModal);
+    });
+
+    const fAdminModal = document.getElementById('fAdminLoginModal');
+    fAdminModal?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const msg = document.getElementById('adminLoginMsg');
+      msg.textContent = 'A entrar...';
+
+      const email = fAdminModal.email.value.trim();
+      const password = fAdminModal.password.value;
+
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        msg.textContent = 'Credenciais inválidas.';
+        return;
+      }
+
+      if (!(await hasRole(data.user.id, 'admin'))) {
+        await supabase.auth.signOut().catch(() => {});
+        msg.textContent = 'Esta conta não é de admin.';
+        return;
+      }
+      window.location.href = './public/admin.html';
+    });
+
+    /* ==========
+      REDIREÇÕES SE JÁ ESTIVER LOGADO
+      ========== */
     (async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user && await hasRole(session.user.id, 'explicador')) {
-        window.location.href = './explicador.html';
+      if (!session?.user) return;
+
+      if (await hasRole(session.user.id, 'explicador')) {
+        // se estiver em /index e já for explicador, redireciona logo para o painel
+        // (podes tirar se quiseres sempre mostrar o site de marketing)
+        // window.location.href = './explicador.html';
       }
     })();
   </script>
+
 </body>
 </html>
