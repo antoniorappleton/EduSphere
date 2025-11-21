@@ -27,7 +27,40 @@
     </div>
   </header>
 
-  <main class="hero" aria-hidden="true"></main>
+  <main class="hero">
+  <section class="hero__card">
+    <div class="hero__text">
+      <h1>Aprender juntos, de forma organizada.</h1>
+      <p>
+        A EduSphere liga alunos, explicadores e administração numa só
+        plataforma: horários, feedback, progresso e tudo o que interessa
+        num único espaço.
+      </p>
+
+      <div class="hero__cta">
+        <button type="button" class="hero__btn hero__btn--aluno"
+                onclick="document.getElementById('navAluno').click()">
+          Sou Aluno
+        </button>
+        <button type="button" class="hero__btn"
+                onclick="document.getElementById('navExplicador').click()">
+          Sou Explicador
+        </button>
+        <button type="button" class="hero__btn hero__btn--ghost"
+                onclick="document.getElementById('navAdmin').click()">
+          Sou Admin
+        </button>
+      </div>
+    </div>
+
+    <div class="hero__side">
+      <div class="hero__pill">Gestão de explicações</div>
+      <div class="hero__pill">Acompanhamento da evolução</div>
+      <div class="hero__pill">Comunicação simplificada</div>
+    </div>
+  </section>
+    </main>
+
 
   <!-- Modal Explicador (APENAS LOGIN) -->
   <div class="modal" id="explModal" aria-hidden="true">
