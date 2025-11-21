@@ -403,7 +403,7 @@
 
       if (!data || !data.length) {
         msgList.innerHTML =
-          "<p>Sem mensagens ainda. Envia a primeira mensagem 👋</p>";
+          "<p>Sem mensagens ainda👋</p>";
         return;
       }
 

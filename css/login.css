@@ -1,0 +1,108 @@
+/* =========================================================
+   LOGIN — UNIVERSAL (Aluno / Explicador / Admin)
+   ========================================================= */
+
+/* Fundo */
+body {
+  margin: 0;
+  padding: 0;
+  background: #f3f4f6;
+  font-family: "Roboto", sans-serif;
+  color: #333;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Container central */
+.login-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex: 1;
+  padding: 40px 20px;
+}
+
+/* Cartão */
+.login-card {
+  width: min(500px, 95%);
+  background: #fff;
+  padding: 40px 30px;
+  border-radius: 16px;
+  box-shadow: 0 10px 35px rgba(0,0,0,0.08);
+  border: 1px solid #e5e7eb;
+  animation: fadeIn 0.4s ease;
+}
+
+/* Título */
+.login-card h1 {
+  font-family: 'Poppins', sans-serif;
+  font-size: 28px;
+  font-weight: 600;
+  color: #a92a1f;
+  margin-bottom: 20px;
+}
+
+/* Inputs */
+.login-card input {
+  width: 100%;
+  padding: 14px;
+  margin-top: 6px;
+  margin-bottom: 18px;
+  border-radius: 10px;
+  border: 1px solid #d0d5dd;
+  font-size: 15px;
+  transition: 0.2s;
+}
+
+.login-card input:focus {
+  border-color: #a92a1f;
+  outline: 3px solid rgba(169, 42, 31, 0.15);
+}
+
+/* Botão */
+.login-card button {
+  width: 100%;
+  padding: 14px;
+  background: #a92a1f;
+  border: none;
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.login-card button:hover {
+  background: #8c1f17;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+}
+
+/* Link voltar */
+.login-card a {
+  display: inline-block;
+  margin-top: 12px;
+  color: #a92a1f;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.login-card a:hover {
+  text-decoration: underline;
+}
+
+/* Footer */
+.login-footer {
+  text-align: center;
+  padding: 20px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+/* Fade-in */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}

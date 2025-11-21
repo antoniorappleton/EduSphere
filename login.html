@@ -3,6 +3,8 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
+
+  <!-- CONTINUA a usar o mesmo CSS global -->
   <link rel="stylesheet" href="./styles.css"/>
   <title>EduSphere — Login do Aluno</title>
 
@@ -11,22 +13,25 @@
   <script src="./public/js/supabaseClient.js"></script>
 </head>
 
-<body class="home">
+<!-- 1) TIRAR class="home" para não usar o fundo com foto -->
+<body>
   <header>
     <div class="header-inner">
       <a class="logo" href="./index.html">
-        <img src="/public/img/logo-icon.svg" alt=""><span>EduSphere</span>
+        <img src="/public/img/logo-icon.svg" alt="">
+        <span>EduSphere</span>
       </a>
       <!-- sem links extra aqui; este ecrã é só login do aluno -->
     </div>
   </header>
 
-  <!-- fundo + overlay como no screen 1 -->
-  <div class="capa__overlay" aria-hidden="true"></div>
+  <!-- 2) REMOVER o .capa__overlay (não precisamos de overlay escuro) -->
+  <!-- <div class="capa__overlay" aria-hidden="true"></div> -->
 
-  <!-- painel central de autenticação (vidro translúcido) -->
-  <main class="auth">
-    <section class="auth__panel">
+  <!-- 3) USAR O MESMO LAYOUT DO ADMIN -->
+  <!--    main.admin-main + section.auth__panel.admin-login-card -->
+  <main class="admin-main">
+    <section class="auth__panel admin-login-card">
       <h1>Entrar (Aluno)</h1>
       <p class="auth__hint">As credenciais são criadas pelo teu explicador.</p>
 
@@ -43,7 +48,8 @@
     </section>
   </main>
 
-  <footer>© <span id="y"></span> EduSphere | by antonioappleton</footer>
+  <!-- 4) Footer igual ao admin (já tinhas praticamente isto) -->
+  <footer>© <span id="y"></span> EduSphere</footer>
 
   <script>
     // ano no footer

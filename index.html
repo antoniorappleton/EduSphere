@@ -81,13 +81,24 @@
     function closeModal(){ modal.classList.remove('open'); modal.setAttribute('aria-hidden','true'); }
 
     navExpl?.addEventListener('click', async (e) => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user && await hasRole(session.user.id, 'explicador')) {
-        return; // já é explicador → segue link
-      }
+      // bloquear logo a navegação normal do <a>
       e.preventDefault();
+
+      const href = navExpl.getAttribute('href') || './explicador.html';
+
+      const { data: { session } } = await supabase.auth.getSession();
+      const isExpl = session?.user && await hasRole(session.user.id, 'explicador');
+
+      if (isExpl) {
+        // já é explicador → vamos nós próprios para a página
+        window.location.href = href;
+        return;
+      }
+
+      // não é explicador → abrir modal de login
       openModal();
     });
+
 
     closeBtn?.addEventListener('click', closeModal);
     modal?.addEventListener('click', (e)=>{ if(e.target.classList.contains('modal__backdrop')) closeModal(); });
