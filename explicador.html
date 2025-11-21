@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <link rel="stylesheet" href="./styles.css" />
   <link rel="stylesheet" href="./css/base.css" />
   <link rel="stylesheet" href="./css/explicador.css" />
   <title>EduSphere — Explicador</title>
@@ -10,6 +11,9 @@
   <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="./public/js/supabaseClient.js"></script>
+  <!-- Opcionalmente aqui ligas um ficheiro JS próprio, ex:
+  <script src="./public/js/explicador.js" type="module"></script>
+  -->
 </head>
 
 <body class="home">
@@ -43,7 +47,7 @@
     <p class="auth__hint">Use as credenciais de professor para aceder ao painel.</p>
     <form id="fExplLogin" class="auth__form" autocomplete="on">
       <input type="email"   name="email"    placeholder="Email"    required />
-      <input type="password"name="password" placeholder="Password" required />
+      <input type="password" name="password" placeholder="Password" required />
       <button class="button" type="submit">Entrar</button>
       <div id="msgExplLogin" class="auth__msg"></div>
     </form>
@@ -54,17 +58,69 @@
     <!-- NAV LATERAL PRINCIPAL -->
     <nav id="explSidebarNav" class="expl-sidebar-nav" style="display:none">
       <button class="expl-nav-btn expl-nav-btn--active" data-target="dashboard">
-        Dashboard
+        <span class="expl-nav-icon">
+          <!-- Dashboard icon -->
+          <svg class="expl-nav-svg" viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="4" y="4" width="7" height="7" rx="1.5" />
+            <rect x="13" y="4" width="7" height="7" rx="1.5" />
+            <rect x="4" y="13" width="7" height="7" rx="1.5" />
+            <rect x="13" y="13" width="7" height="7" rx="1.5" />
+          </svg>
+        </span>
+        <span class="expl-nav-label">Dashboard</span>
       </button>
-      <button class="expl-nav-btn" data-target="alunos">Alunos</button>
-      <button class="expl-nav-btn" data-target="calendario">Calendário</button>
-      <button class="expl-nav-btn" data-target="faturacao">Faturação</button>
-      <button class="expl-nav-btn" data-target="relatorios">Relatórios</button>
+
+      <button class="expl-nav-btn" data-target="alunos">
+        <span class="expl-nav-icon">
+          <!-- Alunos (utilizador) -->
+          <svg class="expl-nav-svg" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="9" r="3.2" />
+            <path d="M6.5 19.5c1.2-2.3 3-3.6 5.5-3.6s4.3 1.3 5.5 3.6" />
+          </svg>
+        </span>
+        <span class="expl-nav-label">Alunos</span>
+      </button>
+
+      <button class="expl-nav-btn" data-target="calendario">
+        <span class="expl-nav-icon">
+          <!-- Calendário -->
+          <svg class="expl-nav-svg" viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="4" y="5.5" width="16" height="14" rx="2" />
+            <path d="M4 10h16" />
+            <path d="M9 4v3" />
+            <path d="M15 4v3" />
+          </svg>
+        </span>
+        <span class="expl-nav-label">Calendário</span>
+      </button>
+
+      <button class="expl-nav-btn" data-target="faturacao">
+        <span class="expl-nav-icon">
+          <!-- Faturação (€ / dinheiro) -->
+          <svg class="expl-nav-svg" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M15.5 7.5c-1-.7-2.1-1.1-3.4-1.1-2.6 0-4.6 1.8-4.6 4.6s2 4.6 4.6 4.6c1.3 0 2.4-.4 3.4-1.1" />
+            <path d="M11 5v14" />
+          </svg>
+        </span>
+        <span class="expl-nav-label">Faturação</span>
+      </button>
+
+      <button class="expl-nav-btn" data-target="relatorios">
+        <span class="expl-nav-icon">
+          <!-- Relatórios (gráfico) -->
+          <svg class="expl-nav-svg" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 18.5h16" />
+            <path d="M6.5 15l3.2-4 3.2 2.7 4.1-5.2" />
+            <path d="M16.8 8.5h3v3" />
+          </svg>
+        </span>
+        <span class="expl-nav-label">Relatórios</span>
+      </button>
     </nav>
 
     <!-- CONTEÚDO PRINCIPAL -->
     <div class="expl-main">
-      <!-- Top bar com saudação + utilizador (está escondida no CSS) -->
+      <!-- Top bar com saudação + utilizador -->
       <header class="expl-header-bar">
         <div class="expl-header-info">
           <h1 class="expl-page-title">Dashboard</h1>
@@ -90,8 +146,9 @@
 
       <!-- Conteúdo scrollável -->
       <div class="expl-body">
+
         <!-- RESUMO FINANCEIRO -->
-        <section class="expl-section">
+        <section class="expl-section" data-section="dashboard">
           <h2 class="expl-section-title">Resumo financeiro</h2>
 
           <div class="expl-kpi-grid">
@@ -113,9 +170,11 @@
         </section>
 
         <!-- ALUNOS + QUOTA -->
-        <section class="expl-section" id="expl-sec-alunos">
+        <section class="expl-section" id="expl-sec-alunos" data-section="alunos">
           <div class="expl-section-header">
-            <h2 class="expl-section-title">Alunos <span class="expl-section-sub">(ativos)</span></h2>
+            <h2 class="expl-section-title">
+              Alunos <span class="expl-section-sub">(ativos)</span>
+            </h2>
             <button class="expl-link-button" type="button" id="btn-scroll-lista">
               Ver lista &rarr;
             </button>
@@ -145,11 +204,11 @@
               <div class="table-wrapper">
                 <table class="table" id="tblAlunos">
                   <thead>
-                  <tr>
-                    <th>Nome</th>
-                    <th>Email</th>
-                    <th>Ano</th>
-                  </tr>
+                    <tr>
+                      <th>Nome</th>
+                      <th>Email</th>
+                      <th>Ano</th>
+                    </tr>
                   </thead>
                   <tbody></tbody>
                 </table>
@@ -157,7 +216,7 @@
             </div>
           </div>
 
-          <!-- Painel de detalhes do aluno (aparece ao clicar numa linha) -->
+          <!-- Painel de detalhes do aluno -->
           <div class="expl-card expl-aluno-detail" id="aluno-detail-card" style="margin-top:1.5rem; display:none">
             <h3 class="expl-subsection-title">
               Detalhes do aluno:
@@ -215,18 +274,18 @@
               <div class="table-wrapper">
                 <table class="table" id="tblSessoesAluno">
                   <thead>
-                  <tr>
-                    <th>Data</th>
-                    <th>Início</th>
-                    <th>Fim</th>
-                    <th>Duração (min)</th>
-                    <th>Estado</th>
-                  </tr>
+                    <tr>
+                      <th>Data</th>
+                      <th>Início</th>
+                      <th>Fim</th>
+                      <th>Duração (min)</th>
+                      <th>Estado</th>
+                    </tr>
                   </thead>
                   <tbody>
-                  <tr>
-                    <td colspan="5">Ainda não existem sessões registadas para este aluno.</td>
-                  </tr>
+                    <tr>
+                      <td colspan="5">Ainda não existem sessões registadas para este aluno.</td>
+                    </tr>
                   </tbody>
                 </table>
               </div>
@@ -236,7 +295,7 @@
         </section>
 
         <!-- RESUMO MENSALIDADES -->
-        <section class="expl-section">
+        <section class="expl-section" data-section="faturacao">
           <div class="expl-grid-2" style="margin-top:1.5rem;">
             <article class="expl-card">
               <h3 class="expl-subsection-title">
@@ -245,20 +304,20 @@
               <div class="table-wrapper">
                 <table class="table" id="tblMensalidadesPendentes">
                   <thead>
-                  <tr>
-                    <th>Aluno</th>
-                    <th>Mês</th>
-                    <th>Previsto (€)</th>
-                    <th>Pago (€)</th>
-                    <th>Em falta (€)</th>
-                    <th>Estado</th>
-                    <th>Avisado</th>
-                  </tr>
+                    <tr>
+                      <th>Aluno</th>
+                      <th>Mês</th>
+                      <th>Previsto (€)</th>
+                      <th>Pago (€)</th>
+                      <th>Em falta (€)</th>
+                      <th>Estado</th>
+                      <th>Avisado</th>
+                    </tr>
                   </thead>
                   <tbody>
-                  <tr>
-                    <td colspan="7">Ainda não existem mensalidades em falta neste mês.</td>
-                  </tr>
+                    <tr>
+                      <td colspan="7">Ainda não existem mensalidades em falta neste mês.</td>
+                    </tr>
                   </tbody>
                 </table>
               </div>
@@ -271,18 +330,18 @@
               <div class="table-wrapper">
                 <table class="table" id="tblMensalidadesPagas">
                   <thead>
-                  <tr>
-                    <th>Aluno</th>
-                    <th>Mês</th>
-                    <th>Pago (€)</th>
-                    <th>Previsto (€)</th>
-                    <th>Estado</th>
-                  </tr>
+                    <tr>
+                      <th>Aluno</th>
+                      <th>Mês</th>
+                      <th>Pago (€)</th>
+                      <th>Previsto (€)</th>
+                      <th>Estado</th>
+                    </tr>
                   </thead>
                   <tbody>
-                  <tr>
-                    <td colspan="5">Ainda não existem mensalidades pagas neste mês.</td>
-                  </tr>
+                    <tr>
+                      <td colspan="5">Ainda não existem mensalidades pagas neste mês.</td>
+                    </tr>
                   </tbody>
                 </table>
               </div>
@@ -291,7 +350,7 @@
         </section>
 
         <!-- CALENDÁRIO + RELATÓRIOS -->
-        <section class="expl-section expl-grid-2" id="expl-sec-outros">
+        <section class="expl-section expl-grid-2" id="expl-sec-outros" data-section="calendario">
           <!-- CARTÃO: CALENDÁRIO -->
           <article id="expl-sec-calendario" class="expl-card expl-placeholder-card">
             <h2 class="expl-section-title">Calendário</h2>
@@ -317,6 +376,7 @@
                 </span>
               </li>
             </ul>
+
             <!-- CALENDÁRIO SEMANAL EM GRELHA -->
             <div class="calendar-week" id="calendar-week">
               <header class="calendar-week__nav">
@@ -330,7 +390,6 @@
               </div>
             </div>
 
-
             <button type="button" class="expl-link-chip">
               <span class="expl-link-chip-icon">📅</span>
               <span>Ir para o calendário de explicações</span>
@@ -338,7 +397,7 @@
           </article>
 
           <!-- CARTÃO: RELATÓRIOS -->
-          <article id="expl-sec-relatorios" class="expl-card expl-placeholder-card">
+          <article id="expl-sec-relatorios" class="expl-card expl-placeholder-card" data-section="relatorios">
             <h2 class="expl-section-title">Relatórios</h2>
             <p class="expl-section-sub">Estatísticas e análises da tua atividade.</p>
 
@@ -370,7 +429,6 @@
           </article>
         </section>
 
-
       </div>
 
       <!-- Botão flutuante para novo aluno -->
@@ -379,8 +437,6 @@
   </section>
 
 </main>
-
-<footer>© <span id="y"></span> EduSphere</footer>
 
 <!-- ========== MODAL: ADICIONAR ALUNO ========== -->
 <div class="modal" id="modal-add-aluno">
@@ -395,23 +451,16 @@
       <div class="grid2">
         <input name="nome" placeholder="Nome do aluno" required />
         <input name="apelido" placeholder="Apelido (opcional)" />
-
         <input name="telemovel" placeholder="Telemóvel (opcional)" />
         <input type="number" name="ano" placeholder="Ano de escolaridade" />
-
         <input type="number" name="idade" placeholder="Idade (opcional)" />
-
         <input name="dia_semana_preferido" placeholder="Dia preferido (ex.: Segunda)" />
-
         <input type="number" step="0.01" name="valor_explicacao" placeholder="Valor por explicação (€)" />
         <input type="number" name="sessoes_mes" placeholder="Sessões por mês" />
-
         <input name="nome_pai_cache" placeholder="Nome do encarregado de educação" />
         <input name="contacto_pai_cache" placeholder="Contacto do encarregado" />
-
         <input type="email" name="email" placeholder="Email (login do aluno)" required />
         <input name="username" placeholder="Username (opcional)" />
-
         <input type="password" name="password" placeholder="Password" minlength="6" required />
       </div>
 
@@ -434,23 +483,16 @@
       <div class="grid2">
         <input name="nome_edit" placeholder="Nome do aluno" required />
         <input name="apelido_edit" placeholder="Apelido (opcional)" />
-
         <input name="telemovel_edit" placeholder="Telemóvel (opcional)" />
         <input type="number" name="ano_edit" placeholder="Ano de escolaridade" />
-
         <input type="number" name="idade_edit" placeholder="Idade (opcional)" />
-
         <input name="dia_semana_preferido_edit" placeholder="Dia preferido (ex.: Segunda)" />
-
         <input type="number" step="0.01" name="valor_explicacao_edit" placeholder="Valor por explicação (€)" />
         <input type="number" name="sessoes_mes_edit" placeholder="Sessões por mês" />
-
         <input name="nome_pai_cache_edit" placeholder="Nome do encarregado de educação" />
         <input name="contacto_pai_cache_edit" placeholder="Contacto do encarregado" />
-
         <input type="email" name="email_edit" placeholder="Email (login do aluno)" required />
         <input name="username_edit" placeholder="Username (opcional)" />
-
         <input type="password" name="password_edit" placeholder="Nova password (opcional)" minlength="6" />
       </div>
 
@@ -473,17 +515,14 @@
       <div class="grid2">
         <input type="date" name="data_sessao" placeholder="Data" required />
         <input type="time" name="hora_inicio" placeholder="Hora início (opcional)" />
-
         <input type="time" name="hora_fim" placeholder="Hora fim (opcional)" />
         <input type="number" name="duracao_min" placeholder="Duração (min, opcional)" />
-
         <select name="estado">
           <option value="AGENDADA">Agendada</option>
           <option value="REALIZADA">Realizada</option>
           <option value="FALTOU">Faltou</option>
           <option value="CANCELADA">Cancelada</option>
         </select>
-
         <input name="observacoes" placeholder="Observações (opcional)" />
       </div>
 
@@ -517,14 +556,23 @@
         <input type="number" name="mes" placeholder="Mês (1-12)" min="1" max="12" required />
 
         <!-- só usado em INICIAR -->
-        <input type="number" name="dia_pagamento"
-               placeholder="Dia de pagamento (1-31)"
-               min="1" max="31"
-               style="display:none;" />
+        <input
+          type="number"
+          name="dia_pagamento"
+          placeholder="Dia de pagamento (1-31)"
+          min="1"
+          max="31"
+          style="display:none;"
+        />
 
         <!-- usado em REGISTAR / EDITAR -->
-        <input type="number" step="0.01" name="valor"
-               placeholder="Valor (€)" style="display:none;" />
+        <input
+          type="number"
+          step="0.01"
+          name="valor"
+          placeholder="Valor (€)"
+          style="display:none;"
+        />
       </div>
 
       <input type="hidden" name="modo" value="registar" />
@@ -537,6 +585,7 @@
   </div>
 </div>
 
+<footer>© <span id="y"></span> EduSphere</footer>
 
 <script>
   // ---------- helper DOM ----------
@@ -2018,3 +2067,4 @@ async function loadResumoCalendario() {
 </script>
 </body>
 </html>
+

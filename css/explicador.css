@@ -555,3 +555,128 @@ body.home main.auth {
     white-space: nowrap;
   }
 }
+/* Sidebar mais compacto */
+.expl-sidebar-nav {
+  flex: 0 0 210px;        /* largura fixa mais pequena */
+  max-width: 210px;
+  padding-inline: 16px;
+}
+/* Shell geral: ocupa quase o ecrã todo em altura */
+.expl-shell {
+  display: flex;
+  align-items: stretch;
+  min-height: calc(100vh - 80px); /* 80px ≈ altura do header global; ajusta se necessário */
+}
+
+/* Coluna principal em coluna: header + body scrollável */
+.expl-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* A tal "barra que desliza" no conteúdo */
+.expl-body {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 8px;  /* espaço para a scroll bar não colar ao conteúdo */
+}
+/* Ajuste suave na tabela de faturação */
+.table th,
+.table td {
+  padding: 10px 12px;      /* se estiveres com 8px, isto já ajuda */
+  font-size: 0.95rem;
+}
+/* =========================================================
+   AJUSTES LAYOUT EXPLICADOR — SIDEBAR + SCROLL
+   ========================================================= */
+
+/* O shell do painel ocupa verticalmente o espaço entre header e footer
+   e deixa o scroll ser feito pela página inteira */
+.expl-shell {
+  display: flex;
+  align-items: stretch;
+  gap: 24px;
+  padding: 24px 24px 32px;          /* aproxima-se visualmente do header/footer */
+  min-height: calc(100vh - 120px);  /* ajusta se o teu header+footer forem maiores/menores */
+}
+
+/* Sidebar:
+   - largura baseada no botão mais largo (width: max-content)
+   - cartão estica da parte de cima à parte de baixo do .expl-shell */
+.expl-sidebar-nav {
+  flex: 0 0 auto;
+  width: max-content;          /* largura ≈ botão maior */
+  align-self: stretch;         /* faz o cartão acompanhar a altura do conteúdo principal */
+  display: flex;
+  flex-direction: column;
+}
+
+/* Garante que a coluna principal usa o resto da largura */
+.expl-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Tira o scroll interno do conteúdo — passa a ser o scroll normal da página */
+.expl-body {
+  flex: 1;
+  overflow-y: visible;   /* anula qualquer overflow:auto definido antes */
+}
+
+/* Se quiseres ainda apertar um bocadinho mais a coluna do menu,
+   podes reduzir o padding interno do cartão */
+.expl-sidebar-nav {
+  padding-inline: 18px;
+  padding-block: 20px;
+}
+
+/* Opcional: um pouco mais de respiro nas células da tabela */
+.table th,
+.table td {
+  padding: 10px 14px;
+}
+/* ====== NAV LATERAL COM ÍCONES ====== */
+
+.expl-nav-btn {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  padding-inline: 18px;
+}
+
+.expl-nav-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.expl-nav-svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.6;
+}
+
+/* Garante ícones a branco no teu sidebar escuro */
+.expl-sidebar-nav .expl-nav-btn {
+  color: #ffffff;
+}
+
+/* Se tiveres um estado diferente para o ativo,
+   isto só reforça o contraste */
+.expl-nav-btn--active {
+  color: #ffffff;
+}
+.expl-sidebar-nav .expl-nav-btn {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.expl-sidebar-nav .expl-nav-btn--active {
+  color: #ffffff;
+}
