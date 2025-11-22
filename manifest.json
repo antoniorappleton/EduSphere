@@ -2,7 +2,7 @@
 {
   "name": "EduSphere",
   "short_name": "EduSphere",
-  "start_url": "/index.html",
+  "start_url": "./index.html",
   "scope": "/",
   "display": "standalone",
   "background_color": "#FFFFFF",
