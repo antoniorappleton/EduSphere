@@ -1202,3 +1202,21 @@ html, body {
 .capa__overlay {
   pointer-events: none;
 }
+/* garante que as tabelas grandes não rebentam o ecrã no telemóvel */
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;      /* cria scroll horizontal só dentro do cartão */
+}
+
+/* tabelas mais largas, para não ficar tudo apertado nas colunas */
+.table--wide {
+  min-width: 640px;
+}
+
+/* em ecrãs pequenos, encostar os cartões às margens para aproveitar melhor a largura */
+@media (max-width: 768px) {
+  .expl-card {
+    margin-left: 0.75rem;
+    margin-right: 0.75rem;
+  }
+}
