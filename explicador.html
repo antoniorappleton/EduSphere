@@ -504,7 +504,6 @@
               <span>Ver gráficos e relatórios</span>
             </button>
           </article>
-
           <div class="relatorios-grid">
             <div class="rel-card">
               <h3 class="expl-subsection-title">Previsto vs Pago (mês selecionado)</h3>
@@ -525,6 +524,17 @@
                 <canvas id="chart-por-aluno"></canvas>
               </div>
             </div>
+
+            <div class="rel-card">
+              <h3 class="expl-subsection-title">Evolução mensal (ano atual)</h3>
+              <p class="expl-section-sub">
+                Compara o total previsto e faturado em cada mês do ano atual.
+              </p>
+              <div class="rel-chart-box">
+                <canvas id="chart-evolucao-anual"></canvas>
+              </div>
+            </div>
+
           </div>
         </section>
 
@@ -712,6 +722,7 @@
     });
   }
 
+  let chartEvolucaoAnual = null;   // <-- novo
   let chartPrevistoPago = null;
   let chartPagamentosPorAluno = null;
   let SESSOES_EXPLICADOR = [];
@@ -1262,43 +1273,148 @@
   }
 
   function atualizarGraficosPagamentos() {
-  const canvasResumo   = document.getElementById("chart-previsto-pago");
-  const canvasPorAluno = document.getElementById("chart-por-aluno");
+    const canvasResumo   = document.getElementById("chart-previsto-pago");
+    const canvasPorAluno = document.getElementById("chart-por-aluno");
 
-  if (!canvasResumo && !canvasPorAluno) return;
+    if (!canvasResumo && !canvasPorAluno) return;
 
-  const dados = getDadosMesSelecionado();
-  if (!dados) return;
+    const dados = getDadosMesSelecionado();
+    if (!dados) return;
 
-  const { mesLabel, pendentes, pagas } = dados;
-  const todos = [...pendentes, ...pagas];
+    const { mesLabel, pendentes, pagas } = dados;
+    const todos = [...pendentes, ...pagas];
 
-  const totalPrevisto = todos.reduce((acc, r) => acc + (r.previsto || 0), 0);
-  const totalPago     = todos.reduce((acc, r) => acc + (r.pago || 0), 0);
-  const totalFalta    = Math.max(totalPrevisto - totalPago, 0);
+    const totalPrevisto = todos.reduce((acc, r) => acc + (r.previsto || 0), 0);
+    const totalPago     = todos.reduce((acc, r) => acc + (r.pago || 0), 0);
+    const totalFalta    = Math.max(totalPrevisto - totalPago, 0);
 
-  // --- Gráfico 1: Previsto vs Pago vs Em falta ---
-  if (chartPrevistoPago) {
-    chartPrevistoPago.destroy();
+    // --- Gráfico 1: Previsto vs Pago vs Em falta ---
+    if (chartPrevistoPago) {
+      chartPrevistoPago.destroy();
+    }
+    if (canvasResumo) {
+      const ctxResumo = canvasResumo.getContext("2d");
+      chartPrevistoPago = new Chart(ctxResumo, {
+        type: "bar",
+        data: {
+          labels: ["Previsto", "Pago", "Em falta"],
+          datasets: [
+            {
+              label: mesLabel,
+              data: [totalPrevisto, totalPago, totalFalta],
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,   // <– importante com CSS que vamos pôr
+          plugins: {
+            legend: { display: false },
+          },
+          scales: {
+            y: { beginAtZero: true },
+          },
+        },
+      });
+    }
+
+    // --- Gráfico 2: Pagamentos por aluno ---
+    if (chartPagamentosPorAluno) {
+      chartPagamentosPorAluno.destroy();
+    }
+    if (canvasPorAluno) {
+      const ctxPorAluno = canvasPorAluno.getContext("2d");
+
+      const porAluno = new Map();
+      todos.forEach((r) => {
+        const entry = porAluno.get(r.aluno) || { previsto: 0, pago: 0 };
+        entry.previsto += r.previsto || 0;
+        entry.pago     += r.pago || 0;
+        porAluno.set(r.aluno, entry);
+      });
+
+      const labels = Array.from(porAluno.keys());
+      const datasetPrevisto = labels.map((nome) => porAluno.get(nome).previsto);
+      const datasetPago     = labels.map((nome) => porAluno.get(nome).pago);
+
+      chartPagamentosPorAluno = new Chart(ctxPorAluno, {
+        type: "bar",
+        data: {
+          labels,
+          datasets: [
+            { label: "Previsto", data: datasetPrevisto },
+            { label: "Pago", data: datasetPago },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,   // idem
+          scales: {
+            y: { beginAtZero: true },
+          },
+        },
+      });
+    }
   }
-  if (canvasResumo) {
-    const ctxResumo = canvasResumo.getContext("2d");
-    chartPrevistoPago = new Chart(ctxResumo, {
-      type: "bar",
+
+  function atualizarGraficoEvolucaoAnual() {
+    const canvas = document.getElementById("chart-evolucao-anual");
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+
+    const now = new Date();
+    const anoAtual = now.getFullYear();
+
+    const nomesMesesCurtos = [
+      "Jan","Fev","Mar","Abr","Mai","Jun",
+      "Jul","Ago","Set","Out","Nov","Dez"
+    ];
+
+    const previstoPorMes = new Array(12).fill(0);
+    const pagoPorMes     = new Array(12).fill(0);
+
+    (PAGAMENTOS_CACHE || []).forEach((p) => {
+      if (p.ano !== anoAtual) return;
+
+      // ignorar alunos bloqueados
+      const alunoRef = (ALUNOS_CACHE || []).find(
+        (a) => String(a.id_aluno) === String(p.id_aluno)
+      );
+      if (alunoRef && alunoRef.is_active === false) return;
+
+      const idxMes = (p.mes || 1) - 1;
+      const previsto = Number(p.valor_previsto) || 0;
+      const pago     = Number(p.valor_pago) || 0;
+
+      previstoPorMes[idxMes] += previsto;
+      pagoPorMes[idxMes]     += pago;
+    });
+
+    if (chartEvolucaoAnual) {
+      chartEvolucaoAnual.destroy();
+    }
+
+    chartEvolucaoAnual = new Chart(ctx, {
+      type: "line",
       data: {
-        labels: ["Previsto", "Pago", "Em falta"],
+        labels: nomesMesesCurtos,
         datasets: [
           {
-            label: mesLabel,
-            data: [totalPrevisto, totalPago, totalFalta],
+            label: "Previsto",
+            data: previstoPorMes,
+          },
+          {
+            label: "Pago",
+            data: pagoPorMes,
           },
         ],
       },
       options: {
         responsive: true,
-        maintainAspectRatio: false,   // <– importante com CSS que vamos pôr
+        maintainAspectRatio: false,
         plugins: {
-          legend: { display: false },
+          legend: { position: "top" },
         },
         scales: {
           y: { beginAtZero: true },
@@ -1307,44 +1423,6 @@
     });
   }
 
-  // --- Gráfico 2: Pagamentos por aluno ---
-  if (chartPagamentosPorAluno) {
-    chartPagamentosPorAluno.destroy();
-  }
-  if (canvasPorAluno) {
-    const ctxPorAluno = canvasPorAluno.getContext("2d");
-
-    const porAluno = new Map();
-    todos.forEach((r) => {
-      const entry = porAluno.get(r.aluno) || { previsto: 0, pago: 0 };
-      entry.previsto += r.previsto || 0;
-      entry.pago     += r.pago || 0;
-      porAluno.set(r.aluno, entry);
-    });
-
-    const labels = Array.from(porAluno.keys());
-    const datasetPrevisto = labels.map((nome) => porAluno.get(nome).previsto);
-    const datasetPago     = labels.map((nome) => porAluno.get(nome).pago);
-
-    chartPagamentosPorAluno = new Chart(ctxPorAluno, {
-      type: "bar",
-      data: {
-        labels,
-        datasets: [
-          { label: "Previsto", data: datasetPrevisto },
-          { label: "Pago", data: datasetPago },
-        ],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,   // idem
-        scales: {
-          y: { beginAtZero: true },
-        },
-      },
-    });
-  }
-}
 
   // ---------- FATURAÇÃO: INICIAR FILTROS (MÊS/ANO) ----------
   function initFiltrosFaturacao() {
@@ -1525,7 +1603,8 @@
       // ---- Secção Faturação + Gráficos ----
       prepararFiltrosFaturacao();   // preenche <select> de mês/ano e liga eventos
       renderResumoMensal();         // preenche tabelas "pagas" + "em falta"
-      atualizarGraficosPagamentos && atualizarGraficosPagamentos(); // se já definiste os gráficos
+      atualizarGraficosPagamentos && atualizarGraficosPagamentos();
+      atualizarGraficoEvolucaoAnual && atualizarGraficoEvolucaoAnual(); // se já definiste os gráficos
     } catch (err) {
       console.error("Erro inesperado em loadKpisFinanceiros", err);
     }
