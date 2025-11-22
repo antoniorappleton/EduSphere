@@ -3,17 +3,14 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <link rel="stylesheet" href="./styles.css" />
   <link rel="stylesheet" href="./css/base.css" />
   <link rel="stylesheet" href="./css/explicador.css" />
+  <link rel="stylesheet" href="./styles.css" />
   <title>EduSphere — Explicador</title>
 
   <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="./public/js/supabaseClient.js"></script>
-  <!-- Opcionalmente aqui ligas um ficheiro JS próprio, ex:
-  <script src="./public/js/explicador.js" type="module"></script>
-  -->
 </head>
 
 <body class="home">
@@ -24,7 +21,7 @@
       <span>EduSphere</span>
     </a>
 
-    <!-- NAV SUPERIOR (se quiseres usar no futuro; não está ligado ao JS) -->
+    <!-- NAV SUPERIOR (opcional) -->
     <nav id="explTopNav" class="expl-main-nav" style="display:none">
       <button class="expl-nav-btn expl-nav-btn--active" data-target="dashboard">Dashboard</button>
       <button class="expl-nav-btn" data-target="alunos">Alunos</button>
@@ -59,7 +56,6 @@
     <nav id="explSidebarNav" class="expl-sidebar-nav" style="display:none">
       <button class="expl-nav-btn expl-nav-btn--active" data-target="dashboard">
         <span class="expl-nav-icon">
-          <!-- Dashboard icon -->
           <svg class="expl-nav-svg" viewBox="0 0 24 24" aria-hidden="true">
             <rect x="4" y="4" width="7" height="7" rx="1.5" />
             <rect x="13" y="4" width="7" height="7" rx="1.5" />
@@ -72,7 +68,6 @@
 
       <button class="expl-nav-btn" data-target="alunos">
         <span class="expl-nav-icon">
-          <!-- Alunos (utilizador) -->
           <svg class="expl-nav-svg" viewBox="0 0 24 24" aria-hidden="true">
             <circle cx="12" cy="9" r="3.2" />
             <path d="M6.5 19.5c1.2-2.3 3-3.6 5.5-3.6s4.3 1.3 5.5 3.6" />
@@ -83,7 +78,6 @@
 
       <button class="expl-nav-btn" data-target="calendario">
         <span class="expl-nav-icon">
-          <!-- Calendário -->
           <svg class="expl-nav-svg" viewBox="0 0 24 24" aria-hidden="true">
             <rect x="4" y="5.5" width="16" height="14" rx="2" />
             <path d="M4 10h16" />
@@ -96,7 +90,6 @@
 
       <button class="expl-nav-btn" data-target="faturacao">
         <span class="expl-nav-icon">
-          <!-- Faturação (€ / dinheiro) -->
           <svg class="expl-nav-svg" viewBox="0 0 24 24" aria-hidden="true">
             <path d="M15.5 7.5c-1-.7-2.1-1.1-3.4-1.1-2.6 0-4.6 1.8-4.6 4.6s2 4.6 4.6 4.6c1.3 0 2.4-.4 3.4-1.1" />
             <path d="M11 5v14" />
@@ -107,7 +100,6 @@
 
       <button class="expl-nav-btn" data-target="relatorios">
         <span class="expl-nav-icon">
-          <!-- Relatórios (gráfico) -->
           <svg class="expl-nav-svg" viewBox="0 0 24 24" aria-hidden="true">
             <path d="M4 18.5h16" />
             <path d="M6.5 15l3.2-4 3.2 2.7 4.1-5.2" />
@@ -120,7 +112,7 @@
 
     <!-- CONTEÚDO PRINCIPAL -->
     <div class="expl-main">
-      <!-- Top bar com saudação + utilizador -->
+      <!-- Top bar -->
       <header class="expl-header-bar">
         <div class="expl-header-info">
           <h1 class="expl-page-title">Dashboard</h1>
@@ -147,8 +139,9 @@
       <!-- Conteúdo scrollável -->
       <div class="expl-body">
 
-        <!-- RESUMO FINANCEIRO -->
+        <!-- ========== DASHBOARD ========== -->
         <section class="expl-section" data-section="dashboard">
+          <!-- RESUMO FINANCEIRO -->
           <h2 class="expl-section-title">Resumo financeiro</h2>
 
           <div class="expl-kpi-grid">
@@ -167,9 +160,23 @@
               <p class="expl-kpi-value expl-kpi-value--red" id="card-pendentes">—</p>
             </article>
           </div>
+
+          <!-- ALUNOS (CARDS DE RESUMO) -->
+          <div class="expl-section-header" style="margin-top:2rem;">
+            <h2 class="expl-section-title">
+              Alunos <span class="expl-section-sub" id="dash-alunos-contador">(0 ativos)</span>
+            </h2>
+            <button class="expl-link-button" type="button" id="btn-dashboard-ver-alunos">
+              Ver todos &rarr;
+            </button>
+          </div>
+
+          <div class="dash-alunos-grid" id="dash-alunos-grid">
+            <!-- cartões preenchidos por JS -->
+          </div>
         </section>
 
-        <!-- ALUNOS + QUOTA -->
+        <!-- ========== ALUNOS (DETALHE) ========== -->
         <section class="expl-section" id="expl-sec-alunos" data-section="alunos">
           <div class="expl-section-header">
             <h2 class="expl-section-title">
@@ -294,7 +301,7 @@
           </div>
         </section>
 
-        <!-- RESUMO MENSALIDADES -->
+        <!-- ========== FATURAÇÃO (RESUMO MENSALIDADES) ========== -->
         <section class="expl-section" data-section="faturacao">
           <div class="expl-grid-2" style="margin-top:1.5rem;">
             <article class="expl-card">
@@ -349,10 +356,9 @@
           </div>
         </section>
 
-        <!-- CALENDÁRIO + RELATÓRIOS -->
-        <section class="expl-section expl-grid-2" id="expl-sec-outros" data-section="calendario">
-          <!-- CARTÃO: CALENDÁRIO -->
-          <article id="expl-sec-calendario" class="expl-card expl-placeholder-card">
+        <!-- ========== CALENDÁRIO ========== -->
+        <section class="expl-section" id="expl-sec-calendario" data-section="calendario">
+          <article class="expl-card expl-placeholder-card">
             <h2 class="expl-section-title">Calendário</h2>
             <p class="expl-section-sub">Próximas explicações agendadas.</p>
 
@@ -395,9 +401,11 @@
               <span>Ir para o calendário de explicações</span>
             </button>
           </article>
+        </section>
 
-          <!-- CARTÃO: RELATÓRIOS -->
-          <article id="expl-sec-relatorios" class="expl-card expl-placeholder-card" data-section="relatorios">
+        <!-- ========== RELATÓRIOS ========== -->
+        <section class="expl-section" id="expl-sec-relatorios" data-section="relatorios">
+          <article class="expl-card expl-placeholder-card">
             <h2 class="expl-section-title">Relatórios</h2>
             <p class="expl-section-sub">Estatísticas e análises da tua atividade.</p>
 
@@ -438,7 +446,9 @@
 
 </main>
 
-<!-- ========== MODAL: ADICIONAR ALUNO ========== -->
+<!-- ========== MODAIS ========== -->
+
+<!-- ADICIONAR ALUNO -->
 <div class="modal" id="modal-add-aluno">
   <div class="modal__backdrop" data-modal-close></div>
   <div class="modal__dialog">
@@ -470,7 +480,7 @@
   </div>
 </div>
 
-<!-- ========== MODAL: EDITAR ALUNO ========== -->
+<!-- EDITAR ALUNO -->
 <div class="modal" id="modal-edit-aluno">
   <div class="modal__backdrop" data-modal-close></div>
   <div class="modal__dialog">
@@ -502,7 +512,7 @@
   </div>
 </div>
 
-<!-- ========== MODAL: SESSÃO (ADICIONAR / EDITAR) ========== -->
+<!-- SESSÃO (ADICIONAR / EDITAR) -->
 <div class="modal" id="modal-sessao">
   <div class="modal__backdrop" data-modal-close></div>
   <div class="modal__dialog">
@@ -538,7 +548,7 @@
   </div>
 </div>
 
-<!-- ========== MODAL: PAGAMENTO ALUNO ========== -->
+<!-- PAGAMENTO ALUNO -->
 <div class="modal" id="modal-pagamento-aluno">
   <div class="modal__backdrop" data-modal-close></div>
   <div class="modal__dialog">
@@ -555,7 +565,6 @@
         <input type="number" name="ano" placeholder="Ano" required />
         <input type="number" name="mes" placeholder="Mês (1-12)" min="1" max="12" required />
 
-        <!-- só usado em INICIAR -->
         <input
           type="number"
           name="dia_pagamento"
@@ -565,7 +574,6 @@
           style="display:none;"
         />
 
-        <!-- usado em REGISTAR / EDITAR -->
         <input
           type="number"
           step="0.01"
@@ -588,17 +596,37 @@
 <footer>© <span id="y"></span> EduSphere</footer>
 
 <script>
+  
   // ---------- helper DOM ----------
   const $ = (s) => document.querySelector(s);
 
-    let SESSOES_EXPLICADOR = [];
+  // -------- Helper para chamar a Edge Function expl-alunos com token --------
+  async function callExplFn(action, payload = null) {
+  const { data: { session } } = await supabase.auth.getSession();
+  const accessToken = session?.access_token;
+
+  if (!accessToken) {
+    return {
+      data: null,
+      error: { message: 'Sem sessão válida (faz login primeiro).', status: 401 },
+    };
+  }
+
+  return supabase.functions.invoke("expl-alunos", {
+    body: { action, payload },
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+}
+
+
+  let SESSOES_EXPLICADOR = [];
   let semanaOffset = 0; // 0 = semana atual, -1 = anterior, +1 = próxima
 
-  const weekGrid    = document.querySelector('#week-grid');
   const weekLabel   = document.querySelector('#week-label');
   const btnWeekPrev = document.querySelector('#week-prev');
   const btnWeekNext = document.querySelector('#week-next');
-
 
   // Pagamento modal refs
   const modalPag        = $('#modal-pagamento-aluno');
@@ -655,6 +683,8 @@
   const btnAddSessao    = $('#btn-add-sessao');
   const tblSessoesBody  = $('#tblSessoesAluno tbody');
 
+  const btnDashVerAlunos = $('#btn-dashboard-ver-alunos');
+
   elYear.textContent = new Date().getFullYear();
 
   let EXPLICADOR       = { userId:null, id_explicador:null, max:0 };
@@ -663,7 +693,7 @@
   let ALUNO_ATUAL      = null;
   let SESSAO_ATUAL_ID  = null;
 
-    function getInicioSemana(date) {
+  function getInicioSemana(date) {
     const d = new Date(date);
     const day = d.getDay(); // 0=Dom,1=Seg,...6=Sáb
     const diff = (day + 6) % 7; // queremos começar em SEG
@@ -673,7 +703,6 @@
   }
 
   const NOMES_DIAS_CURTOS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
-
 
   // ---------- helpers supabase ----------
   async function hasRole(uid, roleName){
@@ -745,17 +774,105 @@
     }
   }
 
+  // ---------- DASHBOARD: CARDS DE ALUNOS ----------
+  function renderDashboardAlunos() {
+    const grid = document.getElementById("dash-alunos-grid");
+    const contador = document.getElementById("dash-alunos-contador");
+    if (!grid) return;
+
+    const alunosAtivos = (ALUNOS_CACHE || []).filter(a => a.is_active !== false);
+    const totalAtivos = alunosAtivos.length;
+
+    if (contador) {
+      contador.textContent =
+        totalAtivos === 1 ? "(1 ativo)" : `(${totalAtivos} ativos)`;
+    }
+
+    if (!totalAtivos) {
+      grid.innerHTML =
+        '<p class="expl-section-sub">Ainda não tens alunos ativos registados.</p>';
+      return;
+    }
+
+    const top3 = alunosAtivos.slice(0, 3);
+
+    grid.innerHTML = top3
+      .map((a) => {
+        const nome = [a.nome, a.apelido].filter(Boolean).join(" ") || "Aluno";
+        const anoLabel = a.ano ? `${a.ano}º Ano` : "—";
+
+        const proximaMensalidade = a.proxima_mensalidade || "—";
+        const estado = (a.estado_mensalidade || "Pago").trim();
+
+        const isPago = estado.toLowerCase() === "pago";
+        const badgeClass =
+          isPago
+            ? "dash-aluno-card__badge dash-aluno-card__badge--pago"
+            : "dash-aluno-card__badge dash-aluno-card__badge--pendente";
+
+        return `
+          <article class="dash-aluno-card">
+            <div>
+              <div class="dash-aluno-card__top">
+                <div class="dash-aluno-card__avatar"></div>
+                <div>
+                  <h3 class="dash-aluno-card__name">${nome}</h3>
+                  <p class="dash-aluno-card__year">${anoLabel}</p>
+                </div>
+              </div>
+
+              <p class="dash-aluno-card__label">Próxima mensalidade:</p>
+              <p class="dash-aluno-card__date">${proximaMensalidade}</p>
+
+              <span class="${badgeClass}">
+                ${estado}
+              </span>
+            </div>
+
+            <button
+              type="button"
+              class="button secondary dash-aluno-card__btn"
+              data-id-aluno="${a.id_aluno}"
+            >
+              Ver detalhes
+            </button>
+          </article>
+        `;
+      })
+      .join("");
+
+    // clique em "Ver detalhes" -> vai para secção Alunos e abre o painel
+    grid.querySelectorAll("[data-id-aluno]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const idAluno = btn.getAttribute("data-id-aluno");
+        const aluno = ALUNOS_CACHE.find(
+          (x) => String(x.id_aluno) === String(idAluno)
+        );
+        if (!aluno) return;
+
+        const tabAlunos = document.querySelector(
+          '.expl-nav-btn[data-target="alunos"]'
+        );
+        tabAlunos?.click();
+
+        setTimeout(() => {
+          mostrarPainelAluno(aluno);
+        }, 150);
+      });
+    });
+  }
+
   // ---------- LISTAR ALUNOS ----------
   async function loadAlunos() {
-    const { data, error } = await supabase.functions.invoke("expl-alunos", {
-      body: { action: "list_alunos" },
-    });
+  const { data, error } = await callExplFn("list_alunos", null);
 
     if (error) {
       console.error("loadAlunos error", error);
       tblBody.innerHTML =
         '<tr><td colspan="3">Erro a carregar alunos.</td></tr>';
+      ALUNOS_CACHE = [];
       updateQuotaUI(0);
+      renderDashboardAlunos();
       return;
     }
 
@@ -764,6 +881,7 @@
         '<tr><td colspan="3">Sem alunos ainda.</td></tr>';
       ALUNOS_CACHE = [];
       updateQuotaUI(0);
+      renderDashboardAlunos();
       return;
     }
 
@@ -784,6 +902,7 @@
       .join("");
 
     updateQuotaUI(data.length);
+    renderDashboardAlunos();
 
     tblBody
       .querySelectorAll("tr.linha-aluno")
@@ -859,7 +978,6 @@
       }
     });
 
-    // Tabela de pendentes
     if (!pendentes.length) {
       tbodyPend.innerHTML =
         '<tr><td colspan="7">Ainda não existem mensalidades em falta neste mês.</td></tr>';
@@ -894,7 +1012,6 @@
       tbodyPend.innerHTML = rowsPend + totalRow;
     }
 
-    // Tabela de pagas
     if (!pagas.length) {
       tbodyPagas.innerHTML =
         '<tr><td colspan="5">Ainda não existem mensalidades pagas neste mês.</td></tr>';
@@ -1039,7 +1156,6 @@
           `€ ${pendenteTotal.toFixed(2)} (${labelAlunos})`;
       }
 
-      // Atualiza o cartão "Relatórios" com base nos mesmos dados
       const nAlunosAtivos = (ALUNOS_CACHE || []).filter(a => a.is_active !== false).length;
       updateResumoRelatorios({
         previstoMesAtual,
@@ -1063,11 +1179,8 @@
     tblSessoesBody.innerHTML =
       '<tr><td colspan="5">A carregar sessões...</td></tr>';
 
-    const { data, error } = await supabase.functions.invoke("expl-alunos", {
-      body: {
-        action: "list_sessoes_aluno",
-        payload: { aluno_id: alunoId },
-      },
+    const { data, error } = await callExplFn("list_sessoes_aluno", {
+      aluno_id: alunoId,
     });
 
     if (error) {
@@ -1103,7 +1216,6 @@
       })
       .join("");
 
-    // clicar para editar
     tblSessoesBody.querySelectorAll("tr.linha-sessao").forEach((row) => {
       row.addEventListener("click", () => {
         const idSessao = row.dataset.idSessao;
@@ -1172,7 +1284,6 @@
   btnRegistarPag?.addEventListener("click", () => abrirModalPagamento("registar"));
   btnEditarPag?.addEventListener("click", () => abrirModalPagamento("editar"));
 
-  // Fechar modal pagamento
   $('#modal-pagamento-aluno .modal__close')?.addEventListener('click', () => {
     closeModal(modalPag);
   });
@@ -1190,7 +1301,7 @@
       return;
     }
 
-    const modo  = formPag.modo.value; // iniciar | registar | editar
+    const modo  = formPag.modo.value;
     const ano   = Number(inputAno.value);
     const mes   = Number(inputMes.value);
     const dia   = inputDiaPag.value ? Number(inputDiaPag.value) : null;
@@ -1206,7 +1317,7 @@
         msgPag.textContent = "Dia de pagamento inválido.";
         return;
       }
-    } else { // registar / editar
+    } else {
       if (valor === null || isNaN(valor) || valor < 0) {
         msgPag.textContent = "Valor inválido.";
         return;
@@ -1245,9 +1356,7 @@
         };
       }
 
-      const { data, error } = await supabase.functions.invoke("expl-alunos", {
-        body: { action, payload },
-      });
+      const { data, error } = await callExplFn(action, payload);
 
       if (error) {
         let extra = "";
@@ -1392,20 +1501,17 @@
 
   // ---------- CRIAR ALUNO ----------
   async function createAluno(payload){
-    const { data, error } = await supabase.functions.invoke("expl-alunos", {
-      body: { action: "create_aluno", payload }
-    });
+  const { data, error } = await callExplFn("create_aluno", payload);
 
-    if (error) {
-      console.error(error);
-      return { ok:false, error: error.message };
-    }
-
-    return { ok: true, data };
+  if (error) {
+    console.error(error);
+    return { ok:false, error: error.message };
   }
 
+  return { ok: true, data };
+}
+
   // ---------- MODAIS (add / edit / sessão) ----------
-  // adicionar aluno
   modalAddAluno?.addEventListener('click', (ev) => {
     if (ev.target.hasAttribute('data-modal-close')) {
       closeModal(modalAddAluno);
@@ -1418,7 +1524,6 @@
   btnFab?.addEventListener('click', () => openModal(modalAddAluno));
   btnOpenAddAluno?.addEventListener('click', () => openModal(modalAddAluno));
 
-  // editar aluno
   $('#modal-edit-aluno .modal__close')?.addEventListener('click', () => {
     closeModal(modalEditAluno);
   });
@@ -1428,7 +1533,6 @@
     }
   });
 
-  // modal sessão
   $('#modal-sessao .modal__close')?.addEventListener('click', () => {
     closeModal(modalSessao);
   });
@@ -1461,7 +1565,6 @@
     msgEditAluno.style.color = "";
   }
 
-  // abrir modal de edição ao clicar no botão
   btnEditarAluno?.addEventListener("click", () => {
     if (!ALUNO_ATUAL) {
       alert("Seleciona primeiro um aluno na lista.");
@@ -1509,12 +1612,7 @@
     msgEditAluno.textContent = "A guardar alterações...";
 
     try {
-      const { data, error } = await supabase.functions.invoke("expl-alunos", {
-        body: {
-          action: "update_aluno",
-          payload,
-        },
-      });
+      const { data, error } = await callExplFn("update_aluno", payload);
 
       if (error) {
         let extra = "";
@@ -1600,9 +1698,7 @@
     btnCreate.disabled = true;
     msgNewAluno.textContent = "A criar aluno...";
 
-    const { data, error } = await supabase.functions.invoke("expl-alunos", {
-      body: { action: "create_aluno", payload },
-    });
+    const { data, error } = await callExplFn("create_aluno", payload);
 
     if (error) {
       let extra = "";
@@ -1679,6 +1775,7 @@
     setState({ isExpl:true, isAuthed:true });
     await loadAlunos();
     await loadKpisFinanceiros();
+    await loadResumoCalendario();
   });
 
   // ---------- LOGOUT ----------
@@ -1720,29 +1817,48 @@
     await loadAlunos();
     await loadKpisFinanceiros();
     await loadResumoCalendario();
-    await loadResumoCalendario();
   })();
 
-  // ---------- NAVEGAÇÃO HEADER ----------
+  // ---------- NAVEGAÇÃO LATERAL (tabs) ----------
   const tabs = document.querySelectorAll('.expl-nav-btn');
-  const sectionMap = {
-    dashboard:  document.querySelector('.expl-body'),
-    alunos:     document.getElementById('expl-sec-alunos'),
-    calendario: document.getElementById('expl-sec-calendario'),
-    faturacao:  document.querySelector('.expl-body'),
-    relatorios: document.getElementById('expl-sec-relatorios'),
-  };
+  const screens = document.querySelectorAll('.expl-section[data-section]');
+
+  function ativarScreen(target) {
+    screens.forEach(sec => {
+      const key = sec.dataset.section;
+      sec.style.display = key === target ? '' : 'none';
+    });
+
+    document.querySelector('.expl-body')?.scrollTo({ top: 0, behavior: 'smooth' });
+    const title = document.querySelector('.expl-page-title');
+    if (title) {
+      const mapTitle = {
+        dashboard: 'Dashboard',
+        alunos: 'Alunos',
+        calendario: 'Calendário',
+        faturacao: 'Faturação',
+        relatorios: 'Relatórios',
+      };
+      title.textContent = mapTitle[target] || 'Dashboard';
+    }
+  }
 
   tabs.forEach(btn => {
     btn.addEventListener('click', () => {
       const target = btn.dataset.target;
-      tabs.forEach(t => t.classList.remove('expl-nav-btn--active', 'expl-tab--active'));
+      tabs.forEach(t => t.classList.remove('expl-nav-btn--active'));
       btn.classList.add('expl-nav-btn--active');
-      const sec = sectionMap[target];
-      if (sec) sec.scrollIntoView({ behavior:'smooth', block:'start' });
+      ativarScreen(target);
     });
   });
 
+  // botão "Ver todos" na dashboard -> tab Alunos
+  btnDashVerAlunos?.addEventListener('click', () => {
+    const tabAlunos = document.querySelector('.expl-nav-btn[data-target="alunos"]');
+    tabAlunos?.click();
+  });
+
+  // scroll para lista de alunos
   btnScrollLista?.addEventListener('click', () => {
     document.querySelector('#lista-alunos-card')?.scrollIntoView({
       behavior:'smooth',
@@ -1827,12 +1943,7 @@
     msgSessao.textContent = "A guardar sessão...";
 
     try {
-      const { data, error } = await supabase.functions.invoke("expl-alunos", {
-        body: {
-          action: "upsert_sessao_aluno",
-          payload,
-        },
-      });
+      const { data, error } = await callExplFn("upsert_sessao_aluno", payload);
 
       if (error) {
         let extra = "";
@@ -1886,12 +1997,10 @@
     btnDeleteSessao.disabled = true;
 
     try {
-      const { data, error } = await supabase.functions.invoke("expl-alunos", {
-        body: {
-          action: "delete_sessao_aluno",
-          payload: { id_sessao: SESSAO_ATUAL_ID },
-        },
+      const { data, error } = await callExplFn("delete_sessao_aluno", {
+        id_sessao: SESSAO_ATUAL_ID,
       });
+
 
       if (error) {
         let extra = "";
@@ -1928,69 +2037,67 @@
     }
   });
 
-    // ------------------------------------------------------------------
+  // ------------------------------------------------------------------
   // RENDER CALENDÁRIO SEMANAL
   // ------------------------------------------------------------------
   function renderCalendarioSemanal() {
-  const grid = document.getElementById("calendar-grid");
-  const label = document.getElementById("week-label");
-  if (!grid) return;
+    const grid = document.getElementById("calendar-grid");
+    const label = document.getElementById("week-label");
+    if (!grid || !label) return;
 
-  const hoje = new Date();
-  const inicio = getInicioSemana(hoje);
-  inicio.setDate(inicio.getDate() + semanaOffset * 7);
+    const hoje = new Date();
+    const inicio = getInicioSemana(hoje);
+    inicio.setDate(inicio.getDate() + semanaOffset * 7);
 
-  const dias = [];
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(inicio);
-    d.setDate(inicio.getDate() + i);
-    dias.push(d);
+    const dias = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(inicio);
+      d.setDate(inicio.getDate() + i);
+      dias.push(d);
+    }
+
+    const fmt = { day: "2-digit", month: "2-digit" };
+    label.textContent = `Semana ${dias[0].toLocaleDateString("pt-PT", fmt)} – ${dias[6].toLocaleDateString("pt-PT", fmt)}`;
+
+    const nomes = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
+
+    grid.innerHTML = dias.map((d, idx) => {
+      const dataStr = d.toISOString().slice(0, 10);
+      const sessoes = SESSOES_EXPLICADOR.filter(s => s.data === dataStr);
+
+      const temRealizada = sessoes.some(s => s.estado === "REALIZADA");
+      const temAgendada  = sessoes.some(s => s.estado === "AGENDADA");
+      const temExtra     = sessoes.some(s => s.estado === "EXTRA");
+
+      const dotsHTML = `
+        ${temRealizada ? `<span class="dot dot-green"></span>` : ""}
+        ${temAgendada  ? `<span class="dot dot-yellow"></span>` : ""}
+        ${temExtra     ? `<span class="dot dot-orange"></span>` : ""}
+      `.trim();
+
+      const lista = sessoes.length === 0
+        ? `<p class="calendar-empty">Sem sessões</p>`
+        : sessoes.map(s => `
+            <div class="calendar-session">
+              <strong>${s.hora_inicio?.slice(0,5) || "--:--"}</strong>
+              <span>${s.aluno_nome}</span>
+            </div>
+          `).join("");
+
+      return `
+        <div class="calendar-day">
+          <div class="calendar-day__header">
+            <span class="calendar-day__weekday">${nomes[idx]}</span>
+            <span class="calendar-day__date">${d.toLocaleDateString("pt-PT", fmt)}</span>
+          </div>
+
+          <div class="calendar-day__dots">${dotsHTML}</div>
+          <div class="calendar-day__list">${lista}</div>
+        </div>
+      `;
+    }).join("");
   }
 
-  const fmt = { day: "2-digit", month: "2-digit" };
-  label.textContent = `Semana ${dias[0].toLocaleDateString("pt-PT", fmt)} – ${dias[6].toLocaleDateString("pt-PT", fmt)}`;
-
-  const nomes = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
-
-  grid.innerHTML = dias.map((d, idx) => {
-    const dataStr = d.toISOString().slice(0, 10);
-    const sessoes = SESSOES_EXPLICADOR.filter(s => s.data === dataStr);
-
-    // bolinhas por tipo
-    const temRealizada = sessoes.some(s => s.estado === "REALIZADA");
-    const temAgendada  = sessoes.some(s => s.estado === "AGENDADA");
-    const temExtra     = sessoes.some(s => s.estado === "EXTRA");
-
-    const dotsHTML = `
-      ${temRealizada ? `<span class="dot dot-green"></span>` : ""}
-      ${temAgendada  ? `<span class="dot dot-yellow"></span>` : ""}
-      ${temExtra     ? `<span class="dot dot-orange"></span>` : ""}
-    `.trim();
-
-    const lista = sessoes.length === 0
-      ? `<p class="calendar-empty">Sem sessões</p>`
-      : sessoes.map(s => `
-          <div class="calendar-session">
-            <strong>${s.hora_inicio?.slice(0,5) || "--:--"}</strong>
-            <span>${s.aluno_nome}</span>
-          </div>
-        `).join("");
-
-    return `
-      <div class="calendar-day">
-        <div class="calendar-day__header">
-          <span class="calendar-day__weekday">${nomes[idx]}</span>
-          <span class="calendar-day__date">${d.toLocaleDateString("pt-PT", fmt)}</span>
-        </div>
-
-        <div class="calendar-day__dots">${dotsHTML}</div>
-        <div class="calendar-day__list">${lista}</div>
-      </div>
-    `;
-  }).join("");
-}
-
-  // navegação de semanas
   btnWeekPrev?.addEventListener('click', () => {
     semanaOffset -= 1;
     renderCalendarioSemanal();
@@ -2001,70 +2108,64 @@
     renderCalendarioSemanal();
   });
 
-//--------------------------------------------------------------------
-// CARREGAR RESUMO DE CALENDÁRIO
-//--------------------------------------------------------------------
-//--------------------------------------------------------------------
-// CARREGAR RESUMO DE CALENDÁRIO
-//--------------------------------------------------------------------
-async function loadResumoCalendario() {
-  console.log("A carregar resumo de calendário...");
+  // --------------------------------------------------------------------
+  // CARREGAR RESUMO DE CALENDÁRIO
+  // --------------------------------------------------------------------
+  async function loadResumoCalendario() {
+    const { data, error } = await callExplFn("list_sessoes_explicador", null);
 
-  const { data, error } = await supabase.functions.invoke("expl-alunos", {
-    body: { action: "list_sessoes_explicador" },
-  });
+    if (error) {
+      console.error("Erro a carregar sessões do explicador", error);
+      return;
+    }
 
-  if (error) {
-    console.error("Erro a carregar sessões do explicador", error);
-    return;
+    const sessoes = data || [];
+    SESSOES_EXPLICADOR = sessoes;
+
+    // HOJE
+    const hojeStr = new Date().toISOString().slice(0, 10);
+    const sessoesHoje = sessoes.filter(s => s.data === hojeStr);
+
+    let txtHoje = "Sem sessões registadas";
+    if (sessoesHoje.length > 0) {
+      const detalhes = sessoesHoje
+        .map(s => `${s.hora_inicio?.slice(0, 5) || "--:--"} ${s.aluno_nome || ""}`.trim())
+        .join(", ");
+
+      txtHoje = `${sessoesHoje.length} sessão(ões) hoje · ${detalhes}`;
+    }
+
+    const elHoje = document.querySelector("#cal-resumo-hoje");
+    if (elHoje) elHoje.textContent = txtHoje;
+
+    // PRÓXIMOS 7 DIAS
+    const hojeDate = new Date();
+    const seteDiasDepois = new Date();
+    seteDiasDepois.setDate(hojeDate.getDate() + 7);
+
+    const sessoesSemana = sessoes.filter(s => {
+      const dataSess = new Date(s.data);
+      dataSess.setHours(0, 0, 0, 0);
+      return dataSess >= hojeDate && dataSess <= seteDiasDepois;
+    });
+
+    let txtSemana = "Agenda em branco por agora";
+    if (sessoesSemana.length > 0) {
+      const alunosUnicos = new Set(sessoesSemana.map(s => s.aluno_nome));
+      txtSemana =
+        `${sessoesSemana.length} sessões nos próximos 7 dias · ` +
+        `${alunosUnicos.size} aluno(s) diferente(s)`;
+    }
+
+    const elSemana = document.querySelector("#cal-resumo-semana");
+    if (elSemana) elSemana.textContent = txtSemana;
+
+    renderCalendarioSemanal();
   }
 
-  const sessoes = data || [];
-  SESSOES_EXPLICADOR = sessoes;
-
-  // === HOJE ===
-  const hojeStr = new Date().toISOString().slice(0, 10);
-  const sessoesHoje = sessoes.filter(s => s.data === hojeStr);
-
-  let txtHoje = "Sem sessões registadas";
-  if (sessoesHoje.length > 0) {
-    const detalhes = sessoesHoje
-      .map(s => `${s.hora_inicio?.slice(0, 5) || "--:--"} ${s.aluno_nome || ""}`.trim())
-      .join(", ");
-
-    txtHoje = `${sessoesHoje.length} sessão(ões) hoje · ${detalhes}`;
-  }
-
-  const elHoje = document.querySelector("#cal-resumo-hoje");
-  if (elHoje) elHoje.textContent = txtHoje;
-
-  // === PRÓXIMOS 7 DIAS ===
-  const hojeDate = new Date();
-  const seteDiasDepois = new Date();
-  seteDiasDepois.setDate(hojeDate.getDate() + 7);
-
-  const sessoesSemana = sessoes.filter(s => {
-    const dataSess = new Date(s.data);
-    dataSess.setHours(0, 0, 0, 0);
-    return dataSess >= hojeDate && dataSess <= seteDiasDepois;
-  });
-
-  let txtSemana = "Agenda em branco por agora";
-  if (sessoesSemana.length > 0) {
-    const alunosUnicos = new Set(sessoesSemana.map(s => s.aluno_nome));
-    txtSemana =
-      `${sessoesSemana.length} sessões nos próximos 7 dias · ` +
-      `${alunosUnicos.size} aluno(s) diferente(s)`;
-  }
-
-  const elSemana = document.querySelector("#cal-resumo-semana");
-  if (elSemana) elSemana.textContent = txtSemana;
-
-  // === CALENDÁRIO SEMANAL ===
-  renderCalendarioSemanal();
-}
-
+  // estado inicial dos tabs
+  ativarScreen('dashboard');
 </script>
+
 </body>
 </html>
-
