@@ -231,6 +231,18 @@
             </h3>
 
             <p id="aluno-detail-meta" class="expl-aluno-detail__meta"></p>
+            <div class="aluno-status-row">
+              <span id="aluno-status-badge" class="aluno-status-badge aluno-status-badge--ativo">
+                Ativo
+              </span>
+
+              <button type="button" id="toggle-aluno-ativo" class="aluno-status-toggle" aria-pressed="true">
+                <span class="aluno-status-toggle__label">Aluno ativo</span>
+                <span class="aluno-status-toggle__switch">
+                  <span class="aluno-status-toggle__knob"></span>
+                </span>
+              </button>
+            </div>
 
             <div class="expl-grid-2">
               <div>
@@ -596,30 +608,28 @@
 <footer>© <span id="y"></span> EduSphere</footer>
 
 <script>
-  
   // ---------- helper DOM ----------
   const $ = (s) => document.querySelector(s);
 
   // -------- Helper para chamar a Edge Function expl-alunos com token --------
   async function callExplFn(action, payload = null) {
-  const { data: { session } } = await supabase.auth.getSession();
-  const accessToken = session?.access_token;
+    const { data: { session } } = await supabase.auth.getSession();
+    const accessToken = session?.access_token;
 
-  if (!accessToken) {
-    return {
-      data: null,
-      error: { message: 'Sem sessão válida (faz login primeiro).', status: 401 },
-    };
+    if (!accessToken) {
+      return {
+        data: null,
+        error: { message: 'Sem sessão válida (faz login primeiro).', status: 401 },
+      };
+    }
+
+    return supabase.functions.invoke("expl-alunos", {
+      body: { action, payload },
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
   }
-
-  return supabase.functions.invoke("expl-alunos", {
-    body: { action, payload },
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
-}
-
 
   let SESSOES_EXPLICADOR = [];
   let semanaOffset = 0; // 0 = semana atual, -1 = anterior, +1 = próxima
@@ -671,6 +681,9 @@
   const btnSaveEdit     = $('#btnSaveEditAluno');
   const btnEditarAluno  = $('#btn-editar-aluno');
 
+  const alunoStatusBadge = $('#aluno-status-badge');
+  const toggleAlunoAtivo = $('#toggle-aluno-ativo');
+
   const btnIniciarFat   = $('#btn-iniciar-faturacao');
   const btnRegistarPag  = $('#btn-registar-pagamento');
   const btnEditarPag    = $('#btn-editar-pagamento');
@@ -687,7 +700,7 @@
 
   elYear.textContent = new Date().getFullYear();
 
-  let EXPLICADOR       = { userId:null, id_explicador:null, max:0 };
+  let EXPLICADOR       = { userId: null, id_explicador: null, max: 0 };
   let ALUNOS_CACHE     = [];
   let PAGAMENTOS_CACHE = [];
   let ALUNO_ATUAL      = null;
@@ -705,7 +718,7 @@
   const NOMES_DIAS_CURTOS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
 
   // ---------- helpers supabase ----------
-  async function hasRole(uid, roleName){
+  async function hasRole(uid, roleName) {
     const { data, error } = await supabase
       .from('app_users')
       .select('role')
@@ -719,7 +732,7 @@
     return !!data;
   }
 
-  async function getExplRow(uid){
+  async function getExplRow(uid) {
     const { data, error } = await supabase
       .from('explicadores')
       .select('id_explicador, nome, apelido, max_alunos')
@@ -729,8 +742,8 @@
     return data || null;
   }
 
-  function setState({ loading=false, isExpl=false, isAuthed=false }){
-    if (loading){
+  function setState({ loading = false, isExpl = false, isAuthed = false }) {
+    if (loading) {
       loginBox.style.display = 'block';
       panel.style.display    = 'none';
       msgLogin.textContent   = 'A verificar sessão...';
@@ -738,37 +751,39 @@
       headerNav.style.display = 'none';
       return;
     }
-    if (isAuthed && isExpl){
+    if (isAuthed && isExpl) {
       loginBox.style.display = 'none';
       panel.style.display    = 'flex';
       msgLogin.textContent   = '';
-      btnLogout.style.display= 'inline-block';
-      headerNav.style.display= 'flex';
+      btnLogout.style.display = 'inline-block';
+      headerNav.style.display = 'flex';
       document.querySelector('main.auth').style.display = 'block';
     } else {
       loginBox.style.display = 'block';
       panel.style.display    = 'none';
-      btnLogout.style.display= 'none';
-      headerNav.style.display= 'none';
+      btnLogout.style.display = 'none';
+      headerNav.style.display = 'none';
       document.querySelector('main.auth').style.display = 'grid';
     }
   }
 
   // ---------- QUOTA UI ----------
-  function updateQuotaUI(total){
+  function updateQuotaUI(total) {
     const max = Number(EXPLICADOR.max || 0);
     elContagem.textContent = String(total);
 
-    if (!max){
+    if (!max) {
       elLimite.textContent    = 'Sem limite';
       elRestantes.textContent = '—';
       btnCreate && (btnCreate.disabled = false);
       return;
     }
+
     elLimite.textContent = String(max);
     const rest = Math.max(0, max - total);
     elRestantes.textContent = String(rest);
-    if (btnCreate){
+
+    if (btnCreate) {
       btnCreate.disabled = rest <= 0;
       btnCreate.title    = rest <= 0 ? 'Limite de alunos atingido.' : '';
     }
@@ -794,7 +809,35 @@
       return;
     }
 
+    // só mostramos até 3, como no mock
     const top3 = alunosAtivos.slice(0, 3);
+
+    // helper para mapear estado → label + classe de badge
+    function getEstadoInfo(rawEstado) {
+      const e = (rawEstado || "").toString().trim().toUpperCase();
+
+      switch (e) {
+        case "PAGO":
+          return {
+            label: "Pago",
+            badgeClass:
+              "dash-aluno-card__badge dash-aluno-card__badge--pago",
+          };
+        case "PARCIAL":
+          return {
+            label: "Parcial",
+            badgeClass:
+              "dash-aluno-card__badge dash-aluno-card__badge--parcial",
+          };
+        case "PENDENTE":
+        default:
+          return {
+            label: e ? e.charAt(0) + e.slice(1).toLowerCase() : "Pendente",
+            badgeClass:
+              "dash-aluno-card__badge dash-aluno-card__badge--pendente",
+          };
+      }
+    }
 
     grid.innerHTML = top3
       .map((a) => {
@@ -802,13 +845,9 @@
         const anoLabel = a.ano ? `${a.ano}º Ano` : "—";
 
         const proximaMensalidade = a.proxima_mensalidade || "—";
-        const estado = (a.estado_mensalidade || "Pago").trim();
-
-        const isPago = estado.toLowerCase() === "pago";
-        const badgeClass =
-          isPago
-            ? "dash-aluno-card__badge dash-aluno-card__badge--pago"
-            : "dash-aluno-card__badge dash-aluno-card__badge--pendente";
+        const { label: estadoLabel, badgeClass } = getEstadoInfo(
+          a.estado_mensalidade || "PENDENTE"
+        );
 
         return `
           <article class="dash-aluno-card">
@@ -825,7 +864,7 @@
               <p class="dash-aluno-card__date">${proximaMensalidade}</p>
 
               <span class="${badgeClass}">
-                ${estado}
+                ${estadoLabel}
               </span>
             </div>
 
@@ -862,9 +901,27 @@
     });
   }
 
+  // ---------- STATUS ALUNO (Ativo / Bloqueado) ----------
+  function updateAlunoStatusUI(aluno) {
+    if (!aluno) return;
+
+    const ativo = aluno.is_active !== false;
+
+    if (alunoStatusBadge) {
+      alunoStatusBadge.textContent = ativo ? 'Ativo' : 'Bloqueado';
+      alunoStatusBadge.classList.toggle('aluno-status-badge--ativo', ativo);
+      alunoStatusBadge.classList.toggle('aluno-status-badge--inativo', !ativo);
+    }
+
+    if (toggleAlunoAtivo) {
+      toggleAlunoAtivo.classList.toggle('is-off', !ativo);
+      toggleAlunoAtivo.setAttribute('aria-pressed', ativo ? 'true' : 'false');
+    }
+  }
+
   // ---------- LISTAR ALUNOS ----------
   async function loadAlunos() {
-  const { data, error } = await callExplFn("list_alunos", null);
+    const { data, error } = await callExplFn("list_alunos", null);
 
     if (error) {
       console.error("loadAlunos error", error);
@@ -943,6 +1000,12 @@
     let totalPrevistoPagas = 0;
 
     (PAGAMENTOS_CACHE || []).forEach((p) => {
+      // ignorar alunos bloqueados
+      const alunoRef = (ALUNOS_CACHE || []).find(
+        (a) => String(a.id_aluno) === String(p.id_aluno)
+      );
+      if (alunoRef && alunoRef.is_active === false) return;
+
       if (p.ano !== anoAtual || p.mes !== mesAtual) return;
 
       const previsto = Number(p.valor_previsto) || 0;
@@ -1113,7 +1176,13 @@
       let pendenteTotal       = 0;
       const alunosComPendencias = new Set();
 
-      (PAGAMENTOS_CACHE).forEach((p) => {
+      (PAGAMENTOS_CACHE || []).forEach((p) => {
+        // ignorar alunos bloqueados
+        const alunoRef = (ALUNOS_CACHE || []).find(
+          (a) => String(a.id_aluno) === String(p.id_aluno)
+        );
+        if (alunoRef && alunoRef.is_active === false) return;
+
         const previsto = Number(p.valor_previsto) || 0;
         const pago     = Number(p.valor_pago) || 0;
         const falta    = Math.max(previsto - pago, 0);
@@ -1157,6 +1226,7 @@
       }
 
       const nAlunosAtivos = (ALUNOS_CACHE || []).filter(a => a.is_active !== false).length;
+
       updateResumoRelatorios({
         previstoMesAtual,
         realizadoMesAtual,
@@ -1230,8 +1300,8 @@
   }
 
   // ---------- OPEN/CLOSE MODAL ----------
-  function openModal(mod){ mod && mod.classList.add('open'); }
-  function closeModal(mod){ mod && mod.classList.remove('open'); }
+  function openModal(mod) { mod && mod.classList.add('open'); }
+  function closeModal(mod) { mod && mod.classList.remove('open'); }
 
   // ---------- MODAL PAGAMENTO: ABRIR ----------
   function abrirModalPagamento(modo) {
@@ -1287,6 +1357,7 @@
   $('#modal-pagamento-aluno .modal__close')?.addEventListener('click', () => {
     closeModal(modalPag);
   });
+
   modalPag?.addEventListener('click', (ev) => {
     if (ev.target.hasAttribute('data-modal-close')) {
       closeModal(modalPag);
@@ -1409,6 +1480,9 @@
     document.getElementById("aluno-detail-nome").textContent =
       nomeCompleto || "Aluno";
 
+    // Atualizar estado (Ativo / Bloqueado + switch)
+    updateAlunoStatusUI(aluno);
+
     document.getElementById("aluno-detail-meta").textContent =
       aluno.username ? `Username: ${aluno.username}` : "";
 
@@ -1500,16 +1574,16 @@
   }
 
   // ---------- CRIAR ALUNO ----------
-  async function createAluno(payload){
-  const { data, error } = await callExplFn("create_aluno", payload);
+  async function createAluno(payload) {
+    const { data, error } = await callExplFn("create_aluno", payload);
 
-  if (error) {
-    console.error(error);
-    return { ok:false, error: error.message };
+    if (error) {
+      console.error(error);
+      return { ok: false, error: error.message };
+    }
+
+    return { ok: true, data };
   }
-
-  return { ok: true, data };
-}
 
   // ---------- MODAIS (add / edit / sessão) ----------
   modalAddAluno?.addEventListener('click', (ev) => {
@@ -1517,6 +1591,7 @@
       closeModal(modalAddAluno);
     }
   });
+
   $('#modal-add-aluno .modal__close')?.addEventListener('click', () => {
     closeModal(modalAddAluno);
   });
@@ -1527,6 +1602,7 @@
   $('#modal-edit-aluno .modal__close')?.addEventListener('click', () => {
     closeModal(modalEditAluno);
   });
+
   modalEditAluno?.addEventListener('click', (ev) => {
     if (ev.target.hasAttribute('data-modal-close')) {
       closeModal(modalEditAluno);
@@ -1536,6 +1612,7 @@
   $('#modal-sessao .modal__close')?.addEventListener('click', () => {
     closeModal(modalSessao);
   });
+
   modalSessao?.addEventListener('click', (ev) => {
     if (ev.target.hasAttribute('data-modal-close')) {
       closeModal(modalSessao);
@@ -1574,6 +1651,53 @@
     openModal(modalEditAluno);
   });
 
+  // ---------- TOGGLE ATIVO / BLOQUEADO ----------
+  toggleAlunoAtivo?.addEventListener('click', async () => {
+    if (!ALUNO_ATUAL || !ALUNO_ATUAL.id_aluno) return;
+
+    const estavaAtivo = ALUNO_ATUAL.is_active !== false;
+    const novoEstado = !estavaAtivo;
+
+    if (!novoEstado) {
+      const confirma = confirm(
+        'Ao bloquear este aluno ele deixa de conseguir fazer login e deixa de contar como aluno ativo. Continuar?'
+      );
+      if (!confirma) return;
+    }
+
+    // feedback mínimo
+    if (alunoStatusBadge) {
+      alunoStatusBadge.textContent = 'A atualizar...';
+    }
+
+    const { error } = await callExplFn('update_aluno', {
+      id_aluno: ALUNO_ATUAL.id_aluno,
+      is_active: novoEstado,
+    });
+
+    if (error) {
+      console.error('Erro ao alterar estado do aluno', error);
+      alert('Não foi possível atualizar o estado do aluno.');
+      // volta ao estado anterior no UI
+      updateAlunoStatusUI(ALUNO_ATUAL);
+      return;
+    }
+
+    // Atualizar caches
+    ALUNO_ATUAL.is_active = novoEstado;
+    const idx = (ALUNOS_CACHE || []).findIndex(
+      a => String(a.id_aluno) === String(ALUNO_ATUAL.id_aluno)
+    );
+    if (idx >= 0) {
+      ALUNOS_CACHE[idx].is_active = novoEstado;
+    }
+
+    // Atualizar UI dependentes
+    updateAlunoStatusUI(ALUNO_ATUAL);
+    renderDashboardAlunos();
+    await loadKpisFinanceiros();
+  });
+
   // ---------- SUBMIT EDITAR ALUNO ----------
   formEdit?.addEventListener("submit", async (ev) => {
     ev.preventDefault();
@@ -1605,7 +1729,7 @@
       email: f.email_edit.value.trim() || null,
       username: f.username_edit.value.trim() || null,
       password: f.password_edit.value.trim() || undefined,
-      is_active: true,
+      is_active: ALUNO_ATUAL?.is_active ?? true,
     };
 
     btnSaveEdit.disabled = true;
@@ -1748,14 +1872,14 @@
     const password = formLogin.password.value.trim();
 
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error){
+    if (error) {
       console.error(error);
       msgLogin.textContent = 'Credenciais inválidas.';
       return;
     }
 
     const user = data.user;
-    if (!(await hasRole(user.id, 'explicador'))){
+    if (!(await hasRole(user.id, 'explicador'))) {
       await supabase.auth.signOut().catch(()=>{});
       msgLogin.textContent = 'Esta conta não é de explicador.';
       return;
@@ -1772,7 +1896,7 @@
     elNomeHeader.textContent = nomeCompleto;
     elNomeMini.textContent   = nomeCompleto;
 
-    setState({ isExpl:true, isAuthed:true });
+    setState({ isExpl: true, isAuthed: true });
     await loadAlunos();
     await loadKpisFinanceiros();
     await loadResumoCalendario();
@@ -1786,18 +1910,18 @@
 
   // ---------- SESSÃO INICIAL ----------
   (async () => {
-    setState({ loading:true });
+    setState({ loading: true });
 
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user){
-      setState({ isExpl:false, isAuthed:false });
+    if (!session?.user) {
+      setState({ isExpl: false, isAuthed: false });
       return;
     }
 
     const user = session.user;
-    if (!(await hasRole(user.id, 'explicador'))){
+    if (!(await hasRole(user.id, 'explicador'))) {
       await supabase.auth.signOut().catch(()=>{});
-      setState({ isExpl:false, isAuthed:false });
+      setState({ isExpl: false, isAuthed: false });
       msgLogin.textContent = 'Conta sem permissões de explicador.';
       return;
     }
@@ -1813,7 +1937,7 @@
     elNomeHeader.textContent = nomeCompleto;
     elNomeMini.textContent   = nomeCompleto;
 
-    setState({ isExpl:true, isAuthed:true });
+    setState({ isExpl: true, isAuthed: true });
     await loadAlunos();
     await loadKpisFinanceiros();
     await loadResumoCalendario();
@@ -1867,8 +1991,8 @@
   });
 
   supabase.auth.onAuthStateChange(async (_evt, session) => {
-    if (!session?.user){
-      setState({ isExpl:false, isAuthed:false });
+    if (!session?.user) {
+      setState({ isExpl: false, isAuthed: false });
     }
   });
 
@@ -2000,7 +2124,6 @@
       const { data, error } = await callExplFn("delete_sessao_aluno", {
         id_sessao: SESSAO_ATUAL_ID,
       });
-
 
       if (error) {
         let extra = "";
@@ -2166,6 +2289,7 @@
   // estado inicial dos tabs
   ativarScreen('dashboard');
 </script>
+
 
 </body>
 </html>

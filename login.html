@@ -6,6 +6,7 @@
 
   <!-- CONTINUA a usar o mesmo CSS global -->
   <link rel="stylesheet" href="./styles.css"/>
+  <link rel="stylesheet" href="./css/base.css" />
   <title>EduSphere — Login do Aluno</title>
 
   <!-- Supabase (global UMD) + cliente do teu projeto -->
@@ -51,37 +52,74 @@
   <!-- 4) Footer igual ao admin (já tinhas praticamente isto) -->
   <footer>© <span id="y"></span> EduSphere</footer>
 
-  <script>
-    // ano no footer
-    document.getElementById('y').textContent = new Date().getFullYear();
+<script>
+  // ano no footer (se tiveres um span com id="y")
+  const y = document.getElementById('y');
+  if (y) y.textContent = new Date().getFullYear();
 
-    // login apenas para ALUNO
-    document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const msg = document.getElementById('msg');
-      msg.textContent = '';
+  // LOGIN DO ALUNO
+  document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-      const email = e.target.email.value.trim();
-      const password = e.target.password.value;
+    const msg = document.getElementById('msg');
+    if (msg) msg.textContent = '';
 
-      // autentica
-      const { error } = await window.supabase.auth.signInWithPassword({ email, password });
-      if (error) { msg.textContent = error.message; return; }
+    const email = e.target.email.value.trim();
+    const password = e.target.password.value;
 
-      // confirma papel 'aluno' no mapeamento app_users
-      const { data: { user } } = await window.supabase.auth.getUser();
-      const { data: profile, error: pErr } = await window.supabase
-        .from('app_users')
-        .select('role')
-        .eq('user_id', user.id)
-        .single();
+    // 1) autenticar no Supabase
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      console.error(error);
+      if (msg) msg.textContent = 'Credenciais inválidas.';
+      return;
+    }
 
-      if (pErr || !profile) { msg.textContent = 'Conta sem perfil associado.'; return; }
-      if (profile.role !== 'aluno') { msg.textContent = 'Esta página é só para Aluno.'; return; }
+    // 2) obter user atual
+    const { data: { user } } = await supabase.auth.getUser();
 
-      // segue para o ecrã do aluno
-      location.href = './aluno.html';
-    });
-  </script>
+    // 3) verificar papel em app_users
+    const { data: profile, error: pErr } = await supabase
+      .from('app_users')
+      .select('role')
+      .eq('user_id', user.id)
+      .single();
+
+    if (pErr || !profile) {
+      if (msg) msg.textContent = 'Conta sem perfil associado.';
+      await supabase.auth.signOut().catch(() => {});
+      return;
+    }
+
+    if (profile.role !== 'aluno') {
+      if (msg) msg.textContent = 'Esta página é só para Aluno.';
+      await supabase.auth.signOut().catch(() => {});
+      return;
+    }
+
+    // 4) verificar se o aluno está ativo na tabela alunos
+    const { data: alunoRow, error: aErr } = await supabase
+      .from('alunos')
+      .select('is_active')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (aErr || !alunoRow) {
+      if (msg) msg.textContent = 'Perfil de aluno não encontrado.';
+      await supabase.auth.signOut().catch(() => {});
+      return;
+    }
+
+    if (alunoRow.is_active === false) {
+      if (msg) msg.textContent = 'A tua conta foi desativada. Fala com o teu explicador.';
+      await supabase.auth.signOut().catch(() => {});
+      return;
+    }
+
+    // 5) tudo ok → segue para ecrã do aluno
+    location.href = './aluno.html';
+  });
+</script>
+
 </body>
 </html>

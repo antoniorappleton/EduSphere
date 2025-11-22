@@ -680,3 +680,223 @@ body.home main.auth {
 .expl-sidebar-nav .expl-nav-btn--active {
   color: #ffffff;
 }
+/* ============================
+   DASHBOARD — CARDS DE ALUNOS
+   ============================ */
+
+/* Grelha tipo Tailwind: 1 / 2 / 3 colunas */
+.dash-alunos-grid {
+  display: grid;
+  gap: 16px;
+  margin-top: 12px;
+}
+
+@media (min-width: 640px) {
+  .dash-alunos-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .dash-alunos-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Cartão individual do aluno */
+.dash-aluno-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 18px 20px 14px;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.12);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 190px;
+}
+
+/* Topo: avatar + nome/ano */
+.dash-aluno-card__top {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+/* Avatar redondinho */
+.dash-aluno-card__avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  background: #e5e7eb;
+  flex-shrink: 0;
+}
+
+/* Nome do aluno */
+.dash-aluno-card__name {
+  margin: 0;
+  font-weight: 600;
+  font-size: 0.98rem;
+  color: #111827;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Ano (ex.: 10º Ano) */
+.dash-aluno-card__year {
+  margin: 2px 0 0;
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+/* Label "Próxima mensalidade:" */
+.dash-aluno-card__label {
+  margin: 6px 0 0;
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+/* Data da próxima mensalidade */
+.dash-aluno-card__date {
+  margin: 2px 0 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+/* Badge de estado (Pago / Pendente) */
+.dash-aluno-card__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+
+/* Pago = fundo escuro, texto branco */
+.dash-aluno-card__badge--pago {
+  background: #111827;
+  color: #ffffff;
+}
+
+/* Pendente = fundo clarinho, texto mais quente */
+.dash-aluno-card__badge--pendente {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+/* Botão "Ver detalhes" ocupa a largura toda */
+.dash-aluno-card__btn {
+  margin-top: 14px;
+  width: 100%;
+  justify-content: center; /* usa flex da .button */
+}
+.dash-badge--pago {
+  background: #111827;
+  color: #fff;
+}
+
+.dash-badge--pendente {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.dash-badge--nao-pago {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.dash-badge--sem-mensalidade {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.dash-badge--aguardar {
+  background: #dbeafe;
+  color: #1e40af;
+}
+.dash-aluno-card__badge--parcial {
+  background: #ffedd5;  /* laranja muito claro */
+  color: #9a3412;       /* laranja escuro */
+}
+/* ===== STATUS ALUNO (painel detalhe) ===== */
+
+.aluno-status-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0.75rem 0 1.25rem;
+}
+
+.aluno-status-badge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+
+.aluno-status-badge--ativo {
+  background: #dcfce7;
+  color: #166534;
+  border-color: #bbf7d0;
+}
+
+.aluno-status-badge--inativo {
+  background: #fee2e2;
+  color: #991b1b;
+  border-color: #fecaca;
+}
+
+/* Switch tipo iOS */
+.aluno-status-toggle {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: #fff;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--text-soft);
+}
+
+.aluno-status-toggle__switch {
+  width: 36px;
+  height: 20px;
+  border-radius: 999px;
+  background: #16a34a;
+  position: relative;
+  transition: background 0.2s ease;
+}
+
+.aluno-status-toggle__knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+  transition: transform 0.2s ease;
+}
+
+/* Estado OFF */
+.aluno-status-toggle.is-off .aluno-status-toggle__switch {
+  background: #e5e7eb;
+}
+
+.aluno-status-toggle.is-off .aluno-status-toggle__knob {
+  transform: translateX(16px);
+}
+
+.aluno-status-toggle.is-off .aluno-status-toggle__label {
+  color: #9ca3af;
+}
