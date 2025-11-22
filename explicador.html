@@ -274,6 +274,28 @@
               <div>
                 <h4 class="expl-subsection-title">Resumo de mensalidades</h4>
                 <ul class="expl-detail-list">
+                  <div class="expl-subsection" style="margin-top:1.5rem;">
+                    <h4 class="expl-subsection-title">Histórico de pagamentos</h4>
+                    <div class="table-wrapper">
+                      <table class="table" id="tblPagamentosAluno">
+                        <thead>
+                          <tr>
+                            <th>Ano</th>
+                            <th>Mês</th>
+                            <th>Previsto (€)</th>
+                            <th>Pago (€)</th>
+                            <th>Estado</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td colspan="5">Ainda não existem pagamentos registados para este aluno.</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
                   <li><strong>Valor previsto (mês atual):</strong> <span id="aluno-detail-previsto-mes">—</span></li>
                   <li><strong>Valor pago (mês atual):</strong> <span id="aluno-detail-pago-mes">—</span></li>
                   <li><strong>Em falta (total):</strong> <span id="aluno-detail-emfalta">—</span></li>
@@ -315,6 +337,41 @@
 
         <!-- ========== FATURAÇÃO (RESUMO MENSALIDADES) ========== -->
         <section class="expl-section" data-section="faturacao">
+                <div class="expl-filter-row">
+                  <div>
+                    <h2 class="expl-section-title">Faturação</h2>
+                    <p class="expl-section-sub">
+                      Consulta mensalidades pagas e em falta por mês/ano.
+                    </p>
+                  </div>
+
+                  <div class="expl-filter-controls">
+                    <label class="expl-filter-field">
+                      <span>Mês</span>
+                      <select id="fat-filtro-mes">
+                        <option value="1">Janeiro</option>
+                        <option value="2">Fevereiro</option>
+                        <option value="3">Março</option>
+                        <option value="4">Abril</option>
+                        <option value="5">Maio</option>
+                        <option value="6">Junho</option>
+                        <option value="7">Julho</option>
+                        <option value="8">Agosto</option>
+                        <option value="9">Setembro</option>
+                        <option value="10">Outubro</option>
+                        <option value="11">Novembro</option>
+                        <option value="12">Dezembro</option>
+                      </select>
+                    </label>
+
+                    <label class="expl-filter-field">
+                      <span>Ano</span>
+                      <select id="fat-filtro-ano">
+                        <!-- JS preenche automaticamente com os anos existentes -->
+                      </select>
+                    </label>
+                  </div>
+                </div>
           <div class="expl-grid-2" style="margin-top:1.5rem;">
             <article class="expl-card">
               <h3 class="expl-subsection-title">
@@ -415,7 +472,7 @@
           </article>
         </section>
 
-        <!-- ========== RELATÓRIOS ========== -->
+          <!-- ========== RELATÓRIOS ========== -->
         <section class="expl-section" id="expl-sec-relatorios" data-section="relatorios">
           <article class="expl-card expl-placeholder-card">
             <h2 class="expl-section-title">Relatórios</h2>
@@ -425,29 +482,52 @@
               <li>
                 <span class="expl-feature-label">Resumo mensal</span>
                 <span class="expl-feature-value" id="rel-resumo-mensal">
-                  Acompanha num só local mensalidades pagas, em falta e total faturado.
+                  Este mês: € 0.00 recebidos de € 0.00 previstos · € 0.00 em falta.
                 </span>
               </li>
               <li>
                 <span class="expl-feature-label">Tendência anual</span>
                 <span class="expl-feature-value" id="rel-tendencia-anual">
-                  Vê a evolução da faturação ao longo do ano lectivo e identifica épocas fortes.
+                  Ano atual: € 0.00 faturados de € 0.00 previstos.
                 </span>
               </li>
               <li>
                 <span class="expl-feature-label">Alunos ativos</span>
                 <span class="expl-feature-value" id="rel-alunos-ativos">
-                  Controla rapidamente quantos alunos acompanhas e como evolui a tua carteira.
+                  Ainda não tens alunos ativos registados.
                 </span>
               </li>
             </ul>
 
             <button type="button" class="expl-link-chip">
               <span class="expl-link-chip-icon">📈</span>
-              <span>Ver gráficos e relatórios (brevemente)</span>
+              <span>Ver gráficos e relatórios</span>
             </button>
           </article>
+
+          <div class="relatorios-grid">
+            <div class="rel-card">
+              <h3 class="expl-subsection-title">Previsto vs Pago (mês selecionado)</h3>
+              <p class="expl-section-sub">
+                Compara o total previsto, pago e em falta para o mês escolhido na faturação.
+              </p>
+              <div class="rel-chart-box">
+                <canvas id="chart-previsto-pago"></canvas>
+              </div>
+            </div>
+
+            <div class="rel-card">
+              <h3 class="expl-subsection-title">Pagamentos por aluno (mês selecionado)</h3>
+              <p class="expl-section-sub">
+                Vê quanto cada aluno devia pagar e quanto já pagou nesse mês.
+              </p>
+              <div class="rel-chart-box">
+                <canvas id="chart-por-aluno"></canvas>
+              </div>
+            </div>
+          </div>
         </section>
+
 
       </div>
 
@@ -606,6 +686,7 @@
 </div>
 
 <footer>© <span id="y"></span> EduSphere</footer>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
   // ---------- helper DOM ----------
@@ -631,6 +712,8 @@
     });
   }
 
+  let chartPrevistoPago = null;
+  let chartPagamentosPorAluno = null;
   let SESSOES_EXPLICADOR = [];
   let semanaOffset = 0; // 0 = semana atual, -1 = anterior, +1 = próxima
 
@@ -697,14 +780,20 @@
   const tblSessoesBody  = $('#tblSessoesAluno tbody');
 
   const btnDashVerAlunos = $('#btn-dashboard-ver-alunos');
+  const selFatMes  = document.getElementById("fat-filtro-mes");
+  const selFatAno  = document.getElementById("fat-filtro-ano");
 
   elYear.textContent = new Date().getFullYear();
-
+  
   let EXPLICADOR       = { userId: null, id_explicador: null, max: 0 };
   let ALUNOS_CACHE     = [];
   let PAGAMENTOS_CACHE = [];
   let ALUNO_ATUAL      = null;
   let SESSAO_ATUAL_ID  = null;
+    // Filtros atuais da secção de faturação
+  let FAT_ANO_SELEC = null;
+  let FAT_MES_SELEC = null;
+
 
   function getInicioSemana(date) {
     const d = new Date(date);
@@ -975,72 +1064,104 @@
   }
 
   // ---------- RESUMO MENSAL ----------
+  function getDadosMesSelecionado() {
+  const tbodyPend = document.querySelector("#tblMensalidadesPendentes tbody");
+  const tbodyPagas = document.querySelector("#tblMensalidadesPagas tbody");
+  if (!tbodyPend || !tbodyPagas) {
+    return null;
+  }
+
+  const selMes = document.getElementById("fat-filtro-mes");
+  const selAno = document.getElementById("fat-filtro-ano");
+  const now = new Date();
+
+  const anoAtual = Number(selAno?.value) || now.getFullYear();
+  const mesAtual = Number(selMes?.value) || (now.getMonth() + 1);
+
+  const nomesMeses = [
+    "Janeiro","Fevereiro","Março","Abril","Maio","Junho",
+    "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro",
+  ];
+  const mesLabel = nomesMeses[mesAtual - 1] || String(mesAtual);
+
+  const pendentes = [];
+  const pagas = [];
+
+  let totalPrevistoPend = 0;
+  let totalFaltaPend = 0;
+  let totalPagoPagas = 0;
+  let totalPrevistoPagas = 0;
+
+  (PAGAMENTOS_CACHE || []).forEach((p) => {
+    // ignorar alunos bloqueados
+    const alunoRef = (ALUNOS_CACHE || []).find(
+      (a) => String(a.id_aluno) === String(p.id_aluno)
+    );
+    if (alunoRef && alunoRef.is_active === false) return;
+
+    if (p.ano !== anoAtual || p.mes !== mesAtual) return;
+
+    const previsto = Number(p.valor_previsto) || 0;
+    const pago = Number(p.valor_pago) || 0;
+    const falta = Math.max(previsto - pago, 0);
+
+    if (previsto === 0 && pago === 0) return;
+
+    const rowBase = {
+      aluno: p.aluno_nome || "Aluno",
+      previsto,
+      pago,
+      falta,
+      estado: p.estado || "",
+      mes: mesLabel,
+      avisado: "—",
+    };
+
+    if (falta > 0) {
+      pendentes.push(rowBase);
+      totalPrevistoPend += previsto;
+      totalFaltaPend += falta;
+    } else {
+      pagas.push(rowBase);
+      totalPagoPagas += pago;
+      totalPrevistoPagas += previsto;
+    }
+  });
+
+  return {
+    anoAtual,
+    mesAtual,
+    mesLabel,
+    pendentes,
+    pagas,
+    totalPrevistoPend,
+    totalFaltaPend,
+    totalPagoPagas,
+    totalPrevistoPagas,
+  };
+}
+
+  // ---------- RESUMO MENSAL (tabelas) ----------
   function renderResumoMensal() {
     const tbodyPend = document.querySelector("#tblMensalidadesPendentes tbody");
     const tbodyPagas = document.querySelector("#tblMensalidadesPagas tbody");
 
     if (!tbodyPend || !tbodyPagas) return;
 
-    const now = new Date();
-    const anoAtual = now.getFullYear();
-    const mesAtual = now.getMonth() + 1;
+    const dados = getDadosMesSelecionado();
+    if (!dados) return;
 
-    const nomesMeses = [
-      "Janeiro","Fevereiro","Março","Abril","Maio","Junho",
-      "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro",
-    ];
-    const mesLabel = nomesMeses[mesAtual - 1] || String(mesAtual);
+    const {
+      mesLabel,
+      pendentes,
+      pagas,
+      totalPrevistoPend,
+      totalFaltaPend,
+      totalPagoPagas,
+      totalPrevistoPagas,
+    } = dados;
 
-    const pendentes = [];
-    const pagas = [];
-
-    let totalPrevistoPend = 0;
-    let totalFaltaPend = 0;
-    let totalPagoPagas = 0;
-    let totalPrevistoPagas = 0;
-
-    (PAGAMENTOS_CACHE || []).forEach((p) => {
-      // ignorar alunos bloqueados
-      const alunoRef = (ALUNOS_CACHE || []).find(
-        (a) => String(a.id_aluno) === String(p.id_aluno)
-      );
-      if (alunoRef && alunoRef.is_active === false) return;
-
-      if (p.ano !== anoAtual || p.mes !== mesAtual) return;
-
-      const previsto = Number(p.valor_previsto) || 0;
-      const pago = Number(p.valor_pago) || 0;
-      const falta = Math.max(previsto - pago, 0);
-
-      if (previsto === 0 && pago === 0) return;
-
-      const avisadoLabel = "—";
-
-      if (falta > 0) {
-        pendentes.push({
-          aluno: p.aluno_nome || "Aluno",
-          previsto,
-          pago,
-          falta,
-          estado: p.estado || "",
-          mes: mesLabel,
-          avisado: avisadoLabel,
-        });
-        totalPrevistoPend += previsto;
-        totalFaltaPend += falta;
-      } else {
-        pagas.push({
-          aluno: p.aluno_nome || "Aluno",
-          previsto,
-          pago,
-          estado: p.estado || "",
-          mes: mesLabel,
-        });
-        totalPagoPagas += pago;
-        totalPrevistoPagas += previsto;
-      }
-    });
-
+    // Pendentes
     if (!pendentes.length) {
       tbodyPend.innerHTML =
         '<tr><td colspan="7">Ainda não existem mensalidades em falta neste mês.</td></tr>';
@@ -1075,6 +1196,7 @@
       tbodyPend.innerHTML = rowsPend + totalRow;
     }
 
+    // Pagas
     if (!pagas.length) {
       tbodyPagas.innerHTML =
         '<tr><td colspan="5">Ainda não existem mensalidades pagas neste mês.</td></tr>';
@@ -1104,6 +1226,140 @@
     `;
 
       tbodyPagas.innerHTML = rowsPagas + totalRowPagas;
+    }
+  }
+
+  function atualizarGraficosPagamentos() {
+  const canvasResumo   = document.getElementById("chart-previsto-pago");
+  const canvasPorAluno = document.getElementById("chart-por-aluno");
+
+  if (!canvasResumo && !canvasPorAluno) return;
+
+  const dados = getDadosMesSelecionado();
+  if (!dados) return;
+
+  const { mesLabel, pendentes, pagas } = dados;
+  const todos = [...pendentes, ...pagas];
+
+  const totalPrevisto = todos.reduce((acc, r) => acc + (r.previsto || 0), 0);
+  const totalPago     = todos.reduce((acc, r) => acc + (r.pago || 0), 0);
+  const totalFalta    = Math.max(totalPrevisto - totalPago, 0);
+
+  // --- Gráfico 1: Previsto vs Pago vs Em falta ---
+  if (chartPrevistoPago) {
+    chartPrevistoPago.destroy();
+  }
+  if (canvasResumo) {
+    const ctxResumo = canvasResumo.getContext("2d");
+    chartPrevistoPago = new Chart(ctxResumo, {
+      type: "bar",
+      data: {
+        labels: ["Previsto", "Pago", "Em falta"],
+        datasets: [
+          {
+            label: mesLabel,
+            data: [totalPrevisto, totalPago, totalFalta],
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,   // <– importante com CSS que vamos pôr
+        plugins: {
+          legend: { display: false },
+        },
+        scales: {
+          y: { beginAtZero: true },
+        },
+      },
+    });
+  }
+
+  // --- Gráfico 2: Pagamentos por aluno ---
+  if (chartPagamentosPorAluno) {
+    chartPagamentosPorAluno.destroy();
+  }
+  if (canvasPorAluno) {
+    const ctxPorAluno = canvasPorAluno.getContext("2d");
+
+    const porAluno = new Map();
+    todos.forEach((r) => {
+      const entry = porAluno.get(r.aluno) || { previsto: 0, pago: 0 };
+      entry.previsto += r.previsto || 0;
+      entry.pago     += r.pago || 0;
+      porAluno.set(r.aluno, entry);
+    });
+
+    const labels = Array.from(porAluno.keys());
+    const datasetPrevisto = labels.map((nome) => porAluno.get(nome).previsto);
+    const datasetPago     = labels.map((nome) => porAluno.get(nome).pago);
+
+    chartPagamentosPorAluno = new Chart(ctxPorAluno, {
+      type: "bar",
+      data: {
+        labels,
+        datasets: [
+          { label: "Previsto", data: datasetPrevisto },
+          { label: "Pago", data: datasetPago },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,   // idem
+        scales: {
+          y: { beginAtZero: true },
+        },
+      },
+    });
+  }
+}
+
+  // ---------- FATURAÇÃO: INICIAR FILTROS (MÊS/ANO) ----------
+  function initFiltrosFaturacao() {
+    if (!selFatMes || !selFatAno) return;
+
+    const agora        = new Date();
+    const anoSistema   = agora.getFullYear();
+    const mesSistema   = agora.getMonth() + 1;
+
+    // Se ainda não houver seleção, usar mês/ano atuais
+    if (!FAT_ANO_SELEC) FAT_ANO_SELEC = anoSistema;
+    if (!FAT_MES_SELEC) FAT_MES_SELEC = mesSistema;
+
+    // Preencher lista de anos com base nos dados + ano atual
+    if (!selFatAno.dataset.initialized) {
+      const anos = new Set([anoSistema]);
+      (PAGAMENTOS_CACHE || []).forEach((p) => {
+        if (p.ano) anos.add(p.ano);
+      });
+
+      const anosOrdenados = Array.from(anos).sort((a, b) => a - b);
+      selFatAno.innerHTML = anosOrdenados
+        .map((a) => `<option value="${a}">${a}</option>`)
+        .join("");
+
+      selFatAno.dataset.initialized = "1";
+    }
+
+    // Sincronizar selects com o estado atual
+    selFatMes.value = String(FAT_MES_SELEC);
+    selFatAno.value = String(FAT_ANO_SELEC);
+
+    // Listeners (só ligamos uma vez)
+    if (!selFatMes.dataset.bound) {
+      selFatMes.addEventListener("change", () => {
+        FAT_MES_SELEC = Number(selFatMes.value) || mesSistema;
+        renderResumoMensal();
+      });
+      selFatMes.dataset.bound = "1";
+    }
+
+    if (!selFatAno.dataset.bound) {
+      selFatAno.addEventListener("change", () => {
+        FAT_ANO_SELEC = Number(selFatAno.value) || anoSistema;
+        renderResumoMensal();
+      });
+      selFatAno.dataset.bound = "1";
     }
   }
 
@@ -1163,46 +1419,44 @@
         return;
       }
 
+      // cache global com todos os pagamentos
       PAGAMENTOS_CACHE = data || [];
 
-      const now = new Date();
+      const now      = new Date();
       const anoAtual = now.getFullYear();
       const mesAtual = now.getMonth() + 1;
 
-      let previstoMesAtual    = 0;
-      let realizadoMesAtual   = 0;
-      let previstoAnoAtual    = 0;
-      let realizadoAnoAtual   = 0;
-      let pendenteTotal       = 0;
+      let previstoMesAtual      = 0;
+      let realizadoMesAtual     = 0;
+      let previstoAnoAtual      = 0;
+      let realizadoAnoAtual     = 0;
+      let pendenteTotalMesAtual = 0;
       const alunosComPendencias = new Set();
 
       (PAGAMENTOS_CACHE || []).forEach((p) => {
-        // ignorar alunos bloqueados
-        const alunoRef = (ALUNOS_CACHE || []).find(
-          (a) => String(a.id_aluno) === String(p.id_aluno)
-        );
-        if (alunoRef && alunoRef.is_active === false) return;
-
         const previsto = Number(p.valor_previsto) || 0;
         const pago     = Number(p.valor_pago) || 0;
         const falta    = Math.max(previsto - pago, 0);
 
+        // Ano inteiro
         if (p.ano === anoAtual) {
           previstoAnoAtual  += previsto;
           realizadoAnoAtual += pago;
         }
 
+        // Só mês atual (para os cards da dashboard)
         if (p.ano === anoAtual && p.mes === mesAtual) {
-          previstoMesAtual  += previsto;
-          realizadoMesAtual += pago;
-        }
+          previstoMesAtual      += previsto;
+          realizadoMesAtual     += pago;
+          pendenteTotalMesAtual += falta;
 
-        pendenteTotal += falta;
-        if (falta > 0 && p.id_aluno) {
-          alunosComPendencias.add(p.id_aluno);
+          if (falta > 0 && p.id_aluno) {
+            alunosComPendencias.add(p.id_aluno);
+          }
         }
       });
 
+      // ---- Cards na dashboard ----
       if (cardTotalPrev) {
         cardTotalPrev.textContent = `€ ${previstoMesAtual.toFixed(2)}`;
       }
@@ -1222,23 +1476,73 @@
             : `${nAlunosPend} alunos em falta`;
 
         cardPendentes.textContent =
-          `€ ${pendenteTotal.toFixed(2)} (${labelAlunos})`;
+          `€ ${pendenteTotalMesAtual.toFixed(2)} (${labelAlunos})`;
       }
 
+      // ---- Resumo dos relatórios (texto) ----
       const nAlunosAtivos = (ALUNOS_CACHE || []).filter(a => a.is_active !== false).length;
-
       updateResumoRelatorios({
         previstoMesAtual,
         realizadoMesAtual,
-        pendenteTotal,
+        pendenteTotal: pendenteTotalMesAtual,
         previstoAnoAtual,
         realizadoAnoAtual,
         nAlunosAtivos,
       });
 
-      renderResumoMensal();
+      // ---- Secção Faturação + Gráficos ----
+      prepararFiltrosFaturacao();   // preenche <select> de mês/ano e liga eventos
+      renderResumoMensal();         // preenche tabelas "pagas" + "em falta"
+      atualizarGraficosPagamentos && atualizarGraficosPagamentos(); // se já definiste os gráficos
     } catch (err) {
       console.error("Erro inesperado em loadKpisFinanceiros", err);
+    }
+  }
+
+  // ---------- FATURAÇÃO: filtros de mês/ano ----------
+  function prepararFiltrosFaturacao() {
+    const selMes = document.getElementById("fat-filtro-mes");
+    const selAno = document.getElementById("fat-filtro-ano");
+    if (!selMes || !selAno) return;
+
+    // criar lista de anos com base nos dados existentes
+    const anos = new Set();
+    (PAGAMENTOS_CACHE || []).forEach((p) => {
+      if (p.ano) anos.add(p.ano);
+    });
+    if (!anos.size) {
+      anos.add(new Date().getFullYear());
+    }
+    const anosArr = Array.from(anos).sort();
+
+    selAno.innerHTML = anosArr
+      .map((a) => `<option value="${a}">${a}</option>`)
+      .join("");
+
+    // mês/ano por defeito
+    const now = new Date();
+    if (!selMes.value) {
+      selMes.value = String(now.getMonth() + 1);
+    }
+    if (!selAno.value) {
+      selAno.value = anosArr.includes(now.getFullYear())
+        ? String(now.getFullYear())
+        : String(anosArr[0]);
+    }
+
+    const onChange = () => {
+      renderResumoMensal();
+      atualizarGraficosPagamentos && atualizarGraficosPagamentos();
+    };
+
+    // evitar adicionar múltiplos listeners cada vez que chamas loadKpisFinanceiros
+    if (!selMes.dataset.bound) {
+      selMes.addEventListener("change", onChange);
+      selMes.dataset.bound = "1";
+    }
+    if (!selAno.dataset.bound) {
+      selAno.addEventListener("change", onChange);
+      selAno.dataset.bound = "1";
     }
   }
 
@@ -1565,6 +1869,45 @@
       }
       if (elEmFalta) {
         elEmFalta.textContent     = `€ ${emFaltaTotal.toFixed(2)}`;
+      }
+            // --- Tabela de histórico de pagamentos do aluno ---
+      const tbodyAluno = document.querySelector("#tblPagamentosAluno tbody");
+
+      if (tbodyAluno) {
+        if (!data || !data.length) {
+          tbodyAluno.innerHTML =
+            '<tr><td colspan="5">Ainda não existem pagamentos registados para este aluno.</td></tr>';
+        } else {
+          const nomesMeses = [
+            "Janeiro","Fevereiro","Março","Abril","Maio","Junho",
+            "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro",
+          ];
+
+          const rows = data
+            .slice() // cópia para poder ordenar
+            .sort((a, b) => (a.ano - b.ano) || (a.mes - b.mes))
+            .map((p) => {
+              const mesIdx = (p.mes || 1) - 1;
+              const mesLabelLinha =
+                nomesMeses[mesIdx] || String(p.mes || "");
+              const previstoLinha = Number(p.valor_previsto) || 0;
+              const pagoLinha     = Number(p.valor_pago) || 0;
+              const estadoLinha   = p.estado || "";
+
+              return `
+                <tr>
+                  <td>${p.ano || ""}</td>
+                  <td>${mesLabelLinha}</td>
+                  <td>€ ${previstoLinha.toFixed(2)}</td>
+                  <td>€ ${pagoLinha.toFixed(2)}</td>
+                  <td>${estadoLinha}</td>
+                </tr>
+              `;
+            })
+            .join("");
+
+          tbodyAluno.innerHTML = rows;
+        }
       }
     } catch (err) {
       console.error("Erro inesperado ao calcular resumo do aluno", err);
