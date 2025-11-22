@@ -116,10 +116,55 @@ serve(async (req)=>{
         headers: cors(origin)
       });
     }
+    // ---------- Helpers de datas para gerar sessões recorrentes ----------
+    function toISODate(d) {
+      return d.toISOString().slice(0, 10); // YYYY-MM-DD
+    }
+    function addDays(d, days) {
+      const nd = new Date(d);
+      nd.setDate(nd.getDate() + days);
+      return nd;
+    }
+    // mapeia "Segunda", "Terça", "Seg", "Ter", ... → 0..6 (JS getDay)
+    function mapDiaSemanaToJsIndex(dia) {
+      if (!dia) return null;
+      const v = dia.trim().toLowerCase();
+      if (v.startsWith("seg")) return 1;
+      if (v.startsWith("ter")) return 2;
+      if (v.startsWith("qua")) return 3;
+      if (v.startsWith("qui")) return 4;
+      if (v.startsWith("sex")) return 5;
+      if (v.startsWith("sáb") || v.startsWith("sab")) return 6;
+      if (v.startsWith("dom")) return 0;
+      return null;
+    }
+    // dado um dia de início e o índice JS do dia-semana alvo (0..6),
+    // devolve a primeira data >= inicio que calhe nesse dia-semana
+    function proximaDataDoDiaSemana(inicio, targetDow) {
+      const d = new Date(inicio);
+      const currentDow = d.getDay(); // 0..6
+      let diff = targetDow - currentDow;
+      if (diff < 0) diff += 7; // salta para a próxima semana se já passou
+      d.setDate(d.getDate() + diff);
+      d.setHours(0, 0, 0, 0);
+      return d;
+    }
     /* ======================================================
-       HELPER: carregar aluno do explicador
-       ====================================================== */ async function getAlunoDoExpl(alunoId) {
-      const { data, error } = await svc.from("alunos").select("id_aluno, id_explicador, nome, apelido, valor_explicacao, sessoes_mes, faturacao_ativa, faturacao_inicio, dia_pagamento").eq("id_aluno", alunoId).eq("id_explicador", myExplId).maybeSingle();
+   HELPER: carregar aluno do explicador
+   ====================================================== */ async function getAlunoDoExpl(alunoId) {
+      const { data, error } = await svc.from("alunos").select(`
+          id_aluno,
+          id_explicador,
+          user_id,
+          nome,
+          apelido,
+          valor_explicacao,
+          sessoes_mes,
+          faturacao_ativa,
+          faturacao_inicio,
+          dia_pagamento,
+          dia_semana_preferido
+        `).eq("id_aluno", alunoId).eq("id_explicador", myExplId).maybeSingle();
       if (error) {
         console.error("Erro a carregar aluno", error);
         throw new Error(error.message);
@@ -165,6 +210,46 @@ serve(async (req)=>{
         });
       }
       return new Response(JSON.stringify(data ?? []), {
+        status: 200,
+        headers: cors(origin)
+      });
+    }
+    /* =======================
+  Eliminar aluno
+   ======================= */ if (action === "delete_aluno") {
+      const p = payload || {};
+      const alunoId = String(p.id_aluno || "").trim();
+      if (!alunoId) {
+        return new Response(JSON.stringify({
+          error: "id_aluno em falta"
+        }), {
+          status: 400,
+          headers: cors(origin)
+        });
+      }
+      // 1) garantir que este aluno é mesmo deste explicador
+      const aluno = await getAlunoDoExpl(alunoId);
+      // 2) apagar dependências (pagamentos, sessões, app_users)
+      await svc.from("pagamentos").delete().eq("id_aluno", alunoId).eq("id_explicador", myExplId);
+      await svc.from("sessoes_explicacao").delete().eq("id_aluno", alunoId).eq("id_explicador", myExplId);
+      await svc.from("app_users").delete().eq("user_id", aluno.user_id).eq("role", "aluno");
+      // 3) apagar aluno
+      await svc.from("alunos").delete().eq("id_aluno", alunoId).eq("id_explicador", myExplId);
+      // 4) apagar utilizador AUTH (para o email poder ser reutilizado)
+      const { error: delErr } = await svc.auth.admin.deleteUser(aluno.user_id);
+      if (delErr) {
+        console.error("delete_aluno: erro ao apagar user auth", delErr);
+        return new Response(JSON.stringify({
+          error: delErr.message
+        }), {
+          status: 400,
+          headers: cors(origin)
+        });
+      }
+      // ✅ FECHO DO BLOCO delete_aluno
+      return new Response(JSON.stringify({
+        ok: true
+      }), {
         status: 200,
         headers: cors(origin)
       });
@@ -385,16 +470,16 @@ serve(async (req)=>{
       });
     }
     /* =======================
-   INICIAR FATURAÇÃO DO ALUNO
-   payload: { aluno_id, ano, mes, dia_pagamento }
-   ======================= */ if (action === "iniciar_faturacao_aluno") {
+        INICIAR FATURAÇÃO DO ALUNO
+        payload: { aluno_id, ano, mes, dia_pagamento }
+        ======================= */ if (action === "iniciar_faturacao_aluno") {
       const p = payload || {};
       const alunoId = String(p.aluno_id || "").trim();
-      const ano = Number(p.ano);
-      const mes = Number(p.mes);
+      const ano1 = Number(p.ano);
+      const mes1 = Number(p.mes);
       const diaPag = p.dia_pagamento != null ? Number(p.dia_pagamento) : 1;
       // validações básicas
-      if (!alunoId || !ano || !mes || mes < 1 || mes > 12) {
+      if (!alunoId || !ano1 || !mes1 || mes1 < 1 || mes1 > 12) {
         return new Response(JSON.stringify({
           error: "aluno_id, ano e mes (1-12) são obrigatórios"
         }), {
@@ -416,7 +501,7 @@ serve(async (req)=>{
       const sessoesMes = Number(aluno.sessoes_mes) || 0;
       const valorPrevDefault = valorExp * sessoesMes; // pode ser 0
       // primeiro dia do mês/ano escolhidos (YYYY-MM-DD)
-      const inicio = new Date(ano, mes - 1, 1).toISOString().slice(0, 10);
+      const inicio = new Date(ano1, mes1 - 1, 1).toISOString().slice(0, 10);
       // 1) Atualizar o aluno para marcar faturação ativa
       const { error: upAlunoErr } = await svc.from("alunos").update({
         faturacao_ativa: true,
@@ -433,7 +518,7 @@ serve(async (req)=>{
         });
       }
       // 2) Criar/ajustar o registo de pagamentos desse mês
-      const { data: pagRow, error: pagErr } = await svc.from("pagamentos").select("valor_previsto, valor_pago").eq("id_aluno", alunoId).eq("id_explicador", myExplId).eq("ano", ano).eq("mes", mes).maybeSingle();
+      const { data: pagRow, error: pagErr } = await svc.from("pagamentos").select("valor_previsto, valor_pago").eq("id_aluno", alunoId).eq("id_explicador", myExplId).eq("ano", ano1).eq("mes", mes1).maybeSingle();
       if (pagErr) {
         console.error("Erro ao ler pagamentos em iniciar_faturacao_aluno", pagErr);
         return new Response(JSON.stringify({
@@ -449,8 +534,8 @@ serve(async (req)=>{
         const { error: insPagErr } = await svc.from("pagamentos").insert({
           id_aluno: alunoId,
           id_explicador: myExplId,
-          ano,
-          mes,
+          ano: ano1,
+          mes: mes1,
           valor_previsto: valorPrevDefault,
           valor_pago: 0,
           data_pagamento: null,
@@ -482,7 +567,7 @@ serve(async (req)=>{
         const { error: updPagErr } = await svc.from("pagamentos").update({
           valor_previsto: novoPrevisto,
           estado: novoEstado
-        }).eq("id_aluno", alunoId).eq("id_explicador", myExplId).eq("ano", ano).eq("mes", mes);
+        }).eq("id_aluno", alunoId).eq("id_explicador", myExplId).eq("ano", ano1).eq("mes", mes1);
         if (updPagErr) {
           console.error("Erro a atualizar pagamento inicial", updPagErr);
           return new Response(JSON.stringify({
@@ -493,6 +578,43 @@ serve(async (req)=>{
           });
         }
       }
+      // 3) Gerar sessões recorrentes para o calendário
+      try {
+        const targetDow = mapDiaSemanaToJsIndex(aluno.dia_semana_preferido ?? null);
+        if (targetDow !== null) {
+          // primeiro dia do mês escolhido
+          const inicioMes = new Date(ano1, mes1 - 1, 1);
+          const primeiroDiaSessao = proximaDataDoDiaSemana(inicioMes, targetDow);
+          const sessoes = [];
+          let dataSessao = primeiroDiaSessao;
+          // quantas semanas queres gerar de uma vez
+          const NUM_SEMANAS = 8;
+          for(let i = 0; i < NUM_SEMANAS; i++){
+            sessoes.push({
+              id_explicador: myExplId,
+              id_aluno: alunoId,
+              data: toISODate(dataSessao),
+              // se ainda não tens hora_preferida, fica null
+              hora_inicio: null,
+              estado: "AGENDADA"
+            });
+            dataSessao = addDays(dataSessao, 7);
+          }
+          if (sessoes.length) {
+            const { error: sessErr } = await svc.from("sessoes_explicacao") // <=== TABELA CERTA
+            .insert(sessoes);
+            if (sessErr) {
+              console.error("Erro a criar sessões recorrentes em iniciar_faturacao_aluno", sessErr);
+            // não damos return de erro, só log, para não estragar a faturação
+            }
+          }
+        } else {
+          console.log("Aluno sem dia_semana_preferido válido, não foram geradas sessões recorrentes.");
+        }
+      } catch (e) {
+        console.error("Erro inesperado ao gerar sessões recorrentes", e);
+      }
+      // resposta final
       return new Response(JSON.stringify({
         ok: true
       }), {
@@ -506,11 +628,11 @@ serve(async (req)=>{
        ======================= */ if (action === "registar_pagamento_aluno") {
       const p = payload || {};
       const alunoId = String(p.aluno_id || "").trim();
-      const ano = Number(p.ano);
-      const mes = Number(p.mes);
+      const ano1 = Number(p.ano);
+      const mes1 = Number(p.mes);
       const valor = Number(p.valor);
       const dataPag = p.data_pagamento ? String(p.data_pagamento) : new Date().toISOString().slice(0, 10);
-      if (!alunoId || !ano || !mes || !valor || valor <= 0) {
+      if (!alunoId || !ano1 || !mes1 || !valor || valor <= 0) {
         return new Response(JSON.stringify({
           error: "aluno_id, ano, mes e valor (>0) são obrigatórios"
         }), {
@@ -522,7 +644,7 @@ serve(async (req)=>{
       const valorExp = Number(aluno.valor_explicacao) || 0;
       const sessoesMes = Number(aluno.sessoes_mes) || 0;
       const valorPrevDefault1 = valorExp * sessoesMes;
-      const { data: pagRow, error: pagErr } = await svc.from("pagamentos").select("valor_previsto, valor_pago, estado").eq("id_aluno", alunoId).eq("id_explicador", myExplId).eq("ano", ano).eq("mes", mes).maybeSingle();
+      const { data: pagRow, error: pagErr } = await svc.from("pagamentos").select("valor_previsto, valor_pago, estado").eq("id_aluno", alunoId).eq("id_explicador", myExplId).eq("ano", ano1).eq("mes", mes1).maybeSingle();
       if (pagErr) {
         console.error("Erro ao ler pagamentos", pagErr);
         return new Response(JSON.stringify({
@@ -538,8 +660,8 @@ serve(async (req)=>{
         const { error: insPagErr } = await svc.from("pagamentos").insert({
           id_aluno: alunoId,
           id_explicador: myExplId,
-          ano,
-          mes,
+          ano: ano1,
+          mes: mes1,
           valor_previsto: valorPrevDefault1,
           valor_pago: 0,
           data_pagamento: null,
@@ -568,7 +690,7 @@ serve(async (req)=>{
         valor_pago: novoPago,
         data_pagamento: dataPag,
         estado: novoEstado
-      }).eq("id_aluno", alunoId).eq("id_explicador", myExplId).eq("ano", ano).eq("mes", mes);
+      }).eq("id_aluno", alunoId).eq("id_explicador", myExplId).eq("ano", ano1).eq("mes", mes1);
       if (updErr) {
         console.error("Erro a atualizar pagamento", updErr);
         return new Response(JSON.stringify({
@@ -594,10 +716,10 @@ serve(async (req)=>{
        ======================= */ if (action === "update_pagamento_aluno") {
       const p = payload || {};
       const alunoId = String(p.aluno_id || "").trim();
-      const ano = Number(p.ano);
-      const mes = Number(p.mes);
+      const ano1 = Number(p.ano);
+      const mes1 = Number(p.mes);
       const valorPago = p.valor_pago !== null && p.valor_pago !== undefined && p.valor_pago !== "" ? Number(p.valor_pago) : null;
-      if (!alunoId || !ano || !mes || mes < 1 || mes > 12) {
+      if (!alunoId || !ano1 || !mes1 || mes1 < 1 || mes1 > 12) {
         return new Response(JSON.stringify({
           error: "aluno_id, ano e mes (1-12) são obrigatórios"
         }), {
@@ -624,7 +746,7 @@ serve(async (req)=>{
       }
       const { error: updErr } = await svc.from("pagamentos").update({
         valor_pago: valorPago
-      }).eq("id_aluno", alunoId).eq("id_explicador", myExplId).eq("ano", ano).eq("mes", mes);
+      }).eq("id_aluno", alunoId).eq("id_explicador", myExplId).eq("ano", ano1).eq("mes", mes1);
       if (updErr) {
         console.error("update_pagamento_aluno: erro no update", updErr);
         return new Response(JSON.stringify({
