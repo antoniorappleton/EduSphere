@@ -1097,3 +1097,108 @@ footer {
   background: #e6f0ff;
   color: #1654c0;
 }
+/* ====== AJUSTES GERAIS ====== */
+html, body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* Garantir que os cartões nunca passam a largura */
+.expl-card,
+.expl-kpi-card,
+.dash-aluno-card,
+.rel-card {
+  max-width: 100%;
+}
+
+/* Tabelas: scroll horizontal só dentro do cartão, nunca na página toda */
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+/* Se alguma tabela for MUITO larga, podes dar também .table--wide no HTML */
+.table--wide {
+  min-width: 650px;
+}
+
+/* ====== LAYOUT MOBILE ====== */
+@media (max-width: 768px) {
+
+  /* shell: deixar de ser “sidebar + main” lado a lado, passa a coluna */
+  .expl-shell {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  /* Sidebar ocupa a largura inteira, tipo “cartão” no topo */
+  .expl-sidebar-nav {
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto 1rem auto;
+    border-radius: 24px;
+  }
+
+  /* Conteúdo principal sem margem à esquerda, 100% largura */
+  .expl-main {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .expl-body {
+    padding-inline: 1rem;
+  }
+
+  /* Header do painel adapta para vertical */
+  .expl-header-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: .5rem;
+  }
+
+  /* Grelhas: tudo em 1 coluna */
+  .expl-grid-2,
+  .expl-kpi-grid,
+  .dash-alunos-grid,
+  .rel-kpi-grid,
+  .relatorios-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Calendário semanal: no mobile, 2 colunas (ou 1 se preferires) */
+  .calendar-week__grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  /* Se quiseres mesmo 1 coluna no telemóvel pequeno, ativa isto: */
+  @media (max-width: 480px) {
+    .calendar-week__grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* Gráficos: canvas nunca passa da largura */
+  .rel-chart-box {
+    width: 100%;
+    max-width: 100%;
+    height: 260px;
+  }
+
+  .rel-chart-box canvas {
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
+  }
+}
+.expl-fab {
+  position: fixed;
+  right: 1.5rem;
+  bottom: 1.5rem;
+  z-index: 3000;         /* bem acima dos cartões, sidebars, etc. */
+}
+
+/* Para garantir que nenhuma “capa” invisível está a interceptar o clique */
+.capa__overlay {
+  pointer-events: none;
+}

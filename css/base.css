@@ -368,3 +368,14 @@ footer {
   width: 100%;
   height: 260px;      /* ajusta à tua preferência */
 }
+.expl-fab {
+  position: fixed;
+  right: 1.5rem;
+  bottom: 1.5rem;
+  z-index: 3000;         /* bem acima dos cartões, sidebars, etc. */
+}
+
+/* Para garantir que nenhuma “capa” invisível está a interceptar o clique */
+.capa__overlay {
+  pointer-events: none;
+}
