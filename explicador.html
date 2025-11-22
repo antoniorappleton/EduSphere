@@ -6,6 +6,7 @@
   <link rel="stylesheet" href="./css/base.css" />
   <link rel="stylesheet" href="./css/explicador.css" />
   <link rel="stylesheet" href="./styles.css" />
+  
   <title>EduSphere — Explicador</title>
 
   <!-- Supabase -->
@@ -427,53 +428,86 @@
 
         <!-- ========== CALENDÁRIO ========== -->
         <section class="expl-section" id="expl-sec-calendario" data-section="calendario">
-          <article class="expl-card expl-placeholder-card">
-            <h2 class="expl-section-title">Calendário</h2>
-            <p class="expl-section-sub">Próximas explicações agendadas.</p>
-
-            <ul class="expl-feature-list">
-              <li>
-                <span class="expl-feature-label">Hoje</span>
-                <span class="expl-feature-value" id="cal-resumo-hoje">
-                  Assim que tiveres sessões marcadas para hoje, elas aparecem aqui.
-                </span>
-              </li>
-              <li>
-                <span class="expl-feature-label">Próximos 7 dias</span>
-                <span class="expl-feature-value" id="cal-resumo-semana">
-                  Usa o calendário para garantir que tens a semana equilibrada.
-                </span>
-              </li>
-              <li>
-                <span class="expl-feature-label">Sugestão</span>
-                <span class="expl-feature-value">
-                  Regista sempre as sessões logo que combinas o horário com o aluno.
-                </span>
-              </li>
-            </ul>
-
-            <!-- CALENDÁRIO SEMANAL EM GRELHA -->
-            <div class="calendar-week" id="calendar-week">
-              <header class="calendar-week__nav">
-                <button id="week-prev" class="calendar-btn">&larr;</button>
-                <h3 id="week-label" class="calendar-week__title">Semana atual</h3>
-                <button id="week-next" class="calendar-btn">&rarr;</button>
-              </header>
-
-              <div class="calendar-week__grid" id="calendar-grid">
-                <!-- preenchido via JS -->
-              </div>
+          <div class="expl-section-header">
+            <div>
+              <h2 class="expl-section-title">Calendário</h2>
+              <p class="expl-section-sub">Gerir explicações e horários.</p>
             </div>
 
-            <button type="button" class="expl-link-chip">
-              <span class="expl-link-chip-icon">📅</span>
-              <span>Ir para o calendário de explicações</span>
+            <button type="button" class="button secondary" id="btn-agendar-explicacao">
+              Agendar explicação
             </button>
-          </article>
+          </div>
+
+          <div class="expl-grid-2" style="margin-top:1.5rem;">
+            <!-- Cartão: Calendário semanal -->
+            <article class="expl-card">
+              <h3 class="expl-subsection-title">Calendário semanal</h3>
+              <p class="expl-section-sub">
+                Vê, por semana, em que dias tens explicações e o estado de cada sessão.
+              </p>
+
+              <!-- Legenda dos estados -->
+              <div class="calendar-legend">
+                <span><span class="dot dot-yellow"></span> Agendada</span>
+                <span><span class="dot dot-green"></span> Realizada</span>
+                <span><span class="dot dot-orange"></span> Extra / outro</span>
+              </div>
+
+              <div class="calendar-week" id="calendar-week">
+                <header class="calendar-week__nav">
+                  <button id="week-prev" class="calendar-btn" type="button">&#8592;</button>
+                  <h3 id="week-label" class="calendar-week__title">Semana atual</h3>
+                  <button id="week-next" class="calendar-btn" type="button">&#8594;</button>
+                </header>
+
+                <div class="calendar-week__grid" id="calendar-grid">
+                  <!-- preenchido via JS -->
+                </div>
+              </div>
+            </article>
+
+            <!-- Cartão: Próximas explicações -->
+            <article class="expl-card">
+              <h3 class="expl-subsection-title">Próximas explicações</h3>
+              <p class="expl-section-sub">
+                Lista das próximas sessões agendadas, por ordem cronológica.
+              </p>
+
+              <div id="calendar-proximas" class="calendar-proximas">
+                <!-- preenchido via JS -->
+              </div>
+            </article>
+          </div>
         </section>
 
-          <!-- ========== RELATÓRIOS ========== -->
+        <!-- ========== RELATÓRIOS ========== -->
         <section class="expl-section" id="expl-sec-relatorios" data-section="relatorios">
+          <div class="rel-kpi-grid">
+            <article class="rel-kpi-card">
+              <p class="rel-kpi-label">Total de alunos</p>
+              <p class="rel-kpi-value" id="rel-kpi-total-alunos">—</p>
+              <p class="rel-kpi-sub" id="rel-kpi-total-alunos-sub">—</p>
+            </article>
+
+            <article class="rel-kpi-card">
+              <p class="rel-kpi-label">Faturação média</p>
+              <p class="rel-kpi-value" id="rel-kpi-fat-media">—</p>
+              <p class="rel-kpi-sub">Por mês (ano atual)</p>
+            </article>
+
+            <article class="rel-kpi-card">
+              <p class="rel-kpi-label">Sessões / mês</p>
+              <p class="rel-kpi-value" id="rel-kpi-sessoes-mes">—</p>
+              <p class="rel-kpi-sub">Média nos últimos 3 meses</p>
+            </article>
+
+            <article class="rel-kpi-card">
+              <p class="rel-kpi-label">Crescimento</p>
+              <p class="rel-kpi-value" id="rel-kpi-crescimento">—</p>
+              <p class="rel-kpi-sub">vs mês anterior</p>
+            </article>
+          </div>
           <article class="expl-card expl-placeholder-card">
             <h2 class="expl-section-title">Relatórios</h2>
             <p class="expl-section-sub">Estatísticas e análises da tua atividade.</p>
@@ -537,8 +571,6 @@
 
           </div>
         </section>
-
-
       </div>
 
       <!-- Botão flutuante para novo aluno -->
@@ -731,6 +763,8 @@
   const weekLabel   = document.querySelector('#week-label');
   const btnWeekPrev = document.querySelector('#week-prev');
   const btnWeekNext = document.querySelector('#week-next');
+  const btnAgendarExplicacao = document.querySelector('#btn-agendar-explicacao');
+  const listaProximas        = document.querySelector('#calendar-proximas');
 
   // Pagamento modal refs
   const modalPag        = $('#modal-pagamento-aluno');
@@ -1510,6 +1544,85 @@
     }
   }
 
+  // ------- KPI's Report cartões -----------
+  function updateRelatorioKpis({
+      previstoMesAtual = 0,
+      realizadoMesAtual = 0,
+      previstoAnoAtual = 0,
+      realizadoAnoAtual = 0,
+    } = {}) {
+      // 1) Total de alunos
+      const total = (ALUNOS_CACHE || []).length;
+      const ativos = (ALUNOS_CACHE || []).filter(a => a.is_active !== false).length;
+
+      const elTot = document.getElementById("rel-kpi-total-alunos");
+      const elTotSub = document.getElementById("rel-kpi-total-alunos-sub");
+      if (elTot) elTot.textContent = String(total);
+      if (elTotSub) {
+        elTotSub.textContent =
+          ativos === 1 ? "1 ativo" : `${ativos} ativos`;
+      }
+
+      // 2) Faturação média / mês (ano atual)
+      const hoje = new Date();
+      const mesAtual = hoje.getMonth() + 1;
+      const mesesConsiderados = Math.max(mesAtual, 1);
+      const mediaMes = realizadoAnoAtual / mesesConsiderados;
+
+      const elFatMed = document.getElementById("rel-kpi-fat-media");
+      if (elFatMed) elFatMed.textContent = `€ ${mediaMes.toFixed(0)}/mês`;
+
+      // 3) Crescimento vs mês anterior
+      let realizadoMesAnterior = 0;
+      const anoAtual = hoje.getFullYear();
+      let mesAnterior = mesAtual - 1;
+      let anoMesAnterior = anoAtual;
+
+      if (mesAnterior < 1) {
+        mesAnterior = 12;
+        anoMesAnterior = anoAtual - 1;
+      }
+
+      (PAGAMENTOS_CACHE || []).forEach(p => {
+        if (p.ano === anoMesAnterior && p.mes === mesAnterior) {
+          realizadoMesAnterior += Number(p.valor_pago) || 0;
+        }
+      });
+
+      let crescimentoTxt = "—";
+      if (realizadoMesAnterior > 0) {
+        const diff = realizadoMesAtual - realizadoMesAnterior;
+        const perc = (diff / realizadoMesAnterior) * 100;
+        const sinal = perc >= 0 ? "+" : "";
+        crescimentoTxt = `${sinal}${perc.toFixed(1)}%`;
+      }
+
+      const elCresc = document.getElementById("rel-kpi-crescimento");
+      if (elCresc) elCresc.textContent = crescimentoTxt;
+
+      // 4) Sessões / mês (média últimos 3 meses)
+      const elSessoes = document.getElementById("rel-kpi-sessoes-mes");
+      if (elSessoes) {
+        if (!SESSOES_EXPLICADOR || !SESSOES_EXPLICADOR.length) {
+          elSessoes.textContent = "—";
+        } else {
+          const hoje = new Date();
+          const limite = new Date();
+          limite.setMonth(hoje.getMonth() - 2); // últimos 3 meses
+
+          let cont = 0;
+          (SESSOES_EXPLICADOR || []).forEach(s => {
+            if (!s.data) return;
+            const d = new Date(s.data);
+            if (d >= limite && d <= hoje) cont++;
+          });
+
+          const media3m = cont / 3;
+          elSessoes.textContent = media3m.toFixed(1);
+        }
+      }
+    }
+
   // ---------- KPI financeiros ----------
   async function loadKpisFinanceiros() {
     if (!EXPLICADOR.id_explicador) return;
@@ -1598,6 +1711,12 @@
         previstoAnoAtual,
         realizadoAnoAtual,
         nAlunosAtivos,
+      });
+      updateRelatorioKpis({
+        previstoMesAtual,
+        realizadoMesAtual,
+        previstoAnoAtual,
+        realizadoAnoAtual,
       });
 
       // ---- Secção Faturação + Gráficos ----
@@ -2488,6 +2607,21 @@
     abrirModalSessao(null);
   });
 
+  // Botão "Agendar explicação" no topo da secção Calendário
+  btnAgendarExplicacao?.addEventListener('click', () => {
+    if (!ALUNO_ATUAL || !ALUNO_ATUAL.id_aluno) {
+      alert('Seleciona primeiro um aluno na lista de Alunos para agendar uma sessão.');
+
+      // muda para o tab Alunos automaticamente
+      const tabAlunos = document.querySelector('.expl-nav-btn[data-target="alunos"]');
+      tabAlunos?.click();
+      return;
+    }
+
+    // abre o modal de sessão em modo "nova sessão"
+    abrirModalSessao(null);
+  });
+
   // ---------- SESSÕES: SUBMIT ----------
   formSessao?.addEventListener("submit", async (ev) => {
     ev.preventDefault();
@@ -2675,9 +2809,95 @@
     }).join("");
   }
 
+  function getBadgeInfoSessao(estadoRaw) {
+  const e = (estadoRaw || "").toString().trim().toUpperCase();
+
+    switch (e) {
+      case "REALIZADA":
+        return { label: "Realizada", className: "sessao-badge sessao-badge--realizada" };
+      case "FALTOU":
+        return { label: "Faltou", className: "sessao-badge sessao-badge--faltou" };
+      case "CANCELADA":
+        return { label: "Cancelada", className: "sessao-badge sessao-badge--cancelada" };
+      case "EXTRA":
+        return { label: "Extra", className: "sessao-badge sessao-badge--extra" };
+      case "AGENDADA":
+      default:
+        return { label: "Agendada", className: "sessao-badge sessao-badge--agendada" };
+    }
+  }
+
+function renderProximasSessoes(sessoes) {
+  const container = document.getElementById("lista-proximas-sessoes");
+  if (!container) return;
+
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+
+  const proximas = (sessoes || [])
+    .filter((s) => s.data)                            // tem data
+    .map((s) => {
+      const d = new Date(s.data);
+      d.setHours(0, 0, 0, 0);
+      return { ...s, _dataObj: d };
+    })
+    .filter((s) => s._dataObj >= hoje)                // de hoje para a frente
+    .sort((a, b) => {
+      if (a._dataObj - b._dataObj !== 0) {
+        return a._dataObj - b._dataObj;
+      }
+      // ordenar também por hora se existir
+      const ha = a.hora_inicio || "";
+      const hb = b.hora_inicio || "";
+      return ha.localeCompare(hb);
+    })
+    .slice(0, 10);                                    // top 10 próximas
+
+  if (!proximas.length) {
+    container.innerHTML =
+      '<p class="calendar-empty">Não tens próximas explicações agendadas.</p>';
+    return;
+  }
+
+  const fmtData = { day: "2-digit", month: "2-digit", year: "numeric" };
+
+  container.innerHTML = proximas
+    .map((s) => {
+      const dataObj = s._dataObj;
+      const dataLabel = dataObj.toLocaleDateString("pt-PT", fmtData);
+      const hora = (s.hora_inicio || "").slice(0, 5) || "--:--";
+      const dur = s.duracao_min != null ? `${s.duracao_min} min` : "";
+      const aluno = s.aluno_nome || "Aluno";
+      const local = s.local || ""; // se algum dia tiveres campo local
+
+      const { label: badgeLabel, className: badgeClass } = getBadgeInfoSessao(s.estado);
+
+      return `
+        <article class="sessao-card">
+          <header class="sessao-card__header">
+            <div>
+              <p class="sessao-card__aluno">${aluno}</p>
+              <p class="sessao-card__meta">${dataLabel} · ${hora}${dur ? " · " + dur : ""}</p>
+            </div>
+            <span class="${badgeClass}">${badgeLabel}</span>
+          </header>
+
+          ${
+            local
+              ? `<p class="sessao-card__footer">${local}</p>`
+              : ""
+          }
+        </article>
+      `;
+    })
+    .join("");
+}
+
+
   btnWeekPrev?.addEventListener('click', () => {
     semanaOffset -= 1;
     renderCalendarioSemanal();
+    updateRelatorioKpis(); // volta a calcular, agora com SESSOES_EXPLICADOR preenchido
   });
 
   btnWeekNext?.addEventListener('click', () => {
@@ -2737,7 +2957,75 @@
     const elSemana = document.querySelector("#cal-resumo-semana");
     if (elSemana) elSemana.textContent = txtSemana;
 
+        // ----------------------------------------------------
+    // PRÓXIMAS EXPLICAÇÕES (lista à direita)
+    // ----------------------------------------------------
+    if (listaProximas) {
+      // só sessões futuras ou de hoje com hora >= agora
+      const agora = new Date();
+      const futuras = (sessoes || [])
+        .filter((s) => {
+          if (!s.data) return false;
+          const d = new Date(s.data);
+          if (s.hora_inicio) {
+            const [h, m] = s.hora_inicio.split(':').map(Number);
+            d.setHours(h || 0, m || 0, 0, 0);
+          }
+          return d >= agora;
+        })
+        .sort((a, b) => {
+          const da = new Date(a.data + 'T' + (a.hora_inicio || '00:00'));
+          const db = new Date(b.data + 'T' + (b.hora_inicio || '00:00'));
+          return da - db;
+        })
+        .slice(0, 10); // mostra no máximo 10
+
+      if (!futuras.length) {
+        listaProximas.innerHTML =
+          '<p class="expl-section-sub">Não tens próximas explicações agendadas.</p>';
+      } else {
+        listaProximas.innerHTML = futuras
+          .map((s) => {
+            const dataLabel = s.data
+              ? new Date(s.data).toLocaleDateString('pt-PT', {
+                  day: '2-digit',
+                  month: '2-digit',
+                  year: 'numeric'
+                })
+              : '—';
+
+            const horaLabel = s.hora_inicio
+              ? s.hora_inicio.slice(0, 5)
+              : '--:--';
+
+            const dur = s.duracao_min != null
+              ? `${s.duracao_min} min`
+              : '';
+
+            const estado = s.estado || 'AGENDADA';
+            const aluno  = s.aluno_nome || 'Aluno';
+
+            return `
+              <div class="calendar-proxima-card">
+                <div class="calendar-proxima-main">
+                  <p class="calendar-proxima-aluno">${aluno}</p>
+                  <span class="calendar-proxima-badge">${estado}</span>
+                </div>
+                <p class="calendar-proxima-meta">
+                  <span>${dataLabel}</span> ·
+                  <span>${horaLabel}</span>
+                  ${dur ? ` · <span>${dur}</span>` : ''}
+                </p>
+              </div>
+            `;
+          })
+          .join('');
+      }
+    }
+
+    // Finalmente, atualizar grelha semanal
     renderCalendarioSemanal();
+    renderProximasSessoes(sessoes);
   }
 
   // estado inicial dos tabs

@@ -979,3 +979,121 @@ footer {
   width: 100%;
   height: 260px;      /* ajusta à tua preferência */
 }
+.rel-kpi-grid {
+  display: grid;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+@media (min-width: 768px) {
+  .rel-kpi-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.rel-kpi-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 110px;
+}
+
+.rel-kpi-label {
+  font-size: 0.9rem;
+  color: #6b7280;
+  margin-bottom: 0.25rem;
+}
+
+.rel-kpi-value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.rel-kpi-sub {
+  font-size: 0.8rem;
+  color: #9ca3af;
+}
+/* Layout Calendário */
+.calendar-week__legend {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.8rem;
+  margin: 0.75rem 0 0.5rem;
+  color: #666;
+}
+
+.proximas-sessoes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+/* Card de sessão */
+.sessao-card {
+  border: 1px solid #eee;
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  background: #fff;
+}
+
+.sessao-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.sessao-card__aluno {
+  font-weight: 600;
+  margin: 0;
+}
+
+.sessao-card__meta {
+  font-size: 0.85rem;
+  color: #666;
+  margin: 0.15rem 0 0;
+}
+
+.sessao-card__footer {
+  font-size: 0.8rem;
+  color: #777;
+  margin: 0.25rem 0 0;
+}
+
+/* Badges de estado */
+.sessao-badge {
+  font-size: 0.75rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.sessao-badge--agendada {
+  background: #fff7e0;
+  color: #b88500;
+}
+
+.sessao-badge--realizada {
+  background: #e6f7ed;
+  color: #0f7a3b;
+}
+
+.sessao-badge--faltou,
+.sessao-badge--cancelada {
+  background: #ffe6e6;
+  color: #b10303;
+}
+
+.sessao-badge--extra {
+  background: #e6f0ff;
+  color: #1654c0;
+}
