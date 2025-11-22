@@ -1995,7 +1995,7 @@
       if (alunoAtualizado) {
         await mostrarPainelAluno(alunoAtualizado);
       }
-
+      await loadResumoCalendario();
       setTimeout(() => closeModal(modalPag), 600);
     } catch (e) {
       console.error("pagamento_aluno error", e);
@@ -2543,13 +2543,19 @@
   }
 
   tabs.forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       const target = btn.dataset.target;
       tabs.forEach(t => t.classList.remove('expl-nav-btn--active'));
       btn.classList.add('expl-nav-btn--active');
       ativarScreen(target);
+
+      // Sempre que abres o separador Calendário, recarregas as sessões do explicador
+      if (target === 'calendario') {
+        await loadResumoCalendario();
+      }
     });
   });
+
 
   // botão "Ver todos" na dashboard -> tab Alunos
   btnDashVerAlunos?.addEventListener('click', () => {
@@ -2683,6 +2689,7 @@
       msgSessao.textContent = "Sessão guardada com sucesso.";
 
       await loadSessoesAluno(ALUNO_ATUAL.id_aluno);
+      await loadResumoCalendario();
       setTimeout(() => {
         closeModal(modalSessao);
       }, 500);
@@ -2739,6 +2746,7 @@
       msgSessao.textContent = "Sessão apagada com sucesso.";
 
       await loadSessoesAluno(ALUNO_ATUAL.id_aluno);
+      await loadResumoCalendario(); 
       setTimeout(() => {
         closeModal(modalSessao);
       }, 400);
