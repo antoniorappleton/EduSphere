@@ -379,3 +379,24 @@ footer {
 .capa__overlay {
   pointer-events: none;
 }
+/* ==== Segurança para mobile: não deixar a app exceder a largura do ecrã ==== */
+
+html, body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* Secções principais nunca devem ter largura > 100% */
+
+main, section, .card, .container, .shell {
+  max-width: 100%;
+}
+html, body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+main, section, .card, .container, .shell {
+  max-width: 100%;
+}
+

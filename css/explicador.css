@@ -1101,7 +1101,7 @@ footer {
 html, body {
   width: 100%;
   max-width: 100%;
-  overflow-x: hidden;
+  overflow-x: visible;
 }
 
 /* Garantir que os cartões nunca passam a largura */
@@ -1112,16 +1112,6 @@ html, body {
   max-width: 100%;
 }
 
-/* Tabelas: scroll horizontal só dentro do cartão, nunca na página toda */
-.table-wrapper {
-  width: 100%;
-  overflow-x: auto;
-}
-
-/* Se alguma tabela for MUITO larga, podes dar também .table--wide no HTML */
-.table--wide {
-  min-width: 650px;
-}
 
 /* ====== LAYOUT MOBILE ====== */
 @media (max-width: 768px) {
@@ -1202,21 +1192,131 @@ html, body {
 .capa__overlay {
   pointer-events: none;
 }
-/* garante que as tabelas grandes não rebentam o ecrã no telemóvel */
-.table-wrapper {
-  width: 100%;
-  overflow-x: auto;      /* cria scroll horizontal só dentro do cartão */
-}
-
-/* tabelas mais largas, para não ficar tudo apertado nas colunas */
-.table--wide {
-  min-width: 640px;
-}
 
 /* em ecrãs pequenos, encostar os cartões às margens para aproveitar melhor a largura */
 @media (max-width: 768px) {
   .expl-card {
     margin-left: 0.75rem;
     margin-right: 0.75rem;
+  }
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+/* --- Mobile layout (até ~768px) --- */
+@media (max-width: 768px) {
+  /* grids principais em 1 coluna */
+  .expl-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  /* grids dos formulários dos modais em 1 coluna */
+  .grid2 {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  /* um bocadinho menos padding nas cartas para caber tudo melhor */
+  .expl-card {
+    padding: 1rem;
+  }
+
+  /* proteção extra contra scroll horizontal global */
+  html, body {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+}
+/* ================= HOTFIX LARGURA / MOBILE ================= */
+
+/* nada pode ser mais largo que o ecrã */
+html, body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* painel explicador e cartões nunca excedem 100% */
+body.home main.auth,
+#explPanel,
+.expl-shell,
+.expl-main,
+.expl-body,
+.expl-section,
+.expl-card {
+  max-width: 100%;
+}
+
+/* MOBILE: 1 coluna, cartões encostados às margens */
+@media (max-width: 768px) {
+  .expl-shell {
+    flex-direction: column;
+    padding-inline: 1rem;
+  }
+
+  .expl-main {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .expl-card {
+    margin-left: 0;
+    margin-right: 0;
+    padding-inline: 1rem;
+  }
+
+  .expl-grid-2,
+  .grid2 {
+    grid-template-columns: 1fr;
+  }
+}
+/* Tabelas largas: scroll horizontal só dentro do cartão (não na página inteira) */
+.table-wrapper {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch; /* scroll suave no telemóvel */
+}
+
+/* Para tabelas com muitas colunas (usa class="table table--wide") */
+.table.table--wide {
+  width: max-content;        /* deixa a largura seguir o conteúdo */
+  min-width: 600px;          /* garante que fica mais larga que o ecrã pequeno */
+}
+.table-wrapper {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table.table--wide {
+  width: max-content;
+  min-width: 600px;   /* garante que fica mais larga que o ecrã no mobile */
+}
+/* segurança extra para mobile */
+.expl-shell,
+.expl-main,
+.expl-section,
+.expl-card {
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+/* mobile: tudo encostado às margens */
+@media (max-width: 768px) {
+  .expl-shell {
+    flex-direction: column;
+    padding-inline: 1rem;
+  }
+
+  .expl-card {
+    margin-inline: 0;
   }
 }
