@@ -19,7 +19,7 @@
 <header>
   <div class="header-inner">
     <a class="logo" href="./index.html">
-      <img src="./public/img/imagens/logo-icon.svg" alt="EduSphere">
+      <img src="./public/img/imagens/logo-icon192.png" alt="EduSphere">
       <span>EduSphere</span>
     </a>
 
@@ -224,15 +224,16 @@
               </div>
             </div>
           </div>
-
           <!-- Painel de detalhes do aluno -->
           <div class="expl-card expl-aluno-detail" id="aluno-detail-card" style="margin-top:1.5rem; display:none">
+
             <h3 class="expl-subsection-title">
               Detalhes do aluno:
               <span id="aluno-detail-nome" class="expl-aluno-detail__nome">—</span>
             </h3>
 
             <p id="aluno-detail-meta" class="expl-aluno-detail__meta"></p>
+
             <div class="aluno-status-row">
               <span id="aluno-status-badge" class="aluno-status-badge aluno-status-badge--ativo">
                 Ativo
@@ -247,8 +248,11 @@
             </div>
 
             <div class="expl-grid-2">
+
+              <!-- Informação básica -->
               <div>
                 <h4 class="expl-subsection-title">Informação básica</h4>
+
                 <ul class="expl-detail-list">
                   <li><strong>Email:</strong> <span id="aluno-detail-email">—</span></li>
                   <li><strong>Telemóvel:</strong> <span id="aluno-detail-tel">—</span></li>
@@ -258,50 +262,58 @@
                 </ul>
 
                 <div class="expl-actions-row" style="margin-top:1rem;">
-                  <button class="button secondary" type="button" id="btn-iniciar-faturacao">
-                    Iniciar faturação
-                  </button>
-                  <button class="button secondary" type="button" id="btn-registar-pagamento">
-                    Registar pagamento
-                  </button>
-                  <button class="button secondary" type="button" id="btn-editar-pagamento">
-                    Editar pagamento
-                  </button>
-                  <button class="button" type="button" id="btn-editar-aluno">
-                    Editar aluno
-                  </button>
+                  <button class="button secondary" id="btn-iniciar-faturacao">Iniciar faturação</button>
+                  <button class="button secondary" id="btn-registar-pagamento">Registar pagamento</button>
+                  <button class="button secondary" id="btn-editar-pagamento">Editar pagamento</button>
+                  <button class="button" id="btn-editar-aluno">Editar aluno</button>
                 </div>
               </div>
 
+              <!-- Resumo de mensalidades -->
               <div>
                 <h4 class="expl-subsection-title">Resumo de mensalidades</h4>
-                <ul class="expl-detail-list">
-                  <div class="expl-subsection" style="margin-top:1.5rem;">
-                    <h4 class="expl-subsection-title">Histórico de pagamentos</h4>
-                    <div class="table-wrapper">
-                      <table class="table" id="tblPagamentosAluno">
-                        <thead>
-                          <tr>
-                            <th>Ano</th>
-                            <th>Mês</th>
-                            <th>Previsto (€)</th>
-                            <th>Pago (€)</th>
-                            <th>Estado</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr>
-                            <td colspan="5">Ainda não existem pagamentos registados para este aluno.</td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
 
-                  <li><strong>Valor previsto (mês atual):</strong> <span id="aluno-detail-previsto-mes">—</span></li>
-                  <li><strong>Valor pago (mês atual):</strong> <span id="aluno-detail-pago-mes">—</span></li>
-                  <li><strong>Em falta (total):</strong> <span id="aluno-detail-emfalta">—</span></li>
+                <ul class="expl-detail-list">
+                  <li>
+                    <strong>Valor previsto (mês atual):</strong>
+                    <span id="aluno-detail-previsto-mes">—</span>
+                  </li>
+
+                  <li>
+                    <strong>Valor pago (mês atual):</strong>
+                    <span id="aluno-detail-pago-mes">—</span>
+                  </li>
+
+                  <li>
+                    <strong>Em falta (total):</strong>
+                    <span id="aluno-detail-emfalta">—</span>
+                  </li>
                 </ul>
+              </div>
+
+            </div>
+
+            <!-- Histórico de pagamentos (Fora das UL para não quebrar layout) -->
+            <div class="expl-subsection" style="margin-top:1.5rem;">
+              <h4 class="expl-subsection-title">Histórico de pagamentos</h4>
+
+              <div class="table-wrapper">
+                <table class="table" id="tblPagamentosAluno">
+                  <thead>
+                    <tr>
+                      <th>Ano</th>
+                      <th>Mês</th>
+                      <th>Previsto (€)</th>
+                      <th>Pago (€)</th>
+                      <th>Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td colspan="5">Ainda não existem pagamentos registados para este aluno.</td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </div>
 
@@ -309,9 +321,7 @@
             <div class="expl-subsection" style="margin-top:1.5rem;">
               <div class="expl-section-header" style="margin-bottom:0.5rem;">
                 <h4 class="expl-subsection-title">Sessões de explicação</h4>
-                <button class="button secondary" type="button" id="btn-add-sessao">
-                  + Adicionar sessão
-                </button>
+                <button class="button secondary" id="btn-add-sessao">+ Adicionar sessão</button>
               </div>
 
               <div class="table-wrapper">
