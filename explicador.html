@@ -188,11 +188,14 @@
               Ver lista &rarr;
             </button>
           </div>
-
           <div class="expl-grid-2">
-            <!-- Quota + ações -->
+
+            <!-- =======================
+                CARTÃO: QUOTA + AÇÕES
+                ======================= -->
             <div class="expl-card">
               <h3 class="expl-subsection-title">Quota de alunos</h3>
+
               <div class="expl-quota">
                 <p><strong>Limite:</strong> <span id="limite">—</span></p>
                 <p><strong>Ativos:</strong> <span id="contagem">0</span></p>
@@ -201,28 +204,39 @@
 
               <h3 class="expl-subsection-title" style="margin-top:1rem;">Ações rápidas</h3>
               <div class="expl-actions-row">
-                <button class="button secondary" type="button" id="btn-open-add-aluno">
+                <button class="button secondary" id="btn-open-add-aluno">
                   + Adicionar aluno
                 </button>
               </div>
             </div>
 
-            <!-- Lista de alunos -->
+            <!-- =======================
+                CARTÃO: LISTA DE ALUNOS
+                ======================= -->
             <div class="expl-card" id="lista-alunos-card">
+
               <h3 class="expl-subsection-title">Lista de alunos</h3>
-              <div class="table-wrapper">
-                <table class="table" id="tblAlunos">
-                  <thead>
-                    <tr>
-                      <th>Nome</th>
-                      <th>Email</th>
-                      <th>Ano</th>
-                    </tr>
-                  </thead>
-                  <tbody></tbody>
-                </table>
+
+              <!-- CONTAINER FIXO COM SCROLL VERTICAL -->
+              <div class="expl-scroll-card">
+
+                <!-- scroll horizontal apenas da tabela -->
+                <div class="table-wrapper">
+                  <table class="table" id="tblAlunos">
+                    <thead>
+                      <tr>
+                        <th>Nome</th>
+                        <th>Email</th>
+                        <th>Ano</th>
+                      </tr>
+                    </thead>
+                    <tbody></tbody>
+                  </table>
+                </div>
+
               </div>
             </div>
+
           </div>
           <!-- Painel de detalhes do aluno -->
           <div class="expl-card expl-aluno-detail" id="aluno-detail-card" style="margin-top:1.5rem; display:none">

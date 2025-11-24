@@ -80,6 +80,13 @@ body.home main.auth {
   display: none !important;
 }
 
+/* “corpo” com as secções e cartões */
+.expl-body {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
 /* Títulos de secção dentro do painel */
 .expl-section-title {
   font-family: 'Poppins', sans-serif;
@@ -569,30 +576,12 @@ body.home main.auth {
   flex-direction: column;
 }
 
-/* aplica só nos cartões que precisarem, por ex. adicionando a classe extra */
-.expl-card--scroll {
-  max-height: 70vh;          /* ou o valor que fizer sentido */
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* ========== FIX: Versão final e única de .expl-body ========== */
+/* A tal "barra que desliza" no conteúdo */
 .expl-body {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-
-  /* Scroll interno funcional */
   overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-
-  /* Espaço para footer fixo (se mantiveres) */
-  padding-right: 8px;
-  padding-bottom: 100px; /* garante que nada fica tapado */
-  padding-inline: 1rem;
+  padding-right: 8px;  /* espaço para a scroll bar não colar ao conteúdo */
 }
-
 /* Ajuste suave na tabela de faturação */
 .table th,
 .table td {
@@ -630,6 +619,12 @@ body.home main.auth {
   min-width: 0;
   display: flex;
   flex-direction: column;
+}
+
+/* Tira o scroll interno do conteúdo — passa a ser o scroll normal da página */
+.expl-body {
+  flex: 1;
+  overflow-y: visible;   /* anula qualquer overflow:auto definido antes */
 }
 
 /* Se quiseres ainda apertar um bocadinho mais a coluna do menu,
@@ -965,10 +960,14 @@ body.home main.auth {
   height: 100% !important;
   display: block;
 }
+/* garante espaço livre para o footer fixo */
+.expl-body {
+  padding-bottom: 80px;  /* ou o valor da altura do footer + algum espaço */
+}
 
 /* se o footer estiver como fixed, mantém assim: */
 footer {
-  position: static;
+  position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
@@ -1135,6 +1134,10 @@ html, body {
   .expl-main {
     margin-left: 0;
     width: 100%;
+  }
+
+  .expl-body {
+    padding-inline: 1rem;
   }
 
   /* Header do painel adapta para vertical */
@@ -1315,5 +1318,110 @@ body.home main.auth,
 
   .expl-card {
     margin-inline: 0;
+  }
+}
+/* === GRID DOS CARTÕES DE ALUNOS (Quota + Lista) === */
+/* Mobile: 1 coluna */
+.expl-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+}
+
+/* A partir de 960px: 2 colunas lado a lado */
+@media (min-width: 960px) {
+  .expl-grid-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+/* === CARTÃO "Lista de alunos" === */
+
+/* o cartão em si não corta nada */
+#lista-alunos-card {
+  overflow: visible;
+}
+
+/* área interna com scroll vertical (lista de alunos) */
+.expl-scroll-card {
+  max-height: 260px;               /* ajusta se quiseres */
+  overflow-y: auto;
+  padding-right: 6px;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* wrapper da tabela: scroll horizontal só aqui */
+#lista-alunos-card .table-wrapper {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;                 /* <- scroll horizontal */
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* a tabela é mais larga que o cartão → obriga scroll horizontal */
+#lista-alunos-card table {
+  width: max-content;
+  min-width: 520px;                 /* ajusta se precisares de mais/menos */
+}
+/* =========================
+   ULTIMO HOTFIX PARA MOBILE
+   (até 768px)
+   ========================= */
+@media (max-width: 768px) {
+
+  /* página nunca é mais larga que o ecrã */
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+  }
+
+  /* contentores principais ajustados à largura do ecrã */
+  #explPanel,
+  .expl-shell,
+  .expl-main,
+  .expl-body,
+  .expl-section {
+    box-sizing: border-box;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  /* grelhas: 1 coluna no mobile */
+  .expl-grid-2 {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+
+  /* cartões nunca passam a largura do ecrã */
+  .expl-card,
+  .expl-kpi-card,
+  .dash-aluno-card,
+  .rel-card {
+    box-sizing: border-box;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  /* sidebar também não rebenta a largura */
+  .expl-sidebar-nav {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* scroll horizontal só dentro da wrapper da tabela */
+  .table-wrapper {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
   }
 }
