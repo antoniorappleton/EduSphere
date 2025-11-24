@@ -1283,12 +1283,29 @@ body.home main.auth,
   overflow-x: auto;
   -webkit-overflow-scrolling: touch; /* scroll suave no telemóvel */
 }
-/* Faturação: scroll vertical dentro dos cartões das tabelas */
-.expl-section[data-section="faturacao"] .table-wrapper {
-  max-height: 260px;          /* ajusta se quiseres mais/menos alto */
-  overflow-y: auto;           /* scroll vertical */
-  overflow-x: auto;           /* mantém scroll horizontal p/ muitas colunas */
+/* ===== Faturação: cartões com tabela a fazer scroll interno ===== */
+
+/* Os 2 cartões de Faturação passam a ser "coluna":
+   título em cima, tabela a ocupar o resto */
+.expl-section[data-section="faturacao"] .expl-card{
+  display: flex;
+  flex-direction: column;
+}
+
+/* A área da tabela é que faz scroll, não o cartão todo */
+.expl-section[data-section="faturacao"] .expl-card .table-wrapper{
+  margin-top: 0.75rem;
+  flex: 1;
+  max-height: 260px;           /* ajusta à vontade (ou usa 50vh / 60vh) */
+  overflow-y: auto;            /* scroll vertical */
+  overflow-x: auto;            /* scroll horizontal se for preciso */
   -webkit-overflow-scrolling: touch;
+}
+
+/* Tabelas largas continuam a usar scroll horizontal dentro da wrapper */
+.expl-section[data-section="faturacao"] .expl-card .table.table--wide{
+  width: max-content;
+  min-width: 600px;            /* ajusta se quiseres mais estreita */
 }
 
 /* Para tabelas com muitas colunas (usa class="table table--wide") */
