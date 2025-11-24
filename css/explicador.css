@@ -1546,3 +1546,8 @@ body.home main.auth,
 .fab-nav.is-open .fab-item:active .fab-label{
   opacity: 1;
 }
+/* Esconde completamente o menu lateral antigo,
+   mas deixa os botões no DOM para o JS e para o FAB */
+.expl-sidebar-nav {
+  display: none !important;
+}

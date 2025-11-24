@@ -3153,36 +3153,36 @@
 
       const labelOffset = 70; // distância das labels para fora do arco
 
-items.forEach((btn, i) => {
-  const angleDeg = startDeg + step * i;
-  const angleRad = angleDeg * Math.PI / 180;
+    items.forEach((btn, i) => {
+      const angleDeg = startDeg + step * i;
+      const angleRad = angleDeg * Math.PI / 180;
 
-  const x = Math.cos(angleRad) * radius;
-  const y = Math.sin(angleRad) * radius;
+      const x = Math.cos(angleRad) * radius;
+      const y = Math.sin(angleRad) * radius;
 
-  btn.style.setProperty('--tx', `${x}px`);
-  btn.style.setProperty('--ty', `${y}px`);
+      btn.style.setProperty('--tx', `${x}px`);
+      btn.style.setProperty('--ty', `${y}px`);
 
-  const len = Math.sqrt(x*x + y*y) || 1;
-  const ux  = x / len;
-  const uy  = y / len;
+      const len = Math.sqrt(x*x + y*y) || 1;
+      const ux  = x / len;
+      const uy  = y / len;
 
-  const dx = ux * labelOffset;
-  const dy = uy * labelOffset;
+      const dx = ux * labelOffset;
+      const dy = uy * labelOffset;
 
-  const label = btn.querySelector('.fab-label');
-  if (label) {
-    label.style.setProperty('--lx', `${dx}px`);
-    label.style.setProperty('--ly', `${dy}px`);
-  }
-});
+      const label = btn.querySelector('.fab-label');
+      if (label) {
+        label.style.setProperty('--lx', `${dx}px`);
+        label.style.setProperty('--ly', `${dy}px`);
+      }
+    });
 
-    } else {
-      closeFab();
-    }
-  });
+        } else {
+          closeFab();
+        }
+      });
 
-  function closeFab() {
+    function closeFab() {
     const itemsWrapper = document.getElementById("fabItems");
     items.forEach(btn => {
       btn.style.setProperty('--tx', '0px');
