@@ -142,9 +142,8 @@
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {
       navigator.serviceWorker
-        .register("/service-worker.js")
+        .register("./service-worker.js")   // <-- ou simplesmente "service-worker.js"
         .then((reg) => {
-          // Atualização imediata quando há novo SW
           if (reg.waiting) {
             reg.waiting.postMessage({ type: "SKIP_WAITING" });
           }

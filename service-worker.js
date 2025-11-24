@@ -4,25 +4,26 @@ const CACHE_STATIC = "edusphere-static-v3";
 const CACHE_DYNAMIC = "edusphere-dynamic-v3";
 
 const ASSETS = [
-  "/",                 // raiz
-  "/index.html",
-  "/login.html",
-  "/aluno.html",
-  "/explicador.html",
-  "/styles.css",
-  "/manifest.json",
+  "./", // raiz do projeto
+  "./index.html",
+  "./login.html",
+  "./aluno.html",
+  "./explicador.html",
+  "./styles.css",
+  "./manifest.json",
 
   // ícones PWA
-  "/public/img/icon-192.png",
-  "/public/img/icon-512.png",
+  "./public/img/icon-192.png",
+  "./public/img/icon-512.png",
 
   // logo usado dentro da app
-  "/public/img/imagens/logo-icon.svg",
+  "./public/img/imagens/logo-icon.svg",
 
   // JS principal
-  "/public/js/supabaseClient.js",
-  "/public/js/router.js"
+  "./public/js/supabaseClient.js",
+  "./public/js/router.js",
 ];
+
 
 // INSTALL – pré-cache estático
 self.addEventListener("install", (event) => {
