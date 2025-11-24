@@ -3123,64 +3123,115 @@
   (function () {
   const fab    = document.getElementById("fabNav");
   const toggle = document.getElementById("fabToggle");
+  const itemsWrapper = document.getElementById("fabItems");
   const items  = Array.from(document.querySelectorAll(".fab-item"));
 
-  // raio (podes ajustar se quiseres mais “apertado”)
-  const radiusDesktop = 95;
-  const radiusMobile  = 80;
+  // raio do arco
+  const RADIUS_DESKTOP = 160;
+  const RADIUS_MOBILE  = 135;
+
+  // distância das labels para fora do arco (se as estiveres a usar)
+  const LABEL_OFFSET = 70;
 
   function getRadius() {
-    return window.innerWidth < 640 ? radiusMobile : radiusDesktop;
+    return window.innerWidth < 640 ? RADIUS_MOBILE : RADIUS_DESKTOP;
   }
 
-    toggle.addEventListener("click", () => {
-    const itemsWrapper = document.getElementById("fabItems");
-    const isOpening = !fab.classList.contains("is-open");
+  function positionItems() {
+    const total  = items.length;
+    if (!total) return;
 
-    fab.classList.toggle("is-open", isOpening);
+    const radius = getRadius();
 
-    if (isOpening) {
-      itemsWrapper.hidden = false;
-      itemsWrapper.setAttribute("aria-hidden", "false");
-
-      const total  = items.length;
-      const radius = getRadius();
-
-      const centerDeg = 270;
-      const spreadDeg = 210; // o que já tinhas
-      const startDeg  = centerDeg - spreadDeg / 2;
-      const step      = total > 1 ? spreadDeg / (total - 1) : 0;
-
-      const labelOffset = 70; // distância das labels para fora do arco
+    // CANTO INFERIOR ESQUERDO:
+    // centro do arco a 315º (diagonal para cima/direita)
+    // abertura de 90º -> de 270º (cima) até 360º (direita)
+    const centerDeg = 315;
+    const spreadDeg = 90;
+    const startDeg  = centerDeg - spreadDeg / 2;
+    const step      = total > 1 ? spreadDeg / (total - 1) : 0;
 
     items.forEach((btn, i) => {
-      const angleDeg = startDeg + step * i;
+      const angleDeg = startDeg + step * i;     // 270, 292.5, 315, 337.5, 360
       const angleRad = angleDeg * Math.PI / 180;
 
       const x = Math.cos(angleRad) * radius;
       const y = Math.sin(angleRad) * radius;
 
-      btn.style.setProperty('--tx', `${x}px`);
-      btn.style.setProperty('--ty', `${y}px`);
+      // move o botão
+      btn.style.setProperty("--tx", x + "px");
+      btn.style.setProperty("--ty", y + "px");
 
-      const len = Math.sqrt(x*x + y*y) || 1;
-      const ux  = x / len;
-      const uy  = y / len;
+      // ---- LABELS (se estiveres a usar .fab-label com --lx/--ly) ----
+      const len = Math.sqrt(x * x + y * y) || 1;
+      const ux = x / len;
+      const uy = y / len;
 
-      const dx = ux * labelOffset;
-      const dy = uy * labelOffset;
+      const dx = ux * LABEL_OFFSET;
+      const dy = uy * LABEL_OFFSET;
 
-      const label = btn.querySelector('.fab-label');
+      const label = btn.querySelector(".fab-label");
       if (label) {
-        label.style.setProperty('--lx', `${dx}px`);
-        label.style.setProperty('--ly', `${dy}px`);
+        label.style.setProperty("--lx", dx + "px");
+        label.style.setProperty("--ly", dy + "px");
+      }
+    });
+  }
+
+  function openFab() {
+    fab.classList.add("is-open");
+    itemsWrapper.hidden = false;
+    itemsWrapper.setAttribute("aria-hidden", "false");
+    positionItems();
+  }
+
+  function closeFab() {
+    fab.classList.remove("is-open");
+    itemsWrapper.setAttribute("aria-hidden", "true");
+
+    // volta tudo ao centro do botão principal
+    items.forEach(btn => {
+      btn.style.setProperty("--tx", "0px");
+      btn.style.setProperty("--ty", "0px");
+      const label = btn.querySelector(".fab-label");
+      if (label) {
+        label.style.setProperty("--lx", "0px");
+        label.style.setProperty("--ly", "0px");
       }
     });
 
-        } else {
-          closeFab();
-        }
-      });
+    setTimeout(() => {
+      itemsWrapper.hidden = true;
+    }, 300); // espera a animação acabar
+  }
+
+  // toggle abre/fecha
+  toggle.addEventListener("click", () => {
+    if (fab.classList.contains("is-open")) {
+      closeFab();
+    } else {
+      openFab();
+    }
+  });
+
+  // clicar num item -> navega para a secção e fecha o menu
+  items.forEach(btn => {
+    btn.addEventListener("click", () => {
+      const target = btn.dataset.target;
+      const original = document.querySelector(
+        '.expl-nav-btn[data-target="' + target + '"]'
+      );
+      if (original) original.click();
+      closeFab();
+    });
+  });
+
+  // se redimensionar o ecrã com o menu aberto, recalcula posições
+  window.addEventListener("resize", () => {
+    if (fab.classList.contains("is-open")) {
+      positionItems();
+    }
+  });
 
     function closeFab() {
     const itemsWrapper = document.getElementById("fabItems");

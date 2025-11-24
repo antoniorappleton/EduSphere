@@ -1283,6 +1283,13 @@ body.home main.auth,
   overflow-x: auto;
   -webkit-overflow-scrolling: touch; /* scroll suave no telemóvel */
 }
+/* Faturação: scroll vertical dentro dos cartões das tabelas */
+.expl-section[data-section="faturacao"] .table-wrapper {
+  max-height: 260px;          /* ajusta se quiseres mais/menos alto */
+  overflow-y: auto;           /* scroll vertical */
+  overflow-x: auto;           /* mantém scroll horizontal p/ muitas colunas */
+  -webkit-overflow-scrolling: touch;
+}
 
 /* Para tabelas com muitas colunas (usa class="table table--wide") */
 .table.table--wide {
@@ -1428,11 +1435,31 @@ body.home main.auth,
 /* ===== FAB NAV — base ===== */
 .fab-nav{
   position: fixed;
-  left: 50%;
+  left: 16px;  /* canto inferior esquerdo */
   bottom: max(16px, env(safe-area-inset-bottom));
-  transform: translateX(-50%);
+  transform: none;
   z-index: 9999;
 }
+.expl-main{
+  flex: 1;
+  padding: 24px 16px 110px; /* <- padding-bottom grande p/ não ficar nada escondido */
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Faturação: scroll vertical dentro dos cartões com tabelas */
+.expl-section[data-section="faturacao"] .table-wrapper{
+  max-height: 260px;        /* ajusta se quiseres ver mais/menos linhas */
+  overflow-y: auto;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.table-wrapper{
+  width: 100%;
+  overflow-x: auto;
+}
+
 
 .fab-nav__toggle{
   width: clamp(64px, 9.5vw, 76px);
