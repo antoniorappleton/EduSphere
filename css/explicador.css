@@ -1425,3 +1425,163 @@ body.home main.auth,
     -webkit-overflow-scrolling: touch;
   }
 }
+/* FAB NAV — base (mantém as tuas regras originais) */
+.fab-nav{
+  position: fixed;
+  left: 50%;
+  bottom: max(16px, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  z-index: 9999;
+}
+
+.fab-nav__toggle{
+  width: clamp(64px, 9.5vw, 76px);
+  height: clamp(64px, 9.5vw, 76px);
+  border-radius: 999px;
+  display: flex;
+  place-items: center;
+  align-items: center;        /* <--- centra vertical */
+  justify-content: center;    /* <--- centra horizontal */
+  background: #b91c1c; /* cor do teu tema */
+  color: #fff;
+  border: none;
+  box-shadow: 0 10px 24px rgba(2,6,23,.25);
+  cursor: pointer;
+}
+
+.fab-nav__toggle svg{
+  width: 30px;
+  height: 30px;
+  stroke: white;
+  fill: none;
+  stroke-width: 2.4;
+  transition: transform .35s ease;
+}
+
+.fab-nav.is-open .fab-nav__toggle svg{
+  transform: rotate(45deg);
+}
+
+.fab-nav__items{
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+/* Labels SEMPRE visíveis quando o menu está aberto */
+.fab-nav.is-open .fab-label{
+  opacity: 1 !important;
+}
+
+.fab-item{
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  /* centro é sempre -50% / -50%, e depois somo o offset em px */
+  transform: translate(
+    calc(-50% + var(--tx, 0px)),
+    calc(-50% + var(--ty, 0px))
+  );
+
+  width: clamp(54px, 8vw, 66px);
+  height: clamp(54px, 8vw, 66px);
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  place-items: center;
+  background: #b91c1c;
+  color: #fff;
+  border: none;
+  box-shadow: 0 10px 22px rgba(2,6,23,.22);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform .45s cubic-bezier(.22,.8,.24,1),
+    opacity   .25s ease;
+  will-change: transform;
+  z-index: 10;
+}
+
+.fab-item svg{
+  width: 30px;
+  height: 30px;
+  display: block;
+  fill: currentColor;
+}
+
+/* Ícones dentro dos FABs */
+.fab-icon {
+  width: 22px;
+  height: 22px;
+}
+
+.fab-icon rect,
+.fab-icon circle,
+.fab-icon path {
+  fill: none;
+  stroke: #ffffff;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* se quiseres os quadradinhos preenchidos no dashboard:
+.fab-item[data-target="dashboard"] .fab-icon rect {
+  fill: #ffffff;
+  stroke: #ffffff;
+}
+*/
+
+
+.fab-nav.is-open .fab-item{
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Labels SEMPRE visíveis quando o menu está aberto */
+.fab-nav.is-open .fab-label{
+  opacity: 1;
+}
+
+/* Estilo base das legendas */
+.fab-label{
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);   /* por cima do círculo */
+  transform: translateX(-50%);
+  white-space: nowrap;
+  background: #ffffff;
+  color: #b91c1c;
+  font-weight: 700;
+  padding: 5px 9px;
+  font-size: .8rem;
+  border-radius: 999px;
+  box-shadow: 0 8px 20px rgba(2,6,23,.18);
+  opacity: 0;                 /* começa escondida */
+  pointer-events: none;
+  z-index: 11;
+}
+
+/* podes manter o hover/focus se quiseres um fade extra */
+.fab-nav.is-open .fab-item:hover .fab-label,
+.fab-nav.is-open .fab-item:focus .fab-label{
+  opacity: 1;
+}
+
+/* NÃO esconder as que têm .below – fica neutro */
+
+
+.fab-nav.is-open .fab-item:hover .fab-label,
+.fab-nav.is-open .fab-item:focus .fab-label{
+  opacity: 1;
+}
+
+
+.fab-nav.is-open .fab-item:hover .fab-label,
+.fab-nav.is-open .fab-item:focus .fab-label{
+  opacity: 1;
+}
+.fab-label{
+  bottom: calc(100% + 8px);
+  transform: translate(-50%, 0);
+}
