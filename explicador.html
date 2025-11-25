@@ -180,44 +180,41 @@
               Ver lista &rarr;
             </button>
           </div>
-          <div class="expl-grid-2">
 
-            <!-- =======================
-                CARTÃO: QUOTA + AÇÕES
-                ======================= -->
-            <div class="expl-card">
-              <h3 class="expl-subsection-title">Quota de alunos</h3>
+          <!-- CARTÃO PEQUENO: QUOTA + AÇÕES RÁPIDAS -->
+          <div class="expl-card expl-card--quota">
+            <h3 class="expl-subsection-title">Quota de alunos</h3>
 
-              <div class="expl-quota">
-                <p><strong>Limite:</strong> <span id="limite">—</span></p>
-                <p><strong>Ativos:</strong> <span id="contagem">0</span></p>
-                <p><strong>Restantes:</strong> <span id="restantes">—</span></p>
-              </div>
-
-              <h3 class="expl-subsection-title" style="margin-top:1rem;">Ações rápidas</h3>
-              <div class="expl-actions-row">
-                <button class="button secondary" id="btn-open-add-aluno">
-                  + Adicionar aluno
-                </button>
-              </div>
+            <div class="expl-quota">
+              <p><strong>Limite:</strong> <span id="limite">Sem limite</span></p>
+              <p><strong>Ativos:</strong> <span id="contagem">0</span></p>
+              <p><strong>Restantes:</strong> <span id="restantes">—</span></p>
             </div>
 
-            <!-- =======================
-                CARTÃO: LISTA DE ALUNOS
-                ======================= -->
-            <div class="expl-card" id="lista-alunos-card">
-              <h3 class="expl-subsection-title">Lista de alunos</h3>
-
-              <!-- Grelha de cartões de alunos -->
-              <div class="dash-alunos-grid" id="alunos-cards-grid">
-                <!-- cartões preenchidos por JS -->
-              </div>
+            <h3 class="expl-subsection-title" style="margin-top:1rem;">Ações rápidas</h3>
+            <div class="expl-actions-row">
+              <button class="button secondary" id="btn-open-add-aluno">
+                + Adicionar aluno
+              </button>
             </div>
-
           </div>
-          <!-- Painel de detalhes do aluno -->
-          <div class="expl-card expl-aluno-detail" id="aluno-detail-card" style="margin-top:1.5rem; display:none">
 
+          <!-- CARTÃO GRANDE: LISTA DE ALUNOS (FULL WIDTH) -->
+          <div class="expl-card" id="lista-alunos-card" style="margin-top:1.5rem;">
+            <h3 class="expl-subsection-title">Lista de alunos</h3>
+
+            <!-- Grelha de cartões de alunos -->
+            <div class="dash-alunos-grid" id="alunos-cards-grid">
+              <!-- cartões preenchidos por JS -->
+            </div>
+          </div>
+
+          <!-- PAINEL DE DETALHES DO ALUNO -->
+          <div
+            class="expl-card expl-aluno-detail"
+            id="aluno-detail-card"
+            style="margin-top:1.5rem; display:none"
+          >
             <h3 class="expl-subsection-title">
               Detalhes do aluno:
               <span id="aluno-detail-nome" class="expl-aluno-detail__nome">—</span>
@@ -226,11 +223,19 @@
             <p id="aluno-detail-meta" class="expl-aluno-detail__meta"></p>
 
             <div class="aluno-status-row">
-              <span id="aluno-status-badge" class="aluno-status-badge aluno-status-badge--ativo">
+              <span
+                id="aluno-status-badge"
+                class="aluno-status-badge aluno-status-badge--ativo"
+              >
                 Ativo
               </span>
 
-              <button type="button" id="toggle-aluno-ativo" class="aluno-status-toggle" aria-pressed="true">
+              <button
+                type="button"
+                id="toggle-aluno-ativo"
+                class="aluno-status-toggle"
+                aria-pressed="true"
+              >
                 <span class="aluno-status-toggle__label">Aluno ativo</span>
                 <span class="aluno-status-toggle__switch">
                   <span class="aluno-status-toggle__knob"></span>
@@ -239,24 +244,46 @@
             </div>
 
             <div class="expl-grid-2">
-
               <!-- Informação básica -->
               <div>
                 <h4 class="expl-subsection-title">Informação básica</h4>
 
                 <ul class="expl-detail-list">
-                  <li><strong>Email:</strong> <span id="aluno-detail-email">—</span></li>
-                  <li><strong>Telemóvel:</strong> <span id="aluno-detail-tel">—</span></li>
-                  <li><strong>Ano:</strong> <span id="aluno-detail-ano">—</span></li>
-                  <li><strong>Valor explicação:</strong> <span id="aluno-detail-valor">—</span></li>
-                  <li><strong>Sessões / mês:</strong> <span id="aluno-detail-sessoes">—</span></li>
+                  <li>
+                    <strong>Email:</strong>
+                    <span id="aluno-detail-email">—</span>
+                  </li>
+                  <li>
+                    <strong>Telemóvel:</strong>
+                    <span id="aluno-detail-tel">—</span>
+                  </li>
+                  <li>
+                    <strong>Ano:</strong>
+                    <span id="aluno-detail-ano">—</span>
+                  </li>
+                  <li>
+                    <strong>Valor explicação:</strong>
+                    <span id="aluno-detail-valor">—</span>
+                  </li>
+                  <li>
+                    <strong>Sessões / mês:</strong>
+                    <span id="aluno-detail-sessoes">—</span>
+                  </li>
                 </ul>
 
                 <div class="expl-actions-row" style="margin-top:1rem;">
-                  <button class="button secondary" id="btn-iniciar-faturacao">Iniciar faturação</button>
-                  <button class="button secondary" id="btn-registar-pagamento">Registar pagamento</button>
-                  <button class="button secondary" id="btn-editar-pagamento">Editar pagamento</button>
-                  <button class="button" id="btn-editar-aluno">Editar aluno</button>
+                  <button class="button secondary" id="btn-iniciar-faturacao">
+                    Iniciar faturação
+                  </button>
+                  <button class="button secondary" id="btn-registar-pagamento">
+                    Registar pagamento
+                  </button>
+                  <button class="button secondary" id="btn-editar-pagamento">
+                    Editar pagamento
+                  </button>
+                  <button class="button" id="btn-editar-aluno">
+                    Editar aluno
+                  </button>
                 </div>
               </div>
 
@@ -281,10 +308,9 @@
                   </li>
                 </ul>
               </div>
-
             </div>
 
-            <!-- Histórico de pagamentos (Fora das UL para não quebrar layout) 
+            <!-- (opcional) Histórico de pagamentos por aluno
             <div class="expl-subsection" style="margin-top:1.5rem;">
               <h4 class="expl-subsection-title">Histórico de pagamentos</h4>
 
@@ -301,42 +327,18 @@
                   </thead>
                   <tbody>
                     <tr>
-                      <td colspan="5">Ainda não existem pagamentos registados para este aluno.</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>-->
-
-            <!-- Sessões do aluno -->
-            <div class="expl-subsection" style="margin-top:1.5rem;">
-              <div class="expl-section-header" style="margin-bottom:0.5rem;">
-                <h4 class="expl-subsection-title">Sessões de explicação</h4>
-                <button class="button secondary" id="btn-add-sessao">+ Adicionar sessão</button>
-              </div>
-
-              <div class="table-wrapper">
-                <table class="table" id="tblSessoesAluno">
-                  <thead>
-                    <tr>
-                      <th>Data</th>
-                      <th>Início</th>
-                      <th>Fim</th>
-                      <th>Duração (min)</th>
-                      <th>Estado</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td colspan="5">Ainda não existem sessões registadas para este aluno.</td>
+                      <td colspan="5">
+                        Ainda não existem pagamentos registados para este aluno.
+                      </td>
                     </tr>
                   </tbody>
                 </table>
               </div>
             </div>
-
+            -->
           </div>
         </section>
+
 
         <!-- ========== PERFIL DO ALUNO (SCREEN) ========== -->
         <section
@@ -427,14 +429,13 @@
 
                   <table class="tabela">
                     <thead>
-                    <tr>
-                      <th>Data</th>
-                      <th>Horário</th>
-                      <th>Disciplina</th>
-                      <th>Tópico</th>
-                      <th>Estado</th>
-                      <th>Notas</th>
-                    </tr>
+                      <tr>
+                        <th>Data</th>
+                        <th>Início</th>
+                        <th>Fim</th>
+                        <th>Duração (min)</th>
+                        <th>Estado</th>
+                      </tr>
                     </thead>
                     <tbody id="listaExplicacoes"></tbody>
                   </table>
@@ -2110,7 +2111,7 @@
   async function loadSessoesAluno(alunoId) {
     if (!alunoId) return;
 
-    const tblBody = document.querySelector("#tblSessoesAluno tbody");
+    const tblBody = document.querySelector("#listaExplicacoes");
     if (!tblBody) return;
 
     tblBody.innerHTML =
@@ -2173,107 +2174,103 @@
     });
 
     // 🔹 Atualizar também o perfil (kpi + tabela + próxima aula)
-    atualizarPerfilComSessoes(data);
+    atualizarPerfilComSessoes(data || []);
   }
 
   function atualizarPerfilComSessoes(sessoes) {
-    const tbody = document.getElementById("listaExplicacoes");
-    const kpiAulasEl = document.getElementById("kpiAulas");
-    const proxEl = document.getElementById("proximaAulaTxt");
+  const tbody   = document.getElementById("listaExplicacoes");
+  const kpiAulasEl = document.getElementById("kpiAulas");
+  const proxEl  = document.getElementById("proximaAulaTxt");
 
-    if (!tbody) return;
+  if (!tbody) return;
 
-    if (!sessoes || !sessoes.length) {
-      tbody.innerHTML =
-        '<tr><td colspan="6">Ainda não existem explicações registadas.</td></tr>';
-      if (kpiAulasEl) kpiAulasEl.textContent = "0/0";
-      if (proxEl) proxEl.textContent = "Nenhuma aula agendada";
-      return;
-    }
-
-    const nomesMeses = [
-      "Jan","Fev","Mar","Abr","Mai","Jun",
-      "Jul","Ago","Set","Out","Nov","Dez",
-    ];
-
-    const hoje = new Date();
-    let proximaSessao = null;
-
-    const rows = sessoes.map((s) => {
-      let dataLabel = s.data || "—";
-      let horario = "—";
-      if (s.hora_inicio || s.hora_fim) {
-        const ini = s.hora_inicio ? s.hora_inicio.slice(0, 5) : "--:--";
-        const fim = s.hora_fim ? s.hora_fim.slice(0, 5) : "--:--";
-        horario = `${ini} - ${fim}`;
-      }
-
-      // calcular próxima aula (apenas AGENDADA no futuro)
-      if (s.data) {
-        const d = new Date(s.data);
-        if (!isNaN(d.getTime()) && d >= hoje && (s.estado || "").toUpperCase() !== "CANCELADA") {
-          if (!proximaSessao || d < new Date(proximaSessao.data)) {
-            proximaSessao = s;
-          }
-        }
-      }
-
-      const partes = s.data ? s.data.split("-") : null;
-      if (partes && partes.length === 3) {
-        const ano = partes[0];
-        const mes = Number(partes[1]);
-        const dia = partes[2];
-        dataLabel = `${dia}/${nomesMeses[mes - 1] ?? mes}/${ano}`;
-      }
-
-      const estado = s.estado || "—";
-      const topico = s.observacoes || "—";
-
-      return `
-        <tr>
-          <td>${dataLabel}</td>
-          <td>${horario}</td>
-          <td>—</td>
-          <td>${topico}</td>
-          <td>${estado}</td>
-          <td>${topico}</td>
-        </tr>
-      `;
-    });
-
-    tbody.innerHTML = rows.join("");
-
-    // KPI aulas concluídas
-    if (kpiAulasEl) {
-      const total = sessoes.length;
-      const concluidas = sessoes.filter(
-        (s) => (s.estado || "").toUpperCase() === "REALIZADA"
-      ).length;
-      kpiAulasEl.textContent = `${concluidas}/${total}`;
-    }
-
-    // Próxima aula
-    if (proxEl) {
-      if (!proximaSessao) {
-        proxEl.textContent = "Nenhuma aula agendada";
-      } else {
-        const partes = proximaSessao.data.split("-");
-        let dataNice = proximaSessao.data;
-        if (partes.length === 3) {
-          const ano = partes[0];
-          const mes = Number(partes[1]);
-          const dia = partes[2];
-          dataNice = `${dia}/${nomesMeses[mes - 1] ?? mes}/${ano}`;
-        }
-        const hora = proximaSessao.hora_inicio
-          ? proximaSessao.hora_inicio.slice(0, 5)
-          : "";
-        proxEl.textContent = hora ? `${dataNice} às ${hora}` : dataNice;
-      }
-    }
+  if (!sessoes || !sessoes.length) {
+    tbody.innerHTML =
+      '<tr><td colspan="5">Ainda não existem explicações registadas.</td></tr>';
+    if (kpiAulasEl) kpiAulasEl.textContent = "0/0";
+    if (proxEl) proxEl.textContent = "Nenhuma aula agendada";
+    return;
   }
 
-    function atualizarPerfilComPagamentos(pagamentos) {
+  const hoje = new Date();
+  let proximaSessao = null;
+
+  const rows = sessoes.map((s) => {
+    // Data formatada
+    let dataLabel = s.data || "—";
+    if (s.data) {
+      const partes = s.data.split("-");
+      if (partes.length === 3) {
+        const ano = partes[0];
+        const mes = partes[1];
+        const dia = partes[2];
+        dataLabel = `${dia}/${mes}/${ano}`;
+      }
+    }
+
+    const inicio = s.hora_inicio ? s.hora_inicio.slice(0, 5) : "--:--";
+    const fim    = s.hora_fim ? s.hora_fim.slice(0, 5) : "--:--";
+    const dur    = s.duracao_min != null ? s.duracao_min : "—";
+    const estado = s.estado || "—";
+
+    // Próxima aula (AGENDADA no futuro)
+    if (s.data) {
+      const d = new Date(s.data);
+      if (
+        !isNaN(d.getTime()) &&
+        d >= hoje &&
+        (estado || "").toUpperCase() !== "CANCELADA"
+      ) {
+        if (!proximaSessao || d < new Date(proximaSessao.data)) {
+          proximaSessao = s;
+        }
+      }
+    }
+
+    return `
+      <tr>
+        <td>${dataLabel}</td>
+        <td>${inicio}</td>
+        <td>${fim}</td>
+        <td>${dur}</td>
+        <td>${estado}</td>
+      </tr>
+    `;
+  });
+
+  tbody.innerHTML = rows.join("");
+
+  // KPI aulas concluídas
+  if (kpiAulasEl) {
+    const total = sessoes.length;
+    const concluidas = sessoes.filter(
+      (s) => (s.estado || "").toUpperCase() === "REALIZADA"
+    ).length;
+    kpiAulasEl.textContent = `${concluidas}/${total}`;
+  }
+
+  // Próxima aula
+  if (proxEl) {
+    if (!proximaSessao) {
+      proxEl.textContent = "Nenhuma aula agendada";
+    } else {
+      const partes = proximaSessao.data.split("-");
+      let dataNice = proximaSessao.data;
+      if (partes.length === 3) {
+        const ano = partes[0];
+        const mes = partes[1];
+        const dia = partes[2];
+        dataNice = `${dia}/${mes}/${ano}`;
+      }
+      const hora = proximaSessao.hora_inicio
+        ? proximaSessao.hora_inicio.slice(0, 5)
+        : "";
+      proxEl.textContent = hora ? `${dataNice} às ${hora}` : dataNice;
+    }
+  }
+}
+
+  function atualizarPerfilComPagamentos(pagamentos) {
     const tbody = document.getElementById("listaPagamentos");
     const totalEl = document.getElementById("pagTotal");
     if (!tbody) return;

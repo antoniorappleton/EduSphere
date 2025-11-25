@@ -1632,3 +1632,12 @@ body.home main.auth,
 .expl-sidebar-nav {
   display: none !important;
 }
+.expl-card--quota {
+  max-width: 360px;
+}
+@media (max-width: 768px) {
+  .expl-card--quota {
+    max-width: 100%;
+  }
+}
+
