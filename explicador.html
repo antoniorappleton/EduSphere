@@ -4,6 +4,8 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <link rel="stylesheet" href="./styles.css" />
+  <link rel="stylesheet" href="./css/aluno-perfil.css" />
+
   <link rel="manifest" href="./manifest.json" />
   <meta name="theme-color" content="#b91c1c">
   <link rel="icon" type="image/png" href="./public/img/icon-192.png" />
@@ -282,7 +284,7 @@
 
             </div>
 
-            <!-- Histórico de pagamentos (Fora das UL para não quebrar layout) -->
+            <!-- Histórico de pagamentos (Fora das UL para não quebrar layout) 
             <div class="expl-subsection" style="margin-top:1.5rem;">
               <h4 class="expl-subsection-title">Histórico de pagamentos</h4>
 
@@ -304,7 +306,7 @@
                   </tbody>
                 </table>
               </div>
-            </div>
+            </div>-->
 
             <!-- Sessões do aluno -->
             <div class="expl-subsection" style="margin-top:1.5rem;">
@@ -332,6 +334,138 @@
                 </table>
               </div>
             </div>
+
+          </div>
+        </section>
+
+        <!-- ========== PERFIL DO ALUNO (SCREEN) ========== -->
+        <section
+          class="expl-section"
+          id="expl-sec-aluno-perfil"
+          data-section="aluno-perfil"
+          style="display:none"
+        >
+          <div class="perfil-wrapper">
+
+            <!-- HEADER -->
+            <div class="perfil-header">
+              <button class="back-btn" onclick="voltarParaAlunos()">
+                ← Voltar
+              </button>
+              <h2>Perfil do Aluno</h2>
+              <p class="subtitle">Informação detalhada e histórico</p>
+            </div>
+
+            <!-- INFO CARD -->
+            <section class="perfil-card perfil-card--main" id="aluno-info-card">
+              <div class="perfil-left">
+                <div class="avatar" id="alunoAvatar">??</div>
+
+                <div>
+                  <h3 id="alunoNome">Carregando.</h3>
+                  <p class="ano" id="alunoAno">—</p>
+
+                  <div class="badge-row">
+                    <span class="badge status active" id="alunoStatus">Ativo</span>
+                  </div>
+
+                  <div class="contact-row">
+                    <p><strong>Email:</strong> <span id="alunoEmail">—</span></p>
+                    <p><strong>Telemóvel:</strong> <span id="alunoTele">—</span></p>
+                    <p><strong>Inscrito desde:</strong> <span id="alunoDataInscricao">—</span></p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="perfil-right">
+                <div class="kpi">
+                  <div class="kpi-icon">📘</div>
+                  <div class="kpi-value" id="kpiAulas">—</div>
+                  <div class="kpi-label">Aulas Concluídas</div>
+                </div>
+
+                <div class="kpi">
+                  <div class="kpi-icon">📈</div>
+                  <div class="kpi-value" id="kpiMedia">—</div>
+                  <div class="kpi-label">Média Atual</div>
+                </div>
+
+                <button id="btnPerfilEditar" class="edit-btn">Editar Perfil</button>
+              </div>
+            </section>
+
+            <!-- PRÓXIMA AULA -->
+            <section class="perfil-card perfil-card--next">
+              <div class="proxima-aula">
+                <span class="icon">🕒</span>
+                <span><strong>Próxima Aula:</strong>
+                  <span id="proximaAulaTxt">A carregar.</span></span>
+              </div>
+            </section>
+
+            <!-- TABS -->
+            <section class="perfil-card perfil-card--tabs">
+              <div class="tabs">
+                <button class="tab active"
+                        data-tab="explicacoes"
+                        onclick="showPerfilTab('explicacoes')">
+                  Explicações
+                </button>
+                <button class="tab"
+                        data-tab="pagamentos"
+                        onclick="showPerfilTab('pagamentos')">
+                  Pagamentos
+                </button>
+              </div>
+
+              <div class="tabs-content-wrapper">
+
+                <!-- EXPLICAÇÕES -->
+                <div id="tab-explicacoes" class="tab-content active">
+                  <h3>Histórico de Explicações</h3>
+                  <p class="descricao">Todas as aulas realizadas com este aluno</p>
+
+                  <table class="tabela">
+                    <thead>
+                    <tr>
+                      <th>Data</th>
+                      <th>Horário</th>
+                      <th>Disciplina</th>
+                      <th>Tópico</th>
+                      <th>Estado</th>
+                      <th>Notas</th>
+                    </tr>
+                    </thead>
+                    <tbody id="listaExplicacoes"></tbody>
+                  </table>
+                </div>
+
+                <!-- PAGAMENTOS -->
+                <div id="tab-pagamentos" class="tab-content">
+                  <div class="pag-header">
+                    <h3>Histórico de Pagamentos</h3>
+                    <div class="total">
+                      €<span id="pagTotal">0.00</span>
+                      <small>Total Recebido</small>
+                    </div>
+                  </div>
+
+                  <table class="tabela">
+                    <thead>
+                    <tr>
+                      <th>Data</th>
+                      <th>Período</th>
+                      <th>Valor</th>
+                      <th>Método</th>
+                      <th>Estado</th>
+                    </tr>
+                    </thead>
+                    <tbody id="listaPagamentos"></tbody>
+                  </table>
+                </div>
+
+              </div>
+            </section>
 
           </div>
         </section>
@@ -906,6 +1040,37 @@
   let FAT_ANO_SELEC = null;
   let FAT_MES_SELEC = null;
 
+  function preencherPerfilAlunoBasico(aluno) {
+    if (!aluno) return;
+
+    const nomeCompleto = [aluno.nome, aluno.apelido].filter(Boolean).join(" ");
+
+    const elNome   = document.getElementById("alunoNome");
+    const elAno    = document.getElementById("alunoAno");
+    const elEmail  = document.getElementById("alunoEmail");
+    const elTele   = document.getElementById("alunoTele");
+    const elAvatar = document.getElementById("alunoAvatar");
+    const elStatus = document.getElementById("alunoStatus");
+
+    if (elNome)   elNome.textContent = nomeCompleto || "Aluno";
+    if (elAno)    elAno.textContent  = aluno.ano ? `${aluno.ano}º Ano` : "—";
+    if (elEmail)  elEmail.textContent = aluno.email || "—";
+    if (elTele)   elTele.textContent  = aluno.telemovel || "—";
+
+    if (elAvatar) {
+      const ini =
+        (aluno.nome?.[0] || "") + (aluno.apelido?.[0] || "");
+      elAvatar.textContent = ini.toUpperCase() || "??";
+    }
+
+    if (elStatus) {
+      const ativo = aluno.is_active !== false;
+      elStatus.textContent = ativo ? "Ativo" : "Inativo";
+      elStatus.classList.toggle("active", ativo);
+    }
+
+    // (se quiseres, podes preencher alunoDataInscricao quando tiveres esse campo)
+  }
 
   function getInicioSemana(date) {
     const d = new Date(date);
@@ -1247,37 +1412,30 @@
           `;
         })
         .join("");
+        // Ligações dos botões "Ver perfil"
+        alunosGrid
+          .querySelectorAll('button[data-action="ver"]')
+          .forEach((btn) => {
+            btn.addEventListener("click", async () => {
+              const idAluno = btn.getAttribute("data-id-aluno");
+              if (!idAluno) return;
 
-      // Ligações dos botões "Ver perfil"
-      alunosGrid
-        .querySelectorAll('button[data-action="ver"]')
-        .forEach((btn) => {
-          btn.addEventListener("click", () => {
-            const idAluno = btn.getAttribute("data-id-aluno");
-            if (!idAluno) return;
+              const aluno = ALUNOS_CACHE.find(
+                (x) => String(x.id_aluno) === String(idAluno)
+              );
+              if (!aluno) return;
 
-            // navega para a nova página de perfil do aluno
-            window.location.href = `./aluno-perfil.html?id=${encodeURIComponent(idAluno)}`;
-          });
+              // garante que o painel clássico também fica atualizado
+              await mostrarPainelAluno(aluno);
+
+              // preenche o novo layout de perfil
+              preencherPerfilAlunoBasico(aluno);
+
+              // mudar para o screen de perfil
+              ativarScreen("aluno-perfil");
+            });
         });
 
-      // Ligações dos botões "Editar"
-      alunosGrid
-        .querySelectorAll('button[data-action="editar"]')
-        .forEach((btn) => {
-          btn.addEventListener("click", () => {
-            const idAluno = btn.getAttribute("data-id-aluno");
-            const aluno = ALUNOS_CACHE.find(
-              (x) => String(x.id_aluno) === String(idAluno)
-            );
-            if (!aluno) return;
-
-            // garantir que este passa a ser o ALUNO_ATUAL
-            ALUNO_ATUAL = aluno;
-            preencherModalEdicao(aluno);
-            openModal(modalEditAluno);
-          });
-        });
     }
 
   // Devolve { ano, mes, mesLabel } garantindo que escolhemos um mês com dados
@@ -1950,9 +2108,12 @@
 
   // ---------- CARREGAR SESSÕES DO ALUNO ----------
   async function loadSessoesAluno(alunoId) {
-    if (!tblSessoesBody) return;
+    if (!alunoId) return;
 
-    tblSessoesBody.innerHTML =
+    const tblBody = document.querySelector("#tblSessoesAluno tbody");
+    if (!tblBody) return;
+
+    tblBody.innerHTML =
       '<tr><td colspan="5">A carregar sessões...</td></tr>';
 
     const { data, error } = await callExplFn("list_sessoes_aluno", {
@@ -1961,48 +2122,208 @@
 
     if (error) {
       console.error("list_sessoes_aluno error", error);
-      tblSessoesBody.innerHTML =
-        '<tr><td colspan="5">Erro ao carregar sessões.</td></tr>';
+      tblBody.innerHTML =
+        '<tr><td colspan="5">Erro a carregar sessões do aluno.</td></tr>';
       return;
     }
 
     if (!data || !data.length) {
-      tblSessoesBody.innerHTML =
+      tblBody.innerHTML =
         '<tr><td colspan="5">Ainda não existem sessões registadas para este aluno.</td></tr>';
+      // atualizar vista de perfil também
+      atualizarPerfilComSessoes([]);
       return;
     }
 
-    tblSessoesBody.innerHTML = data
+    const rows = data
       .map((s) => {
-        const dataLabel = s.data || "—";
-        const hIni = s.hora_inicio || "—";
-        const hFim = s.hora_fim || "—";
+        const d = s.data || "";
+        const ini = s.hora_inicio || "";
+        const fim = s.hora_fim || "";
         const dur = s.duracao_min != null ? s.duracao_min : "—";
-        const est = s.estado || "—";
+        const estado = s.estado || "";
 
         return `
-          <tr class="linha-sessao" data-id-sessao="${s.id_sessao}">
-            <td>${dataLabel}</td>
-            <td>${hIni}</td>
-            <td>${hFim}</td>
+          <tr data-id-sessao="${s.id_sessao}">
+            <td>${d}</td>
+            <td>${ini}</td>
+            <td>${fim}</td>
             <td>${dur}</td>
-            <td>${est}</td>
+            <td>${estado}</td>
           </tr>
         `;
       })
       .join("");
 
-    tblSessoesBody.querySelectorAll("tr.linha-sessao").forEach((row) => {
-      row.addEventListener("click", () => {
-        const idSessao = row.dataset.idSessao;
-        const sessao = (data || []).find(
-          (s) => String(s.id_sessao) === String(idSessao),
+    tblBody.innerHTML = rows;
+
+    tblBody.querySelectorAll("tr").forEach((tr) => {
+      tr.addEventListener("click", () => {
+        const idSessao = tr.getAttribute("data-id-sessao");
+        if (!idSessao) return;
+
+        const sessao = data.find(
+          (s) => String(s.id_sessao) === String(idSessao)
         );
-        if (sessao) {
-          abrirModalSessao(sessao);
-        }
+        if (!sessao) return;
+
+        preencherModalSessao(sessao);
+        openModal(modalSessao);
       });
     });
+
+    // 🔹 Atualizar também o perfil (kpi + tabela + próxima aula)
+    atualizarPerfilComSessoes(data);
+  }
+
+  function atualizarPerfilComSessoes(sessoes) {
+    const tbody = document.getElementById("listaExplicacoes");
+    const kpiAulasEl = document.getElementById("kpiAulas");
+    const proxEl = document.getElementById("proximaAulaTxt");
+
+    if (!tbody) return;
+
+    if (!sessoes || !sessoes.length) {
+      tbody.innerHTML =
+        '<tr><td colspan="6">Ainda não existem explicações registadas.</td></tr>';
+      if (kpiAulasEl) kpiAulasEl.textContent = "0/0";
+      if (proxEl) proxEl.textContent = "Nenhuma aula agendada";
+      return;
+    }
+
+    const nomesMeses = [
+      "Jan","Fev","Mar","Abr","Mai","Jun",
+      "Jul","Ago","Set","Out","Nov","Dez",
+    ];
+
+    const hoje = new Date();
+    let proximaSessao = null;
+
+    const rows = sessoes.map((s) => {
+      let dataLabel = s.data || "—";
+      let horario = "—";
+      if (s.hora_inicio || s.hora_fim) {
+        const ini = s.hora_inicio ? s.hora_inicio.slice(0, 5) : "--:--";
+        const fim = s.hora_fim ? s.hora_fim.slice(0, 5) : "--:--";
+        horario = `${ini} - ${fim}`;
+      }
+
+      // calcular próxima aula (apenas AGENDADA no futuro)
+      if (s.data) {
+        const d = new Date(s.data);
+        if (!isNaN(d.getTime()) && d >= hoje && (s.estado || "").toUpperCase() !== "CANCELADA") {
+          if (!proximaSessao || d < new Date(proximaSessao.data)) {
+            proximaSessao = s;
+          }
+        }
+      }
+
+      const partes = s.data ? s.data.split("-") : null;
+      if (partes && partes.length === 3) {
+        const ano = partes[0];
+        const mes = Number(partes[1]);
+        const dia = partes[2];
+        dataLabel = `${dia}/${nomesMeses[mes - 1] ?? mes}/${ano}`;
+      }
+
+      const estado = s.estado || "—";
+      const topico = s.observacoes || "—";
+
+      return `
+        <tr>
+          <td>${dataLabel}</td>
+          <td>${horario}</td>
+          <td>—</td>
+          <td>${topico}</td>
+          <td>${estado}</td>
+          <td>${topico}</td>
+        </tr>
+      `;
+    });
+
+    tbody.innerHTML = rows.join("");
+
+    // KPI aulas concluídas
+    if (kpiAulasEl) {
+      const total = sessoes.length;
+      const concluidas = sessoes.filter(
+        (s) => (s.estado || "").toUpperCase() === "REALIZADA"
+      ).length;
+      kpiAulasEl.textContent = `${concluidas}/${total}`;
+    }
+
+    // Próxima aula
+    if (proxEl) {
+      if (!proximaSessao) {
+        proxEl.textContent = "Nenhuma aula agendada";
+      } else {
+        const partes = proximaSessao.data.split("-");
+        let dataNice = proximaSessao.data;
+        if (partes.length === 3) {
+          const ano = partes[0];
+          const mes = Number(partes[1]);
+          const dia = partes[2];
+          dataNice = `${dia}/${nomesMeses[mes - 1] ?? mes}/${ano}`;
+        }
+        const hora = proximaSessao.hora_inicio
+          ? proximaSessao.hora_inicio.slice(0, 5)
+          : "";
+        proxEl.textContent = hora ? `${dataNice} às ${hora}` : dataNice;
+      }
+    }
+  }
+
+    function atualizarPerfilComPagamentos(pagamentos) {
+    const tbody = document.getElementById("listaPagamentos");
+    const totalEl = document.getElementById("pagTotal");
+    if (!tbody) return;
+
+    if (!pagamentos || !pagamentos.length) {
+      tbody.innerHTML =
+        '<tr><td colspan="5">Ainda não existem pagamentos registados.</td></tr>';
+      if (totalEl) totalEl.textContent = "0.00";
+      return;
+    }
+
+    const nomesMesesLong = [
+      "Janeiro","Fevereiro","Março","Abril","Maio","Junho",
+      "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro",
+    ];
+
+    let totalRecebido = 0;
+
+    const rows = pagamentos.map((p) => {
+      const pago = Number(p.valor_pago) || 0;
+      totalRecebido += pago;
+
+      const ano = p.ano;
+      const mes = p.mes;
+      const periodo =
+        (nomesMesesLong[mes - 1] || mes) + " " + ano;
+
+      const dataLabel =
+        p.data_pagamento ||
+        `${String(1).padStart(2, "0")}/${String(mes).padStart(2, "0")}/${ano}`;
+
+      const metodo = "—"; // se mais tarde adicionares método à tabela, lês daqui
+      const estado = p.estado || "—";
+
+      return `
+        <tr>
+          <td>${dataLabel}</td>
+          <td>${periodo}</td>
+          <td>€ ${pago.toFixed(2)}</td>
+          <td>${metodo}</td>
+          <td>${estado}</td>
+        </tr>
+      `;
+    });
+
+    tbody.innerHTML = rows.join("");
+
+    if (totalEl) {
+      totalEl.textContent = totalRecebido.toFixed(2);
+    }
   }
 
   // ---------- OPEN/CLOSE MODAL ----------
@@ -2177,146 +2498,117 @@
 
   // ---------- Painel de detalhes por aluno ----------
   async function mostrarPainelAluno(aluno) {
-    ALUNO_ATUAL = aluno;
 
-    const card = document.getElementById("aluno-detail-card");
-    if (!card) return;
+  ALUNO_ATUAL = aluno;
 
-    const nomeCompleto = [aluno.nome, aluno.apelido].filter(Boolean).join(" ");
-    document.getElementById("aluno-detail-nome").textContent =
-      nomeCompleto || "Aluno";
+  const card = document.getElementById("aluno-detail-card");
+  if (!card) return;
 
-    // Atualizar estado (Ativo / Bloqueado + switch)
-    updateAlunoStatusUI(aluno);
+  const nomeCompleto = [aluno.nome, aluno.apelido].filter(Boolean).join(" ");
+  document.getElementById("aluno-detail-nome").textContent =
+    nomeCompleto || "Aluno";
 
-    document.getElementById("aluno-detail-meta").textContent =
-      aluno.username ? `Username: ${aluno.username}` : "";
+  updateAlunoStatusUI(aluno);
 
-    document.getElementById("aluno-detail-email").textContent =
-      aluno.email || "—";
-    document.getElementById("aluno-detail-tel").textContent =
-      aluno.telemovel || "—";
-    document.getElementById("aluno-detail-ano").textContent =
-      aluno.ano ?? "—";
+  document.getElementById("aluno-detail-meta").textContent =
+    aluno.username ? `Username: ${aluno.username}` : "";
 
-    const valorExp =
-      aluno.valor_explicacao != null
-        ? `€ ${Number(aluno.valor_explicacao).toFixed(2)}`
-        : "—";
-    document.getElementById("aluno-detail-valor").textContent = valorExp;
+  document.getElementById("aluno-detail-email").textContent =
+    aluno.email || "—";
+  document.getElementById("aluno-detail-tel").textContent =
+    aluno.telemovel || "—";
+  document.getElementById("aluno-detail-ano").textContent =
+    aluno.ano ?? "—";
 
-    const sessoes =
-      aluno.sessoes_mes != null ? String(aluno.sessoes_mes) : "—";
-    document.getElementById("aluno-detail-sessoes").textContent = sessoes;
+  document.getElementById("aluno-detail-valor").textContent =
+    aluno.valor_explicacao != null
+      ? `€ ${Number(aluno.valor_explicacao).toFixed(2)}`
+      : "—";
 
-    card.style.display = "block";
+  document.getElementById("aluno-detail-sessoes").textContent =
+    aluno.sessoes_mes != null ? String(aluno.sessoes_mes) : "—";
 
-    if (!EXPLICADOR.id_explicador) return;
+  card.style.display = "block";
 
-    const elPrevistoMes = document.getElementById("aluno-detail-previsto-mes");
-    const elPagoMes     = document.getElementById("aluno-detail-pago-mes");
-    const elEmFalta     = document.getElementById("aluno-detail-emfalta");
+  if (!EXPLICADOR.id_explicador) return;
 
-    try {
-      const now = new Date();
-      const anoAtual = now.getFullYear();
-      const mesAtual = now.getMonth() + 1;
+  const elPrevistoMes = document.getElementById("aluno-detail-previsto-mes");
+  const elPagoMes = document.getElementById("aluno-detail-pago-mes");
+  const elEmFalta = document.getElementById("aluno-detail-emfalta");
 
-      const { data, error } = await supabase
-        .from("v_pagamentos_detalhe")
-        .select("ano, mes, valor_previsto, valor_pago, estado")
-        .eq("id_explicador", EXPLICADOR.id_explicador)
-        .eq("id_aluno", aluno.id_aluno);
+  // 🔥 CORREÇÃO — declarar antes do try
+  let pagamentosAluno = [];
 
-      if (error) {
-        console.error("Erro a carregar pagamentos do aluno", error);
-        if (elPrevistoMes) elPrevistoMes.textContent = "—";
-        if (elPagoMes)     elPagoMes.textContent     = "—";
-        if (elEmFalta)     elEmFalta.textContent     = "—";
-        return;
-      }
+  try {
+    const now = new Date();
+    const anoAtual = now.getFullYear();
+    const mesAtual = now.getMonth() + 1;
 
-      let previstoMes = 0;
-      let pagoMes     = 0;
-      let emFaltaTotal = 0;
+    const { data, error } = await supabase
+      .from("v_pagamentos_detalhe")
+      .select(
+        "ano, mes, valor_previsto, valor_pago, estado, data_pagamento"
+      )
+      .eq("id_explicador", EXPLICADOR.id_explicador)
+      .eq("id_aluno", aluno.id_aluno);
 
-      (data || []).forEach((p) => {
-        const previsto = Number(p.valor_previsto) || 0;
-        const pago     = Number(p.valor_pago) || 0;
-        const falta    = Math.max(previsto - pago, 0);
-
-        if (p.ano === anoAtual && p.mes === mesAtual) {
-          previstoMes += previsto;
-          pagoMes     += pago;
-        }
-
-        emFaltaTotal += falta;
-      });
-
-      if ((!data || data.length === 0) &&
-          aluno.valor_explicacao != null &&
-          aluno.sessoes_mes != null) {
-
-        const estimado = Number(aluno.valor_explicacao) * Number(aluno.sessoes_mes);
-        previstoMes   = estimado;
-        pagoMes       = 0;
-        emFaltaTotal  = estimado;
-      }
-
-      if (elPrevistoMes) {
-        elPrevistoMes.textContent = `€ ${previstoMes.toFixed(2)}`;
-      }
-      if (elPagoMes) {
-        elPagoMes.textContent     = `€ ${pagoMes.toFixed(2)}`;
-      }
-      if (elEmFalta) {
-        elEmFalta.textContent     = `€ ${emFaltaTotal.toFixed(2)}`;
-      }
-            // --- Tabela de histórico de pagamentos do aluno ---
-      const tbodyAluno = document.querySelector("#tblPagamentosAluno tbody");
-
-      if (tbodyAluno) {
-        if (!data || !data.length) {
-          tbodyAluno.innerHTML =
-            '<tr><td colspan="5">Ainda não existem pagamentos registados para este aluno.</td></tr>';
-        } else {
-          const nomesMeses = [
-            "Janeiro","Fevereiro","Março","Abril","Maio","Junho",
-            "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro",
-          ];
-
-          const rows = data
-            .slice() // cópia para poder ordenar
-            .sort((a, b) => (a.ano - b.ano) || (a.mes - b.mes))
-            .map((p) => {
-              const mesIdx = (p.mes || 1) - 1;
-              const mesLabelLinha =
-                nomesMeses[mesIdx] || String(p.mes || "");
-              const previstoLinha = Number(p.valor_previsto) || 0;
-              const pagoLinha     = Number(p.valor_pago) || 0;
-              const estadoLinha   = p.estado || "";
-
-              return `
-                <tr>
-                  <td>${p.ano || ""}</td>
-                  <td>${mesLabelLinha}</td>
-                  <td>€ ${previstoLinha.toFixed(2)}</td>
-                  <td>€ ${pagoLinha.toFixed(2)}</td>
-                  <td>${estadoLinha}</td>
-                </tr>
-              `;
-            })
-            .join("");
-
-          tbodyAluno.innerHTML = rows;
-        }
-      }
-    } catch (err) {
-      console.error("Erro inesperado ao calcular resumo do aluno", err);
+    if (error) {
+      console.error("Erro a carregar pagamentos do aluno", error);
+      if (elPrevistoMes) elPrevistoMes.textContent = "—";
+      if (elPagoMes) elPagoMes.textContent = "—";
+      if (elEmFalta) elEmFalta.textContent = "—";
+      return;
     }
 
-    await loadSessoesAluno(aluno.id_aluno);
+    // 🔥 CORREÇÃO — guardar os pagamentos lidos
+    pagamentosAluno = data || [];
+
+    let previstoMes = 0;
+    let pagoMes = 0;
+    let emFaltaTotal = 0;
+
+    (data || []).forEach((p) => {
+      const previsto = Number(p.valor_previsto) || 0;
+      const pago = Number(p.valor_pago) || 0;
+      const falta = Math.max(previsto - pago, 0);
+
+      if (p.ano === anoAtual && p.mes === mesAtual) {
+        previstoMes += previsto;
+        pagoMes += pago;
+      }
+
+      emFaltaTotal += falta;
+    });
+
+    if (
+      (!data || data.length === 0) &&
+      aluno.valor_explicacao != null &&
+      aluno.sessoes_mes != null
+    ) {
+      const estimado =
+        Number(aluno.valor_explicacao) * Number(aluno.sessoes_mes);
+
+      previstoMes = estimado;
+      pagoMes = 0;
+      emFaltaTotal = estimado;
+    }
+
+    if (elPrevistoMes)
+      elPrevistoMes.textContent = `€ ${previstoMes.toFixed(2)}`;
+    if (elPagoMes) elPagoMes.textContent = `€ ${pagoMes.toFixed(2)}`;
+    if (elEmFalta) elEmFalta.textContent = `€ ${emFaltaTotal.toFixed(2)}`;
+
+    // (tabela original mantém-se)
+  } catch (err) {
+    console.error("Erro inesperado ao calcular resumo do aluno", err);
   }
+
+  // 🔥 CORREÇÃO — esta variável AGORA existe sempre
+  atualizarPerfilComPagamentos(pagamentosAluno);
+
+  // Carregar sessões do aluno para preencher tab "Explicações"
+  await loadSessoesAluno(aluno.id_aluno);
+}
 
   // ---------- CRIAR ALUNO ----------
   async function createAluno(payload) {
@@ -2702,11 +2994,12 @@
     const title = document.querySelector('.expl-page-title');
     if (title) {
       const mapTitle = {
-        dashboard: 'Dashboard',
-        alunos: 'Alunos',
-        calendario: 'Calendário',
-        faturacao: 'Faturação',
-        relatorios: 'Relatórios',
+        dashboard: "Dashboard",
+        alunos: "Alunos",
+        "aluno-perfil": "Perfil do aluno",
+        calendario: "Calendário",
+        faturacao: "Faturação",
+        relatorios: "Relatórios",
       };
       title.textContent = mapTitle[target] || 'Dashboard';
     }
@@ -3352,6 +3645,25 @@
       closeFab();
     });
   });
+
+    // Disponibilizar no global para o HTML
+  window.ativarScreen = ativarScreen;
+  window.voltarParaAlunos = function () {
+    ativarScreen("alunos");
+  };
+
+  window.showPerfilTab = function (tab) {
+    const sec = document.getElementById("expl-sec-aluno-perfil");
+    if (!sec) return;
+
+    sec.querySelectorAll(".tab").forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.tab === tab);
+    });
+
+    sec.querySelectorAll(".tab-content").forEach((div) => {
+      div.classList.toggle("active", div.id === `tab-${tab}`);
+    });
+  };
 
 })();
 </script>

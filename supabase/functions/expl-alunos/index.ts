@@ -19,10 +19,14 @@ if (!URL || !ANON || !SVC) {
   throw new Error("Faltam SUPABASE_URL / SUPABASE_ANON_KEY / SUPABASE_SERVICE_ROLE_KEY");
 }
 function cors(origin = "*") {
+  const o = origin || "*";
   return {
-    "Access-Control-Allow-Origin": origin,
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Origin": o,
+    "Vary": "Origin",
+    // Deixa passar todos os headers pedidos no preflight
+    "Access-Control-Allow-Headers": "*",
+    // Podes permitir também GET se um dia usares
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Content-Type": "application/json"
   };
 }
@@ -582,30 +586,32 @@ serve(async (req)=>{
       try {
         const targetDow = mapDiaSemanaToJsIndex(aluno.dia_semana_preferido ?? null);
         if (targetDow !== null) {
-          // primeiro dia do mês escolhido
+          // base: máximo entre hoje e 1º dia do mês escolhido
+          const hoje = new Date();
+          hoje.setHours(0, 0, 0, 0);
           const inicioMes = new Date(ano1, mes1 - 1, 1);
-          const primeiroDiaSessao = proximaDataDoDiaSemana(inicioMes, targetDow);
+          inicioMes.setHours(0, 0, 0, 0);
+          const baseInicio = hoje > inicioMes ? hoje : inicioMes;
+          // primeira sessão >= baseInicio no dia da semana preferido
+          const primeiroDiaSessao = proximaDataDoDiaSemana(baseInicio, targetDow);
           const sessoes = [];
           let dataSessao = primeiroDiaSessao;
-          // quantas semanas queres gerar de uma vez
-          const NUM_SEMANAS = 8;
+          const NUM_SEMANAS = 8; // podes ajustar mais tarde
           for(let i = 0; i < NUM_SEMANAS; i++){
             sessoes.push({
               id_explicador: myExplId,
               id_aluno: alunoId,
               data: toISODate(dataSessao),
-              // se ainda não tens hora_preferida, fica null
               hora_inicio: null,
               estado: "AGENDADA"
             });
             dataSessao = addDays(dataSessao, 7);
           }
           if (sessoes.length) {
-            const { error: sessErr } = await svc.from("sessoes_explicacao") // <=== TABELA CERTA
-            .insert(sessoes);
+            const { error: sessErr } = await svc.from("sessoes_explicacao").insert(sessoes);
             if (sessErr) {
               console.error("Erro a criar sessões recorrentes em iniciar_faturacao_aluno", sessErr);
-            // não damos return de erro, só log, para não estragar a faturação
+            // não fazemos return de erro para não estragar a faturação
             }
           }
         } else {
