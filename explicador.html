@@ -204,26 +204,11 @@
                 CARTÃO: LISTA DE ALUNOS
                 ======================= -->
             <div class="expl-card" id="lista-alunos-card">
-
               <h3 class="expl-subsection-title">Lista de alunos</h3>
 
-              <!-- CONTAINER FIXO COM SCROLL VERTICAL -->
-              <div class="expl-scroll-card">
-
-                <!-- scroll horizontal apenas da tabela -->
-                <div class="table-wrapper">
-                  <table class="table" id="tblAlunos">
-                    <thead>
-                      <tr>
-                        <th>Nome</th>
-                        <th>Email</th>
-                        <th>Ano</th>
-                      </tr>
-                    </thead>
-                    <tbody></tbody>
-                  </table>
-                </div>
-
+              <!-- Grelha de cartões de alunos -->
+              <div class="dash-alunos-grid" id="alunos-cards-grid">
+                <!-- cartões preenchidos por JS -->
               </div>
             </div>
 
@@ -868,7 +853,7 @@
   const msgLogin    = $('#msgExplLogin');
   const formLogin   = $('#fExplLogin');
 
-  const tblBody     = $('#tblAlunos tbody');
+  const alunosGrid  = document.getElementById('alunos-cards-grid');
   const elLimite    = $('#limite');
   const elContagem  = $('#contagem');
   const elRestantes = $('#restantes');
@@ -1136,59 +1121,164 @@
   }
 
   // ---------- LISTAR ALUNOS ----------
-  async function loadAlunos() {
-    const { data, error } = await callExplFn("list_alunos", null);
+    async function loadAlunos() {
+      const { data, error } = await callExplFn("list_alunos", null);
 
-    if (error) {
-      console.error("loadAlunos error", error);
-      tblBody.innerHTML =
-        '<tr><td colspan="3">Erro a carregar alunos.</td></tr>';
-      ALUNOS_CACHE = [];
-      updateQuotaUI(0);
+      if (!alunosGrid) {
+        console.warn("alunos-cards-grid não encontrado no DOM.");
+        return;
+      }
+
+      if (error) {
+        console.error("loadAlunos error", error);
+        alunosGrid.innerHTML =
+          '<p class="expl-section-sub">Erro a carregar alunos.</p>';
+        ALUNOS_CACHE = [];
+        updateQuotaUI(0);
+        renderDashboardAlunos();
+        return;
+      }
+
+      if (!data || !data.length) {
+        alunosGrid.innerHTML =
+          '<p class="expl-section-sub">Sem alunos ainda.</p>';
+        ALUNOS_CACHE = [];
+        updateQuotaUI(0);
+        renderDashboardAlunos();
+        return;
+      }
+
+      ALUNOS_CACHE = data;
+      updateQuotaUI(data.length);
       renderDashboardAlunos();
-      return;
-    }
 
-    if (!data || !data.length) {
-      tblBody.innerHTML =
-        '<tr><td colspan="3">Sem alunos ainda.</td></tr>';
-      ALUNOS_CACHE = [];
-      updateQuotaUI(0);
-      renderDashboardAlunos();
-      return;
-    }
+      // helper para o badge de estado da mensalidade
+      function getEstadoInfo(rawEstado) {
+        const e = (rawEstado || "").toString().trim().toUpperCase();
 
-    ALUNOS_CACHE = data;
+        switch (e) {
+          case "PAGO":
+            return {
+              label: "Pago",
+              badgeClass:
+                "dash-aluno-card__badge dash-aluno-card__badge--pago",
+            };
+          case "PARCIAL":
+            return {
+              label: "Parcial",
+              badgeClass:
+                "dash-aluno-card__badge dash-aluno-card__badge--parcial",
+            };
+          case "PENDENTE":
+          default:
+            return {
+              label: e ? e.charAt(0) + e.slice(1).toLowerCase() : "Pendente",
+              badgeClass:
+                "dash-aluno-card__badge dash-aluno-card__badge--pendente",
+            };
+        }
+      }
 
-    tblBody.innerHTML = data
-      .map((a) => {
-        const nome = [a.nome, a.apelido].filter(Boolean).join(" ");
+      alunosGrid.innerHTML = data
+        .map((a) => {
+          const nome = [a.nome, a.apelido].filter(Boolean).join(" ") || "Aluno";
+          const anoLabel = a.ano ? `${a.ano}º Ano` : "—";
+          const tel = a.telemovel || "—";
 
-        return `
-          <tr class="linha-aluno" data-id-aluno="${a.id_aluno}">
-            <td>${nome || "-"}</td>
-            <td>${a.email ?? "-"}</td>
-            <td>${a.ano ?? "-"}</td>
-          </tr>
-        `;
-      })
-      .join("");
+          const proximaMensalidade = a.proxima_mensalidade || "—";
+          const { label: estadoLabel, badgeClass } = getEstadoInfo(
+            a.estado_mensalidade || "PENDENTE"
+          );
 
-    updateQuotaUI(data.length);
-    renderDashboardAlunos();
+          const ativo = a.is_active !== false;
+          const statusLabel = ativo ? "Ativo" : "Inativo";
+          const statusClass = ativo
+            ? "aluno-status-badge aluno-status-badge--ativo"
+            : "aluno-status-badge aluno-status-badge--inativo";
 
-    tblBody
-      .querySelectorAll("tr.linha-aluno")
-      .forEach((row) => {
-        row.addEventListener("click", () => {
-          const idAluno = row.dataset.idAluno;
-          const aluno = ALUNOS_CACHE.find((a) => String(a.id_aluno) === String(idAluno));
-          if (aluno) {
-            mostrarPainelAluno(aluno);
-          }
+          return `
+            <article class="dash-aluno-card">
+              <div>
+                <div class="dash-aluno-card__top" style="justify-content: space-between;">
+                  <div style="display:flex; gap:12px;">
+                    <div class="dash-aluno-card__avatar"></div>
+                    <div>
+                      <h3 class="dash-aluno-card__name">${nome}</h3>
+                      <p class="dash-aluno-card__year">${anoLabel}</p>
+                      <p class="aluno-card__phone">
+                        Telemóvel: <span>${tel}</span>
+                      </p>
+                    </div>
+                  </div>
+
+                  <span class="${statusClass}">
+                    ${statusLabel}
+                  </span>
+                </div>
+
+                <p class="dash-aluno-card__label">Próxima mensalidade:</p>
+                <p class="dash-aluno-card__date">${proximaMensalidade}</p>
+
+                <span class="${badgeClass}">
+                  ${estadoLabel}
+                </span>
+              </div>
+
+              <div class="aluno-card__actions">
+                <button
+                  type="button"
+                  class="button secondary aluno-card__btn"
+                  data-action="ver"
+                  data-id-aluno="${a.id_aluno}"
+                >
+                  Ver perfil
+                </button>
+
+                <button
+                  type="button"
+                  class="button secondary aluno-card__btn"
+                  data-action="editar"
+                  data-id-aluno="${a.id_aluno}"
+                >
+                  Editar
+                </button>
+              </div>
+            </article>
+          `;
+        })
+        .join("");
+
+      // Ligações dos botões "Ver perfil"
+      alunosGrid
+        .querySelectorAll('button[data-action="ver"]')
+        .forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const idAluno = btn.getAttribute("data-id-aluno");
+            if (!idAluno) return;
+
+            // navega para a nova página de perfil do aluno
+            window.location.href = `./aluno-perfil.html?id=${encodeURIComponent(idAluno)}`;
+          });
         });
-      });
-  }
+
+      // Ligações dos botões "Editar"
+      alunosGrid
+        .querySelectorAll('button[data-action="editar"]')
+        .forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const idAluno = btn.getAttribute("data-id-aluno");
+            const aluno = ALUNOS_CACHE.find(
+              (x) => String(x.id_aluno) === String(idAluno)
+            );
+            if (!aluno) return;
+
+            // garantir que este passa a ser o ALUNO_ATUAL
+            ALUNO_ATUAL = aluno;
+            preencherModalEdicao(aluno);
+            openModal(modalEditAluno);
+          });
+        });
+    }
 
   // Devolve { ano, mes, mesLabel } garantindo que escolhemos um mês com dados
   function getMesAnoSelecionadosOuUltimoComDados() {

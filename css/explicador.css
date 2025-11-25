@@ -795,6 +795,25 @@ body.home main.auth {
   width: 100%;
   justify-content: center; /* usa flex da .button */
 }
+/* Extra para os cartões da Lista de Alunos */
+
+.aluno-card__phone {
+  margin-top: 4px;
+  font-size: 0.82rem;
+  color: #6b7280;
+}
+
+.aluno-card__actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.aluno-card__btn {
+  flex: 1;
+  justify-content: center; /* usa o flex da .button */
+}
+
 .dash-badge--pago {
   background: #111827;
   color: #fff;
@@ -833,23 +852,24 @@ body.home main.auth {
 }
 
 .aluno-status-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+
   padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   font-weight: 600;
-  border: 1px solid transparent;
+
+  border-radius: 9999px;
+  color: white;
 }
 
 .aluno-status-badge--ativo {
-  background: #dcfce7;
-  color: #166534;
-  border-color: #bbf7d0;
+  background: #4ade80; /* verde suave */
 }
 
 .aluno-status-badge--inativo {
-  background: #fee2e2;
-  color: #991b1b;
-  border-color: #fecaca;
+  background: #f87171; /* vermelho suave */
 }
 
 /* Switch tipo iOS */
@@ -1107,7 +1127,6 @@ html, body {
 /* Garantir que os cartões nunca passam a largura */
 .expl-card,
 .expl-kpi-card,
-.dash-aluno-card,
 .rel-card {
   max-width: 100%;
 }
@@ -1155,6 +1174,20 @@ html, body {
   .relatorios-grid {
     grid-template-columns: 1fr;
   }
+  .dash-alunos-grid {
+    gap: 20px;
+  }
+  .aluno-card__actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.aluno-card__btn {
+  flex: 1;
+  text-align: center;
+}
+
 
   /* Calendário semanal: no mobile, 2 colunas (ou 1 se preferires) */
   .calendar-week__grid {
@@ -1434,6 +1467,10 @@ body.home main.auth,
     margin-left: 0 !important;
     margin-right: 0 !important;
   }
+  .dash-aluno-card {
+  position: relative;
+  margin-bottom: 16px;
+}
 
   /* sidebar também não rebenta a largura */
   .expl-sidebar-nav {
