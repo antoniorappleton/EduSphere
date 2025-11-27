@@ -360,3 +360,23 @@
 .sessao-btn:active .icon16 path {
   transform: scale(0.95);
 }
+/* Tabelas do perfil do aluno – garantir largura mínima para scroll no mobile */
+.perfil-table-wrapper {
+  margin-top: 8px;
+}
+
+.perfil-tabela {
+  min-width: 600px;
+}
+
+@media (max-width: 480px) {
+  .perfil-tabela {
+    min-width: 520px;
+    font-size: 12px;
+  }
+
+  .perfil-tabela th,
+  .perfil-tabela td {
+    padding: 8px 10px;
+  }
+}
