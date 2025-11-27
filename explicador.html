@@ -1215,7 +1215,6 @@
       .map((a) => {
         const nome = [a.nome, a.apelido].filter(Boolean).join(" ") || "Aluno";
         const anoLabel = a.ano ? `${a.ano}º Ano` : "—";
-
         const proximaMensalidade = a.proxima_mensalidade || "—";
         const { label: estadoLabel, badgeClass } = getEstadoInfo(
           a.estado_mensalidade || "PENDENTE"
@@ -1253,21 +1252,22 @@
       .join("");
 
     // clique em "Ver detalhes" -> vai direto para o PERFIL do aluno
-    grid.querySelectorAll("[data-id-aluno]").forEach((btn) => {
+    grid.querySelectorAll(".dash-aluno-card__btn").forEach((btn) => {
       btn.addEventListener("click", () => {
         const idAluno = btn.getAttribute("data-id-aluno");
-        const aluno = ALUNOS_CACHE.find(
+        const aluno = (ALUNOS_CACHE || []).find(
           (x) => String(x.id_aluno) === String(idAluno)
         );
         if (!aluno) return;
 
-        // preenche o header do perfil
-        preencherPerfilAlunoBasico(aluno);
+        // preencher header do perfil + painel detalhe
+        if (typeof preencherPerfilAlunoBasico === "function") {
+          preencherPerfilAlunoBasico(aluno);
+        }
+        if (typeof mostrarPainelAluno === "function") {
+          mostrarPainelAluno(aluno);
+        }
 
-        // carrega sessões + pagamentos + painel lateral (função já é async)
-        mostrarPainelAluno(aluno);
-
-        // muda o ecrã principal para o perfil
         ativarScreen("aluno-perfil");
       });
     });
@@ -1292,157 +1292,168 @@
   }
 
   // ---------- LISTAR ALUNOS ----------
-    async function loadAlunos() {
-      const { data, error } = await callExplFn("list_alunos", null);
+  async function loadAlunos() {
+    const { data, error } = await callExplFn("list_alunos", null);
 
-      if (!alunosGrid) {
-        console.warn("alunos-cards-grid não encontrado no DOM.");
-        return;
-      }
+    if (!alunosGrid) {
+      console.warn("alunos-cards-grid não encontrado no DOM.");
+      return;
+    }
 
-      if (error) {
-        console.error("loadAlunos error", error);
-        alunosGrid.innerHTML =
-          '<p class="expl-section-sub">Erro a carregar alunos.</p>';
-        ALUNOS_CACHE = [];
-        updateQuotaUI(0);
-        renderDashboardAlunos();
-        return;
-      }
-
-      if (!data || !data.length) {
-        alunosGrid.innerHTML =
-          '<p class="expl-section-sub">Sem alunos ainda.</p>';
-        ALUNOS_CACHE = [];
-        updateQuotaUI(0);
-        renderDashboardAlunos();
-        return;
-      }
-
-      ALUNOS_CACHE = data;
-      updateQuotaUI(data.length);
+    if (error) {
+      console.error("loadAlunos error", error);
+      alunosGrid.innerHTML =
+        '<p class="expl-section-sub">Erro a carregar alunos.</p>';
+      ALUNOS_CACHE = [];
+      updateQuotaUI(0);
       renderDashboardAlunos();
+      return;
+    }
 
-      // helper para o badge de estado da mensalidade
-      function getEstadoInfo(rawEstado) {
-        const e = (rawEstado || "").toString().trim().toUpperCase();
+    if (!data || !data.length) {
+      alunosGrid.innerHTML =
+        '<p class="expl-section-sub">Sem alunos ainda.</p>';
+      ALUNOS_CACHE = [];
+      updateQuotaUI(0);
+      renderDashboardAlunos();
+      return;
+    }
 
-        switch (e) {
-          case "PAGO":
-            return {
-              label: "Pago",
-              badgeClass:
-                "dash-aluno-card__badge dash-aluno-card__badge--pago",
-            };
-          case "PARCIAL":
-            return {
-              label: "Parcial",
-              badgeClass:
-                "dash-aluno-card__badge dash-aluno-card__badge--parcial",
-            };
-          case "PENDENTE":
-          default:
-            return {
-              label: e ? e.charAt(0) + e.slice(1).toLowerCase() : "Pendente",
-              badgeClass:
-                "dash-aluno-card__badge dash-aluno-card__badge--pendente",
-            };
-        }
+    ALUNOS_CACHE = data;
+    updateQuotaUI(data.length);
+    renderDashboardAlunos();
+
+    // helper para o badge de estado da mensalidade
+    function getEstadoInfo(rawEstado) {
+      const e = (rawEstado || "").toString().trim().toUpperCase();
+
+      switch (e) {
+        case "PAGO":
+          return {
+            label: "Pago",
+            badgeClass:
+              "dash-aluno-card__badge dash-aluno-card__badge--pago",
+          };
+        case "PARCIAL":
+          return {
+            label: "Parcial",
+            badgeClass:
+              "dash-aluno-card__badge dash-aluno-card__badge--parcial",
+          };
+        case "PENDENTE":
+        default:
+          return {
+            label: e ? e.charAt(0) + e.slice(1).toLowerCase() : "Pendente",
+            badgeClass:
+              "dash-aluno-card__badge dash-aluno-card__badge--pendente",
+          };
       }
+    }
 
-      alunosGrid.innerHTML = data
-        .map((a) => {
-          const nome = [a.nome, a.apelido].filter(Boolean).join(" ") || "Aluno";
-          const anoLabel = a.ano ? `${a.ano}º Ano` : "—";
-          const tel = a.telemovel || "—";
+    alunosGrid.innerHTML = data
+      .map((a) => {
+        const nome = [a.nome, a.apelido].filter(Boolean).join(" ") || "Aluno";
+        const anoLabel = a.ano ? `${a.ano}º Ano` : "—";
+        const tel = a.telemovel || "—";
 
-          const proximaMensalidade = a.proxima_mensalidade || "—";
-          const { label: estadoLabel, badgeClass } = getEstadoInfo(
-            a.estado_mensalidade || "PENDENTE"
-          );
+        const proximaMensalidade = a.proxima_mensalidade || "—";
+        const { label: estadoLabel, badgeClass } = getEstadoInfo(
+          a.estado_mensalidade || "PENDENTE"
+        );
 
-          const ativo = a.is_active !== false;
-          const statusLabel = ativo ? "Ativo" : "Inativo";
-          const statusClass = ativo
-            ? "aluno-status-badge aluno-status-badge--ativo"
-            : "aluno-status-badge aluno-status-badge--inativo";
+        const ativo = a.is_active !== false;
+        const statusLabel = ativo ? "Ativo" : "Inativo";
+        const statusClass = ativo
+          ? "aluno-status-badge aluno-status-badge--ativo"
+          : "aluno-status-badge aluno-status-badge--inativo";
 
-          return `
-            <article class="dash-aluno-card">
-              <div>
-                <div class="dash-aluno-card__top" style="justify-content: space-between;">
-                  <div style="display:flex; gap:12px;">
-                    <div class="dash-aluno-card__avatar"></div>
-                    <div>
-                      <h3 class="dash-aluno-card__name">${nome}</h3>
-                      <p class="dash-aluno-card__year">${anoLabel}</p>
-                      <p class="aluno-card__phone">
-                        Telemóvel: <span>${tel}</span>
-                      </p>
-                    </div>
+        return `
+          <article class="dash-aluno-card">
+            <div>
+              <div class="dash-aluno-card__top" style="justify-content: space-between;">
+                <div style="display:flex; gap:12px;">
+                  <div class="dash-aluno-card__avatar"></div>
+                  <div>
+                    <h3 class="dash-aluno-card__name">${nome}</h3>
+                    <p class="dash-aluno-card__year">${anoLabel}</p>
+                    <p class="aluno-card__phone">
+                      Telemóvel: <span>${tel}</span>
+                    </p>
                   </div>
-
-                  <span class="${statusClass}">
-                    ${statusLabel}
-                  </span>
                 </div>
 
-                <p class="dash-aluno-card__label">Próxima mensalidade:</p>
-                <p class="dash-aluno-card__date">${proximaMensalidade}</p>
-
-                <span class="${badgeClass}">
-                  ${estadoLabel}
+                <span class="${statusClass}">
+                  ${statusLabel}
                 </span>
               </div>
 
-              <div class="aluno-card__actions">
-                <button
-                  type="button"
-                  class="button secondary aluno-card__btn"
-                  data-action="ver"
-                  data-id-aluno="${a.id_aluno}"
-                >
-                  Ver perfil
-                </button>
+              <p class="dash-aluno-card__label">Próxima mensalidade:</p>
+              <p class="dash-aluno-card__date">${proximaMensalidade}</p>
 
-                <button
-                  type="button"
-                  class="button secondary aluno-card__btn"
-                  data-action="editar"
-                  data-id-aluno="${a.id_aluno}"
-                >
-                  Editar
-                </button>
-              </div>
-            </article>
-          `;
-        })
-        .join("");
-        // Ligações dos botões "Ver perfil"
-        alunosGrid
-          .querySelectorAll('button[data-action="ver"]')
-          .forEach((btn) => {
-            btn.addEventListener("click", async () => {
-              const idAluno = btn.getAttribute("data-id-aluno");
-              if (!idAluno) return;
+              <span class="${badgeClass}">
+                ${estadoLabel}
+              </span>
+            </div>
 
-              const aluno = ALUNOS_CACHE.find(
-                (x) => String(x.id_aluno) === String(idAluno)
-              );
-              if (!aluno) return;
+            <div class="aluno-card__actions">
+              <button
+                type="button"
+                class="button secondary aluno-card__btn"
+                data-action="ver"
+                data-id-aluno="${a.id_aluno}"
+              >
+                Ver perfil
+              </button>
 
-              // garante que o painel clássico também fica atualizado
-              await mostrarPainelAluno(aluno);
+              <button
+                type="button"
+                class="button secondary aluno-card__btn"
+                data-action="perfil"
+                data-id-aluno="${a.id_aluno}"
+              >
+                Informações rápidas
+              </button>
+            </div>
+          </article>
+        `;
+      })
+      .join("");
 
-              // preenche o novo layout de perfil
-              preencherPerfilAlunoBasico(aluno);
+    // Eventos nos botões da lista de alunos
+    alunosGrid
+      .querySelectorAll(".aluno-card__btn")
+      .forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const idAluno = btn.getAttribute("data-id-aluno");
+          const acao    = btn.dataset.action; // "ver" ou "perfil"
 
-              // mudar para o screen de perfil
-              ativarScreen("aluno-perfil");
-            });
+          const aluno = ALUNOS_CACHE.find(
+            (x) => String(x.id_aluno) === String(idAluno)
+          );
+          if (!aluno) return;
+
+          // ➜ Ver perfil completo (tabs Explicações / Pagamentos)
+          if (acao === "ver") {
+            preencherPerfilAlunoBasico(aluno);
+            mostrarPainelAluno(aluno);
+            ativarScreen("aluno-perfil");
+            return;
+          }
+
+          // ➜ Informações rápidas (cartão grande na secção Alunos)
+          if (acao === "perfil") {
+            mostrarPainelAluno(aluno);
+            ativarScreen("alunos");
+
+            const card = document.getElementById("aluno-detail-card");
+            if (card) {
+              card.style.display = "block";
+              card.scrollIntoView({ behavior: "smooth", block: "start" });
+            }
+          }
         });
-
-    }
+      });
+  }
 
   // Devolve { ano, mes, mesLabel } garantindo que escolhemos um mês com dados
   function getMesAnoSelecionadosOuUltimoComDados() {
@@ -2262,9 +2273,9 @@ async function loadSessoesAluno(alunoId) {
 
   ev.stopPropagation();
 
-  const tr    = btn.closest("tr");
-  const id    = tr?.dataset.id;
-  const acao  = btn.dataset.acao;
+  const tr   = btn.closest("tr");
+  const id   = tr?.dataset.id;
+  const acao = btn.dataset.acao;
   if (!id || !acao) return;
 
   const sessao = (SESSOES_ALUNO_ATUAL || []).find(
@@ -2272,9 +2283,14 @@ async function loadSessoesAluno(alunoId) {
   );
   if (!sessao) return;
 
-  // EDITAR -> abrir modal já existente
+  // EDITAR → abre modal da sessão (NÃO o perfil do aluno)
   if (acao === "editar") {
-    abrirModalSessao(sessao);
+    if (typeof preencherModalSessao === "function") {
+      preencherModalSessao(sessao);   // função que preenche o form da sessão
+    }
+    if (typeof modalSessao !== "undefined") {
+      openModal(modalSessao);
+    }
     return;
   }
 
@@ -2333,6 +2349,71 @@ async function loadSessoesAluno(alunoId) {
   }
 }
 
+  function obterIdAluno(alunoOuId) {
+  if (!alunoOuId) return null;
+
+  // já é id
+  if (typeof alunoOuId === "number" || typeof alunoOuId === "string") {
+    return alunoOuId;
+  }
+
+  // é objeto aluno
+  if (typeof alunoOuId === "object" && alunoOuId.id_aluno) {
+    return alunoOuId.id_aluno;
+  }
+
+  return null;
+}
+
+async function carregarPerfilAluno(alunoOuId) {
+  const idAluno = obterIdAluno(alunoOuId);
+
+  if (!idAluno) {
+    console.error("carregarPerfilAluno: idAluno inválido", alunoOuId);
+    return;
+  }
+
+  const aluno = await fetchAluno(idAluno);
+  if (!aluno) {
+    alert("Erro ao carregar aluno.");
+    return;
+  }
+
+  ALUNO_ATUAL = aluno;
+
+  // Preenche o cartão grande
+  if (typeof preencherCartaoPerfil === "function") {
+    preencherCartaoPerfil(ALUNO_ATUAL);
+  }
+
+  // Mostra a secção de detalhe
+  mostrarSecao("aluno-perfil");
+}
+
+
+  async function carregarPerfilAluno(alunoOuId) {
+    const idAluno = obterIdAluno(alunoOuId);
+    if (!idAluno) {
+      console.error("carregarPerfilAluno: idAluno inválido", alunoOuId);
+      return;
+    }
+
+    const aluno = await fetchAluno(idAluno);
+    if (!aluno) {
+      alert("Erro ao carregar aluno.");
+      return;
+    }
+
+    ALUNO_ATUAL = aluno;
+
+    // aqui usas a tua função que preenche o cartão grande
+    if (typeof preencherCartaoPerfil === "function") {
+      preencherCartaoPerfil(ALUNO_ATUAL);
+    }
+
+    // e mostra a secção correta
+    mostrarSecao("aluno-perfil");
+  }
 
 // ---------- ATUALIZAR PERFIL DO ALUNO: PAGAMENTOS ----------
   function atualizarPerfilComPagamentos(pagamentos) {
