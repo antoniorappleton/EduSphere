@@ -313,3 +313,50 @@
     margin-left: 0;
   }
 }
+.acoes-exp {
+  margin-left: 0.5rem;
+  display: inline-flex;
+  gap: 0.25rem;
+  vertical-align: middle;
+}
+
+.sessao-btn {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0 2px;
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+.sessao-btn:hover {
+  transform: scale(1.1);
+}
+.icon16 {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
+.acoes-exp {
+  display: inline-flex;
+  gap: 6px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+.sessao-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.sessao-btn:hover .icon16 path {
+  fill: #dc2626 !important;     /* hover mais forte */
+  stroke: #dc2626 !important;
+}
+
+.sessao-btn:active .icon16 path {
+  transform: scale(0.95);
+}

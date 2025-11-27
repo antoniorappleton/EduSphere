@@ -2193,33 +2193,30 @@
   }
 
   const hoje = new Date();
+  hoje.setHours(0,0,0,0);
   let proximaSessao = null;
 
   const rows = sessoes.map((s) => {
-    // Data formatada
+    // Data formatada YYYY-MM-DD -> DD/MM/YYYY
     let dataLabel = s.data || "—";
     if (s.data) {
-      const partes = s.data.split("-");
-      if (partes.length === 3) {
-        const ano = partes[0];
-        const mes = partes[1];
-        const dia = partes[2];
-        dataLabel = `${dia}/${mes}/${ano}`;
-      }
+      const [ano, mes, dia] = s.data.split("-");
+      dataLabel = `${dia}/${mes}/${ano}`;
     }
 
     const inicio = s.hora_inicio ? s.hora_inicio.slice(0, 5) : "--:--";
-    const fim    = s.hora_fim ? s.hora_fim.slice(0, 5) : "--:--";
+    const fim    = s.hora_fim ? s.hora_fim.slice(0, 5)   : "--:--";
     const dur    = s.duracao_min != null ? s.duracao_min : "—";
     const estado = s.estado || "—";
 
-    // Próxima aula (AGENDADA no futuro)
+    // calcular próxima aula (AGENDADA no futuro)
     if (s.data) {
       const d = new Date(s.data);
+      d.setHours(0,0,0,0);
       if (
         !isNaN(d.getTime()) &&
         d >= hoje &&
-        (estado || "").toUpperCase() !== "CANCELADA"
+        estado.toUpperCase() !== "CANCELADA"
       ) {
         if (!proximaSessao || d < new Date(proximaSessao.data)) {
           proximaSessao = s;
@@ -2228,12 +2225,71 @@
     }
 
     return `
-      <tr>
+      <tr data-id="${s.id_sessao}">
         <td>${dataLabel}</td>
         <td>${inicio}</td>
         <td>${fim}</td>
         <td>${dur}</td>
-        <td>${estado}</td>
+        <td>
+          <span class="estado-texto">${estado}</span>
+              <span class="acoes-exp">
+
+                <!-- EDITAR -->
+                <button type="button"
+                        class="sessao-btn"
+                        data-acao="editar"
+                        title="Editar sessão">
+                  <svg class="icon16" viewBox="0 0 24 24">
+                    <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z"
+                          fill="#b91c1c"/>
+                    <path d="M20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z"
+                          fill="#b91c1c"/>
+                  </svg>
+                </button>
+
+                <!-- REALIZADA -->
+                <button type="button"
+                        class="sessao-btn"
+                        data-acao="realizada"
+                        title="Marcar como realizada">
+                  <svg class="icon16" viewBox="0 0 24 24">
+                    <path d="M20 6L9 17l-5-5"
+                          stroke="#b91c1c"
+                          stroke-width="2.5"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          fill="none" />
+                  </svg>
+                </button>
+
+                <!-- APAGAR -->
+                <button type="button"
+                        class="sessao-btn"
+                        data-acao="apagar"
+                        title="Apagar sessão">
+                  <svg class="icon16" viewBox="0 0 24 24">
+                    <path d="M3 6h18"
+                          stroke="#b91c1c"
+                          stroke-width="2"
+                          stroke-linecap="round"/>
+                    <path d="M8 6V4h8v2"
+                          stroke="#b91c1c"
+                          stroke-width="2"
+                          stroke-linecap="round"/>
+                    <path d="M10 11v6M14 11v6"
+                          stroke="#b91c1c"
+                          stroke-width="2"
+                          stroke-linecap="round"/>
+                    <path d="M5 6h14v13a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6z"
+                          fill="none"
+                          stroke="#b91c1c"
+                          stroke-width="2"/>
+                  </svg>
+  </button>
+
+</span>
+
+        </td>
       </tr>
     `;
   });
@@ -2254,22 +2310,70 @@
     if (!proximaSessao) {
       proxEl.textContent = "Nenhuma aula agendada";
     } else {
-      const partes = proximaSessao.data.split("-");
-      let dataNice = proximaSessao.data;
-      if (partes.length === 3) {
-        const ano = partes[0];
-        const mes = partes[1];
-        const dia = partes[2];
-        dataNice = `${dia}/${mes}/${ano}`;
-      }
+      const [ano, mes, dia] = proximaSessao.data.split("-");
+      const dataNice = `${dia}/${mes}/${ano}`;
       const hora = proximaSessao.hora_inicio
         ? proximaSessao.hora_inicio.slice(0, 5)
         : "";
       proxEl.textContent = hora ? `${dataNice} às ${hora}` : dataNice;
     }
   }
+
+  // LIGAR BOTÕES (editar / realizada / apagar)
+  tbody.querySelectorAll(".sessao-btn").forEach((btn) => {
+    btn.addEventListener("click", async (ev) => {
+      ev.stopPropagation(); // não dispara click na linha toda
+
+      const acao = btn.dataset.acao;
+      const id   = btn.dataset.id;
+      const sessao = sessoes.find(
+        (s) => String(s.id_sessao) === String(id)
+      );
+      if (!sessao) return;
+
+      if (acao === "editar") {
+        // abrir modal já existente em modo edição
+        abrirModalSessao(sessao);
+
+      } else if (acao === "realizada") {
+        // marcar como realizada
+        try {
+          await callExplFn("upsert_sessao_aluno", {
+            id_sessao: sessao.id_sessao,
+            aluno_id: sessao.aluno_id,
+            data: sessao.data,
+            hora_inicio: sessao.hora_inicio,
+            hora_fim: sessao.hora_fim,
+            duracao_min: sessao.duracao_min,
+            estado: "REALIZADA",
+            observacoes: sessao.observacoes,
+          });
+          await loadSessoesAluno(ALUNO_ATUAL.id_aluno);
+          await loadResumoCalendario();
+        } catch (e) {
+          console.error(e);
+          alert("Não foi possível marcar como realizada.");
+        }
+
+      } else if (acao === "apagar") {
+        if (!confirm("Tens a certeza que queres apagar esta sessão?")) return;
+        try {
+          await callExplFn("delete_sessao_aluno", {
+            id_sessao: sessao.id_sessao,
+          });
+          await loadSessoesAluno(ALUNO_ATUAL.id_aluno);
+          await loadResumoCalendario();
+        } catch (e) {
+          console.error(e);
+          alert("Não foi possível apagar a sessão.");
+        }
+      }
+    });
+  });
 }
 
+
+  // ---------- ATUALIZAR PERFIL DO ALUNO: PAGAMENTOS ----------
   function atualizarPerfilComPagamentos(pagamentos) {
     const tbody = document.getElementById("listaPagamentos");
     const totalEl = document.getElementById("pagTotal");
