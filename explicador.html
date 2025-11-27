@@ -2374,58 +2374,125 @@
 
 
   // ---------- ATUALIZAR PERFIL DO ALUNO: PAGAMENTOS ----------
+
   function atualizarPerfilComPagamentos(pagamentos) {
-    const tbody = document.getElementById("listaPagamentos");
-    const totalEl = document.getElementById("pagTotal");
-    if (!tbody) return;
+  const tbody = document.getElementById("listaPagamentos");
+  const totalEl = document.getElementById("pagTotal");
+  if (!tbody) return;
 
-    if (!pagamentos || !pagamentos.length) {
-      tbody.innerHTML =
-        '<tr><td colspan="5">Ainda não existem pagamentos registados.</td></tr>';
-      if (totalEl) totalEl.textContent = "0.00";
-      return;
-    }
-
-    const nomesMesesLong = [
-      "Janeiro","Fevereiro","Março","Abril","Maio","Junho",
-      "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro",
-    ];
-
-    let totalRecebido = 0;
-
-    const rows = pagamentos.map((p) => {
-      const pago = Number(p.valor_pago) || 0;
-      totalRecebido += pago;
-
-      const ano = p.ano;
-      const mes = p.mes;
-      const periodo =
-        (nomesMesesLong[mes - 1] || mes) + " " + ano;
-
-      const dataLabel =
-        p.data_pagamento ||
-        `${String(1).padStart(2, "0")}/${String(mes).padStart(2, "0")}/${ano}`;
-
-      const metodo = "—"; // se mais tarde adicionares método à tabela, lês daqui
-      const estado = p.estado || "—";
-
-      return `
-        <tr>
-          <td>${dataLabel}</td>
-          <td>${periodo}</td>
-          <td>€ ${pago.toFixed(2)}</td>
-          <td>${metodo}</td>
-          <td>${estado}</td>
-        </tr>
-      `;
-    });
-
-    tbody.innerHTML = rows.join("");
-
-    if (totalEl) {
-      totalEl.textContent = totalRecebido.toFixed(2);
-    }
+  if (!pagamentos || !pagamentos.length) {
+    tbody.innerHTML =
+      '<tr><td colspan="6">Ainda não existem pagamentos registados.</td></tr>';
+    if (totalEl) totalEl.textContent = "0.00";
+    return;
   }
+
+  const nomesMesesLong = [
+    "Janeiro","Fevereiro","Março","Abril","Maio","Junho",
+    "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro",
+  ];
+
+  let totalRecebido = 0;
+
+  const rows = pagamentos.map((p) => {
+    const pago = Number(p.valor_pago) || 0;
+    totalRecebido += pago;
+
+    const ano = p.ano;
+    const mes = p.mes;
+    const periodo = `${nomesMesesLong[mes - 1] || mes} ${ano}`;
+
+    const dataLabel =
+      p.data_pagamento ||
+      `${String(1).padStart(2, "0")}/${String(mes).padStart(2, "0")}/${ano}`;
+
+    const metodo = p.metodo ?? "—";
+    const estado = p.estado || "—";
+
+    return `
+      <tr data-id="${p.id_pagamento}">
+        <td>${dataLabel}</td>
+        <td>${periodo}</td>
+        <td>€ ${pago.toFixed(2)}</td>
+        <td>${metodo}</td>
+        <td>
+          ${estado}
+          <span class="acoes-exp">
+
+            <!-- EDITAR -->
+            <button class="sessao-btn" data-acao="editar" data-id="${p.id_pagamento}">
+              <svg class="icon16" viewBox="0 0 24 24">
+                <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z" fill="#b91c1c"/>
+                <path d="M20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z" fill="#b91c1c"/>
+              </svg>
+            </button>
+
+            <!-- APAGAR -->
+            <button class="sessao-btn" data-acao="apagar" data-id="${p.id_pagamento}">
+              <svg class="icon16" viewBox="0 0 24 24">
+                <path d="M3 6h18" stroke="#b91c1c" stroke-width="2" stroke-linecap="round"/>
+                <path d="M8 6V4h8v2" stroke="#b91c1c" stroke-width="2" stroke-linecap="round"/>
+                <path d="M10 11v6M14 11v6" stroke="#b91c1c" stroke-width="2" stroke-linecap="round"/>
+                <path d="M5 6h14v13a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6z"
+                      stroke="#b91c1c" stroke-width="2" fill="none"/>
+              </svg>
+            </button>
+
+          </span>
+        </td>
+      </tr>
+    `;
+  });
+
+  tbody.innerHTML = rows.join("");
+
+  // Atualizar total
+  if (totalEl) {
+    totalEl.textContent = totalRecebido.toFixed(2);
+  }
+
+  // Ligar botões
+  tbody.querySelectorAll(".sessao-btn").forEach((btn) => {
+    btn.addEventListener("click", async (ev) => {
+      ev.stopPropagation();
+
+      const acao = btn.dataset.acao;
+      const id = btn.dataset.id;
+      const pagamento = pagamentos.find(
+        (p) => String(p.id_pagamento) === String(id)
+      );
+      if (!pagamento) return;
+
+      // EDITAR
+      if (acao === "editar") {
+        if (typeof preencherModalPagamento === "function") {
+          preencherModalPagamento(pagamento);
+        }
+        if (typeof modalPagamento !== "undefined") {
+          openModal(modalPagamento);
+        }
+        return;
+      }
+
+      // APAGAR
+      if (acao === "apagar") {
+        if (!confirm("Tens certeza que queres apagar este pagamento?")) return;
+
+        const { error } = await callExplFn("delete_pagamento", {
+          id_pagamento: id,
+        });
+
+        if (error) {
+          console.error(error);
+          alert("Erro ao apagar pagamento.");
+          return;
+        }
+
+        await loadPagamentosAluno(ALUNO_ATUAL.id_aluno);
+      }
+    });
+  });
+}
 
   // ---------- OPEN/CLOSE MODAL ----------
   function openModal(mod) { mod && mod.classList.add('open'); }
