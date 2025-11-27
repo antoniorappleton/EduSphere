@@ -1640,4 +1640,28 @@ body.home main.auth,
     max-width: 100%;
   }
 }
+/* Cartões mais compactos no mobile */
+@media (max-width: 768px) {
+  /* cards de resumo financeiro */
+  .expl-kpi-grid {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
+
+  .expl-kpi-card {
+    width: 100%;
+    max-width: 320px;   /* deixa de esticar até à borda */
+  }
+
+  /* cards dos alunos no dashboard */
+  .dash-alunos-grid {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
+
+  .dash-aluno-card {
+    width: 100%;
+    max-width: 340px;
+  }
+}
 

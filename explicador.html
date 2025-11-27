@@ -1252,7 +1252,7 @@
       })
       .join("");
 
-    // clique em "Ver detalhes" -> vai para secção Alunos e abre o painel
+    // clique em "Ver detalhes" -> vai direto para o PERFIL do aluno
     grid.querySelectorAll("[data-id-aluno]").forEach((btn) => {
       btn.addEventListener("click", () => {
         const idAluno = btn.getAttribute("data-id-aluno");
@@ -1261,14 +1261,14 @@
         );
         if (!aluno) return;
 
-        const tabAlunos = document.querySelector(
-          '.expl-nav-btn[data-target="alunos"]'
-        );
-        tabAlunos?.click();
+        // preenche o header do perfil
+        preencherPerfilAlunoBasico(aluno);
 
-        setTimeout(() => {
-          mostrarPainelAluno(aluno);
-        }, 150);
+        // carrega sessões + pagamentos + painel lateral (função já é async)
+        mostrarPainelAluno(aluno);
+
+        // muda o ecrã principal para o perfil
+        ativarScreen("aluno-perfil");
       });
     });
   }
