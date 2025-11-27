@@ -2336,13 +2336,13 @@ async function loadSessoesAluno(alunoId) {
 
 // ---------- ATUALIZAR PERFIL DO ALUNO: PAGAMENTOS ----------
   function atualizarPerfilComPagamentos(pagamentos) {
-  const tbody = document.getElementById("listaPagamentos");
+  const tbody   = document.getElementById("listaPagamentos");
   const totalEl = document.getElementById("pagTotal");
   if (!tbody) return;
 
   if (!pagamentos || !pagamentos.length) {
     tbody.innerHTML =
-      '<tr><td colspan="6">Ainda não existem pagamentos registados.</td></tr>';
+      '<tr><td colspan="5">Ainda não existem pagamentos registados.</td></tr>';
     if (totalEl) totalEl.textContent = "0.00";
     return;
   }
@@ -2360,17 +2360,17 @@ async function loadSessoesAluno(alunoId) {
 
     const ano = p.ano;
     const mes = p.mes;
-    const periodo = `${nomesMesesLong[mes - 1] || mes} ${ano}`;
+    const periodo = (nomesMesesLong[mes - 1] || mes) + " " + ano;
 
     const dataLabel =
       p.data_pagamento ||
       `${String(1).padStart(2, "0")}/${String(mes).padStart(2, "0")}/${ano}`;
 
-    const metodo = p.metodo ?? "—";
+    const metodo = "—";
     const estado = p.estado || "—";
 
     return `
-      <tr data-id="${p.id_pagamento}">
+      <tr>
         <td>${dataLabel}</td>
         <td>${periodo}</td>
         <td>€ ${pago.toFixed(2)}</td>
@@ -2378,17 +2378,26 @@ async function loadSessoesAluno(alunoId) {
         <td>
           ${estado}
           <span class="acoes-exp">
-
-            <!-- EDITAR -->
-            <button class="sessao-btn" data-acao="editar" data-id="${p.id_pagamento}">
+            <!-- editar -->
+            <button
+              class="pag-btn"
+              data-acao="editar"
+              data-id="${p.id_pagamento}"
+              type="button"
+            >
               <svg class="icon16" viewBox="0 0 24 24">
                 <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z" fill="#b91c1c"/>
                 <path d="M20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z" fill="#b91c1c"/>
               </svg>
             </button>
 
-            <!-- APAGAR -->
-            <button class="sessao-btn" data-acao="apagar" data-id="${p.id_pagamento}">
+            <!-- apagar -->
+            <button
+              class="pag-btn"
+              data-acao="apagar"
+              data-id="${p.id_pagamento}"
+              type="button"
+            >
               <svg class="icon16" viewBox="0 0 24 24">
                 <path d="M3 6h18" stroke="#b91c1c" stroke-width="2" stroke-linecap="round"/>
                 <path d="M8 6V4h8v2" stroke="#b91c1c" stroke-width="2" stroke-linecap="round"/>
@@ -2397,7 +2406,6 @@ async function loadSessoesAluno(alunoId) {
                       stroke="#b91c1c" stroke-width="2" fill="none"/>
               </svg>
             </button>
-
           </span>
         </td>
       </tr>
@@ -2406,18 +2414,18 @@ async function loadSessoesAluno(alunoId) {
 
   tbody.innerHTML = rows.join("");
 
-  // Atualizar total
   if (totalEl) {
     totalEl.textContent = totalRecebido.toFixed(2);
   }
 
-  // Ligar botões
-  tbody.querySelectorAll(".sessao-btn").forEach((btn) => {
+  // Ligar botões de EDITAR / APAGAR (pagamentos)
+  tbody.querySelectorAll(".pag-btn").forEach((btn) => {
     btn.addEventListener("click", async (ev) => {
       ev.stopPropagation();
 
       const acao = btn.dataset.acao;
-      const id = btn.dataset.id;
+      const id   = btn.dataset.id;
+
       const pagamento = pagamentos.find(
         (p) => String(p.id_pagamento) === String(id)
       );
@@ -2425,11 +2433,14 @@ async function loadSessoesAluno(alunoId) {
 
       // EDITAR
       if (acao === "editar") {
-        if (typeof preencherModalPagamento === "function") {
+        // usa o mesmo modal que já tens para pagamentos do aluno
+        // -> modo "editar"
+        if (typeof abrirModalPagamento === "function") {
+          // se tiveres esta função, podes passarlhe o pagamento
+          abrirModalPagamento("editar", pagamento);
+        } else if (typeof preencherModalPagamento === "function") {
+          // fallback para a tua função antiga
           preencherModalPagamento(pagamento);
-        }
-        if (typeof modalPagamento !== "undefined") {
-          openModal(modalPagamento);
         }
         return;
       }
@@ -2448,6 +2459,7 @@ async function loadSessoesAluno(alunoId) {
           return;
         }
 
+        // recarrega pagamentos/summary desse aluno
         await loadPagamentosAluno(ALUNO_ATUAL.id_aluno);
       }
     });
