@@ -1357,65 +1357,114 @@
         const tel = a.telemovel || "—";
 
         const proximaMensalidade = a.proxima_mensalidade || "—";
-        const { label: estadoLabel, badgeClass } = getEstadoInfo(
-          a.estado_mensalidade || "PENDENTE"
-        );
+const { label: estadoLabel, badgeClass } = getEstadoInfo(
+  a.estado_mensalidade || "PENDENTE"
+);
 
-        const ativo = a.is_active !== false;
-        const statusLabel = ativo ? "Ativo" : "Inativo";
-        const statusClass = ativo
-          ? "aluno-status-badge aluno-status-badge--ativo"
-          : "aluno-status-badge aluno-status-badge--inativo";
+// próxima explicação (se vier do back-end)
+let proxExpLabel = "—";
+if (a.proxima_sessao_data) {
+  const d = new Date(a.proxima_sessao_data);
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const yyyy = d.getFullYear();
+  const hora = (a.proxima_sessao_hora || "").slice(0, 5);
+  proxExpLabel = hora ? `${dd}/${mm}/${yyyy} às ${hora}` : `${dd}/${mm}/${yyyy}`;
+}
 
-        return `
-          <article class="dash-aluno-card">
-            <div>
-              <div class="dash-aluno-card__top" style="justify-content: space-between;">
-                <div style="display:flex; gap:12px;">
-                  <div class="dash-aluno-card__avatar"></div>
-                  <div>
-                    <h3 class="dash-aluno-card__name">${nome}</h3>
-                    <p class="dash-aluno-card__year">${anoLabel}</p>
-                    <p class="aluno-card__phone">
-                      Telemóvel: <span>${tel}</span>
-                    </p>
-                  </div>
-                </div>
+// estado ativo / inativo
+const ativo = a.is_active !== false;
+const statusLabel = ativo ? "Ativo" : "Inativo";
+const statusClass = ativo
+  ? "aluno-status-badge aluno-status-badge--ativo"
+  : "aluno-status-badge aluno-status-badge--inativo";
 
-                <span class="${statusClass}">
-                  ${statusLabel}
-                </span>
-              </div>
+// mensalidade avisada?
+const avisado = !!a.mensalidade_avisada;
 
-              <p class="dash-aluno-card__label">Próxima mensalidade:</p>
-              <p class="dash-aluno-card__date">${proximaMensalidade}</p>
+const svgBellQuiet = `
+  <svg class="aluno-bell-icon" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M12 3a4 4 0 0 0-4 4v1.1c0 .5-.2 1-.4 1.5L6.3 12
+             A2 2 0 0 0 8 15h8a2 2 0 0 0 1.7-3l-1.3-2.4
+             c-.2-.5-.4-1-.4-1.5V7a4 4 0 0 0-4-4z" />
+    <path d="M10 18a2 2 0 0 0 4 0" />
+  </svg>`;
 
-              <span class="${badgeClass}">
-                ${estadoLabel}
-              </span>
-            </div>
+const svgBellRing = `
+  <svg class="aluno-bell-icon aluno-bell-icon--active" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M12 3a4 4 0 0 0-4 4v1.1c0 .5-.2 1-.4 1.5L6.3 12
+             A2 2 0 0 0 8 15h8a2 2 0 0 0 1.7-3l-1.3-2.4
+             c-.2-.5-.4-1-.4-1.5V7a4 4 0 0 0-4-4z" />
+    <path d="M10 18a2 2 0 0 0 4 0" />
+    <path d="M5 8.5 3.5 7M19 8.5 20.5 7" />
+    <path d="M4.5 5a5 5 0 0 1 2-2.5M19.5 5a5 5 0 0 0-2-2.5" />
+  </svg>`;
 
-            <div class="aluno-card__actions">
-              <button
-                type="button"
-                class="button secondary aluno-card__btn"
-                data-action="ver"
-                data-id-aluno="${a.id_aluno}"
-              >
-                Ver perfil
-              </button>
+return `
+  <article class="dash-aluno-card">
+    <div>
+      <div class="dash-aluno-card__top" style="justify-content: space-between;">
+        <div style="display:flex; gap:12px;">
+          <div class="dash-aluno-card__avatar"></div>
+          <div>
+            <h3 class="dash-aluno-card__name">${nome}</h3>
+            <p class="dash-aluno-card__year">${anoLabel}</p>
+            <p class="aluno-card__phone">
+              Telemóvel: <span>${tel}</span>
+            </p>
+          </div>
+        </div>
 
-              <button
-                type="button"
-                class="button secondary aluno-card__btn"
-                data-action="perfil"
-                data-id-aluno="${a.id_aluno}"
-              >
-                Informações rápidas
-              </button>
-            </div>
-          </article>
-        `;
+        <span class="${statusClass}">
+          ${statusLabel}
+        </span>
+      </div>
+
+      <p class="dash-aluno-card__label">Próxima explicação:</p>
+      <p class="dash-aluno-card__date">${proxExpLabel}</p>
+
+      <div class="aluno-card__mensalidade-row">
+        <div>
+          <p class="dash-aluno-card__label">Mensalidade:</p>
+          <span class="${badgeClass}">
+            ${estadoLabel}
+          </span>
+        </div>
+
+        <button
+          type="button"
+          class="aluno-card__bell"
+          data-id-aluno="${a.id_aluno}"
+          aria-pressed="${avisado ? "true" : "false"}"
+          title="${avisado ? "Encarregado avisado" : "Marcar como avisado"}"
+        >
+          ${avisado ? svgBellRing : svgBellQuiet}
+        </button>
+      </div>
+    </div>
+
+    <div class="aluno-card__actions">
+      <button
+        type="button"
+        class="button secondary aluno-card__btn"
+        data-action="ver"
+        data-id-aluno="${a.id_aluno}"
+      >
+        Ver perfil
+      </button>
+
+      <button
+        type="button"
+        class="button secondary aluno-card__btn"
+        data-action="perfil"
+        data-id-aluno="${a.id_aluno}"
+      >
+        Informações rápidas
+      </button>
+    </div>
+  </article>
+`;
+
       })
       .join("");
 
@@ -1454,6 +1503,47 @@
         });
       });
   }
+
+  // Eventos nos botões de aviso (sino)
+alunosGrid
+  .querySelectorAll(".aluno-card__bell")
+  .forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const idAluno = btn.getAttribute("data-id-aluno");
+      const aluno = (ALUNOS_CACHE || []).find(
+        (x) => String(x.id_aluno) === String(idAluno)
+      );
+      if (!aluno) return;
+
+      const jaAvisado = !!aluno.mensalidade_avisada;
+
+      // feedback mínimo
+      btn.disabled = true;
+
+      try {
+        const { error } = await callExplFn("set_mensalidade_avisada", {
+          aluno_id: aluno.id_aluno,
+          avisado: !jaAvisado,
+        });
+
+        if (error) {
+          console.error("Erro a marcar aviso de mensalidade", error);
+          alert("Não foi possível atualizar o estado de aviso.");
+          return;
+        }
+
+        // atualizar cache
+        aluno.mensalidade_avisada = !jaAvisado;
+
+        // atualizar ícone + aria
+        btn.setAttribute("aria-pressed", !jaAvisado ? "true" : "false");
+        btn.innerHTML = !jaAvisado ? svgBellRing : svgBellQuiet;
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  });
+
 
   // Devolve { ano, mes, mesLabel } garantindo que escolhemos um mês com dados
   function getMesAnoSelecionadosOuUltimoComDados() {

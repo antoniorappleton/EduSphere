@@ -1029,3 +1029,28 @@ body.home main.auth {
     grid-template-columns: 1fr;
   }
 }
+.aluno-card__mensalidade-row {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.aluno-card__bell {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 999px;
+}
+
+.aluno-bell-icon {
+  width: 22px;
+  height: 22px;
+  fill: #999;
+}
+
+.aluno-bell-icon--active {
+  fill: #f59e0b; /* tipo amarelo sino; muda se quiseres */
+}
