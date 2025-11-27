@@ -1043,6 +1043,8 @@
     // Filtros atuais da secção de faturação
   let FAT_ANO_SELEC = null;
   let FAT_MES_SELEC = null;
+  let SESSOES_ALUNO_ATUAL = [];
+
 
   function preencherPerfilAlunoBasico(aluno) {
     if (!aluno) return;
@@ -2110,80 +2112,34 @@
     }
   }
 
-  // ---------- CARREGAR SESSÕES DO ALUNO ----------
-  async function loadSessoesAluno(alunoId) {
-    if (!alunoId) return;
+// ---------- CARREGAR SESSÕES DO ALUNO ----------
+async function loadSessoesAluno(alunoId) {
+  if (!alunoId) return;
 
+  const { data, error } = await callExplFn("list_sessoes_aluno", {
+    aluno_id: alunoId,
+  });
+
+  if (error) {
+    console.error("list_sessoes_aluno error", error);
     const tblBody = document.querySelector("#listaExplicacoes");
-    if (!tblBody) return;
-
-    tblBody.innerHTML =
-      '<tr><td colspan="5">A carregar sessões...</td></tr>';
-
-    const { data, error } = await callExplFn("list_sessoes_aluno", {
-      aluno_id: alunoId,
-    });
-
-    if (error) {
-      console.error("list_sessoes_aluno error", error);
+    if (tblBody) {
       tblBody.innerHTML =
         '<tr><td colspan="5">Erro a carregar sessões do aluno.</td></tr>';
-      return;
     }
-
-    if (!data || !data.length) {
-      tblBody.innerHTML =
-        '<tr><td colspan="5">Ainda não existem sessões registadas para este aluno.</td></tr>';
-      // atualizar vista de perfil também
-      atualizarPerfilComSessoes([]);
-      return;
-    }
-
-    const rows = data
-      .map((s) => {
-        const d = s.data || "";
-        const ini = s.hora_inicio || "";
-        const fim = s.hora_fim || "";
-        const dur = s.duracao_min != null ? s.duracao_min : "—";
-        const estado = s.estado || "";
-
-        return `
-          <tr data-id-sessao="${s.id_sessao}">
-            <td>${d}</td>
-            <td>${ini}</td>
-            <td>${fim}</td>
-            <td>${dur}</td>
-            <td>${estado}</td>
-          </tr>
-        `;
-      })
-      .join("");
-
-    tblBody.innerHTML = rows;
-
-    tblBody.querySelectorAll("tr").forEach((tr) => {
-      tr.addEventListener("click", () => {
-        const idSessao = tr.getAttribute("data-id-sessao");
-        if (!idSessao) return;
-
-        const sessao = data.find(
-          (s) => String(s.id_sessao) === String(idSessao)
-        );
-        if (!sessao) return;
-
-        preencherModalSessao(sessao);
-        openModal(modalSessao);
-      });
-    });
-
-    // 🔹 Atualizar também o perfil (kpi + tabela + próxima aula)
-    atualizarPerfilComSessoes(data || []);
+    return;
   }
 
+  SESSOES_ALUNO_ATUAL = data || [];
+
+  // Atualiza tabela + KPI + próxima aula
+  atualizarPerfilComSessoes(SESSOES_ALUNO_ATUAL);
+}
+
   function atualizarPerfilComSessoes(sessoes) {
-  const tbody   = document.getElementById("listaExplicacoes");
+  const tbody      = document.getElementById("listaExplicacoes");
   const kpiAulasEl = document.getElementById("kpiAulas");
-  const proxEl  = document.getElementById("proximaAulaTxt");
+  const proxEl     = document.getElementById("proximaAulaTxt");
 
   if (!tbody) return;
 
@@ -2196,26 +2152,26 @@
   }
 
   const hoje = new Date();
-  hoje.setHours(0,0,0,0);
+  hoje.setHours(0, 0, 0, 0);
   let proximaSessao = null;
 
   const rows = sessoes.map((s) => {
-    // Data formatada YYYY-MM-DD -> DD/MM/YYYY
-    let dataLabel = s.data || "—";
+    // Data formatada yyyy-mm-dd -> dd/mm/yyyy
+    let dataLabel = "—";
     if (s.data) {
       const [ano, mes, dia] = s.data.split("-");
       dataLabel = `${dia}/${mes}/${ano}`;
     }
 
     const inicio = s.hora_inicio ? s.hora_inicio.slice(0, 5) : "--:--";
-    const fim    = s.hora_fim ? s.hora_fim.slice(0, 5)   : "--:--";
+    const fim    = s.hora_fim ? s.hora_fim.slice(0, 5) : "--:--";
     const dur    = s.duracao_min != null ? s.duracao_min : "—";
     const estado = s.estado || "—";
 
-    // calcular próxima aula (AGENDADA no futuro)
+    // Próxima aula (AGENDADA no futuro)
     if (s.data) {
       const d = new Date(s.data);
-      d.setHours(0,0,0,0);
+      d.setHours(0, 0, 0, 0);
       if (
         !isNaN(d.getTime()) &&
         d >= hoje &&
@@ -2234,64 +2190,35 @@
         <td>${fim}</td>
         <td>${dur}</td>
         <td>
-          <span class="estado-texto">${estado}</span>
-              <span class="acoes-exp">
+          ${estado}
+          <span class="acoes-exp">
+            <!-- editar -->
+            <button class="sessao-btn sessao-acao" data-acao="editar">
+              <svg class="icon16" viewBox="0 0 24 24">
+                <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z" fill="#b91c1c"/>
+                <path d="M20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z" fill="#b91c1c"/>
+              </svg>
+            </button>
 
-                <!-- EDITAR -->
-                <button type="button"
-                        class="sessao-btn"
-                        data-acao="editar"
-                        title="Editar sessão">
-                  <svg class="icon16" viewBox="0 0 24 24">
-                    <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z"
-                          fill="#b91c1c"/>
-                    <path d="M20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z"
-                          fill="#b91c1c"/>
-                  </svg>
-                </button>
+            <!-- marcar como realizada -->
+            <button class="sessao-btn sessao-acao" data-acao="realizada">
+              <svg class="icon16" viewBox="0 0 24 24">
+                <path d="M9 16.2l-3.5-3.5L4 14.2 9 19l11-11-1.5-1.5L9 16.2z"
+                      fill="#b91c1c"/>
+              </svg>
+            </button>
 
-                <!-- REALIZADA -->
-                <button type="button"
-                        class="sessao-btn"
-                        data-acao="realizada"
-                        title="Marcar como realizada">
-                  <svg class="icon16" viewBox="0 0 24 24">
-                    <path d="M20 6L9 17l-5-5"
-                          stroke="#b91c1c"
-                          stroke-width="2.5"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          fill="none" />
-                  </svg>
-                </button>
-
-                <!-- APAGAR -->
-                <button type="button"
-                        class="sessao-btn"
-                        data-acao="apagar"
-                        title="Apagar sessão">
-                  <svg class="icon16" viewBox="0 0 24 24">
-                    <path d="M3 6h18"
-                          stroke="#b91c1c"
-                          stroke-width="2"
-                          stroke-linecap="round"/>
-                    <path d="M8 6V4h8v2"
-                          stroke="#b91c1c"
-                          stroke-width="2"
-                          stroke-linecap="round"/>
-                    <path d="M10 11v6M14 11v6"
-                          stroke="#b91c1c"
-                          stroke-width="2"
-                          stroke-linecap="round"/>
-                    <path d="M5 6h14v13a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6z"
-                          fill="none"
-                          stroke="#b91c1c"
-                          stroke-width="2"/>
-                  </svg>
-  </button>
-
-</span>
-
+            <!-- apagar -->
+            <button class="sessao-btn sessao-acao" data-acao="apagar">
+              <svg class="icon16" viewBox="0 0 24 24">
+                <path d="M3 6h18" stroke="#b91c1c" stroke-width="2" stroke-linecap="round"/>
+                <path d="M8 6V4h8v2" stroke="#b91c1c" stroke-width="2" stroke-linecap="round"/>
+                <path d="M10 11v6M14 11v6" stroke="#b91c1c" stroke-width="2" stroke-linecap="round"/>
+                <path d="M5 6h14v13a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6z"
+                      stroke="#b91c1c" stroke-width="2" fill="none"/>
+              </svg>
+            </button>
+          </span>
         </td>
       </tr>
     `;
@@ -2322,62 +2249,92 @@
     }
   }
 
-  // LIGAR BOTÕES (editar / realizada / apagar)
-  tbody.querySelectorAll(".sessao-btn").forEach((btn) => {
-    btn.addEventListener("click", async (ev) => {
-      ev.stopPropagation(); // não dispara click na linha toda
+  // ligar handlers uma vez (delegação no tbody)
+  if (!tbody.dataset.boundSessao) {
+    tbody.addEventListener("click", onClickAcaoSessao);
+    tbody.dataset.boundSessao = "1";
+  }
+}
 
-      const acao = btn.dataset.acao;
-      const id   = btn.dataset.id;
-      const sessao = sessoes.find(
-        (s) => String(s.id_sessao) === String(id)
-      );
-      if (!sessao) return;
+  async function onClickAcaoSessao(ev) {
+  const btn = ev.target.closest(".sessao-acao");
+  if (!btn) return;
 
-      if (acao === "editar") {
-        // abrir modal já existente em modo edição
-        abrirModalSessao(sessao);
+  ev.stopPropagation();
 
-      } else if (acao === "realizada") {
-        // marcar como realizada
-        try {
-          await callExplFn("upsert_sessao_aluno", {
-            id_sessao: sessao.id_sessao,
-            aluno_id: sessao.aluno_id,
-            data: sessao.data,
-            hora_inicio: sessao.hora_inicio,
-            hora_fim: sessao.hora_fim,
-            duracao_min: sessao.duracao_min,
-            estado: "REALIZADA",
-            observacoes: sessao.observacoes,
-          });
-          await loadSessoesAluno(ALUNO_ATUAL.id_aluno);
-          await loadResumoCalendario();
-        } catch (e) {
-          console.error(e);
-          alert("Não foi possível marcar como realizada.");
-        }
+  const tr    = btn.closest("tr");
+  const id    = tr?.dataset.id;
+  const acao  = btn.dataset.acao;
+  if (!id || !acao) return;
 
-      } else if (acao === "apagar") {
-        if (!confirm("Tens a certeza que queres apagar esta sessão?")) return;
-        try {
-          await callExplFn("delete_sessao_aluno", {
-            id_sessao: sessao.id_sessao,
-          });
-          await loadSessoesAluno(ALUNO_ATUAL.id_aluno);
-          await loadResumoCalendario();
-        } catch (e) {
-          console.error(e);
-          alert("Não foi possível apagar a sessão.");
-        }
+  const sessao = (SESSOES_ALUNO_ATUAL || []).find(
+    (s) => String(s.id_sessao) === String(id)
+  );
+  if (!sessao) return;
+
+  // EDITAR -> abrir modal já existente
+  if (acao === "editar") {
+    abrirModalSessao(sessao);
+    return;
+  }
+
+  // MARCAR COMO REALIZADA
+  if (acao === "realizada") {
+    try {
+      const payload = {
+        id_sessao: sessao.id_sessao,
+        aluno_id: sessao.aluno_id || (ALUNO_ATUAL && ALUNO_ATUAL.id_aluno),
+        data: sessao.data,
+        hora_inicio: sessao.hora_inicio,
+        hora_fim: sessao.hora_fim,
+        duracao_min: sessao.duracao_min,
+        estado: "REALIZADA",
+        observacoes: sessao.observacoes,
+      };
+
+      const { error } = await callExplFn("upsert_sessao_aluno", payload);
+      if (error) {
+        console.error(error);
+        alert("Não foi possível atualizar a sessão.");
+        return;
       }
-    });
-  });
+
+      await loadSessoesAluno(ALUNO_ATUAL.id_aluno);
+      await loadResumoCalendario();
+    } catch (e) {
+      console.error(e);
+      alert("Erro inesperado ao atualizar sessão.");
+    }
+    return;
+  }
+
+  // APAGAR
+  if (acao === "apagar") {
+    const conf = confirm("Tens a certeza que queres apagar esta sessão?");
+    if (!conf) return;
+
+    try {
+      const { error } = await callExplFn("delete_sessao_aluno", {
+        id_sessao: sessao.id_sessao,
+      });
+
+      if (error) {
+        console.error(error);
+        alert("Não foi possível apagar a sessão.");
+        return;
+      }
+
+      await loadSessoesAluno(ALUNO_ATUAL.id_aluno);
+      await loadResumoCalendario();
+    } catch (e) {
+      console.error(e);
+      alert("Erro inesperado ao apagar sessão.");
+    }
+  }
 }
 
 
-  // ---------- ATUALIZAR PERFIL DO ALUNO: PAGAMENTOS ----------
-
+// ---------- ATUALIZAR PERFIL DO ALUNO: PAGAMENTOS ----------
   function atualizarPerfilComPagamentos(pagamentos) {
   const tbody = document.getElementById("listaPagamentos");
   const totalEl = document.getElementById("pagTotal");
