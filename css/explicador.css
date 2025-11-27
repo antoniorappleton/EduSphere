@@ -1,98 +1,111 @@
 /* =========================================================
-   EXPLICADOR — LAYOUT FULL WIDTH, PROFISSIONAL
-   (assume que base.css já definiu cores, fontes, .button, etc.)
+   EXPLICADOR — LAYOUT & COMPONENTES
    ========================================================= */
 
-/* ---- 1) MAIN: usar largura total, sem centrar como login ---- */
+/* ---------- LAYOUT GERAL ---------- */
+
+/* Esconder notificações e avatar do header do painel explicador */
+.expl-header-user,.expl-header-bar {
+  display: none !important;
+}
+
 
 body.home main.auth {
-  /* em vez de centrar um cartão, deixamos o painel ocupar tudo */
   max-width: none;
   margin: 0;
   padding: 0;
-  min-height: calc(100vh - 120px); /* header + footer aprox. */
+  min-height: calc(100vh - 120px);
   display: block;
 }
 
-/* ---- 2) SHELL DO PAINEL (sidebar + conteúdo) ---- */
-
 #explPanel.expl-shell {
   display: flex;
-  flex-direction: row;
   align-items: stretch;
-  width: 100%;
+  gap: 24px;
+  padding: 24px 24px 32px;
   min-height: calc(100vh - 120px);
-  background: transparent; /* deixa ver a imagem de fundo da home */
 }
 
-/* ---- 3) SIDEBAR LATERAL ---- */
-
-.expl-sidebar-nav {
-  width: 240px;
-  background: rgba(15, 23, 42, 0.96); /* quase preto, moderno */
-  color: #e5e7eb;
-  padding: 24px 18px;
+.expl-main {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  box-shadow: 4px 0 18px rgba(0, 0, 0, 0.35);
+  gap: 24px;
+  padding: 24px 16px 110px; /* espaço para footer + FAB */
 }
 
-/* “Dashboard / Alunos / Calendário / …” */
+.expl-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding-bottom: 80px;
+}
+
+/* ---------- SIDEBAR (ESTILOS BÁSICOS, MAS ESCONDIDA) ---------- */
+
+.expl-sidebar-nav {
+  flex: 0 0 210px;
+  max-width: 210px;
+  background: rgba(2, 6, 23, 0.98);
+  color: rgba(255, 255, 255, 0.75);
+  border-radius: 16px;
+  padding: 18px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
 
 .expl-sidebar-nav .expl-nav-btn {
   width: 100%;
   text-align: left;
   border-radius: 999px;
-  padding: 10px 14px;
+  padding: 10px 12px;
   border: none;
   background: transparent;
-  color: #e5e7eb;
-  font-size: 0.9rem;
-  font-weight: 500;
+  color: inherit;
+  font-size: 14px;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 10px;
-  transition: background 0.15s ease, color 0.15s ease, transform 0.08s ease;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 
 .expl-sidebar-nav .expl-nav-btn--active,
 .expl-sidebar-nav .expl-nav-btn:hover {
   background: #111827;
-  color: #ffffff;
-  transform: translateY(-1px);
+  color: #f9fafb;
 }
 
-/* ---- 4) CONTEÚDO PRINCIPAL ---- */
-
-.expl-main {
-  flex: 1;
-  padding: 24px 32px 40px;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  color: #111827;
+/* Ícones no menu lateral */
+.expl-nav-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-/* Esconder completamente o header interno antigo */
-.expl-header-bar {
+.expl-nav-svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.6;
+}
+
+/* No layout actual o menu lateral está escondido (usamos o FAB nav) */
+.expl-sidebar-nav {
   display: none !important;
 }
 
-/* “corpo” com as secções e cartões */
-.expl-body {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
+/* ---------- SECÇÕES / CARTÕES ---------- */
 
-/* Títulos de secção dentro do painel */
 .expl-section-title {
   font-family: 'Poppins', sans-serif;
   font-size: 1.25rem;
   font-weight: 600;
-  color: #b91c1c; /* mesmo vermelho do resto do site */
+  color: #b91c1c;
   margin: 0 0 4px;
 }
 
@@ -109,10 +122,9 @@ body.home main.auth {
   column-gap: 16px;
 }
 
-/* Grelha reutilizável (ex.: quota + lista alunos, calendário + relatórios) */
 .expl-grid-2 {
   display: grid;
-  gap: 18px;
+  gap: 24px;
 }
 
 @media (min-width: 960px) {
@@ -121,8 +133,6 @@ body.home main.auth {
   }
 }
 
-/* ---- 5) CARTÕES DO PAINEL ---- */
-
 .expl-card {
   background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(8px);
@@ -130,9 +140,9 @@ body.home main.auth {
   padding: 18px 20px;
   border: 1px solid rgba(255, 255, 255, 0.55);
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.28);
+  max-width: 100%;
 }
 
-/* texto escuro dentro dos cartões, para bom contraste */
 .expl-card h2,
 .expl-card h3,
 .expl-card h4,
@@ -144,6 +154,16 @@ body.home main.auth {
   color: #111827;
 }
 
+.expl-card--quota {
+  max-width: 360px;
+}
+
+@media (max-width: 768px) {
+  .expl-card--quota {
+    max-width: 100%;
+  }
+}
+
 .expl-subsection-title {
   font-family: 'Poppins', sans-serif;
   font-size: 1rem;
@@ -151,7 +171,8 @@ body.home main.auth {
   margin: 0 0 8px;
 }
 
-/* KPI cards em 3 colunas */
+/* ---------- KPI CARDS / RESUMO FINANCEIRO ---------- */
+
 .expl-kpi-grid {
   display: grid;
   gap: 16px;
@@ -187,504 +208,76 @@ body.home main.auth {
   color: #ef4444;
 }
 
-/* Tabelas dentro dos cartões: linhas suaves */
-.expl-card .table {
-  background: transparent;
-  border-radius: 10px;
-}
+/* ---------- TABELAS ---------- */
 
-.expl-card .table th,
-.expl-card .table td {
-  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
-  color: #111827;
-}
-
-/* Ações alinhadas horizontalmente */
-.expl-actions-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-/* Lista de detalhes (aluno) */
-.expl-detail-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: grid;
-  gap: 4px;
-  font-size: 0.9rem;
-}
-
-.expl-detail-list li strong {
-  font-weight: 600;
-}
-
-/* ---- 6) CARTÕES “Calendário / Relatórios” (detalhe) ---- */
-
-.expl-feature-list {
-  list-style: none;
-  margin: 10px 0 18px;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.expl-feature-list li {
-  display: grid;
-  grid-template-columns: 140px minmax(0, 1fr);
-  column-gap: 12px;
-  row-gap: 2px;
-  align-items: flex-start;
-}
-
-@media (max-width: 640px) {
-  .expl-feature-list li {
-    grid-template-columns: 1fr;
-  }
-}
-
-.expl-feature-label {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #4b5563;
-}
-
-.expl-feature-value {
-  font-size: 0.85rem;
-  color: #6b7280;
-}
-
-/* “chip” de link no rodapé dos cartões */
-.expl-link-chip {
-  margin-top: 10px;
-  border-radius: 999px;
-  border: 1px solid #d1d5db;
-  background: #f9fafb;
-  padding: 8px 12px;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.85rem;
-  cursor: pointer;
-  transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.08s ease;
-}
-
-.expl-link-chip-icon {
-  font-size: 1rem;
-}
-
-.expl-link-chip:hover {
-  background: #eef2ff;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.18);
-  transform: translateY(-1px);
-}
-
-/* ---- 7) CALENDÁRIO SEMANAL (dentro do cartão) ---- */
-
-.calendar-week {
-  margin-top: 16px;
-  background: #ffffffee;
-  padding: 16px;
-  border-radius: 14px;
-  backdrop-filter: blur(6px);
-  border: 1px solid rgba(148, 163, 184, 0.4);
-}
-
-.calendar-week__nav {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.calendar-week__title {
-  font-weight: 600;
-  font-size: 1rem;
-}
-
-.calendar-btn {
-  border: none;
-  background: #e5e7eb;
-  padding: 6px 10px;
-  border-radius: 999px;
-  cursor: pointer;
-  font-size: 0.9rem;
-}
-
-.calendar-btn:hover {
-  background: #d1d5db;
-}
-
-/* grelha 7 dias */
-.calendar-week__grid {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 8px;
-}
-
-@media (max-width: 900px) {
-  .calendar-week__grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-}
-@media (max-width: 640px) {
-  .calendar-week__grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-.calendar-day {
-  background: #ffffff;
-  border-radius: 12px;
-  padding: 8px;
-  box-shadow: 0 2px 4px rgba(15, 23, 42, 0.08);
-  min-height: 100px;
-}
-
-.calendar-day__header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 0.8rem;
-  margin-bottom: 6px;
-}
-
-.calendar-day__weekday {
-  font-weight: 600;
-}
-
-.calendar-day__date {
-  opacity: 0.6;
-  font-size: 0.75rem;
-}
-
-/* bolinhas de estado */
-.dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 999px;
-  display: inline-block;
-  margin-right: 4px;
-}
-
-.dot-green  { background: #16a34a; } /* REALIZADA */
-.dot-yellow { background: #facc15; } /* AGENDADA */
-.dot-orange { background: #fb923c; } /* EXTRA   */
-
-/* ---- 8) BOTÃO FLUTUANTE “+” (novo aluno) ---- */
-
-.expl-fab {
-  position: fixed;
-  right: 32px;
-  bottom: 32px;
-  width: 48px;
-  height: 48px;
-  border-radius: 999px;
-  border: none;
-  background: #b91c1c;
-  color: #ffffff;
-  font-size: 26px;
-  cursor: pointer;
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* ---- 9) RESPONSIVO ---- */
-
-@media (max-width: 960px) {
-  #explPanel.expl-shell {
-    flex-direction: column;
-  }
-
-  .expl-sidebar-nav {
-    width: 100%;
-    flex-direction: row;
-    justify-content: flex-start;
-    overflow-x: auto;
-    padding: 10px 12px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-    gap: 6px;
-  }
-
-  .expl-main {
-    padding: 16px;
-  }
-
-  .expl-fab {
-    right: 16px;
-    bottom: 16px;
-  }
-}
-
-/* =========================================================
-   (Opcional) Reforço de estilos de MODAL
-   se, por algum motivo, base.css não os estiver a aplicar
-   ========================================================= */
-
-.modal {
-  position: fixed;
-  inset: 0;
-  display: none;
-  z-index: 50;
-}
-
-.modal.open {
-  display: grid;
-  place-items: center;
-}
-
-.modal__backdrop {
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(2px);
-}
-
-.modal__dialog {
-  position: relative;
-  width: min(92vw, 720px);
-  background: #ffffff;
-  color: #111827;
-  border-radius: 14px;
-  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.35);
-  padding: 16px 18px 18px;
-  z-index: 1;
-}
-
-.modal__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.modal__header h2 {
-  margin: 0;
-  font-family: 'Poppins', sans-serif;
-  font-size: 1.2rem;
-  font-weight: 600;
-  color: #b91c1c;
-}
-
-.modal__close {
-  appearance: none;
-  border: 0;
-  background: transparent;
-  font-size: 24px;
-  line-height: 1;
-  cursor: pointer;
-}
-/* ===== LAYOUT GERAL DO PAINEL EXPLICADOR ==================== */
-
-.expl-shell {
-  display: flex;
-  gap: 24px;
-  padding: 24px 32px 40px;
-  min-height: calc(100vh - 72px); /* altura total entre header e footer */
-}
-
-/* SIDEBAR LATERAL SEMPRE VISÍVEL */
-.expl-sidebar-nav {
-  /* dimensões / visual */
-  flex: 0 0 220px;
-  background: rgba(2, 6, 23, 0.98);
-  color: #e5e7eb;
-  border-radius: 16px;
-  padding: 18px 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-
-  /* “sticky” — fica sempre à vista ao fazer scroll */
-  position: sticky;
-  top: 80px;                        /* espaço para o header */
-  align-self: flex-start;
-  max-height: calc(100vh - 96px);   /* opcional: para não ultrapassar o footer */
-}
-
-/* botões da barra lateral */
-.expl-sidebar-nav .expl-nav-btn {
+.table {
   width: 100%;
-  text-align: left;
-  border-radius: 999px;
-  padding: 10px 12px;
-  border: none;
-  background: transparent;
-  color: #e5e7eb;
-  font-size: 14px;
-  cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
+  border-collapse: collapse;
 }
 
-.expl-sidebar-nav .expl-nav-btn--active,
-.expl-sidebar-nav .expl-nav-btn:hover {
-  background: #111827;
-  color: #f9fafb;
-}
-
-/* CONTEÚDO PRINCIPAL (CARTÕES) */
-.expl-main {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-/* em ecrãs pequenos, a sidebar deixa de ser fixa e passa para cima */
-@media (max-width: 900px) {
-  .expl-shell {
-    flex-direction: column;
-    padding: 16px;
-  }
-
-  .expl-sidebar-nav {
-    position: static;
-    max-height: none;
-    flex: 0 0 auto;
-    flex-direction: row;
-    overflow-x: auto;
-  }
-
-  .expl-sidebar-nav .expl-nav-btn {
-    white-space: nowrap;
-  }
-}
-/* Sidebar mais compacto */
-.expl-sidebar-nav {
-  flex: 0 0 210px;        /* largura fixa mais pequena */
-  max-width: 210px;
-  padding-inline: 16px;
-}
-/* Shell geral: ocupa quase o ecrã todo em altura */
-.expl-shell {
-  display: flex;
-  align-items: stretch;
-  min-height: calc(100vh - 80px); /* 80px ≈ altura do header global; ajusta se necessário */
-}
-
-/* Coluna principal em coluna: header + body scrollável */
-.expl-main {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-/* A tal "barra que desliza" no conteúdo */
-.expl-body {
-  flex: 1;
-  overflow-y: auto;
-  padding-right: 8px;  /* espaço para a scroll bar não colar ao conteúdo */
-}
-/* Ajuste suave na tabela de faturação */
-.table th,
-.table td {
-  padding: 10px 12px;      /* se estiveres com 8px, isto já ajuda */
-  font-size: 0.95rem;
-}
-/* =========================================================
-   AJUSTES LAYOUT EXPLICADOR — SIDEBAR + SCROLL
-   ========================================================= */
-
-/* O shell do painel ocupa verticalmente o espaço entre header e footer
-   e deixa o scroll ser feito pela página inteira */
-.expl-shell {
-  display: flex;
-  align-items: stretch;
-  gap: 24px;
-  padding: 24px 24px 32px;          /* aproxima-se visualmente do header/footer */
-  min-height: calc(100vh - 120px);  /* ajusta se o teu header+footer forem maiores/menores */
-}
-
-/* Sidebar:
-   - largura baseada no botão mais largo (width: max-content)
-   - cartão estica da parte de cima à parte de baixo do .expl-shell */
-.expl-sidebar-nav {
-  flex: 0 0 auto;
-  width: max-content;          /* largura ≈ botão maior */
-  align-self: stretch;         /* faz o cartão acompanhar a altura do conteúdo principal */
-  display: flex;
-  flex-direction: column;
-}
-
-/* Garante que a coluna principal usa o resto da largura */
-.expl-main {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Tira o scroll interno do conteúdo — passa a ser o scroll normal da página */
-.expl-body {
-  flex: 1;
-  overflow-y: visible;   /* anula qualquer overflow:auto definido antes */
-}
-
-/* Se quiseres ainda apertar um bocadinho mais a coluna do menu,
-   podes reduzir o padding interno do cartão */
-.expl-sidebar-nav {
-  padding-inline: 18px;
-  padding-block: 20px;
-}
-
-/* Opcional: um pouco mais de respiro nas células da tabela */
 .table th,
 .table td {
   padding: 10px 14px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+  font-size: 0.95rem;
+  color: #111827;
 }
-/* ====== NAV LATERAL COM ÍCONES ====== */
 
-.expl-nav-btn {
+.table-wrapper {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Tabelas mais largas (ex.: faturação) */
+.table.table--wide {
+  width: max-content;
+  min-width: 600px;
+}
+
+/* Faturação: cartões com a tabela a fazer scroll interno */
+.expl-section[data-section="faturacao"] .expl-card {
   display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 10px;
-  padding-inline: 18px;
+  flex-direction: column;
 }
 
-.expl-nav-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+.expl-section[data-section="faturacao"] .expl-card .table-wrapper {
+  margin-top: 0.75rem;
+  flex: 1;
+  max-height: 260px;
+  overflow-y: auto;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
-.expl-nav-svg {
-  width: 18px;
-  height: 18px;
-  stroke: currentColor;
-  fill: none;
-  stroke-width: 1.6;
+/* Lista de alunos dentro de cartão com scroll vertical + horizontal na tabela */
+#lista-alunos-card {
+  overflow: visible;
 }
 
-/* Garante ícones a branco no teu sidebar escuro */
-.expl-sidebar-nav .expl-nav-btn {
-  color: #ffffff;
+.expl-scroll-card {
+  max-height: 260px;
+  overflow-y: auto;
+  padding-right: 6px;
+  -webkit-overflow-scrolling: touch;
 }
 
-/* Se tiveres um estado diferente para o ativo,
-   isto só reforça o contraste */
-.expl-nav-btn--active {
-  color: #ffffff;
-}
-.expl-sidebar-nav .expl-nav-btn {
-  color: rgba(255, 255, 255, 0.75);
+#lista-alunos-card .table-wrapper {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
 }
 
-.expl-sidebar-nav .expl-nav-btn--active {
-  color: #ffffff;
+#lista-alunos-card table {
+  width: max-content;
+  min-width: 520px;
 }
-/* ============================
-   DASHBOARD — CARDS DE ALUNOS
-   ============================ */
 
-/* Grelha tipo Tailwind: 1 / 2 / 3 colunas */
+/* ---------- DASHBOARD – CARDS DE ALUNOS ---------- */
+
 .dash-alunos-grid {
   display: grid;
   gap: 16px;
@@ -703,7 +296,6 @@ body.home main.auth {
   }
 }
 
-/* Cartão individual do aluno */
 .dash-aluno-card {
   background: #ffffff;
   border-radius: 16px;
@@ -716,7 +308,6 @@ body.home main.auth {
   min-height: 190px;
 }
 
-/* Topo: avatar + nome/ano */
 .dash-aluno-card__top {
   display: flex;
   align-items: flex-start;
@@ -724,7 +315,6 @@ body.home main.auth {
   margin-bottom: 12px;
 }
 
-/* Avatar redondinho */
 .dash-aluno-card__avatar {
   width: 44px;
   height: 44px;
@@ -733,7 +323,6 @@ body.home main.auth {
   flex-shrink: 0;
 }
 
-/* Nome do aluno */
 .dash-aluno-card__name {
   margin: 0;
   font-weight: 600;
@@ -744,21 +333,18 @@ body.home main.auth {
   text-overflow: ellipsis;
 }
 
-/* Ano (ex.: 10º Ano) */
 .dash-aluno-card__year {
   margin: 2px 0 0;
   font-size: 0.85rem;
   color: #6b7280;
 }
 
-/* Label "Próxima mensalidade:" */
 .dash-aluno-card__label {
   margin: 6px 0 0;
   font-size: 0.85rem;
   color: #6b7280;
 }
 
-/* Data da próxima mensalidade */
 .dash-aluno-card__date {
   margin: 2px 0 8px;
   font-size: 0.9rem;
@@ -766,7 +352,6 @@ body.home main.auth {
   color: #111827;
 }
 
-/* Badge de estado (Pago / Pendente) */
 .dash-aluno-card__badge {
   display: inline-flex;
   align-items: center;
@@ -777,43 +362,28 @@ body.home main.auth {
   font-weight: 600;
 }
 
-/* Pago = fundo escuro, texto branco */
 .dash-aluno-card__badge--pago {
   background: #111827;
   color: #ffffff;
 }
 
-/* Pendente = fundo clarinho, texto mais quente */
 .dash-aluno-card__badge--pendente {
   background: #fef3c7;
   color: #92400e;
 }
 
-/* Botão "Ver detalhes" ocupa a largura toda */
+.dash-aluno-card__badge--parcial {
+  background: #ffedd5;
+  color: #9a3412;
+}
+
 .dash-aluno-card__btn {
   margin-top: 14px;
   width: 100%;
-  justify-content: center; /* usa flex da .button */
-}
-/* Extra para os cartões da Lista de Alunos */
-
-.aluno-card__phone {
-  margin-top: 4px;
-  font-size: 0.82rem;
-  color: #6b7280;
+  justify-content: center;
 }
 
-.aluno-card__actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 12px;
-}
-
-.aluno-card__btn {
-  flex: 1;
-  justify-content: center; /* usa o flex da .button */
-}
-
+/* Badges extra usados noutros sítios */
 .dash-badge--pago {
   background: #111827;
   color: #fff;
@@ -838,11 +408,26 @@ body.home main.auth {
   background: #dbeafe;
   color: #1e40af;
 }
-.dash-aluno-card__badge--parcial {
-  background: #ffedd5;  /* laranja muito claro */
-  color: #9a3412;       /* laranja escuro */
+
+/* Informações extra nos cards da lista de alunos */
+.aluno-card__phone {
+  margin-top: 4px;
+  font-size: 0.82rem;
+  color: #6b7280;
 }
-/* ===== STATUS ALUNO (painel detalhe) ===== */
+
+.aluno-card__actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.aluno-card__btn {
+  flex: 1;
+  justify-content: center;
+}
+
+/* ---------- STATUS ALUNO (painel detalhe) ---------- */
 
 .aluno-status-row {
   display: flex;
@@ -855,21 +440,19 @@ body.home main.auth {
   position: absolute;
   top: 12px;
   right: 12px;
-
   padding: 4px 10px;
   font-size: 0.75rem;
   font-weight: 600;
-
   border-radius: 9999px;
   color: white;
 }
 
 .aluno-status-badge--ativo {
-  background: #4ade80; /* verde suave */
+  background: #4ade80;
 }
 
 .aluno-status-badge--inativo {
-  background: #f87171; /* vermelho suave */
+  background: #f87171;
 }
 
 /* Switch tipo iOS */
@@ -904,7 +487,7 @@ body.home main.auth {
   height: 16px;
   border-radius: 999px;
   background: #fff;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
   transition: transform 0.2s ease;
 }
 
@@ -920,124 +503,95 @@ body.home main.auth {
 .aluno-status-toggle.is-off .aluno-status-toggle__label {
   color: #9ca3af;
 }
-/* ===== Responsive modal (mobile & tablet) ====================== */
 
-/* Garantir que o modal está sempre acima de tudo */
+/* ---------- MODAIS ---------- */
+
 .modal {
+  position: fixed;
+  inset: 0;
+  display: none;
   z-index: 9999;
 }
 
-/* Conteúdo com altura máxima e scroll interno */
+.modal.open {
+  display: grid;
+  place-items: center;
+}
+
+.modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(2px);
+}
+
 .modal__dialog {
-  max-height: 90vh;            /* nunca passa da altura do ecrã */
-  overflow-y: auto;            /* scroll dentro do modal se for preciso */
-}
-
-/* Nos ecrãs pequenos, o modal estica quase a 100% em largura */
-@media (max-width: 768px) {
-  .modal.open {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 12px;            /* espaço à volta para não colar às bordas */
-  }
-
-  .modal__dialog {
-    width: 100%;
-    max-width: 100%;
-    border-radius: 10px;
-    max-height: calc(100vh - 24px); /* margem em cima/baixo */
-  }
-
-  .modal__body {
-    max-height: calc(100vh - 130px); /* depende da altura do header do modal */
-    overflow-y: auto;
-  }
-}
-.relatorios-grid {
-  display: grid;
-  gap: 1.5rem;
-  margin-top: 1.5rem;
-}
-
-.rel-card {
-  background: var(--card-bg, #ffffff);
-  border-radius: 12px;
-  padding: 1rem 1.25rem;
-  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
-}
-
-/* Caixote do gráfico */
-.rel-chart-box {
   position: relative;
-  width: 100%;
-  height: 260px;
-  margin-top: 0.75rem;
-}
-
-.rel-chart-box canvas {
-  width: 100% !important;
-  height: 100% !important;
-  display: block;
-}
-/* garante espaço livre para o footer fixo */
-.expl-body {
-  padding-bottom: 80px;  /* ou o valor da altura do footer + algum espaço */
-}
-
-/* se o footer estiver como fixed, mantém assim: */
-footer {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-}
-
-/* garante que os charts têm altura própria dentro do card */
-.rel-chart-box {
-  position: relative;
-  width: 100%;
-  height: 260px;      /* ajusta à tua preferência */
-}
-.rel-kpi-grid {
-  display: grid;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-@media (min-width: 768px) {
-  .rel-kpi-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-}
-
-.rel-kpi-card {
-  background: #fff;
-  border-radius: 16px;
-  padding: 1.25rem 1.5rem;
-  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  min-height: 110px;
-}
-
-.rel-kpi-label {
-  font-size: 0.9rem;
-  color: #6b7280;
-  margin-bottom: 0.25rem;
-}
-
-.rel-kpi-value {
-  font-size: 1.6rem;
-  font-weight: 700;
+  width: min(92vw, 720px);
+  background: #ffffff;
   color: #111827;
+  border-radius: 14px;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.35);
+  padding: 16px 18px 18px;
+  z-index: 1;
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
-.rel-kpi-sub {
-  font-size: 0.8rem;
-  color: #9ca3af;
+.modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
 }
-/* Layout Calendário */
+
+.modal__header h2 {
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #b91c1c;
+}
+
+.modal__close {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+/* ---------- CALENDÁRIO SEMANAL + PRÓXIMAS SESSÕES ---------- */
+
+.calendar-week {
+  margin-top: 16px;
+  background: #ffffffee;
+  padding: 16px;
+  border-radius: 14px;
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(148, 163, 184, 0.4);
+}
+
+.calendar-week__nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.calendar-week__title {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.calendar-week__grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+}
+
 .calendar-week__legend {
   display: flex;
   gap: 1rem;
@@ -1046,6 +600,57 @@ footer {
   color: #666;
 }
 
+.calendar-btn {
+  border: none;
+  background: #e5e7eb;
+  padding: 6px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.calendar-btn:hover {
+  background: #d1d5db;
+}
+
+.calendar-day {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 8px;
+  box-shadow: 0 2px 4px rgba(15, 23, 42, 0.08);
+  min-height: 100px;
+}
+
+.calendar-day__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+  margin-bottom: 6px;
+}
+
+.calendar-day__weekday {
+  font-weight: 600;
+}
+
+.calendar-day__date {
+  opacity: 0.6;
+  font-size: 0.75rem;
+}
+
+/* bolinhas estado */
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  display: inline-block;
+  margin-right: 4px;
+}
+
+.dot-green { background: #16a34a; }
+.dot-yellow { background: #facc15; }
+.dot-orange { background: #fb923c; }
+
 .proximas-sessoes-list {
   display: flex;
   flex-direction: column;
@@ -1053,7 +658,6 @@ footer {
   margin-top: 0.75rem;
 }
 
-/* Card de sessão */
 .sessao-card {
   border: 1px solid #eee;
   border-radius: 12px;
@@ -1088,7 +692,6 @@ footer {
   margin: 0.25rem 0 0;
 }
 
-/* Badges de estado */
 .sessao-badge {
   font-size: 0.75rem;
   padding: 0.15rem 0.5rem;
@@ -1117,405 +720,85 @@ footer {
   background: #e6f0ff;
   color: #1654c0;
 }
-/* ====== AJUSTES GERAIS ====== */
-html, body {
-  width: 100%;
-  max-width: 100%;
-  overflow-x: visible;
+
+/* ---------- RELATÓRIOS / GRÁFICOS ---------- */
+
+.relatorios-grid {
+  display: grid;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
 }
 
-/* Garantir que os cartões nunca passam a largura */
-.expl-card,
-.expl-kpi-card,
 .rel-card {
-  max-width: 100%;
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
 }
 
-
-/* ====== LAYOUT MOBILE ====== */
-@media (max-width: 768px) {
-
-  /* shell: deixar de ser “sidebar + main” lado a lado, passa a coluna */
-  .expl-shell {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  /* Sidebar ocupa a largura inteira, tipo “cartão” no topo */
-  .expl-sidebar-nav {
-    width: 100%;
-    max-width: 100%;
-    margin: 0 auto 1rem auto;
-    border-radius: 24px;
-  }
-
-  /* Conteúdo principal sem margem à esquerda, 100% largura */
-  .expl-main {
-    margin-left: 0;
-    width: 100%;
-  }
-
-  .expl-body {
-    padding-inline: 1rem;
-  }
-
-  /* Header do painel adapta para vertical */
-  .expl-header-bar {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: .5rem;
-  }
-
-  /* Grelhas: tudo em 1 coluna */
-  .expl-grid-2,
-  .expl-kpi-grid,
-  .dash-alunos-grid,
-  .rel-kpi-grid,
-  .relatorios-grid {
-    grid-template-columns: 1fr;
-  }
-  .dash-alunos-grid {
-    gap: 20px;
-  }
-  .aluno-card__actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 16px;
-}
-
-.aluno-card__btn {
-  flex: 1;
-  text-align: center;
-}
-
-
-  /* Calendário semanal: no mobile, 2 colunas (ou 1 se preferires) */
-  .calendar-week__grid {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  /* Se quiseres mesmo 1 coluna no telemóvel pequeno, ativa isto: */
-  @media (max-width: 480px) {
-    .calendar-week__grid {
-      grid-template-columns: 1fr;
-    }
-  }
-
-  /* Gráficos: canvas nunca passa da largura */
-  .rel-chart-box {
-    width: 100%;
-    max-width: 100%;
-    height: 260px;
-  }
-
-  .rel-chart-box canvas {
-    width: 100% !important;
-    height: 100% !important;
-    display: block;
-  }
-}
-.expl-fab {
-  position: fixed;
-  right: 1.5rem;
-  bottom: 1.5rem;
-  z-index: 3000;         /* bem acima dos cartões, sidebars, etc. */
-}
-
-/* Para garantir que nenhuma “capa” invisível está a interceptar o clique */
-.capa__overlay {
-  pointer-events: none;
-}
-
-/* em ecrãs pequenos, encostar os cartões às margens para aproveitar melhor a largura */
-@media (max-width: 768px) {
-  .expl-card {
-    margin-left: 0.75rem;
-    margin-right: 0.75rem;
-  }
-}
-
-.table {
+.rel-chart-box {
+  position: relative;
   width: 100%;
-  border-collapse: collapse;
+  height: 260px;
+  margin-top: 0.75rem;
 }
 
-/* --- Mobile layout (até ~768px) --- */
-@media (max-width: 768px) {
-  /* grids principais em 1 coluna */
-  .expl-grid-2 {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-
-  /* grids dos formulários dos modais em 1 coluna */
-  .grid2 {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 0.75rem;
-  }
-
-  /* um bocadinho menos padding nas cartas para caber tudo melhor */
-  .expl-card {
-    padding: 1rem;
-  }
-
-  /* proteção extra contra scroll horizontal global */
-  html, body {
-    max-width: 100%;
-    overflow-x: hidden;
-  }
-}
-/* ================= HOTFIX LARGURA / MOBILE ================= */
-
-/* nada pode ser mais largo que o ecrã */
-html, body {
-  width: 100%;
-  max-width: 100%;
-  overflow-x: hidden;
+.rel-chart-box canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
 }
 
-/* painel explicador e cartões nunca excedem 100% */
-body.home main.auth,
-#explPanel,
-.expl-shell,
-.expl-main,
-.expl-body,
-.expl-section,
-.expl-card {
-  max-width: 100%;
+.rel-kpi-grid {
+  display: grid;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
 }
 
-/* MOBILE: 1 coluna, cartões encostados às margens */
-@media (max-width: 768px) {
-  .expl-shell {
-    flex-direction: column;
-    padding-inline: 1rem;
-  }
-
-  .expl-main {
-    width: 100%;
-    margin-left: 0;
-  }
-
-  .expl-card {
-    margin-left: 0;
-    margin-right: 0;
-    padding-inline: 1rem;
-  }
-
-  .expl-grid-2,
-  .grid2 {
-    grid-template-columns: 1fr;
+@media (min-width: 768px) {
+  .rel-kpi-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
-/* Tabelas largas: scroll horizontal só dentro do cartão (não na página inteira) */
-.table-wrapper {
-  width: 100%;
-  max-width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch; /* scroll suave no telemóvel */
-}
-/* ===== Faturação: cartões com tabela a fazer scroll interno ===== */
 
-/* Os 2 cartões de Faturação passam a ser "coluna":
-   título em cima, tabela a ocupar o resto */
-.expl-section[data-section="faturacao"] .expl-card{
+.rel-kpi-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
   display: flex;
   flex-direction: column;
+  justify-content: center;
+  min-height: 110px;
 }
 
-/* A área da tabela é que faz scroll, não o cartão todo */
-.expl-section[data-section="faturacao"] .expl-card .table-wrapper{
-  margin-top: 0.75rem;
-  flex: 1;
-  max-height: 260px;           /* ajusta à vontade (ou usa 50vh / 60vh) */
-  overflow-y: auto;            /* scroll vertical */
-  overflow-x: auto;            /* scroll horizontal se for preciso */
-  -webkit-overflow-scrolling: touch;
+.rel-kpi-label {
+  font-size: 0.9rem;
+  color: #6b7280;
+  margin-bottom: 0.25rem;
 }
 
-/* Tabelas largas continuam a usar scroll horizontal dentro da wrapper */
-.expl-section[data-section="faturacao"] .expl-card .table.table--wide{
-  width: max-content;
-  min-width: 600px;            /* ajusta se quiseres mais estreita */
+.rel-kpi-value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #111827;
 }
 
-/* Para tabelas com muitas colunas (usa class="table table--wide") */
-.table.table--wide {
-  width: max-content;        /* deixa a largura seguir o conteúdo */
-  min-width: 600px;          /* garante que fica mais larga que o ecrã pequeno */
-}
-.table-wrapper {
-  width: 100%;
-  max-width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
+.rel-kpi-sub {
+  font-size: 0.8rem;
+  color: #9ca3af;
 }
 
-.table.table--wide {
-  width: max-content;
-  min-width: 600px;   /* garante que fica mais larga que o ecrã no mobile */
-}
-/* segurança extra para mobile */
-.expl-shell,
-.expl-main,
-.expl-section,
-.expl-card {
-  box-sizing: border-box;
-  max-width: 100%;
-}
+/* ---------- FAB NAV (MENU FLUTUANTE) ---------- */
 
-/* mobile: tudo encostado às margens */
-@media (max-width: 768px) {
-  .expl-shell {
-    flex-direction: column;
-    padding-inline: 1rem;
-  }
-
-  .expl-card {
-    margin-inline: 0;
-  }
-}
-/* === GRID DOS CARTÕES DE ALUNOS (Quota + Lista) === */
-/* Mobile: 1 coluna */
-.expl-grid-2 {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 24px;
-}
-
-/* A partir de 960px: 2 colunas lado a lado */
-@media (min-width: 960px) {
-  .expl-grid-2 {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-/* === CARTÃO "Lista de alunos" === */
-
-/* o cartão em si não corta nada */
-#lista-alunos-card {
-  overflow: visible;
-}
-
-/* área interna com scroll vertical (lista de alunos) */
-.expl-scroll-card {
-  max-height: 260px;               /* ajusta se quiseres */
-  overflow-y: auto;
-  padding-right: 6px;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* wrapper da tabela: scroll horizontal só aqui */
-#lista-alunos-card .table-wrapper {
-  width: 100%;
-  max-width: 100%;
-  overflow-x: auto;                 /* <- scroll horizontal */
-  overflow-y: hidden;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* a tabela é mais larga que o cartão → obriga scroll horizontal */
-#lista-alunos-card table {
-  width: max-content;
-  min-width: 520px;                 /* ajusta se precisares de mais/menos */
-}
-/* =========================
-   ULTIMO HOTFIX PARA MOBILE
-   (até 768px)
-   ========================= */
-@media (max-width: 768px) {
-
-  /* página nunca é mais larga que o ecrã */
-  html, body {
-    margin: 0 !important;
-    padding: 0 !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    overflow-x: hidden !important;
-  }
-
-  /* contentores principais ajustados à largura do ecrã */
-  #explPanel,
-  .expl-shell,
-  .expl-main,
-  .expl-body,
-  .expl-section {
-    box-sizing: border-box;
-    width: 100% !important;
-    max-width: 100% !important;
-    margin: 0 auto !important;
-    padding-left: 0 !important;
-    padding-right: 0 !important;
-  }
-
-  /* grelhas: 1 coluna no mobile */
-  .expl-grid-2 {
-    display: grid !important;
-    grid-template-columns: 1fr !important;
-    gap: 16px !important;
-  }
-
-  /* cartões nunca passam a largura do ecrã */
-  .expl-card,
-  .expl-kpi-card,
-  .dash-aluno-card,
-  .rel-card {
-    box-sizing: border-box;
-    width: 100% !important;
-    max-width: 100% !important;
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-  }
-  .dash-aluno-card {
-  position: relative;
-  margin-bottom: 16px;
-}
-
-  /* sidebar também não rebenta a largura */
-  .expl-sidebar-nav {
-    width: 100% !important;
-    max-width: 100% !important;
-  }
-
-  /* scroll horizontal só dentro da wrapper da tabela */
-  .table-wrapper {
-    width: 100% !important;
-    max-width: 100% !important;
-    overflow-x: auto !important;
-    -webkit-overflow-scrolling: touch;
-  }
-}
-/* ===== FAB NAV — base ===== */
-.fab-nav{
+.fab-nav {
   position: fixed;
-  left: 16px;  /* canto inferior esquerdo */
+  left: 16px;
   bottom: max(16px, env(safe-area-inset-bottom));
-  transform: none;
   z-index: 9999;
 }
-.expl-main{
-  flex: 1;
-  padding: 24px 16px 110px; /* <- padding-bottom grande p/ não ficar nada escondido */
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
 
-/* Faturação: scroll vertical dentro dos cartões com tabelas */
-.expl-section[data-section="faturacao"] .table-wrapper{
-  max-height: 260px;        /* ajusta se quiseres ver mais/menos linhas */
-  overflow-y: auto;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-.table-wrapper{
-  width: 100%;
-  overflow-x: auto;
-}
-
-
-.fab-nav__toggle{
+.fab-nav__toggle {
   width: clamp(64px, 9.5vw, 76px);
   height: clamp(64px, 9.5vw, 76px);
   border-radius: 999px;
@@ -1525,31 +808,30 @@ body.home main.auth,
   background: #b91c1c;
   color: #fff;
   border: none;
-  box-shadow: 0 10px 24px rgba(2,6,23,.25);
+  box-shadow: 0 10px 24px rgba(2, 6, 23, 0.25);
   cursor: pointer;
 }
 
-.fab-nav__toggle svg{
+.fab-nav__toggle svg {
   width: 30px;
   height: 30px;
-  stroke: white;
+  stroke: #ffffff;
   fill: none;
   stroke-width: 2.4;
-  transition: transform .35s ease;
+  transition: transform 0.35s ease;
 }
 
-.fab-nav.is-open .fab-nav__toggle svg{
+.fab-nav.is-open .fab-nav__toggle svg {
   transform: rotate(45deg);
 }
 
-.fab-nav__items{
+.fab-nav__items {
   position: absolute;
   inset: 0;
-  pointer-events: none; /* o wrapper não apanha cliques */
+  pointer-events: none;
 }
 
-/* ===== Itens do arco ===== */
-.fab-item{
+.fab-item {
   position: absolute;
   left: 50%;
   top: 50%;
@@ -1566,22 +848,21 @@ body.home main.auth,
   background: #b91c1c;
   color: #fff;
   border: none;
-  box-shadow: 0 10px 22px rgba(2,6,23,.22);
+  box-shadow: 0 10px 22px rgba(2, 6, 23, 0.22);
   opacity: 0;
   pointer-events: none;
   transition:
-    transform .45s cubic-bezier(.22,.8,.24,1),
-    opacity   .25s ease;
+    transform 0.45s cubic-bezier(.22,.8,.24,1),
+    opacity   0.25s ease;
   will-change: transform;
   z-index: 10;
 }
 
-.fab-nav.is-open .fab-item{
+.fab-nav.is-open .fab-item {
   opacity: 1;
   pointer-events: auto;
 }
 
-/* Ícones dentro dos FABs */
 .fab-icon {
   width: 22px;
   height: 22px;
@@ -1597,10 +878,7 @@ body.home main.auth,
   stroke-linejoin: round;
 }
 
-/* ===== Labels / legendas ===== */
-
-/* posição: parte do centro do botão e aplica o offset radial (--lx, --ly) */
-.fab-label{
+.fab-label {
   position: absolute;
   left: 50%;
   top: 50%;
@@ -1613,55 +891,141 @@ body.home main.auth,
   color: #b91c1c;
   font-weight: 700;
   padding: 5px 9px;
-  font-size: .8rem;
+  font-size: 0.8rem;
   border-radius: 999px;
-  box-shadow: 0 8px 20px rgba(2,6,23,.18);
-  opacity: 0;           /* escondida por defeito */
+  box-shadow: 0 8px 20px rgba(2, 6, 23, 0.18);
+  opacity: 0;
   pointer-events: none;
   z-index: 11;
 }
 
-/* mostra a label SÓ quando o botão está “activo” */
 .fab-nav.is-open .fab-item:hover .fab-label,
 .fab-nav.is-open .fab-item:focus-visible .fab-label,
-.fab-nav.is-open .fab-item:active .fab-label{
+.fab-nav.is-open .fab-item:active .fab-label {
   opacity: 1;
 }
-/* Esconde completamente o menu lateral antigo,
-   mas deixa os botões no DOM para o JS e para o FAB */
-.expl-sidebar-nav {
-  display: none !important;
+
+/* Overlay da capa nunca bloqueia cliques (para o FAB funcionar) */
+.capa__overlay {
+  pointer-events: none;
 }
-.expl-card--quota {
-  max-width: 360px;
-}
-@media (max-width: 768px) {
-  .expl-card--quota {
-    max-width: 100%;
+
+/* ---------- MOBILE / RESPONSIVE ---------- */
+
+@media (max-width: 900px) {
+  #explPanel.expl-shell {
+    flex-direction: column;
+    padding-inline: 16px;
   }
 }
-/* Cartões mais compactos no mobile */
+
+/* mobile até ~768px */
 @media (max-width: 768px) {
-  /* cards de resumo financeiro */
-  .expl-kpi-grid {
-    grid-template-columns: 1fr;
-    justify-items: center;
+
+  html,
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
   }
 
-  .expl-kpi-card {
+  #explPanel,
+  .expl-shell,
+  .expl-main,
+  .expl-body,
+  .expl-section {
+    box-sizing: border-box;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
+  }
+
+  .expl-shell {
+    flex-direction: column;
+    padding-inline: 1rem;
+  }
+
+  .expl-main {
     width: 100%;
-    max-width: 320px;   /* deixa de esticar até à borda */
+    margin-left: 0;
+    padding-inline: 0;
   }
 
-  /* cards dos alunos no dashboard */
+  .expl-body {
+    padding-inline: 1rem;
+  }
+
+  .expl-grid-2,
+  .grid2,
+  .rel-kpi-grid,
+  .relatorios-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px;
+  }
+
+  .expl-card,
+  .expl-kpi-card,
+  .dash-aluno-card,
+  .rel-card {
+    box-sizing: border-box;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  /* cartões que queres mais "quadrados" e não de lado a lado */
+  .expl-kpi-card,
+  .dash-aluno-card {
+    max-width: 340px;
+    margin-inline: auto;
+  }
+
   .dash-alunos-grid {
     grid-template-columns: 1fr;
     justify-items: center;
+    gap: 20px;
   }
 
-  .dash-aluno-card {
+  .aluno-card__actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  .aluno-card__btn {
+    flex: 1;
+    text-align: center;
+  }
+
+  .calendar-week__grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .rel-chart-box {
     width: 100%;
-    max-width: 340px;
+    max-width: 100%;
+    height: 260px;
+  }
+
+  .rel-chart-box canvas {
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  .table-wrapper {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
   }
 }
 
+/* ainda mais estreito: calendário em 1 coluna */
+@media (max-width: 480px) {
+  .calendar-week__grid {
+    grid-template-columns: 1fr;
+  }
+}
