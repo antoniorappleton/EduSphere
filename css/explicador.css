@@ -928,7 +928,6 @@ body.home main.auth {
     padding: 0 !important;
     width: 100% !important;
     max-width: 100% !important;
-    overflow-x: hidden !important;
   }
 
   #explPanel,
@@ -1072,3 +1071,4 @@ body.home main.auth {
 .dash-aluno-card__date .aluno-bell-icon {
   flex-shrink: 0;
 }
+

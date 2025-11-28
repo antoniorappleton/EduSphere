@@ -380,3 +380,26 @@
     padding: 8px 10px;
   }
 }
+.perfil-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.perfil-tabela {
+  min-width: 600px;
+}
+
+@media (max-width: 480px) {
+  .perfil-tabela {
+    min-width: 520px;
+    font-size: 12px;
+  }
+}
+
+/* faturação ainda mais larga */
+#tblMensalidadesPendentes,
+#tblMensalidadesPagas {
+  min-width: 700px;
+}
+

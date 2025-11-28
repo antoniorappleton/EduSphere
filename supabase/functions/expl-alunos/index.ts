@@ -179,29 +179,30 @@ serve(async (req)=>{
       return data;
     }
     /* =======================
-       LISTAR ALUNOS
-       ======================= */ if (action === "list_alunos") {
+   LISTAR ALUNOS
+   ======================= */ if (action === "list_alunos") {
       const { data, error } = await svc.from("alunos").select(`
-          id_aluno,
-          nome,
-          apelido,
-          telemovel,
-          ano,
-          idade,
-          dia_semana_preferido,
-          valor_explicacao,
-          sessoes_mes,
-          nome_pai_cache,
-          contacto_pai_cache,
-          email,
-          id_explicador,
-          user_id,
-          is_active,
-          username,
-          faturacao_ativa,
-          faturacao_inicio,
-          dia_pagamento
-        `).eq("id_explicador", myExplId).order("nome", {
+      id_aluno,
+      nome,
+      apelido,
+      telemovel,
+      ano,
+      idade,
+      dia_semana_preferido,
+      valor_explicacao,
+      sessoes_mes,
+      nome_pai_cache,
+      contacto_pai_cache,
+      email,
+      id_explicador,
+      user_id,
+      is_active,
+      username,
+      faturacao_ativa,
+      faturacao_inicio,
+      dia_pagamento,
+      mensalidade_avisada
+    `).eq("id_explicador", myExplId).order("nome", {
         ascending: true
       });
       if (error) {
@@ -214,6 +215,44 @@ serve(async (req)=>{
         });
       }
       return new Response(JSON.stringify(data ?? []), {
+        status: 200,
+        headers: cors(origin)
+      });
+    }
+    /* =======================
+       SET MENSALIDADE AVISADA
+       payload: { aluno_id, avisado }
+       ======================= */ if (action === "set_mensalidade_avisada") {
+      const p = payload || {};
+      const alunoId = String(p.aluno_id || "").trim();
+      const avisado = !!p.avisado;
+      if (!alunoId) {
+        return new Response(JSON.stringify({
+          error: "aluno_id em falta"
+        }), {
+          status: 400,
+          headers: cors(origin)
+        });
+      }
+      // garantir que o aluno pertence ao explicador autenticado
+      await getAlunoDoExpl(alunoId);
+      const { error: upErr } = await svc.from("alunos").update({
+        mensalidade_avisada: avisado
+      }).eq("id_aluno", alunoId).eq("id_explicador", myExplId);
+      if (upErr) {
+        console.error("Erro em set_mensalidade_avisada", upErr);
+        return new Response(JSON.stringify({
+          error: upErr.message
+        }), {
+          status: 400,
+          headers: cors(origin)
+        });
+      }
+      return new Response(JSON.stringify({
+        ok: true,
+        aluno_id: alunoId,
+        avisado
+      }), {
         status: 200,
         headers: cors(origin)
       });
