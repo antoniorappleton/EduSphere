@@ -1045,12 +1045,30 @@ body.home main.auth {
   border-radius: 999px;
 }
 
+/* Sino base (desligado) */
 .aluno-bell-icon {
   width: 22px;
   height: 22px;
-  fill: #999;
+  stroke: #9ca3af;   /* cinzento */
+  fill: none;
 }
 
+/* Sino quando o aluno está avisado */
 .aluno-bell-icon--active {
-  fill: #f59e0b; /* tipo amarelo sino; muda se quiseres */
+  stroke: #b91c1c;
+}
+
+.dash-aluno-card__date {
+  margin: 2px 0 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #111827;
+
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dash-aluno-card__date .aluno-bell-icon {
+  flex-shrink: 0;
 }
