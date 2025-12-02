@@ -1080,6 +1080,75 @@ serve(async (req)=>{
       }
     }
     /* =======================
+   RELATÓRIOS (dashboard)
+   ======================= */
+    if (action === "get_relatorios") {
+      const anoAtual = new Date().getFullYear();
+      const mesAtual = new Date().getMonth() + 1;
+
+      /* ============================
+        1. Evolução da faturação
+        ============================ */
+      const { data: fat, error: fatErr } = await svc
+        .rpc("expl_relatorio_faturacao", {
+          expl_id: myExplId,
+          ano: anoAtual
+        });
+
+      if (fatErr) {
+        console.error("RPC faturacao", fatErr);
+      }
+
+      /* ============================
+        2. Evolução de alunos ativos
+        ============================ */
+      const { data: alunosMes, error: alMesErr } = await svc
+        .rpc("expl_relatorio_alunos_mes", {
+          expl_id: myExplId,
+          ano: anoAtual
+        });
+
+      if (alMesErr) {
+        console.error("RPC alunos_mes", alMesErr);
+      }
+
+      /* ============================
+        3. Sessões mensais
+        ============================ */
+      const { data: sessoes, error: sessErr } = await svc
+        .rpc("expl_relatorio_sessoes_mes", {
+          expl_id: myExplId,
+          ano: anoAtual
+        });
+
+      if (sessErr) {
+        console.error("RPC sessoes_mes", sessErr);
+      }
+
+      /* ============================
+        4. Distribuição por disciplina
+        ============================ */
+      const { data: dist, error: distErr } = await svc
+        .rpc("expl_relatorio_disciplinas", {
+          expl_id: myExplId
+        });
+
+      if (distErr) {
+        console.error("RPC dist", distErr);
+      }
+
+      return new Response(
+        JSON.stringify({
+          faturacao: fat ?? [],
+          alunos_mes: alunosMes ?? [],
+          sessoes_mes: sessoes ?? [],
+          disciplinas: dist ?? []
+        }),
+        { status: 200, headers: cors(origin) }
+      );
+    }
+
+    /* =======================
        APAGAR SESSÃO
        payload: { id_sessao }
        ======================= */ if (action === "delete_sessao_aluno") {

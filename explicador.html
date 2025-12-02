@@ -2282,7 +2282,7 @@
       }
     }
 
-    // ---------- KPI financeiros ----------
+  // ---------- KPI financeiros ----------
     async function loadKpisFinanceiros() {
       if (!EXPLICADOR.id_explicador) return;
 
@@ -2420,8 +2420,10 @@
       }
     }
 
+// ------ Carregar Relatórios Financeiros ------
+    
   // ---------- FATURAÇÃO: filtros de mês/ano ----------
-  function prepararFiltrosFaturacao() {
+function prepararFiltrosFaturacao() {
     const selMes = document.getElementById("fat-filtro-mes");
     const selAno = document.getElementById("fat-filtro-ano");
     if (!selMes || !selAno) return;
@@ -2466,6 +2468,56 @@
       selAno.dataset.bound = "1";
     }
   }
+    
+async function loadRelatorios() {
+    if (!EXPLICADOR.id_explicador) return;
+
+    const { data, error } = await callExplFn("get_relatorios", {
+      id_explicador: EXPLICADOR.id_explicador
+    });
+
+    if (error || !data) {
+      console.error("Erro ao carregar relatórios", error);
+      return;
+    }
+
+    const { faturacao, alunos_mes, sessoes_mes, disciplinas } = data;
+
+    // Preencher KPIs
+    updateRelatorioKpisFromData(faturacao, alunos_mes, sessoes_mes);
+
+    // Gerar gráficos
+    renderGraficoFaturacao(faturacao);
+    renderGraficoAlunos(alunos_mes);
+    renderGraficoSessoes(sessoes_mes);
+  }
+
+function updateRelatorioKpisFromData(faturacao, alunos_mes, sessoes_mes) {
+  const total = ALUNOS_CACHE.length;
+  const ativos = ALUNOS_CACHE.filter(a => a.is_active !== false).length;
+
+  document.getElementById("rel-kpi-total-alunos").textContent = total;
+  document.getElementById("rel-kpi-total-alunos-sub").textContent =
+    ativos === 1 ? "1 ativo" : `${ativos} ativos`;
+
+  const retencao = total > 0 ? (ativos / total) * 100 : 0;
+  document.getElementById("rel-kpi-retencao").textContent =
+    retencao.toFixed(1) + "%";
+
+  const mediaSessoes =
+    sessoes_mes.length
+      ? sessoes_mes.reduce((a, b) => a + Number(b.total || 0), 0) / sessoes_mes.length
+      : 0;
+  document.getElementById("rel-kpi-sessoes-mes").textContent =
+    mediaSessoes.toFixed(1);
+
+  const mediaFat =
+    faturacao.length
+      ? faturacao.reduce((a, b) => a + Number(b.total || 0), 0) / faturacao.length
+      : 0;
+  document.getElementById("rel-kpi-fat-media").textContent =
+    "€ " + mediaFat.toFixed(0);
+}
 
 // ---------- CARREGAR SESSÕES DO ALUNO ----------
 async function loadSessoesAluno(alunoId) {
@@ -2734,8 +2786,99 @@ async function carregarPerfilAluno(alunoOuId) {
   mostrarSecao("aluno-perfil");
 }
 
+let chartFat = null;
+let chartAlunosMes = null;
+let chartSessoes = null;
 
-  async function carregarPerfilAluno(alunoOuId) {
+function renderGraficoFaturacao(faturacao) {
+  const canvas = document.getElementById("chart-evolucao-faturacao");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+
+  if (chartFat) chartFat.destroy();
+
+  chartFat = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: faturacao.map(m => m.mes_label),
+      datasets: [
+        {
+          label: "Faturação (€)",
+          data: faturacao.map(m => Number(m.total || 0)),
+          fill: false,
+          tension: 0.3
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,   // <- deixa o CSS mandar
+      scales: {
+        y: { beginAtZero: true }
+      }
+    }
+  });
+}
+
+function renderGraficoAlunos(alunos_mes) {
+  const canvas = document.getElementById("chart-evolucao-alunos");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+
+  if (chartAlunosMes) chartAlunosMes.destroy();
+
+  chartAlunosMes = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: alunos_mes.map(m => m.mes_label),
+      datasets: [
+        {
+          label: "Alunos ativos",
+          data: alunos_mes.map(m => Number(m.total || 0))
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: { beginAtZero: true }
+      }
+    }
+  });
+}
+
+function renderGraficoSessoes(sessoes_mes) {
+  const canvas = document.getElementById("chart-sessoes-mensais");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+
+  if (chartSessoes) chartSessoes.destroy();
+
+  chartSessoes = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: sessoes_mes.map(m => m.mes_label),
+      datasets: [
+        {
+          label: "Sessões",
+          data: sessoes_mes.map(m => Number(m.total || 0)),
+          tension: 0.3
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: { beginAtZero: true }
+      }
+    }
+  });
+}
+
+
+async function carregarPerfilAluno(alunoOuId) {
     const idAluno = obterIdAluno(alunoOuId);
     if (!idAluno) {
       console.error("carregarPerfilAluno: idAluno inválido", alunoOuId);
@@ -3597,6 +3740,9 @@ async function carregarPerfilAluno(alunoOuId) {
       // Sempre que abres o separador Calendário, recarregas as sessões do explicador
       if (target === 'calendario') {
         await loadResumoCalendario();
+      }
+      if (target === "relatorios") {
+        await loadRelatorios();      // <--- isto é o que dispara a query ao backend
       }
     });
   });
