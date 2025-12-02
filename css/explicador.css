@@ -1321,4 +1321,162 @@ body.home main.auth {
     overflow-x: auto !important;
     overflow-y: hidden !important;
 }
+:root {
+  --rel-accent: #b91c1c;
+}
+
+/* GRID de KPIs – agora com até 5 cards */
+.rel-kpi-grid {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .rel-kpi-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .rel-kpi-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+/* Cards dos KPIs (já tinhas, só garantindo estilo) */
+.rel-kpi-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 1.1rem 1.25rem;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
+  border: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 110px;
+}
+
+.rel-kpi-label {
+  font-size: 0.9rem;
+  color: #6b7280;
+  margin-bottom: 0.25rem;
+}
+
+.rel-kpi-value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.rel-kpi-sub {
+  font-size: 0.8rem;
+  color: #9ca3af;
+}
+
+/* Valores que devem ter a cor principal (#b91c1c) */
+.rel-kpi-value--accent {
+  color: var(--rel-accent);
+}
+
+/* Crescimento positivo a verde continua como no React */
+.rel-kpi-value--positivo {
+  color: #16a34a;
+}
+
+/* GRID dos cartões de gráficos */
+.relatorios-grid {
+  display: grid;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+@media (min-width: 1024px) {
+  .relatorios-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .rel-card--full {
+    grid-column: 1 / -1; /* ocupa a linha toda */
+  }
+}
+
+/* Card de relatório / gráfico */
+.rel-card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
+  border: 1px solid #e5e7eb;
+}
+
+.rel-chart-box {
+  position: relative;
+  width: 100%;
+  height: 260px;
+  margin-top: 0.75rem;
+}
+
+.rel-chart-box canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
+/* Distribuição por disciplina – barras em HTML */
+.rel-disc-list {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.rel-disc-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.rel-disc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+}
+
+.rel-disc-title {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.rel-disc-nome {
+  font-weight: 600;
+  color: #111827;
+}
+
+.rel-disc-meta {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.rel-disc-valor {
+  font-weight: 600;
+  color: #111827;
+}
+
+.rel-disc-bar {
+  position: relative;
+  height: 8px;
+  border-radius: 999px;
+  background: #e5e7eb;
+  overflow: hidden;
+}
+
+.rel-disc-bar span {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: var(--rel-accent);  /* #b91c1c */
+}
 

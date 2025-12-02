@@ -679,11 +679,32 @@
 
             <!-- ========== RELATÓRIOS ========== -->
             <section class="expl-section" id="expl-sec-relatorios" data-section="relatorios">
+              <!-- Cabeçalho -->
+              <div class="expl-section-header">
+                <div>
+                  <h2 class="expl-section-title">Relatórios</h2>
+                  <p class="expl-section-sub">Análises e estatísticas do seu negócio</p>
+                </div>
+              </div>
+
+              <!-- KPI CARDS -->
               <div class="rel-kpi-grid">
                 <article class="rel-kpi-card">
                   <p class="rel-kpi-label">Total de alunos</p>
                   <p class="rel-kpi-value" id="rel-kpi-total-alunos">—</p>
                   <p class="rel-kpi-sub" id="rel-kpi-total-alunos-sub">—</p>
+                </article>
+
+                <article class="rel-kpi-card">
+                  <p class="rel-kpi-label">Taxa de retenção</p>
+                  <p class="rel-kpi-value rel-kpi-value--accent" id="rel-kpi-retencao">—</p>
+                  <p class="rel-kpi-sub">Últimos 6 meses</p>
+                </article>
+
+                <article class="rel-kpi-card">
+                  <p class="rel-kpi-label">Sessões / mês</p>
+                  <p class="rel-kpi-value" id="rel-kpi-sessoes-mes">—</p>
+                  <p class="rel-kpi-sub">Média mensal</p>
                 </article>
 
                 <article class="rel-kpi-card">
@@ -693,80 +714,43 @@
                 </article>
 
                 <article class="rel-kpi-card">
-                  <p class="rel-kpi-label">Sessões / mês</p>
-                  <p class="rel-kpi-value" id="rel-kpi-sessoes-mes">—</p>
-                  <p class="rel-kpi-sub">Média nos últimos 3 meses</p>
-                </article>
-
-                <article class="rel-kpi-card">
                   <p class="rel-kpi-label">Crescimento</p>
-                  <p class="rel-kpi-value" id="rel-kpi-crescimento">—</p>
+                  <p class="rel-kpi-value rel-kpi-value--positivo" id="rel-kpi-crescimento">—</p>
                   <p class="rel-kpi-sub">vs mês anterior</p>
                 </article>
               </div>
-              <article class="expl-card expl-placeholder-card">
-                <h2 class="expl-section-title">Relatórios</h2>
-                <p class="expl-section-sub">Estatísticas e análises da tua atividade.</p>
 
-                <ul class="expl-feature-list">
-                  <li>
-                    <span class="expl-feature-label">Resumo mensal</span>
-                    <span class="expl-feature-value" id="rel-resumo-mensal">
-                      Este mês: € 0.00 recebidos de € 0.00 previstos · € 0.00 em falta.
-                    </span>
-                  </li>
-                  <li>
-                    <span class="expl-feature-label">Tendência anual</span>
-                    <span class="expl-feature-value" id="rel-tendencia-anual">
-                      Ano atual: € 0.00 faturados de € 0.00 previstos.
-                    </span>
-                  </li>
-                  <li>
-                    <span class="expl-feature-label">Alunos ativos</span>
-                    <span class="expl-feature-value" id="rel-alunos-ativos">
-                      Ainda não tens alunos ativos registados.
-                    </span>
-                  </li>
-                </ul>
-
-                <button type="button" class="expl-link-chip">
-                  <span class="expl-link-chip-icon">📈</span>
-                  <span>Ver gráficos e relatórios</span>
-                </button>
-              </article>
+              <!-- GRÁFICOS -->
               <div class="relatorios-grid">
-                <div class="rel-card">
-                  <h3 class="expl-subsection-title">Previsto vs Pago (mês selecionado)</h3>
-                  <p class="expl-section-sub">
-                    Compara o total previsto, pago e em falta para o mês escolhido na faturação.
-                  </p>
+                <!-- Evolução da Faturação -->
+                <article class="rel-card">
+                  <h3 class="expl-subsection-title">Evolução da Faturação</h3>
+                  <p class="expl-section-sub">Faturação mensal dos últimos 6 meses</p>
                   <div class="rel-chart-box">
-                    <canvas id="chart-previsto-pago"></canvas>
+                    <canvas id="chart-evolucao-faturacao"></canvas>
                   </div>
-                </div>
+                </article>
 
-                <div class="rel-card">
-                  <h3 class="expl-subsection-title">Pagamentos por aluno (mês selecionado)</h3>
-                  <p class="expl-section-sub">
-                    Vê quanto cada aluno devia pagar e quanto já pagou nesse mês.
-                  </p>
+                <!-- Evolução de Alunos -->
+                <article class="rel-card">
+                  <h3 class="expl-subsection-title">Evolução de Alunos</h3>
+                  <p class="expl-section-sub">Número de alunos ativos por mês</p>
                   <div class="rel-chart-box">
-                    <canvas id="chart-por-aluno"></canvas>
+                    <canvas id="chart-evolucao-alunos"></canvas>
                   </div>
-                </div>
+                </article>
 
-                <div class="rel-card">
-                  <h3 class="expl-subsection-title">Evolução mensal (ano atual)</h3>
-                  <p class="expl-section-sub">
-                    Compara o total previsto e faturado em cada mês do ano atual.
-                  </p>
+                <!-- Sessões mensais (linha completa) -->
+                <article class="rel-card rel-card--full">
+                  <h3 class="expl-subsection-title">Sessões Mensais</h3>
+                  <p class="expl-section-sub">Total de sessões realizadas por mês</p>
                   <div class="rel-chart-box">
-                    <canvas id="chart-evolucao-anual"></canvas>
+                    <canvas id="chart-sessoes-mensais"></canvas>
                   </div>
-                </div>
-
+                </article>
               </div>
             </section>
+
           </div>
           <!-- FAB NAV FLUTUANTE -->
           <nav class="fab-nav" id="fabNav">
