@@ -1266,14 +1266,12 @@
         case "PAGO":
           return {
             label: "Pago",
-            badgeClass:
-              "dash-aluno-card__badge dash-aluno-card__badge--pago",
+            badgeClass: "dash-aluno-card__badge dash-aluno-card__badge--pago",
           };
         case "PARCIAL":
           return {
             label: "Parcial",
-            badgeClass:
-              "dash-aluno-card__badge dash-aluno-card__badge--parcial",
+            badgeClass: "dash-aluno-card__badge dash-aluno-card__badge--parcial",
           };
         case "PENDENTE":
         default:
@@ -1289,7 +1287,40 @@
       .map((a) => {
         const nome = [a.nome, a.apelido].filter(Boolean).join(" ") || "Aluno";
         const anoLabel = a.ano ? `${a.ano}º Ano` : "—";
-        const proximaMensalidade = a.proxima_mensalidade || "—";
+
+        // Próxima explicação
+        let proxExpLabel = "Nenhuma explicação agendada";
+        if (a.proxima_sessao_data) {
+          const d = new Date(a.proxima_sessao_data);
+          if (!isNaN(d.getTime())) {
+            const dataNum = d.toLocaleDateString("pt-PT", {
+              day: "2-digit",
+              month: "2-digit",
+            });
+            const diaSemana = d.toLocaleDateString("pt-PT", {
+              weekday: "short",
+            });
+            const hora = (a.proxima_sessao_hora || "").slice(0, 5);
+            proxExpLabel = hora
+              ? `${dataNum} (${diaSemana}) · ${hora}`
+              : `${dataNum} (${diaSemana})`;
+          }
+        }
+
+        // Próxima mensalidade
+        let proxMensLabel = "—";
+        if (a.proxima_mensalidade) {
+          const d = new Date(a.proxima_mensalidade);
+          if (!isNaN(d.getTime())) {
+            proxMensLabel = d.toLocaleDateString("pt-PT", {
+              day: "2-digit",
+              month: "2-digit",
+            });
+          } else {
+            proxMensLabel = a.proxima_mensalidade;
+          }
+        }
+
         const { label: estadoLabel, badgeClass } = getEstadoInfo(
           a.estado_mensalidade || "PENDENTE"
         );
@@ -1307,10 +1338,13 @@
                 </div>
               </div>
 
-              <p class="dash-aluno-card__label">Próxima mensalidade:</p>
-              <div class="dash-aluno-card__mensalidade-row">
-                <span class="dash-aluno-card__date">
-                  ${proximaMensalidade}
+              <p class="dash-aluno-card__label">Próxima explicação:</p>
+              <p class="dash-aluno-card__date">${proxExpLabel}</p>
+
+              <p class="dash-aluno-card__label">Mensalidade (mês atual):</p>
+              <div class="aluno-card__mensalidade-row">
+                <span class="${badgeClass}">
+                  ${estadoLabel}
                 </span>
 
                 <button
@@ -1337,40 +1371,29 @@
                 </button>
               </div>
 
-              <span class="${badgeClass}">
-                ${estadoLabel}
-              </span>
+              <p class="dash-aluno-card__label">Próxima mensalidade:</p>
+              <p class="dash-aluno-card__date">${proxMensLabel}</p>
             </div>
-
-            <button
-              type="button"
-              class="button secondary dash-aluno-card__btn"
-              data-id-aluno="${a.id_aluno}"
-            >
-              Ver detalhes
-            </button>
           </article>
         `;
       })
       .join("");
 
-    // clique em "Ver detalhes" -> vai direto para o PERFIL do aluno
-    grid.querySelectorAll(".dash-aluno-card__btn").forEach((btn) => {
+    // listeners no sino (avisado / não avisado) – reutiliza o que já tinhas
+    grid.querySelectorAll(".aluno-card__bell").forEach((btn) => {
       btn.addEventListener("click", () => {
         const idAluno = btn.getAttribute("data-id-aluno");
-        const aluno = (ALUNOS_CACHE || []).find(
-          (x) => String(x.id_aluno) === String(idAluno)
-        );
-        if (!aluno) return;
+        const atual   = btn.getAttribute("data-avisado") === "true";
+        const novo    = !atual;
 
-        if (typeof preencherPerfilAlunoBasico === "function") {
-          preencherPerfilAlunoBasico(aluno);
-        }
-        if (typeof mostrarPainelAluno === "function") {
-          mostrarPainelAluno(aluno);
-        }
+        // aqui podes chamar a função que marca mensalidade_avisada no back-end
+        // ...
 
-        ativarScreen("aluno-perfil");
+        btn.setAttribute("data-avisado", novo ? "true" : "false");
+        btn.setAttribute("aria-pressed", novo ? "true" : "false");
+        btn
+          .querySelector(".aluno-bell-icon")
+          ?.classList.toggle("aluno-bell-icon--active", novo);
       });
     });
   }
@@ -1498,16 +1521,35 @@
         let proxExpLabel = "—";
         if (a.proxima_sessao_data) {
           const d = new Date(a.proxima_sessao_data);
-          const dd = String(d.getDate()).padStart(2, "0");
-          const mm = String(d.getMonth() + 1).padStart(2, "0");
-          const yyyy = d.getFullYear();
-          const hora = (a.proxima_sessao_hora || "").slice(0, 5);
-          proxExpLabel = hora
-            ? `${dd}/${mm}/${yyyy} às ${hora}`
-            : `${dd}/${mm}/${yyyy}`;
+          if (!isNaN(d.getTime())) {
+            const dataNum = d.toLocaleDateString("pt-PT", {
+              day: "2-digit",
+              month: "2-digit",
+            });
+            const diaSemana = d.toLocaleDateString("pt-PT", {
+              weekday: "short",
+            }); // ex: "seg.", "ter."
+
+            const hora = (a.proxima_sessao_hora || "").slice(0, 5);
+            proxExpLabel = hora
+              ? `${dataNum} (${diaSemana}) · ${hora}`
+              : `${dataNum} (${diaSemana})`;
+          }
         }
 
-        const proximaMensalidade = a.proxima_mensalidade || "—";
+        // próxima mensalidade
+        let proxMensLabel = "—";
+        if (a.proxima_mensalidade) {
+          const d = new Date(a.proxima_mensalidade);
+          if (!isNaN(d.getTime())) {
+            proxMensLabel = d.toLocaleDateString("pt-PT", {
+              day: "2-digit",
+              month: "2-digit",
+            });
+          } else {
+            proxMensLabel = a.proxima_mensalidade;
+          }
+        }
         const { label: estadoLabel, badgeClass } = getEstadoInfo(
           a.estado_mensalidade || "PENDENTE"
         );
@@ -1545,7 +1587,7 @@
 
               <div class="aluno-card__mensalidade-row">
                 <div>
-                  <p class="dash-aluno-card__label">Mensalidade:</p>
+                  <p class="dash-aluno-card__label">Mensalidade (mês atual):</p>
                   <span class="${badgeClass}">
                     ${estadoLabel}
                   </span>
@@ -1574,6 +1616,9 @@
                   </svg>
                 </button>
               </div>
+
+              <p class="dash-aluno-card__label">Próxima mensalidade:</p>
+              <p class="dash-aluno-card__date">${proxMensLabel}</p>
             </div>
 
             <div class="aluno-card__actions">
@@ -2206,111 +2251,143 @@
       }
     }
 
-  // ---------- KPI financeiros ----------
-  async function loadKpisFinanceiros() {
-    if (!EXPLICADOR.id_explicador) return;
+    // ---------- KPI financeiros ----------
+    async function loadKpisFinanceiros() {
+      if (!EXPLICADOR.id_explicador) return;
 
-    const cardTotalPrev = document.getElementById("card-total-previsto");
-    const cardTotalMes  = document.getElementById("card-total-mes");
-    const cardPendentes = document.getElementById("card-pendentes");
+      const cardTotalPrev = document.getElementById("card-total-previsto");
+      const cardTotalMes  = document.getElementById("card-total-mes");
+      const cardPendentes = document.getElementById("card-pendentes");
 
-    try {
-      const { data, error } = await supabase
-        .from("v_pagamentos_detalhe")
-        .select("ano, mes, id_aluno, aluno_nome, valor_previsto, valor_pago, estado")
-        .eq("id_explicador", EXPLICADOR.id_explicador);
+      try {
+        const { data, error } = await supabase
+          .from("v_pagamentos_detalhe")
+          .select("ano, mes, id_aluno, aluno_nome, valor_previsto, valor_pago, estado")
+          .eq("id_explicador", EXPLICADOR.id_explicador);
 
-      if (error) {
-        console.error("Erro a carregar KPI financeiros", error);
-        return;
-      }
-
-      // cache global com todos os pagamentos
-      PAGAMENTOS_CACHE = data || [];
-
-      const now      = new Date();
-      const anoAtual = now.getFullYear();
-      const mesAtual = now.getMonth() + 1;
-
-      let previstoMesAtual      = 0;
-      let realizadoMesAtual     = 0;
-      let previstoAnoAtual      = 0;
-      let realizadoAnoAtual     = 0;
-      let pendenteTotalMesAtual = 0;
-      const alunosComPendencias = new Set();
-
-      (PAGAMENTOS_CACHE || []).forEach((p) => {
-        const previsto = Number(p.valor_previsto) || 0;
-        const pago     = Number(p.valor_pago) || 0;
-        const falta    = Math.max(previsto - pago, 0);
-
-        // Ano inteiro
-        if (p.ano === anoAtual) {
-          previstoAnoAtual  += previsto;
-          realizadoAnoAtual += pago;
+        if (error) {
+          console.error("Erro a carregar KPI financeiros", error);
+          return;
         }
 
-        // Só mês atual (para os cards da dashboard)
-        if (p.ano === anoAtual && p.mes === mesAtual) {
-          previstoMesAtual      += previsto;
-          realizadoMesAtual     += pago;
-          pendenteTotalMesAtual += falta;
+        // cache global com todos os pagamentos
+        PAGAMENTOS_CACHE = data || [];
 
-          if (falta > 0 && p.id_aluno) {
-            alunosComPendencias.add(p.id_aluno);
+        const now      = new Date();
+        const anoAtual = now.getFullYear();
+        const mesAtual = now.getMonth() + 1;
+
+        let previstoMesAtual      = 0;
+        let realizadoMesAtual     = 0;
+        let previstoAnoAtual      = 0;
+        let realizadoAnoAtual     = 0;
+        let pendenteTotalMesAtual = 0;
+        const alunosComPendencias = new Set();
+
+        (PAGAMENTOS_CACHE || []).forEach((p) => {
+          const previsto = Number(p.valor_previsto) || 0;
+          const pago     = Number(p.valor_pago) || 0;
+          const falta    = Math.max(previsto - pago, 0);
+
+          // Ano inteiro
+          if (p.ano === anoAtual) {
+            previstoAnoAtual  += previsto;
+            realizadoAnoAtual += pago;
+          }
+
+          // Só mês atual (para os cards da dashboard)
+          if (p.ano === anoAtual && p.mes === mesAtual) {
+            previstoMesAtual      += previsto;
+            realizadoMesAtual     += pago;
+            pendenteTotalMesAtual += falta;
+
+            if (falta > 0 && p.id_aluno) {
+              alunosComPendencias.add(p.id_aluno);
+            }
+          }
+        });
+
+        // -------- Fallback: se não houver registos de pagamentos para o mês atual,
+        // usa a soma das mensalidades dos alunos ativos (valor_explicacao * sessoes_mes)
+        let nAlunosPend = alunosComPendencias.size;
+        const temRegistosMesAtual = (PAGAMENTOS_CACHE || []).some(
+          (p) => p.ano === anoAtual && p.mes === mesAtual
+        );
+
+        if (!temRegistosMesAtual) {
+          let somaMensal      = 0;
+          let ativosComValor  = 0;
+
+          (ALUNOS_CACHE || []).forEach((a) => {
+            if (a.is_active === false) return;
+
+            const v = Number(a.valor_explicacao) || 0;
+            const s = Number(a.sessoes_mes) || 0;
+            const mensal = v * s;
+
+            if (mensal > 0) {
+              somaMensal += mensal;
+              ativosComValor++;
+            }
+          });
+
+          if (somaMensal > 0) {
+            previstoMesAtual      = somaMensal;
+            // como não há pagamentos registados, o realizado é 0
+            realizadoMesAtual     = 0;
+            pendenteTotalMesAtual = somaMensal;
+            if (!nAlunosPend) nAlunosPend = ativosComValor;
           }
         }
-      });
 
-      // ---- Cards na dashboard ----
-      if (cardTotalPrev) {
-        cardTotalPrev.textContent = `€ ${previstoMesAtual.toFixed(2)}`;
+        // ---- Cards na dashboard ----
+        if (cardTotalPrev) {
+          cardTotalPrev.textContent = `€ ${previstoMesAtual.toFixed(2)}`;
+        }
+
+        if (cardTotalMes) {
+          cardTotalMes.textContent =
+            `€ ${realizadoMesAtual.toFixed(2)} de € ${previstoMesAtual.toFixed(2)}`;
+        }
+
+        if (cardPendentes) {
+          const labelAlunos =
+            nAlunosPend === 0
+              ? "Nenhum aluno em falta"
+              : nAlunosPend === 1
+              ? "1 aluno em falta"
+              : `${nAlunosPend} alunos em falta`;
+
+          cardPendentes.textContent =
+            `€ ${pendenteTotalMesAtual.toFixed(2)} (${labelAlunos})`;
+        }
+
+        // ---- Resumo dos relatórios (texto) ----
+        const nAlunosAtivos = (ALUNOS_CACHE || []).filter(a => a.is_active !== false).length;
+        updateResumoRelatorios({
+          previstoMesAtual,
+          realizadoMesAtual,
+          pendenteTotal: pendenteTotalMesAtual,
+          previstoAnoAtual,
+          realizadoAnoAtual,
+          nAlunosAtivos,
+        });
+        updateRelatorioKpis({
+          previstoMesAtual,
+          realizadoMesAtual,
+          previstoAnoAtual,
+          realizadoAnoAtual,
+        });
+
+        // ---- Secção Faturação + Gráficos ----
+        prepararFiltrosFaturacao();   // preenche <select> mês/ano
+        renderResumoMensal();         // tabelas "pagas" + "em falta"
+        atualizarGraficosPagamentos && atualizarGraficosPagamentos();
+        atualizarGraficoEvolucaoAnual && atualizarGraficoEvolucaoAnual();
+      } catch (err) {
+        console.error("Erro inesperado em loadKpisFinanceiros", err);
       }
-
-      if (cardTotalMes) {
-        cardTotalMes.textContent =
-          `€ ${realizadoMesAtual.toFixed(2)} de € ${previstoMesAtual.toFixed(2)}`;
-      }
-
-      if (cardPendentes) {
-        const nAlunosPend = alunosComPendencias.size;
-        const labelAlunos =
-          nAlunosPend === 0
-            ? "Nenhum aluno em falta"
-            : nAlunosPend === 1
-            ? "1 aluno em falta"
-            : `${nAlunosPend} alunos em falta`;
-
-        cardPendentes.textContent =
-          `€ ${pendenteTotalMesAtual.toFixed(2)} (${labelAlunos})`;
-      }
-
-      // ---- Resumo dos relatórios (texto) ----
-      const nAlunosAtivos = (ALUNOS_CACHE || []).filter(a => a.is_active !== false).length;
-      updateResumoRelatorios({
-        previstoMesAtual,
-        realizadoMesAtual,
-        pendenteTotal: pendenteTotalMesAtual,
-        previstoAnoAtual,
-        realizadoAnoAtual,
-        nAlunosAtivos,
-      });
-      updateRelatorioKpis({
-        previstoMesAtual,
-        realizadoMesAtual,
-        previstoAnoAtual,
-        realizadoAnoAtual,
-      });
-
-      // ---- Secção Faturação + Gráficos ----
-      prepararFiltrosFaturacao();   // preenche <select> de mês/ano e liga eventos
-      renderResumoMensal();         // preenche tabelas "pagas" + "em falta"
-      atualizarGraficosPagamentos && atualizarGraficosPagamentos();
-      atualizarGraficoEvolucaoAnual && atualizarGraficoEvolucaoAnual(); // se já definiste os gráficos
-    } catch (err) {
-      console.error("Erro inesperado em loadKpisFinanceiros", err);
     }
-  }
 
   // ---------- FATURAÇÃO: filtros de mês/ano ----------
   function prepararFiltrosFaturacao() {
