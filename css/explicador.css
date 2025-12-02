@@ -1071,4 +1071,195 @@ body.home main.auth {
 .dash-aluno-card__date .aluno-bell-icon {
   flex-shrink: 0;
 }
+.cal-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.cal-kpi-label {
+  font-size: .85rem;
+  color: var(--muted-text, #6b7280);
+  margin-bottom: .35rem;
+}
+
+.cal-kpi-value {
+  font-size: 1.6rem;
+  font-weight: 600;
+}
+
+@media (max-width: 900px) {
+  .cal-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .cal-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.cal-filters {
+  display: flex;
+  gap: .75rem;
+  align-items: center;
+  margin-top: .5rem;
+  flex-wrap: wrap;
+}
+
+.cal-search-wrapper {
+  flex: 1;
+}
+
+.cal-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 1rem;
+  border-radius: .5rem;
+  overflow: hidden;
+  border: 1px solid var(--border-color, #e5e7eb);
+}
+
+.cal-tab {
+  padding: .5rem 1rem;
+  font-size: .9rem;
+  background: #f9fafb;
+  border: none;
+  cursor: pointer;
+}
+
+.cal-tab--active {
+  background: #fff;
+  font-weight: 600;
+}
+
+.cal-view {
+  display: none;
+  margin-top: 1rem;
+}
+
+.cal-view--active {
+  display: block;
+}
+
+/* Cards de sessão na lista */
+.sessao-list-item {
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+  padding: .75rem 1rem;
+  border-radius: .75rem;
+  border: 1px solid #e5e7eb;
+  margin-bottom: .75rem;
+}
+
+.sessao-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sessao-aluno {
+  font-weight: 600;
+}
+
+.sessao-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .75rem;
+  font-size: .85rem;
+  color: #6b7280;
+}
+
+/* Timeline */
+.cal-timeline-dia {
+  margin-bottom: 1.25rem;
+}
+
+.cal-timeline-dia-titulo {
+  font-size: .9rem;
+  font-weight: 600;
+  margin-bottom: .5rem;
+}
+
+.cal-timeline-lista {
+  border-left: 2px solid #e5e7eb;
+  margin-left: .5rem;
+  padding-left: 1rem;
+}
+
+.cal-timeline-ponto {
+  position: relative;
+  margin-bottom: .75rem;
+}
+
+.cal-timeline-ponto::before {
+  content: "";
+  position: absolute;
+  left: -1.1rem;
+  top: .4rem;
+  width: .5rem;
+  height: .5rem;
+  border-radius: 999px;
+  background: #111827;
+}
+.sessao-list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.9rem 1.1rem;
+  border-radius: 0.75rem;
+  border: 1px solid #e5e7eb;
+  margin-bottom: 0.75rem;
+  background: #fff;
+}
+
+.sessao-list-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.sessao-list-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.sessao-aluno {
+  font-weight: 600;
+}
+
+.sessao-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.sessao-list-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.button--sm {
+  padding: 0.35rem 0.7rem;
+  font-size: 0.85rem;
+}
+
+@media (max-width: 640px) {
+  .sessao-list-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .sessao-list-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
 

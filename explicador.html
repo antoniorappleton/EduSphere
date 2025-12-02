@@ -339,7 +339,6 @@
           </div>
         </section>
 
-
         <!-- ========== PERFIL DO ALUNO (SCREEN) ========== -->
         <section
           class="expl-section"
@@ -511,280 +510,333 @@
                     </label>
                   </div>
                 </div>
-              <div class="expl-grid-2" style="margin-top:1.5rem;">
 
-                <article class="expl-card">
-                  <h3 class="expl-subsection-title">
-                    Mensalidades em falta (mês atual)
-                  </h3>
-                  <div class="table-wrapper perfil-table-wrapper">
-                    <table class="tabela perfil-tabela" id="tblMensalidadesPendentes">
-                      <thead>
-                        <tr>
-                          <th>Aluno</th>
-                          <th>Mês</th>
-                          <th>Previsto (€)</th>
-                          <th>Pago (€)</th>
-                          <th>Em falta (€)</th>
-                          <th>Estado</th>
-                          <th>Avisado</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr>
-                          <td colspan="7">
-                            Ainda não existem mensalidades em falta neste mês.
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </article>
+      <div class="expl-grid-2" style="margin-top:1.5rem;">
 
-                <article class="expl-card">
-                  <h3 class="expl-subsection-title">
-                    Mensalidades pagas (mês atual)
-                  </h3>
-                  <div class="table-wrapper perfil-table-wrapper">
-                    <table class="tabela perfil-tabela" id="tblMensalidadesPagas">
-                      <thead>
-                        <tr>
-                          <th>Aluno</th>
-                          <th>Mês</th>
-                          <th>Pago (€)</th>
-                          <th>Previsto (€)</th>
-                          <th>Estado</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr>
-                          <td colspan="5">
-                            Ainda não existem mensalidades pagas neste mês.
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </article>
-
-              </div>
-        </section>
-
-        <!-- ========== CALENDÁRIO ========== -->
-        <section class="expl-section" id="expl-sec-calendario" data-section="calendario">
-          <div class="expl-section-header">
-            <div>
-              <h2 class="expl-section-title">Calendário</h2>
-              <p class="expl-section-sub">Gerir explicações e horários.</p>
+          <!-- Mensalidades em falta -->
+          <article class="expl-card">
+            <h3 class="expl-subsection-title">Mensalidades em falta (mês atual)</h3>
+            <div class="table-wrapper perfil-table-wrapper">
+              <table class="table table--wide tabela perfil-tabela" id="tblMensalidadesPendentes">
+                <thead>
+                  <tr>
+                    <th>Aluno</th>
+                    <th>Mês</th>
+                    <th>Previsto (€)</th>
+                    <th>Pago (€)</th>
+                    <th>Em falta (€)</th>
+                    <th>Estado</th>
+                    <th>Avisado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td colspan="7">Ainda não existem mensalidades em falta neste mês.</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
+          </article>
 
-            <button type="button" class="button secondary" id="btn-agendar-explicacao">
-              Agendar explicação
-            </button>
-          </div>
+          <!-- Mensalidades pagas -->
+          <article class="expl-card">
+            <h3 class="expl-subsection-title">Mensalidades pagas (mês atual)</h3>
+            <div class="table-wrapper perfil-table-wrapper">
+              <table class="table table--wide tabela perfil-tabela" id="tblMensalidadesPagas">
+                <thead>
+                  <tr>
+                    <th>Aluno</th>
+                    <th>Mês</th>
+                    <th>Pago (€)</th>
+                    <th>Previsto (€)</th>
+                    <th>Estado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td colspan="5">Ainda não existem mensalidades pagas neste mês.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
 
-          <div class="expl-grid-2" style="margin-top:1.5rem;">
-            <!-- Cartão: Calendário semanal -->
-            <article class="expl-card">
-              <h3 class="expl-subsection-title">Calendário semanal</h3>
-              <p class="expl-section-sub">
-                Vê, por semana, em que dias tens explicações e o estado de cada sessão.
-              </p>
+      </div>
 
-              <!-- Legenda dos estados -->
-              <div class="calendar-legend">
-                <span><span class="dot dot-yellow"></span> Agendada</span>
-                <span><span class="dot dot-green"></span> Realizada</span>
-                <span><span class="dot dot-orange"></span> Extra / outro</span>
+            </section>
+
+            <!-- ========== CALENDÁRIO ========== -->
+            <section class="expl-section" id="expl-sec-calendario" data-section="calendario">
+              <div class="expl-section-header">
+                <div>
+                  <h2 class="expl-section-title">Calendário</h2>
+                  <p class="expl-section-sub">Gerir explicações e horários.</p>
+                </div>
+
+                <button type="button" class="button secondary" id="btn-agendar-explicacao">
+                  Agendar explicação
+                </button>
               </div>
 
-              <div class="calendar-week" id="calendar-week">
-                <header class="calendar-week__nav">
-                  <button id="week-prev" class="calendar-btn" type="button">&#8592;</button>
-                  <h3 id="week-label" class="calendar-week__title">Semana atual</h3>
-                  <button id="week-next" class="calendar-btn" type="button">&#8594;</button>
-                </header>
+              <!-- KPIs semanais -->
+              <div class="cal-kpi-grid">
+                <article class="expl-card cal-kpi-card">
+                  <p class="cal-kpi-label">Sessões esta semana</p>
+                  <p class="cal-kpi-value" id="cal-kpi-sessoes-semana">—</p>
+                </article>
 
-                <div class="calendar-week__grid" id="calendar-grid">
+                <article class="expl-card cal-kpi-card">
+                  <p class="cal-kpi-label">Horas totais</p>
+                  <p class="cal-kpi-value" id="cal-kpi-horas">—</p>
+                </article>
+
+                <article class="expl-card cal-kpi-card">
+                  <p class="cal-kpi-label">Faturação semana</p>
+                  <p class="cal-kpi-value" id="cal-kpi-fat-semana">—</p>
+                </article>
+
+                <article class="expl-card cal-kpi-card">
+                  <p class="cal-kpi-label">Próxima sessão</p>
+                  <p class="cal-kpi-value" id="cal-kpi-proxima">—</p>
+                </article>
+              </div>
+                            <article class="expl-card" id="card-todas-sessoes" style="margin-top:1.5rem;">
+                <div class="expl-card-header">
+                  <h3 class="expl-subsection-title">Todas as explicações</h3>
+
+                  <div class="cal-filters">
+                    <div class="cal-search-wrapper">
+                      <input type="text" id="cal-search" class="input" placeholder="Pesquisar aluno..." />
+                    </div>
+
+                    <select id="cal-filtro-estado" class="select">
+                      <option value="todas">Todas</option>
+                      <option value="AGENDADA">Agendada</option>
+                      <option value="REALIZADA">Realizada</option>
+                      <option value="CANCELADA">Cancelada</option>
+                      <option value="FALTOU">Faltou</option>
+                      <option value="EXTRA">Extra</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="cal-tabs">
+                  <button type="button" class="cal-tab cal-tab--active" data-view="lista">Lista</button>
+                  <button type="button" class="cal-tab" data-view="timeline">Timeline</button>
+                </div>
+
+                <div id="cal-view-lista" class="cal-view cal-view--active">
                   <!-- preenchido via JS -->
                 </div>
+
+                <div id="cal-view-timeline" class="cal-view">
+                  <!-- preenchido via JS -->
+                </div>
+              </article>
+              <div class="expl-grid-2" style="margin-top:1.5rem;">
+                <!-- Cartão: Calendário semanal -->
+                <article class="expl-card">
+                  <h3 class="expl-subsection-title">Calendário semanal</h3>
+                  <p class="expl-section-sub">
+                    Vê, por semana, em que dias tens explicações e o estado de cada sessão.
+                  </p>
+
+                  <!-- Legenda dos estados -->
+                  <div class="calendar-legend">
+                    <span><span class="dot dot-yellow"></span> Agendada</span>
+                    <span><span class="dot dot-green"></span> Realizada</span>
+                    <span><span class="dot dot-orange"></span> Extra / outro</span>
+                  </div>
+
+                  <div class="calendar-week" id="calendar-week">
+                    <header class="calendar-week__nav">
+                      <button id="week-prev" class="calendar-btn" type="button">&#8592;</button>
+                      <h3 id="week-label" class="calendar-week__title">Semana atual</h3>
+                      <button id="week-next" class="calendar-btn" type="button">&#8594;</button>
+                    </header>
+
+                    <div class="calendar-week__grid" id="calendar-grid">
+                      <!-- preenchido via JS -->
+                    </div>
+                  </div>
+                </article>
+
+                <!-- Cartão: Próximas explicações -->
+                <article class="expl-card">
+                  <h3 class="expl-subsection-title">Próximas explicações</h3>
+                  <p class="expl-section-sub">
+                    Lista das próximas sessões agendadas, por ordem cronológica.
+                  </p>
+
+                  <div id="calendar-proximas" class="calendar-proximas">
+                    <!-- preenchido via JS -->
+                  </div>
+                </article>
               </div>
-            </article>
 
-            <!-- Cartão: Próximas explicações -->
-            <article class="expl-card">
-              <h3 class="expl-subsection-title">Próximas explicações</h3>
-              <p class="expl-section-sub">
-                Lista das próximas sessões agendadas, por ordem cronológica.
-              </p>
 
-              <div id="calendar-proximas" class="calendar-proximas">
-                <!-- preenchido via JS -->
+            </section>
+
+            <!-- ========== RELATÓRIOS ========== -->
+            <section class="expl-section" id="expl-sec-relatorios" data-section="relatorios">
+              <div class="rel-kpi-grid">
+                <article class="rel-kpi-card">
+                  <p class="rel-kpi-label">Total de alunos</p>
+                  <p class="rel-kpi-value" id="rel-kpi-total-alunos">—</p>
+                  <p class="rel-kpi-sub" id="rel-kpi-total-alunos-sub">—</p>
+                </article>
+
+                <article class="rel-kpi-card">
+                  <p class="rel-kpi-label">Faturação média</p>
+                  <p class="rel-kpi-value" id="rel-kpi-fat-media">—</p>
+                  <p class="rel-kpi-sub">Por mês (ano atual)</p>
+                </article>
+
+                <article class="rel-kpi-card">
+                  <p class="rel-kpi-label">Sessões / mês</p>
+                  <p class="rel-kpi-value" id="rel-kpi-sessoes-mes">—</p>
+                  <p class="rel-kpi-sub">Média nos últimos 3 meses</p>
+                </article>
+
+                <article class="rel-kpi-card">
+                  <p class="rel-kpi-label">Crescimento</p>
+                  <p class="rel-kpi-value" id="rel-kpi-crescimento">—</p>
+                  <p class="rel-kpi-sub">vs mês anterior</p>
+                </article>
               </div>
-            </article>
+              <article class="expl-card expl-placeholder-card">
+                <h2 class="expl-section-title">Relatórios</h2>
+                <p class="expl-section-sub">Estatísticas e análises da tua atividade.</p>
+
+                <ul class="expl-feature-list">
+                  <li>
+                    <span class="expl-feature-label">Resumo mensal</span>
+                    <span class="expl-feature-value" id="rel-resumo-mensal">
+                      Este mês: € 0.00 recebidos de € 0.00 previstos · € 0.00 em falta.
+                    </span>
+                  </li>
+                  <li>
+                    <span class="expl-feature-label">Tendência anual</span>
+                    <span class="expl-feature-value" id="rel-tendencia-anual">
+                      Ano atual: € 0.00 faturados de € 0.00 previstos.
+                    </span>
+                  </li>
+                  <li>
+                    <span class="expl-feature-label">Alunos ativos</span>
+                    <span class="expl-feature-value" id="rel-alunos-ativos">
+                      Ainda não tens alunos ativos registados.
+                    </span>
+                  </li>
+                </ul>
+
+                <button type="button" class="expl-link-chip">
+                  <span class="expl-link-chip-icon">📈</span>
+                  <span>Ver gráficos e relatórios</span>
+                </button>
+              </article>
+              <div class="relatorios-grid">
+                <div class="rel-card">
+                  <h3 class="expl-subsection-title">Previsto vs Pago (mês selecionado)</h3>
+                  <p class="expl-section-sub">
+                    Compara o total previsto, pago e em falta para o mês escolhido na faturação.
+                  </p>
+                  <div class="rel-chart-box">
+                    <canvas id="chart-previsto-pago"></canvas>
+                  </div>
+                </div>
+
+                <div class="rel-card">
+                  <h3 class="expl-subsection-title">Pagamentos por aluno (mês selecionado)</h3>
+                  <p class="expl-section-sub">
+                    Vê quanto cada aluno devia pagar e quanto já pagou nesse mês.
+                  </p>
+                  <div class="rel-chart-box">
+                    <canvas id="chart-por-aluno"></canvas>
+                  </div>
+                </div>
+
+                <div class="rel-card">
+                  <h3 class="expl-subsection-title">Evolução mensal (ano atual)</h3>
+                  <p class="expl-section-sub">
+                    Compara o total previsto e faturado em cada mês do ano atual.
+                  </p>
+                  <div class="rel-chart-box">
+                    <canvas id="chart-evolucao-anual"></canvas>
+                  </div>
+                </div>
+
+              </div>
+            </section>
           </div>
-        </section>
-
-        <!-- ========== RELATÓRIOS ========== -->
-        <section class="expl-section" id="expl-sec-relatorios" data-section="relatorios">
-          <div class="rel-kpi-grid">
-            <article class="rel-kpi-card">
-              <p class="rel-kpi-label">Total de alunos</p>
-              <p class="rel-kpi-value" id="rel-kpi-total-alunos">—</p>
-              <p class="rel-kpi-sub" id="rel-kpi-total-alunos-sub">—</p>
-            </article>
-
-            <article class="rel-kpi-card">
-              <p class="rel-kpi-label">Faturação média</p>
-              <p class="rel-kpi-value" id="rel-kpi-fat-media">—</p>
-              <p class="rel-kpi-sub">Por mês (ano atual)</p>
-            </article>
-
-            <article class="rel-kpi-card">
-              <p class="rel-kpi-label">Sessões / mês</p>
-              <p class="rel-kpi-value" id="rel-kpi-sessoes-mes">—</p>
-              <p class="rel-kpi-sub">Média nos últimos 3 meses</p>
-            </article>
-
-            <article class="rel-kpi-card">
-              <p class="rel-kpi-label">Crescimento</p>
-              <p class="rel-kpi-value" id="rel-kpi-crescimento">—</p>
-              <p class="rel-kpi-sub">vs mês anterior</p>
-            </article>
-          </div>
-          <article class="expl-card expl-placeholder-card">
-            <h2 class="expl-section-title">Relatórios</h2>
-            <p class="expl-section-sub">Estatísticas e análises da tua atividade.</p>
-
-            <ul class="expl-feature-list">
-              <li>
-                <span class="expl-feature-label">Resumo mensal</span>
-                <span class="expl-feature-value" id="rel-resumo-mensal">
-                  Este mês: € 0.00 recebidos de € 0.00 previstos · € 0.00 em falta.
-                </span>
-              </li>
-              <li>
-                <span class="expl-feature-label">Tendência anual</span>
-                <span class="expl-feature-value" id="rel-tendencia-anual">
-                  Ano atual: € 0.00 faturados de € 0.00 previstos.
-                </span>
-              </li>
-              <li>
-                <span class="expl-feature-label">Alunos ativos</span>
-                <span class="expl-feature-value" id="rel-alunos-ativos">
-                  Ainda não tens alunos ativos registados.
-                </span>
-              </li>
-            </ul>
-
-            <button type="button" class="expl-link-chip">
-              <span class="expl-link-chip-icon">📈</span>
-              <span>Ver gráficos e relatórios</span>
+          <!-- FAB NAV FLUTUANTE -->
+          <nav class="fab-nav" id="fabNav">
+            <!-- Botão principal -->
+            <button class="fab-nav__toggle" id="fabToggle" aria-label="Menu rápido">
+              <svg viewBox="0 0 24 24">
+                <path d="M12 5v14M5 12h14"
+                      stroke="white"
+                      stroke-width="2.4"
+                      fill="none"
+                      stroke-linecap="round" />
+              </svg>
             </button>
-          </article>
-          <div class="relatorios-grid">
-            <div class="rel-card">
-              <h3 class="expl-subsection-title">Previsto vs Pago (mês selecionado)</h3>
-              <p class="expl-section-sub">
-                Compara o total previsto, pago e em falta para o mês escolhido na faturação.
-              </p>
-              <div class="rel-chart-box">
-                <canvas id="chart-previsto-pago"></canvas>
-              </div>
+
+            <!-- Itens radiais -->
+            <div id="fabItems" class="fab-nav__items" hidden aria-hidden="true">
+
+              <!-- Dashboard -->
+              <button class="fab-item" data-target="dashboard" aria-label="Dashboard">
+                <svg class="fab-icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <rect x="4"  y="4"  width="7" height="7" rx="1.5" />
+                  <rect x="13" y="4"  width="7" height="7" rx="1.5" />
+                  <rect x="4"  y="13" width="7" height="7" rx="1.5" />
+                  <rect x="13" y="13" width="7" height="7" rx="1.5" />
+                </svg>
+                <span class="fab-label">Dashboard</span>
+              </button>
+
+              <!-- Alunos -->
+              <button class="fab-item" data-target="alunos" aria-label="Alunos">
+                <svg class="fab-icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <circle cx="12" cy="9" r="3.2" />
+                  <path d="M6.5 19.5c1.2-2.3 3-3.6 5.5-3.6s4.3 1.3 5.5 3.6" />
+                </svg>
+                <span class="fab-label">Alunos</span>
+              </button>
+
+              <!-- Calendário -->
+              <button class="fab-item" data-target="calendario" aria-label="Calendário">
+                <svg class="fab-icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <rect x="4" y="5.5" width="16" height="14" rx="2" />
+                  <path d="M4 10h16" />
+                  <path d="M9 4v3" />
+                  <path d="M15 4v3" />
+                </svg>
+                <span class="fab-label">Calendário</span>
+              </button>
+
+              <!-- Faturação -->
+              <button class="fab-item" data-target="faturacao" aria-label="Faturação">
+                <svg class="fab-icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M15.5 7.5c-1-.7-2.1-1.1-3.4-1.1-2.6 0-4.6 1.8-4.6 4.6s2 4.6 4.6 4.6c1.3 0 2.4-.4 3.4-1.1" />
+                  <path d="M11 5v14" />
+                </svg>
+                <span class="fab-label">Faturação</span>
+              </button>
+
+              <!-- Relatórios -->
+              <button class="fab-item" data-target="relatorios" aria-label="Relatórios">
+                <svg class="fab-icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M4 18.5h16" />
+                  <path d="M6.5 15l3.2-4 3.2 2.7 4.1-5.2" />
+                  <path d="M16.8 8.5h3v3" />
+                </svg>
+                <span class="fab-label">Relatórios</span>
+              </button>
+
             </div>
-
-            <div class="rel-card">
-              <h3 class="expl-subsection-title">Pagamentos por aluno (mês selecionado)</h3>
-              <p class="expl-section-sub">
-                Vê quanto cada aluno devia pagar e quanto já pagou nesse mês.
-              </p>
-              <div class="rel-chart-box">
-                <canvas id="chart-por-aluno"></canvas>
-              </div>
-            </div>
-
-            <div class="rel-card">
-              <h3 class="expl-subsection-title">Evolução mensal (ano atual)</h3>
-              <p class="expl-section-sub">
-                Compara o total previsto e faturado em cada mês do ano atual.
-              </p>
-              <div class="rel-chart-box">
-                <canvas id="chart-evolucao-anual"></canvas>
-              </div>
-            </div>
-
-          </div>
-        </section>
-      </div>
-      <!-- FAB NAV FLUTUANTE -->
-      <nav class="fab-nav" id="fabNav">
-        <!-- Botão principal -->
-        <button class="fab-nav__toggle" id="fabToggle" aria-label="Menu rápido">
-          <svg viewBox="0 0 24 24">
-            <path d="M12 5v14M5 12h14"
-                  stroke="white"
-                  stroke-width="2.4"
-                  fill="none"
-                  stroke-linecap="round" />
-          </svg>
-        </button>
-
-        <!-- Itens radiais -->
-        <div id="fabItems" class="fab-nav__items" hidden aria-hidden="true">
-
-          <!-- Dashboard -->
-          <button class="fab-item" data-target="dashboard" aria-label="Dashboard">
-            <svg class="fab-icon" viewBox="0 0 24 24" aria-hidden="true">
-              <rect x="4"  y="4"  width="7" height="7" rx="1.5" />
-              <rect x="13" y="4"  width="7" height="7" rx="1.5" />
-              <rect x="4"  y="13" width="7" height="7" rx="1.5" />
-              <rect x="13" y="13" width="7" height="7" rx="1.5" />
-            </svg>
-            <span class="fab-label">Dashboard</span>
-          </button>
-
-          <!-- Alunos -->
-          <button class="fab-item" data-target="alunos" aria-label="Alunos">
-            <svg class="fab-icon" viewBox="0 0 24 24" aria-hidden="true">
-              <circle cx="12" cy="9" r="3.2" />
-              <path d="M6.5 19.5c1.2-2.3 3-3.6 5.5-3.6s4.3 1.3 5.5 3.6" />
-            </svg>
-            <span class="fab-label">Alunos</span>
-          </button>
-
-          <!-- Calendário -->
-          <button class="fab-item" data-target="calendario" aria-label="Calendário">
-            <svg class="fab-icon" viewBox="0 0 24 24" aria-hidden="true">
-              <rect x="4" y="5.5" width="16" height="14" rx="2" />
-              <path d="M4 10h16" />
-              <path d="M9 4v3" />
-              <path d="M15 4v3" />
-            </svg>
-            <span class="fab-label">Calendário</span>
-          </button>
-
-          <!-- Faturação -->
-          <button class="fab-item" data-target="faturacao" aria-label="Faturação">
-            <svg class="fab-icon" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M15.5 7.5c-1-.7-2.1-1.1-3.4-1.1-2.6 0-4.6 1.8-4.6 4.6s2 4.6 4.6 4.6c1.3 0 2.4-.4 3.4-1.1" />
-              <path d="M11 5v14" />
-            </svg>
-            <span class="fab-label">Faturação</span>
-          </button>
-
-          <!-- Relatórios -->
-          <button class="fab-item" data-target="relatorios" aria-label="Relatórios">
-            <svg class="fab-icon" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M4 18.5h16" />
-              <path d="M6.5 15l3.2-4 3.2 2.7 4.1-5.2" />
-              <path d="M16.8 8.5h3v3" />
-            </svg>
-            <span class="fab-label">Relatórios</span>
-          </button>
-
+          </nav>
         </div>
-      </nav>
-    </div>
   </section>
 
 </main>
@@ -1184,7 +1236,6 @@
   }
 
   // ---------- DASHBOARD: CARDS DE ALUNOS ----------
-    // ---------- DASHBOARD: CARDS DE ALUNOS ----------
   function renderDashboardAlunos() {
     const grid = document.getElementById("dash-alunos-grid");
     const contador = document.getElementById("dash-alunos-contador");
@@ -3792,6 +3843,268 @@ async function carregarPerfilAluno(alunoOuId) {
     renderCalendarioSemanal();
   });
 
+  const inputSearchSessoes  = document.querySelector('#cal-search');
+const selectEstadoSessoes = document.querySelector('#cal-filtro-estado');
+const viewLista           = document.querySelector('#cal-view-lista');
+const viewTimeline        = document.querySelector('#cal-view-timeline');
+const tabsSessoes         = document.querySelectorAll('.cal-tab');
+
+tabsSessoes.forEach(btn => {
+  btn.addEventListener('click', () => {
+    const view = btn.getAttribute('data-view');
+    tabsSessoes.forEach(b => b.classList.toggle('cal-tab--active', b === btn));
+    document.querySelectorAll('.cal-view').forEach(v => {
+      v.classList.remove('cal-view--active');
+    });
+    const target = view === 'timeline' ? viewTimeline : viewLista;
+    target?.classList.add('cal-view--active');
+  });
+});
+
+inputSearchSessoes?.addEventListener('input', renderTodasSessoes);
+selectEstadoSessoes?.addEventListener('change', renderTodasSessoes);
+
+function filtrarSessoesParaLista() {
+  const termo  = (inputSearchSessoes?.value || '').trim().toLowerCase();
+  const estado = (selectEstadoSessoes?.value || 'todas').toUpperCase();
+
+  return (SESSOES_EXPLICADOR || [])
+    .filter(s => {
+      if (estado !== 'TODAS' && (s.estado || '').toUpperCase() !== estado) return false;
+      if (termo && !(s.aluno_nome || '').toLowerCase().includes(termo)) return false;
+      return true;
+    })
+    .sort((a, b) => {
+      const da = new Date(a.data + 'T' + (a.hora_inicio || '00:00'));
+      const db = new Date(b.data + 'T' + (b.hora_inicio || '00:00'));
+      return da - db;
+    });
+}
+
+function renderTodasSessoes() {
+  if (!viewLista || !viewTimeline) return;
+
+  const sessoes = filtrarSessoesParaLista();
+
+  if (!sessoes.length) {
+    const emptyHtml = '<p class="calendar-empty">Não existem sessões com os filtros atuais.</p>';
+    viewLista.innerHTML = emptyHtml;
+    viewTimeline.innerHTML = emptyHtml;
+    return;
+  }
+
+  // --- VISTA LISTA ---
+  viewLista.innerHTML = sessoes.map((s) => {
+    const dataLabel = s.data
+      ? new Date(s.data).toLocaleDateString('pt-PT', {
+          day: '2-digit', month: '2-digit', year: 'numeric'
+        })
+      : '—';
+
+    const horaLabel = s.hora_inicio ? s.hora_inicio.slice(0, 5) : '--:--';
+    const dur = s.duracao_min != null ? `${s.duracao_min} min` : '';
+    const estadoInfo = getBadgeInfoSessao(s.estado); // já tens esta helper
+
+    return `
+      <div class="sessao-list-item">
+        <div class="sessao-list-main">
+          <div class="sessao-list-header">
+            <span class="sessao-aluno">${s.aluno_nome || 'Aluno'}</span>
+            <span class="${estadoInfo.badgeClass || estadoInfo.className}">
+              ${estadoInfo.label}
+            </span>
+          </div>
+
+          <div class="sessao-meta">
+            <span>${dataLabel}</span>
+            <span>${horaLabel}${dur ? ' · ' + dur : ''}</span>
+          </div>
+        </div>
+
+        <div class="sessao-list-actions">
+          <button
+            type="button"
+            class="button secondary button--sm"
+            data-cal-acao="editar"
+            data-id-sessao="${s.id_sessao}"
+            data-id-aluno="${s.aluno_id || ''}"
+          >
+            Editar
+          </button>
+          <button
+            type="button"
+            class="button ghost button--sm"
+            data-cal-acao="apagar"
+            data-id-sessao="${s.id_sessao}"
+            data-id-aluno="${s.aluno_id || ''}"
+          >
+            Cancelar
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  // (a parte da Timeline continua como tinhas / como te passei antes)
+  renderTimelineSessoes(sessoes);
+}
+function renderTimelineSessoes(sessoes) {
+  if (!viewTimeline) return;
+
+  // agrupar por data
+  const grupos = {};
+  (sessoes || []).forEach(s => {
+    const key = s.data || 'sem-data';
+    if (!grupos[key]) grupos[key] = [];
+    grupos[key].push(s);
+  });
+
+  const chavesOrdenadas = Object.keys(grupos).sort();
+
+  viewTimeline.innerHTML = chavesOrdenadas.map(data => {
+    const lista = grupos[data]
+      .sort((a, b) => (a.hora_inicio || '').localeCompare(b.hora_inicio || ''))
+      .map(s => {
+        const hora = s.hora_inicio ? s.hora_inicio.slice(0, 5) : '--:--';
+        const dur  = s.duracao_min != null ? `${s.duracao_min} min` : '';
+        const estadoInfo = getBadgeInfoSessao(s.estado); // já existe no teu JS
+
+        return `
+          <div class="cal-timeline-ponto">
+            <div class="sessao-list-item">
+              <div class="sessao-list-header">
+                <span class="sessao-aluno">${s.aluno_nome || 'Aluno'}</span>
+                <span class="${estadoInfo.badgeClass || estadoInfo.className}">
+                  ${estadoInfo.label}
+                </span>
+              </div>
+              <div class="sessao-meta">
+                <span>${hora}${dur ? ' · ' + dur : ''}</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+    const titulo = data !== 'sem-data'
+      ? new Date(data).toLocaleDateString('pt-PT', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric'
+        })
+      : 'Sem data';
+
+    return `
+      <div class="cal-timeline-dia">
+        <h4 class="cal-timeline-dia-titulo">${titulo}</h4>
+        <div class="cal-timeline-lista">
+          ${lista}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// Delegação de clique na lista "Todas as explicações"
+const listaTodasSessoes = document.querySelector('#cal-view-lista');
+
+listaTodasSessoes?.addEventListener('click', onClickSessaoCalendario);
+
+async function onClickSessaoCalendario(ev) {
+  const btn = ev.target.closest('[data-cal-acao]');
+  if (!btn) return;
+
+  ev.stopPropagation();
+
+  const acao      = btn.dataset.calAcao;
+  const idSessao  = btn.dataset.idSessao;
+  const idAluno   = btn.dataset.idAluno;
+
+  if (!acao || !idSessao) return;
+
+  const sessao = (SESSOES_EXPLICADOR || []).find(
+    (s) => String(s.id_sessao) === String(idSessao)
+  );
+  if (!sessao) {
+    alert('Sessão não encontrada.');
+    return;
+  }
+
+  // ---------- EDITAR ----------
+  if (acao === 'editar') {
+    // 1) tentar obter o id do aluno da sessão
+    let alunoId = sessao.aluno_id || sessao.id_aluno || idAluno;
+
+    // 2) se ainda não tivermos, tentar encontrar pelo nome
+    if (!alunoId && sessao.aluno_nome && Array.isArray(ALUNOS_CACHE)) {
+      const match = ALUNOS_CACHE.find(a => {
+        const nomeCompleto = [a.nome, a.apelido].filter(Boolean).join(" ").trim();
+        return nomeCompleto === sessao.aluno_nome;
+      });
+      if (match) {
+        alunoId = match.id_aluno;
+      }
+    }
+
+    if (!alunoId) {
+      alert('Não foi possível identificar o aluno desta sessão. Abre primeiro o aluno na secção "Alunos" e tenta novamente.');
+      return;
+    }
+
+    // 3) preencher ALUNO_ATUAL com o aluno correto
+    let alunoObj = Array.isArray(ALUNOS_CACHE)
+      ? ALUNOS_CACHE.find(a => String(a.id_aluno) === String(alunoId))
+      : null;
+
+    if (!alunoObj) {
+      alunoObj = { id_aluno: alunoId }; // fallback mínimo
+    }
+
+    ALUNO_ATUAL = alunoObj;
+
+    // 4) abrir o mesmo modal de sessão que já usas no perfil
+    if (typeof abrirModalSessao === 'function') {
+      abrirModalSessao(sessao); // preenche form + mostra modal
+    } else if (typeof preencherModalSessao === 'function') {
+      preencherModalSessao(sessao);
+      openModal(modalSessao);
+    } else {
+      console.warn('Função de abrir modal de sessão não encontrada.');
+    }
+    return;
+  }
+
+  // ---------- APAGAR / CANCELAR ----------
+  if (acao === 'apagar') {
+    const confirmar = confirm('Tens a certeza que queres cancelar/apagar esta sessão?');
+    if (!confirmar) return;
+
+    try {
+      const { error } = await callExplFn('delete_sessao_aluno', {
+        id_sessao: sessao.id_sessao,
+      });
+
+      if (error) {
+        console.error(error);
+        alert('Não foi possível apagar a sessão.');
+        return;
+      }
+
+      // Recarregar calendário + listas
+      await loadResumoCalendario();
+
+      // Se o perfil desse aluno estiver aberto, atualiza também
+      if (ALUNO_ATUAL && ALUNO_ATUAL.id_aluno &&
+          String(ALUNO_ATUAL.id_aluno) === String(sessao.aluno_id || idAluno)) {
+        await loadSessoesAluno(ALUNO_ATUAL.id_aluno);
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Erro inesperado ao apagar sessão.');
+    }
+  }
+  }
+
   // --------------------------------------------------------------------
   // CARREGAR RESUMO DE CALENDÁRIO
   // --------------------------------------------------------------------
@@ -3805,6 +4118,69 @@ async function carregarPerfilAluno(alunoOuId) {
 
     const sessoes = data || [];
     SESSOES_EXPLICADOR = sessoes;
+    atualizarResumoSemana(SESSOES_EXPLICADOR);
+    renderTodasSessoes();
+
+    //Estatísticas rápidas Explicações
+    function atualizarResumoSemana(sessoes) {
+      const elTotal = document.querySelector('#cal-kpi-sessoes-semana');
+      const elHoras = document.querySelector('#cal-kpi-horas');
+      const elFat   = document.querySelector('#cal-kpi-fat-semana');
+      const elProx  = document.querySelector('#cal-kpi-proxima');
+      if (!elTotal || !elHoras || !elFat || !elProx) return;
+
+      const hoje = new Date();
+      hoje.setHours(0,0,0,0);
+      const inicio = getInicioSemana(hoje);   // já usas esta função no calendário semanal
+      const fim = new Date(inicio);
+      fim.setDate(fim.getDate() + 6);
+
+      const daSemana = (sessoes || []).filter(s => {
+        if (!s.data) return false;
+        const d = new Date(s.data);
+        return d >= inicio && d <= fim;
+      });
+
+      const totalSessoes = daSemana.length;
+      const horasTotais = daSemana.reduce((acc, s) => {
+        const mins = s.duracao_min != null ? Number(s.duracao_min) : 0;
+        return acc + mins / 60;
+      }, 0);
+
+      // Aqui não tens ainda um campo "valor" na sessão.
+      // Se mais tarde adicionares (ex: s.preco_sessao), basta somar aqui.
+      const faturacaoSemana = 0; // placeholder
+
+      elTotal.textContent = totalSessoes.toString();
+      elHoras.textContent = horasTotais ? `${horasTotais.toFixed(1)}h` : '0h';
+      elFat.textContent   = faturacaoSemana ? `${faturacaoSemana.toFixed(2)}€` : '—';
+
+      // Próxima sessão (já calculas algo semelhante para "Próximas explicações")
+      const agora = new Date();
+      const futuras = (sessoes || [])
+        .filter(s => s.data)
+        .map(s => {
+          const d = new Date(s.data);
+          if (s.hora_inicio) {
+            const [h, m] = s.hora_inicio.split(':').map(Number);
+            d.setHours(h || 0, m || 0, 0, 0);
+          }
+          return { ...s, _dataObj: d };
+        })
+        .filter(s => s._dt >= agora)
+        .sort((a, b) => a._dt - b._dt);
+
+      if (!futuras.length) {
+        elProx.textContent = 'Sem próximas sessões';
+      } else {
+        const prox = futuras[0];
+        const dataLabel = prox._dt.toLocaleDateString('pt-PT', {
+          day: '2-digit', month: '2-digit'
+        });
+        const horaLabel = prox.hora_inicio ? prox.hora_inicio.slice(0,5) : '--:--';
+        elProx.textContent = `${dataLabel} · ${horaLabel}`;
+      }
+    }
 
     // HOJE
     const hojeStr = new Date().toISOString().slice(0, 10);
@@ -3844,7 +4220,7 @@ async function carregarPerfilAluno(alunoOuId) {
     const elSemana = document.querySelector("#cal-resumo-semana");
     if (elSemana) elSemana.textContent = txtSemana;
 
-        // ----------------------------------------------------
+    // ----------------------------------------------------
     // PRÓXIMAS EXPLICAÇÕES (lista à direita)
     // ----------------------------------------------------
     if (listaProximas) {
@@ -3911,7 +4287,6 @@ async function carregarPerfilAluno(alunoOuId) {
     }
 
     // Finalmente, atualizar grelha semanal
-    renderCalendarioSemanal();
     renderProximasSessoes(sessoes);
   }
 
