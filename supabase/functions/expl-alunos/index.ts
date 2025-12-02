@@ -178,85 +178,200 @@ serve(async (req)=>{
       }
       return data;
     }
-    /* =======================
+  /* =======================
    LISTAR ALUNOS
-   ======================= */ if (action === "list_alunos") {
-      const { data, error } = await svc.from("alunos").select(`
-      id_aluno,
-      nome,
-      apelido,
-      telemovel,
-      ano,
-      idade,
-      dia_semana_preferido,
-      valor_explicacao,
-      sessoes_mes,
-      nome_pai_cache,
-      contacto_pai_cache,
-      email,
-      id_explicador,
-      user_id,
-      is_active,
-      username,
-      faturacao_ativa,
-      faturacao_inicio,
-      dia_pagamento,
-      mensalidade_avisada
-    `).eq("id_explicador", myExplId).order("nome", {
-        ascending: true
-      });
+   ======================= */
+    if (action === "list_alunos") {
+      // 1) Buscar alunos base
+      const { data: alunos, error } = await svc
+        .from("alunos")
+        .select(`
+          id_aluno,
+          nome,
+          apelido,
+          telemovel,
+          ano,
+          idade,
+          dia_semana_preferido,
+          valor_explicacao,
+          sessoes_mes,
+          nome_pai_cache,
+          contacto_pai_cache,
+          email,
+          id_explicador,
+          user_id,
+          is_active,
+          username,
+          faturacao_ativa,
+          faturacao_inicio,
+          dia_pagamento,
+          mensalidade_avisada
+        `)
+        .eq("id_explicador", myExplId)
+        .order("nome", { ascending: true });
+
       if (error) {
         console.error("Erro em list_alunos", error);
-        return new Response(JSON.stringify({
-          error: error.message
-        }), {
-          status: 400,
-          headers: cors(origin)
+        return new Response(
+          JSON.stringify({ error: error.message }),
+          { status: 400, headers: cors(origin) },
+        );
+      }
+
+      const lista = alunos ?? [];
+      if (!lista.length) {
+        return new Response(JSON.stringify([]), {
+          status: 200,
+          headers: cors(origin),
         });
       }
-      return new Response(JSON.stringify(data ?? []), {
+
+      const idsAlunos = lista
+        .map((a) => a.id_aluno)
+        .filter((v) => v != null);
+
+      const agora = new Date();
+      const anoAtual = agora.getFullYear();
+      const mesAtual = agora.getMonth() + 1;
+
+      // -------------------------------------------------
+      // 2) Pagamentos do mês atual (estado_mensalidade)
+      // -------------------------------------------------
+      const pagamentosPorAluno = new Map<string, any>();
+
+      if (idsAlunos.length) {
+        const { data: pags, error: pagErr } = await svc
+          .from("v_pagamentos_detalhe")
+          .select("id_aluno, ano, mes, estado")
+          .eq("id_explicador", myExplId)
+          .eq("ano", anoAtual)
+          .eq("mes", mesAtual)
+          .in("id_aluno", idsAlunos);
+
+        if (pagErr) {
+          console.error("list_alunos / v_pagamentos_detalhe", pagErr);
+        } else if (pags) {
+          for (const p of pags) {
+            const key = String(p.id_aluno);
+            // assumimos 1 registo por mês/aluno; se houver vários, fica o último que passar aqui
+            pagamentosPorAluno.set(key, p);
+          }
+        }
+      }
+
+      // -------------------------------------------------
+      // 3) Próxima sessão de cada aluno (proxima_sessao_*)
+      // -------------------------------------------------
+      const proxSessaoPorAluno = new Map<string, any>();
+
+      if (idsAlunos.length) {
+        const hojeIso = new Date().toISOString().slice(0, 10);
+
+        const { data: sessoes, error: sesErr } = await svc
+          .from("v_sessoes_detalhe")
+          .select("id_aluno, data, hora_inicio, estado")
+          .eq("id_explicador", myExplId)
+          .gte("data", hojeIso);
+
+        if (sesErr) {
+          console.error("list_alunos / v_sessoes_detalhe", sesErr);
+        } else if (sessoes) {
+          for (const s of sessoes) {
+            const key = String(s.id_aluno);
+            const d = new Date(s.data);
+            if (!d || isNaN(d.getTime())) continue;
+            if (s.estado === "CANCELADA") continue;
+
+            const atual = proxSessaoPorAluno.get(key);
+            if (!atual) {
+              proxSessaoPorAluno.set(key, s);
+            } else {
+              const dAtual = new Date(atual.data);
+              // fica a sessão mais próxima (mais cedo)
+              if (
+                d < dAtual ||
+                (d.getTime() === dAtual.getTime() &&
+                  (s.hora_inicio || "") < (atual.hora_inicio || ""))
+              ) {
+                proxSessaoPorAluno.set(key, s);
+              }
+            }
+          }
+        }
+      }
+
+      // -------------------------------------------------
+      // 4) Enriquecer alunos com:
+      //    - estado_mensalidade
+      //    - proxima_mensalidade
+      //    - proxima_sessao_data / proxima_sessao_hora
+      // -------------------------------------------------
+      const enriquecidos = lista.map((a: any) => {
+        const key = String(a.id_aluno);
+
+        const pag = pagamentosPorAluno.get(key);
+        const sess = proxSessaoPorAluno.get(key) || null;
+
+        // Data da mensalidade deste mês (ex: dia_pagamento = 10 → 10/mesAtual)
+        const diaPag = a.dia_pagamento || 1;
+        const dataMensal = new Date(anoAtual, mesAtual - 1, diaPag);
+        const dataMensalIso = isNaN(dataMensal.getTime())
+          ? null
+          : dataMensal.toISOString().slice(0, 10);
+
+        return {
+          ...a,
+          estado_mensalidade: pag?.estado ?? "PENDENTE",
+          proxima_mensalidade: dataMensalIso,
+          proxima_sessao_data: sess?.data ?? null,
+          proxima_sessao_hora: sess?.hora_inicio ?? null,
+        };
+      });
+
+      return new Response(JSON.stringify(enriquecidos), {
         status: 200,
-        headers: cors(origin)
+        headers: cors(origin),
       });
     }
+
     /* =======================
        SET MENSALIDADE AVISADA
        payload: { aluno_id, avisado }
        ======================= */ if (action === "set_mensalidade_avisada") {
-      const p = payload || {};
-      const alunoId = String(p.aluno_id || "").trim();
-      const avisado = !!p.avisado;
-      if (!alunoId) {
-        return new Response(JSON.stringify({
-          error: "aluno_id em falta"
-        }), {
-          status: 400,
-          headers: cors(origin)
-        });
-      }
-      // garantir que o aluno pertence ao explicador autenticado
-      await getAlunoDoExpl(alunoId);
-      const { error: upErr } = await svc.from("alunos").update({
-        mensalidade_avisada: avisado
-      }).eq("id_aluno", alunoId).eq("id_explicador", myExplId);
-      if (upErr) {
-        console.error("Erro em set_mensalidade_avisada", upErr);
-        return new Response(JSON.stringify({
-          error: upErr.message
-        }), {
-          status: 400,
-          headers: cors(origin)
-        });
-      }
-      return new Response(JSON.stringify({
-        ok: true,
-        aluno_id: alunoId,
-        avisado
-      }), {
-        status: 200,
-        headers: cors(origin)
-      });
-    }
+  const p = payload || {};
+  const alunoId = String(p.aluno_id || "").trim();
+  const avisado = !!p.avisado;
+
+  if (!alunoId) {
+    return new Response(
+      JSON.stringify({ error: "aluno_id em falta" }),
+      { status: 400, headers: cors(origin) },
+    );
+  }
+
+  // garantir que o aluno pertence ao explicador autenticado
+  await getAlunoDoExpl(alunoId);
+
+  const { error: upErr } = await svc
+    .from("alunos")
+    .update({ mensalidade_avisada: avisado })
+    .eq("id_aluno", alunoId)
+    .eq("id_explicador", myExplId);
+
+  if (upErr) {
+    console.error("Erro em set_mensalidade_avisada", upErr);
+    return new Response(
+      JSON.stringify({ error: upErr.message }),
+      { status: 400, headers: cors(origin) },
+    );
+  }
+
+  return new Response(
+    JSON.stringify({ ok: true, aluno_id: alunoId, avisado }),
+    { status: 200, headers: cors(origin) },
+  );
+}
+
     /* =======================
   Eliminar aluno
    ======================= */ if (action === "delete_aluno") {
