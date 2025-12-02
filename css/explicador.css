@@ -214,6 +214,35 @@ body.home main.auth {
   width: 100%;
   border-collapse: collapse;
 }
+/* Cartões de faturação em coluna */
+.expl-section[data-section="faturacao"] .expl-card {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Wrapper responsável pelo scroll horizontal */
+.expl-section[data-section="faturacao"] .expl-card .table-wrapper {
+  margin-top: 0.75rem;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;              /* ← scroll horizontal */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 🔹 Override da largura só para as tabelas de faturação */
+.expl-section[data-section="faturacao"] .expl-card .table {
+  width: auto;                   /* anula o width:100% global */
+  min-width: 650px;              /* força a tabela a ser mais larga que o card */
+  border-collapse: collapse;
+}
+
+/* (Opcional) evitar quebras estranhas nas colunas */
+.expl-section[data-section="faturacao"] .expl-card .table th,
+.expl-section[data-section="faturacao"] .expl-card .table td {
+  white-space: nowrap;
+}
+
 
 .table th,
 .table td {
@@ -1261,5 +1290,35 @@ body.home main.auth {
     width: 100%;
     justify-content: flex-end;
   }
+}
+/* ========================
+   FIX: PERMITIR OVERFLOW EM TABELAS DA FATURAÇÃO
+   ======================== */
+
+/* 1) Impedir que o grid/flex encolha a tabela */
+.expl-grid-2 > .expl-card {
+    min-width: 0 !important;
+    overflow: visible !important;
+}
+
+/* 2) Impedir que a tabela seja encolhida pelo cartão */
+.expl-card .perfil-table-wrapper {
+    min-width: 0 !important;
+    flex-shrink: 1 !important;
+}
+
+/* 3) FORÇAR a tabela a ultrapassar o cartão */
+.expl-card .perfil-table-wrapper table {
+    width: max-content !important;
+    min-width: 900px !important;
+    display: table !important;
+    table-layout: auto !important;
+    white-space: nowrap;
+}
+
+/* 4) scroll horizontal ativo */
+.perfil-table-wrapper {
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
 }
 
