@@ -738,14 +738,14 @@
                   </div>
                 </article>
 
-                <!-- 3) Faturação Prevista vs Realizada por aluno (mês corrente) -->
+                <!-- 3) Faturação Prevista vs Realizada por aluno (mês corrente)
                 <article class="rel-card rel-card--full">
                   <h3 class="expl-subsection-title">Por aluno (mês corrente)</h3>
                   <p class="expl-section-sub">Faturação prevista vs realizada por aluno</p>
                   <div class="rel-chart-box">
                     <canvas id="chart-fat-aluno-mes"></canvas>
                   </div>
-                </article>
+                </article> -->
 
                 <!-- 4) Sessões previstas vs realizadas por mês -->
                 <article class="rel-card rel-card--full">
@@ -2030,80 +2030,69 @@
 
     const ctx = canvas.getContext("2d");
 
-    const now = new Date();
-    const anoAtual = now.getFullYear();
+    const anoAtual = new Date().getFullYear();
 
     const nomesMesesCurtos = [
       "Jan","Fev","Mar","Abr","Mai","Jun",
       "Jul","Ago","Set","Out","Nov","Dez"
     ];
 
-    const previstoPorMes = new Array(12).fill(0);
-    const pagoPorMes     = new Array(12).fill(0);
+    const previsto = new Array(12).fill(0);
+    const realizado = new Array(12).fill(0);
 
+    // 1) SOMAR VALORES DE PAGAMENTOS (pagos e previstos)
     (PAGAMENTOS_CACHE || []).forEach((p) => {
       if (p.ano !== anoAtual) return;
 
-      const alunoRef = (ALUNOS_CACHE || []).find(
-        (a) => String(a.id_aluno) === String(p.id_aluno)
-      );
-      if (alunoRef && alunoRef.is_active === false) return;
+      const idx = (Number(p.mes) || 1) - 1;
 
-      const idxMes = (p.mes || 1) - 1;
-      const previsto = Number(p.valor_previsto) || 0;
-      const pago     = Number(p.valor_pago) || 0;
-
-      previstoPorMes[idxMes] += previsto;
-      pagoPorMes[idxMes]     += pago;
+      previsto[idx]  += Number(p.valor_previsto || 0);
+      realizado[idx] += Number(p.valor_pago || 0);
     });
 
-    // fallback: previsão baseada nas mensalidades dos alunos ativos
-    const somaMensalAlunosAtivos = () => {
-      let total = 0;
-      (ALUNOS_CACHE || []).forEach((a) => {
+    // 2) PREVISÃO AUTOMÁTICA PARA MESES SEM PAGAMENTOS
+    const mensalBase = (() => {
+      let tot = 0;
+      (ALUNOS_CACHE || []).forEach(a => {
         if (a.is_active === false) return;
+
         const v = Number(a.valor_explicacao) || 0;
         const s = Number(a.sessoes_mes) || 0;
-        if (v > 0 && s > 0) {
-          total += v * s;
-        }
-      });
-      return total;
-    };
 
-    const mensalBase = somaMensalAlunosAtivos();
+        if (v > 0 && s > 0) tot += v * s;
+      });
+      return tot;
+    })();
 
     if (mensalBase > 0) {
       for (let i = 0; i < 12; i++) {
-        const mes = i + 1;
-        const temDadosMes = (PAGAMENTOS_CACHE || []).some(
-          (p) => p.ano === anoAtual && p.mes === mes
-        );
+        const temPagamentos = (PAGAMENTOS_CACHE || [])
+          .some(p => p.ano === anoAtual && Number(p.mes) === i + 1);
 
-        if (!temDadosMes && previstoPorMes[i] === 0) {
-          previstoPorMes[i] = mensalBase;
+        if (!temPagamentos && previsto[i] === 0) {
+          previsto[i] = mensalBase;
         }
       }
     }
 
-    if (chartEvolucaoAnual) {
-      chartEvolucaoAnual.destroy();
-    }
+    // 3) Destruir gráfico antigo
+    if (window.chartEvolucaoAnual) window.chartEvolucaoAnual.destroy();
 
-    chartEvolucaoAnual = new Chart(ctx, {
-      type: "line",
+    // 4) Criar gráfico final
+    window.chartEvolucaoAnual = new Chart(ctx, {
+      type: "bar",
       data: {
         labels: nomesMesesCurtos,
         datasets: [
           {
-            label: "Previsto",
-            data: previstoPorMes,
-            tension: 0.3
+            label: "Previsto (€)",
+            data: previsto,
+            backgroundColor: "#3b82f6"
           },
           {
-            label: "Pago",
-            data: pagoPorMes,
-            tension: 0.3
+            label: "Realizado (€)",
+            data: realizado,
+            backgroundColor: "#ec4899"
           }
         ]
       },
