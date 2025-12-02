@@ -1114,7 +1114,7 @@
   let FAT_ANO_SELEC = null;
   let FAT_MES_SELEC = null;
   let SESSOES_ALUNO_ATUAL = [];
-
+  let PAGAMENTOS_MES = [];
 
   function preencherPerfilAlunoBasico(aluno) {
     if (!aluno) return;
@@ -2118,19 +2118,16 @@
   }
 
   function renderGraficoFatAlunoMesCorrente() {
-    const canvas = document.getElementById("chart-fat-alunos-mes");
+    const canvas = document.getElementById("chart-fat-aluno-mes"); // <- SINGULAR
     if (!canvas) return;
 
     const ctx = canvas.getContext("2d");
 
     if (window.chartFatAlunos) window.chartFatAlunos.destroy();
 
-    // backend deve trazer:
-    // { aluno_nome, valor_previsto, valor_pago }
-
-    const nomes = PAGAMENTOS_MES.map(a => a.aluno_nome);
+    const nomes    = PAGAMENTOS_MES.map(a => a.aluno_nome);
     const previsto = PAGAMENTOS_MES.map(a => Number(a.valor_previsto || 0));
-    const pago = PAGAMENTOS_MES.map(a => Number(a.valor_pago || 0));
+    const pago     = PAGAMENTOS_MES.map(a => Number(a.valor_pago || 0));
 
     window.chartFatAlunos = new Chart(ctx, {
       type: "bar",
@@ -2159,6 +2156,7 @@
       }
     });
   }
+
 
   function renderGraficoSessoesMensais() {
     const canvas = document.getElementById("chart-sessoes-mensais");
@@ -2225,64 +2223,62 @@
 
   let chartFatMesCorr = null;
 
-async function renderGraficoFatMesCorrente() {
-  const canvas = document.getElementById("chart-fat-mes-corrente");
-  if (!canvas) return;
+  async function renderGraficoFatMesCorrente() {
+    const canvas = document.getElementById("chart-fat-mes-corrente");
+    if (!canvas) return;
 
-  const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext("2d");
 
-  // obter ano/mês atual
-  const hoje = new Date();
-  const ano  = hoje.getFullYear();
-  const mes  = hoje.getMonth() + 1;
+    const hoje = new Date();
+    const ano  = hoje.getFullYear();
+    const mes  = hoje.getMonth() + 1;
 
-  // chamada ao RPC
-  const { data, error } = await supabase.rpc("fat_mes_corrente", {
-    p_id_explicador: EXPLICADOR.id_explicador,
-    p_ano: ano,
-    p_mes: mes
-  });
+    const { data, error } = await supabase.rpc("fat_mes_corrente", {
+      p_id_explicador: EXPLICADOR.id_explicador,
+      p_ano: ano,
+      p_mes: mes
+    });
 
-
-  if (error) {
-    console.error("Erro RPC fat_mes_corrente:", error);
-    return;
-  }
-
-  // preparar labels e valores
-  const labels        = data.map(r => r.aluno_nome);
-  const previsto      = data.map(r => Number(r.valor_previsto || 0));
-  const realizado     = data.map(r => Number(r.valor_pago || 0));
-
-  // destruir gráfico antigo
-  if (window.chartFatMesCorrente) window.chartFatMesCorrente.destroy();
-
-  window.chartFatMesCorrente = new Chart(ctx, {
-    type: "bar",
-    data: {
-      labels,
-      datasets: [
-        {
-          label: "Previsto (€)",
-          data: previsto,
-          backgroundColor: "#3b82f6"   // azul
-        },
-        {
-          label: "Pago (€)",
-          data: realizado,
-          backgroundColor: "#ec4899"   // rosa
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: {
-        y: { beginAtZero: true }
-      }
+    if (error) {
+      console.error("Erro RPC fat_mes_corrente:", error);
+      return;
     }
-  });
-}
+
+    // <<< GUARDA AQUI PARA O OUTRO GRÁFICO
+    PAGAMENTOS_MES = data || [];
+
+    const labels    = PAGAMENTOS_MES.map(r => r.aluno_nome);
+    const previsto  = PAGAMENTOS_MES.map(r => Number(r.valor_previsto || 0));
+    const realizado = PAGAMENTOS_MES.map(r => Number(r.valor_pago || 0));
+
+    if (window.chartFatMesCorrente) window.chartFatMesCorrente.destroy();
+
+    window.chartFatMesCorrente = new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels,
+        datasets: [
+          {
+            label: "Previsto (€)",
+            data: previsto,
+            backgroundColor: "#3b82f6" // azul
+          },
+          {
+            label: "Pago (€)",
+            data: realizado,
+            backgroundColor: "#ec4899" // rosa
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: { beginAtZero: true }
+        }
+      }
+    });
+  }
 
   // ---------- FATURAÇÃO: INICIAR FILTROS (MÊS/ANO) ----------
   function initFiltrosFaturacao() {
@@ -2639,24 +2635,21 @@ function prepararFiltrosFaturacao() {
 async function loadRelatorios() {
   // Garantir que já tens KPIs financeiros carregados
   if (!PAGAMENTOS_CACHE || !PAGAMENTOS_CACHE.length) {
-    // se tiveres uma função que carrega os KPIs/pagamentos, podes chamá-la aqui
     if (typeof loadKpisFinanceiros === "function") {
       await loadKpisFinanceiros();
     }
   }
 
-  // Atualizar KPIs (usa PAGAMENTOS_CACHE + SESSOES_EXPLICADOR)
   if (typeof updateRelatorioKpis === "function") {
     updateRelatorioKpis();
   }
 
-  // 1) Faturação anual (Previsto vs Pago)
   atualizarGraficoEvolucaoAnual();
 
-  // 2) Previsto vs Pago no mês corrente
-  renderGraficoFatMesCorrente();
+  // 2) Previsto vs Pago no mês corrente (total + alimenta PAGAMENTOS_MES)
+  await renderGraficoFatMesCorrente();
 
-  // 3) Previsto vs Pago por aluno no mês corrente
+  // 3) Previsto vs Pago por aluno no mês corrente (usa PAGAMENTOS_MES)
   renderGraficoFatAlunoMesCorrente();
 
   // 4) Sessões previstas vs realizadas por mês
