@@ -719,31 +719,38 @@
                   <p class="rel-kpi-sub">vs mês anterior</p>
                 </article>
               </div>
-
-              <!-- GRÁFICOS -->
               <div class="relatorios-grid">
-                <!-- Evolução da Faturação -->
+                <!-- 1) Evolução da Faturação Realizada ao longo do ano -->
                 <article class="rel-card">
                   <h3 class="expl-subsection-title">Evolução da Faturação</h3>
-                  <p class="expl-section-sub">Faturação mensal dos últimos 6 meses</p>
+                  <p class="expl-section-sub">Faturação realizada ao longo do ano</p>
                   <div class="rel-chart-box">
-                    <canvas id="chart-evolucao-faturacao"></canvas>
+                    <canvas id="chart-evolucao-anual"></canvas>
                   </div>
                 </article>
 
-                <!-- Evolução de Alunos -->
+                <!-- 2) Faturação Prevista vs Realizada no mês corrente -->
                 <article class="rel-card">
-                  <h3 class="expl-subsection-title">Evolução de Alunos</h3>
-                  <p class="expl-section-sub">Número de alunos ativos por mês</p>
+                  <h3 class="expl-subsection-title">Mês corrente</h3>
+                  <p class="expl-section-sub">Faturação prevista vs realizada</p>
                   <div class="rel-chart-box">
-                    <canvas id="chart-evolucao-alunos"></canvas>
+                    <canvas id="chart-fat-mes-corrente"></canvas>
                   </div>
                 </article>
 
-                <!-- Sessões mensais (linha completa) -->
+                <!-- 3) Faturação Prevista vs Realizada por aluno (mês corrente) -->
                 <article class="rel-card rel-card--full">
-                  <h3 class="expl-subsection-title">Sessões Mensais</h3>
-                  <p class="expl-section-sub">Total de sessões realizadas por mês</p>
+                  <h3 class="expl-subsection-title">Por aluno (mês corrente)</h3>
+                  <p class="expl-section-sub">Faturação prevista vs realizada por aluno</p>
+                  <div class="rel-chart-box">
+                    <canvas id="chart-fat-aluno-mes"></canvas>
+                  </div>
+                </article>
+
+                <!-- 4) Sessões previstas vs realizadas por mês -->
+                <article class="rel-card rel-card--full">
+                  <h3 class="expl-subsection-title">Sessões mensais</h3>
+                  <p class="expl-section-sub">Sessões previstas vs realizadas por mês</p>
                   <div class="rel-chart-box">
                     <canvas id="chart-sessoes-mensais"></canvas>
                   </div>
@@ -1022,6 +1029,11 @@
   let chartPagamentosPorAluno = null;
   let SESSOES_EXPLICADOR = [];
   let semanaOffset = 0; // 0 = semana atual, -1 = anterior, +1 = próxima
+
+  // novos gráficos da secção Relatórios
+  let chartFatMesCorrente = null;
+  let chartFatAlunoMesCorrente = null;
+  let chartSessoesMensais = null;
 
   const weekLabel   = document.querySelector('#week-label');
   const btnWeekPrev = document.querySelector('#week-prev');
@@ -2011,6 +2023,7 @@
       });
     }
   }
+  
   function atualizarGraficoEvolucaoAnual() {
     const canvas = document.getElementById("chart-evolucao-anual");
     if (!canvas) return;
@@ -2028,11 +2041,9 @@
     const previstoPorMes = new Array(12).fill(0);
     const pagoPorMes     = new Array(12).fill(0);
 
-    // 1) Somar o que existir na view (PAGAMENTOS_CACHE)
     (PAGAMENTOS_CACHE || []).forEach((p) => {
       if (p.ano !== anoAtual) return;
 
-      // ignorar alunos bloqueados
       const alunoRef = (ALUNOS_CACHE || []).find(
         (a) => String(a.id_aluno) === String(p.id_aluno)
       );
@@ -2046,8 +2057,7 @@
       pagoPorMes[idxMes]     += pago;
     });
 
-    // 2) Fallback: para meses do ano atual sem qualquer registo,
-    // usar soma das mensalidades dos alunos ativos
+    // fallback: previsão baseada nas mensalidades dos alunos ativos
     const somaMensalAlunosAtivos = () => {
       let total = 0;
       (ALUNOS_CACHE || []).forEach((a) => {
@@ -2072,7 +2082,6 @@
 
         if (!temDadosMes && previstoPorMes[i] === 0) {
           previstoPorMes[i] = mensalBase;
-          // pagoPorMes fica 0 até haver pagamentos registados
         }
       }
     }
@@ -2089,33 +2098,191 @@
           {
             label: "Previsto",
             data: previstoPorMes,
-            borderWidth: 2,
-            tension: 0.3,
+            tension: 0.3
           },
           {
             label: "Pago",
             data: pagoPorMes,
-            borderWidth: 2,
-            tension: 0.3,
+            tension: 0.3
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: { beginAtZero: true }
+        }
+      }
+    });
+  }
+
+  function renderGraficoFatAlunoMesCorrente() {
+    const canvas = document.getElementById("chart-fat-alunos-mes");
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+
+    if (window.chartFatAlunos) window.chartFatAlunos.destroy();
+
+    // backend deve trazer:
+    // { aluno_nome, valor_previsto, valor_pago }
+
+    const nomes = PAGAMENTOS_MES.map(a => a.aluno_nome);
+    const previsto = PAGAMENTOS_MES.map(a => Number(a.valor_previsto || 0));
+    const pago = PAGAMENTOS_MES.map(a => Number(a.valor_pago || 0));
+
+    window.chartFatAlunos = new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels: nomes,
+        datasets: [
+          {
+            label: "Previsto",
+            data: previsto,
+            backgroundColor: "#3b82f6", // azul
           },
+          {
+            label: "Pago",
+            data: pago,
+            backgroundColor: "#ec4899", // rosa
+          }
         ],
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        interaction: {
-          mode: "index",
-          intersect: false,
-        },
-        plugins: {
-          legend: { display: true },
-        },
         scales: {
           y: { beginAtZero: true },
-        },
-      },
+          x: { stacked: false }
+        }
+      }
     });
   }
+
+  function renderGraficoSessoesMensais() {
+    const canvas = document.getElementById("chart-sessoes-mensais");
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+
+    const now = new Date();
+    const anoAtual = now.getFullYear();
+
+    const nomesMesesCurtos = [
+      "Jan","Fev","Mar","Abr","Mai","Jun",
+      "Jul","Ago","Set","Out","Nov","Dez"
+    ];
+
+    const previstasPorMes  = new Array(12).fill(0);
+    const realizadasPorMes = new Array(12).fill(0);
+
+    (SESSOES_EXPLICADOR || []).forEach((s) => {
+      if (!s.data) return;
+
+      const d = new Date(s.data);
+      if (d.getFullYear() !== anoAtual) return;
+
+      const idxMes = d.getMonth(); // 0-11
+      const estado = (s.estado || "").toUpperCase();
+
+      if (estado === "AGENDADA") {
+        previstasPorMes[idxMes] += 1;
+      } else if (estado === "REALIZADA") {
+        realizadasPorMes[idxMes] += 1;
+      }
+    });
+
+    if (chartSessoesMensais) {
+      chartSessoesMensais.destroy();
+    }
+
+    chartSessoesMensais = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: nomesMesesCurtos,
+        datasets: [
+          {
+            label: "Previstas",
+            data: previstasPorMes,
+            tension: 0.3
+          },
+          {
+            label: "Realizadas",
+            data: realizadasPorMes,
+            tension: 0.3
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: { beginAtZero: true }
+        }
+      }
+    });
+  }
+
+  let chartFatMesCorr = null;
+
+async function renderGraficoFatMesCorrente() {
+  const canvas = document.getElementById("chart-fat-mes-corrente");
+  if (!canvas) return;
+
+  const ctx = canvas.getContext("2d");
+
+  // obter ano/mês atual
+  const hoje = new Date();
+  const ano  = hoje.getFullYear();
+  const mes  = hoje.getMonth() + 1;
+
+  // chamada ao RPC
+  const { data, error } = await supabase.rpc("fat_mes_corrente", {
+    p_id_explicador: EXPLICADOR.id_explicador,
+    p_ano: ano,
+    p_mes: mes
+  });
+
+
+  if (error) {
+    console.error("Erro RPC fat_mes_corrente:", error);
+    return;
+  }
+
+  // preparar labels e valores
+  const labels        = data.map(r => r.aluno_nome);
+  const previsto      = data.map(r => Number(r.valor_previsto || 0));
+  const realizado     = data.map(r => Number(r.valor_pago || 0));
+
+  // destruir gráfico antigo
+  if (window.chartFatMesCorrente) window.chartFatMesCorrente.destroy();
+
+  window.chartFatMesCorrente = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "Previsto (€)",
+          data: previsto,
+          backgroundColor: "#3b82f6"   // azul
+        },
+        {
+          label: "Pago (€)",
+          data: realizado,
+          backgroundColor: "#ec4899"   // rosa
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: { beginAtZero: true }
+      }
+    }
+  });
+}
 
   // ---------- FATURAÇÃO: INICIAR FILTROS (MÊS/ANO) ----------
   function initFiltrosFaturacao() {
@@ -2470,27 +2637,31 @@ function prepararFiltrosFaturacao() {
   }
     
 async function loadRelatorios() {
-    if (!EXPLICADOR.id_explicador) return;
-
-    const { data, error } = await callExplFn("get_relatorios", {
-      id_explicador: EXPLICADOR.id_explicador
-    });
-
-    if (error || !data) {
-      console.error("Erro ao carregar relatórios", error);
-      return;
+  // Garantir que já tens KPIs financeiros carregados
+  if (!PAGAMENTOS_CACHE || !PAGAMENTOS_CACHE.length) {
+    // se tiveres uma função que carrega os KPIs/pagamentos, podes chamá-la aqui
+    if (typeof loadKpisFinanceiros === "function") {
+      await loadKpisFinanceiros();
     }
-
-    const { faturacao, alunos_mes, sessoes_mes, disciplinas } = data;
-
-    // Preencher KPIs
-    updateRelatorioKpisFromData(faturacao, alunos_mes, sessoes_mes);
-
-    // Gerar gráficos
-    renderGraficoFaturacao(faturacao);
-    renderGraficoAlunos(alunos_mes);
-    renderGraficoSessoes(sessoes_mes);
   }
+
+  // Atualizar KPIs (usa PAGAMENTOS_CACHE + SESSOES_EXPLICADOR)
+  if (typeof updateRelatorioKpis === "function") {
+    updateRelatorioKpis();
+  }
+
+  // 1) Faturação anual (Previsto vs Pago)
+  atualizarGraficoEvolucaoAnual();
+
+  // 2) Previsto vs Pago no mês corrente
+  renderGraficoFatMesCorrente();
+
+  // 3) Previsto vs Pago por aluno no mês corrente
+  renderGraficoFatAlunoMesCorrente();
+
+  // 4) Sessões previstas vs realizadas por mês
+  renderGraficoSessoesMensais();
+}
 
 function updateRelatorioKpisFromData(faturacao, alunos_mes, sessoes_mes) {
   const total = ALUNOS_CACHE.length;
@@ -2503,6 +2674,10 @@ function updateRelatorioKpisFromData(faturacao, alunos_mes, sessoes_mes) {
   const retencao = total > 0 ? (ativos / total) * 100 : 0;
   document.getElementById("rel-kpi-retencao").textContent =
     retencao.toFixed(1) + "%";
+
+    const somaSessoes = sessoes_mes.reduce((a, b) =>
+      a + Number(b.total ?? b.n_sessoes ?? 0),
+    0);
 
   const mediaSessoes =
     sessoes_mes.length
@@ -2793,18 +2968,29 @@ let chartSessoes = null;
 function renderGraficoFaturacao(faturacao) {
   const canvas = document.getElementById("chart-evolucao-faturacao");
   if (!canvas) return;
-  const ctx = canvas.getContext("2d");
 
+  const ctx = canvas.getContext("2d");
   if (chartFat) chartFat.destroy();
+
+  // ADAPTA AQUI se o backend devolver outra chave (ex: total_faturado)
+  const labels = (faturacao || []).map(m => m.mes_label || m.mes || "—");
+  const valores = (faturacao || []).map(m =>
+    Number(
+      m.total ??
+      m.total_faturacao ??
+      m.total_pago ??
+      0
+    )
+  );
 
   chartFat = new Chart(ctx, {
     type: "line",
     data: {
-      labels: faturacao.map(m => m.mes_label),
+      labels,
       datasets: [
         {
           label: "Faturação (€)",
-          data: faturacao.map(m => Number(m.total || 0)),
+          data: valores,
           fill: false,
           tension: 0.3
         }
@@ -2812,7 +2998,7 @@ function renderGraficoFaturacao(faturacao) {
     },
     options: {
       responsive: true,
-      maintainAspectRatio: false,   // <- deixa o CSS mandar
+      maintainAspectRatio: false,
       scales: {
         y: { beginAtZero: true }
       }
@@ -2823,18 +3009,29 @@ function renderGraficoFaturacao(faturacao) {
 function renderGraficoAlunos(alunos_mes) {
   const canvas = document.getElementById("chart-evolucao-alunos");
   if (!canvas) return;
-  const ctx = canvas.getContext("2d");
 
+  const ctx = canvas.getContext("2d");
   if (chartAlunosMes) chartAlunosMes.destroy();
+
+  // ADAPTA AQUI a chave corresponde ao nº de alunos
+  const labels = (alunos_mes || []).map(m => m.mes_label || m.mes || "—");
+  const valores = (alunos_mes || []).map(m =>
+    Number(
+      m.total ??
+      m.n_alunos ??
+      m.alunos_ativos ??
+      0
+    )
+  );
 
   chartAlunosMes = new Chart(ctx, {
     type: "bar",
     data: {
-      labels: alunos_mes.map(m => m.mes_label),
+      labels,
       datasets: [
         {
           label: "Alunos ativos",
-          data: alunos_mes.map(m => Number(m.total || 0))
+          data: valores
         }
       ]
     },
@@ -2851,18 +3048,29 @@ function renderGraficoAlunos(alunos_mes) {
 function renderGraficoSessoes(sessoes_mes) {
   const canvas = document.getElementById("chart-sessoes-mensais");
   if (!canvas) return;
-  const ctx = canvas.getContext("2d");
 
+  const ctx = canvas.getContext("2d");
   if (chartSessoes) chartSessoes.destroy();
+
+  // ADAPTA AQUI a chave para nº de sessões
+  const labels = (sessoes_mes || []).map(m => m.mes_label || m.mes || "—");
+  const valores = (sessoes_mes || []).map(m =>
+    Number(
+      m.total ??
+      m.n_sessoes ??
+      m.total_sessoes ??
+      0
+    )
+  );
 
   chartSessoes = new Chart(ctx, {
     type: "line",
     data: {
-      labels: sessoes_mes.map(m => m.mes_label),
+      labels,
       datasets: [
         {
           label: "Sessões",
-          data: sessoes_mes.map(m => Number(m.total || 0)),
+          data: valores,
           tension: 0.3
         }
       ]
@@ -2876,7 +3084,6 @@ function renderGraficoSessoes(sessoes_mes) {
     }
   });
 }
-
 
 async function carregarPerfilAluno(alunoOuId) {
     const idAluno = obterIdAluno(alunoOuId);
@@ -4383,6 +4590,12 @@ async function onClickSessaoCalendario(ev) {
     SESSOES_EXPLICADOR = sessoes;
     atualizarResumoSemana(SESSOES_EXPLICADOR);
     renderTodasSessoes();
+        // atualizar KPIs e gráfico de sessões nos Relatórios, se existirem
+    if (typeof updateRelatorioKpis === "function") {
+      updateRelatorioKpis();
+    }
+    renderGraficoSessoesMensais();
+
 
     //Estatísticas rápidas Explicações
     function atualizarResumoSemana(sessoes) {
