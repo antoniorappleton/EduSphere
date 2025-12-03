@@ -565,8 +565,8 @@
 
         </section>
 
-            <!-- ========== CALENDÁRIO ========== -->
-            <section class="expl-section" id="expl-sec-calendario" data-section="calendario">
+        <!-- ========== CALENDÁRIO ========== -->
+        <section class="expl-section" id="expl-sec-calendario" data-section="calendario">
               <div class="expl-section-header">
                 <div>
                   <h2 class="expl-section-title">Calendário</h2>
@@ -675,10 +675,10 @@
               </div>
 
 
-            </section>
+        </section>
 
-            <!-- ========== RELATÓRIOS ========== -->
-            <section class="expl-section" id="expl-sec-relatorios" data-section="relatorios">
+        <!-- ========== RELATÓRIOS ========== -->
+        <section class="expl-section" id="expl-sec-relatorios" data-section="relatorios">
               <!-- Cabeçalho -->
               <div class="expl-section-header">
                 <div>
@@ -698,7 +698,7 @@
                 <article class="rel-kpi-card">
                   <p class="rel-kpi-label">Taxa de retenção</p>
                   <p class="rel-kpi-value rel-kpi-value--accent" id="rel-kpi-retencao">—</p>
-                  <p class="rel-kpi-sub">Últimos 6 meses</p>
+                  <p class="rel-kpi-sub">% da faturação do mês em falta</p>
                 </article>
 
                 <article class="rel-kpi-card">
@@ -756,7 +756,7 @@
                   </div>
                 </article>
               </div>
-            </section>
+        </section>
 
           </div>
           <!-- FAB NAV FLUTUANTE -->
@@ -1753,103 +1753,82 @@
 
     return { ano, mes, mesLabel };
   }
-
+  
   // ---------- RESUMO MENSAL ----------
   function getDadosMesSelecionado() {
-    const tbodyPend  = document.querySelector("#tblMensalidadesPendentes tbody");
-    const tbodyPagas = document.querySelector("#tblMensalidadesPagas tbody");
-    if (!tbodyPend || !tbodyPagas) return null;
+  const tbodyPend  = document.querySelector("#tblMensalidadesPendentes tbody");
+  const tbodyPagas = document.querySelector("#tblMensalidadesPagas tbody");
+  if (!tbodyPend || !tbodyPagas) return null;
 
-    const { ano, mes, mesLabel } = getMesAnoSelecionadosOuUltimoComDados();
+  const { ano, mes, mesLabel } = getMesAnoSelecionadosOuUltimoComDados();
 
-    const pendentes = [];
-    const pagas     = [];
+  const pendentes = [];
+  const pagas     = [];
 
-    let totalPrevistoPend  = 0;
-    let totalFaltaPend     = 0;
-    let totalPagoPagas     = 0;
-    let totalPrevistoPagas = 0;
+  let totalPrevistoPend  = 0;
+  let totalFaltaPend     = 0;
+  let totalPagoPagas     = 0;
+  let totalPrevistoPagas = 0;
 
-    // 1) Primeiro tentamos usar só o que vem de PAGAMENTOS_CACHE
-    (PAGAMENTOS_CACHE || []).forEach((p) => {
-      // ignorar alunos bloqueados
-      const alunoRef = (ALUNOS_CACHE || []).find(
-        (a) => String(a.id_aluno) === String(p.id_aluno)
-      );
-      if (alunoRef && alunoRef.is_active === false) return;
-
-      if (p.ano !== ano || p.mes !== mes) return;
-
-      const previsto = Number(p.valor_previsto) || 0;
-      const pago     = Number(p.valor_pago) || 0;
-      const falta    = Math.max(previsto - pago, 0);
-
-      if (previsto === 0 && pago === 0) return;
-
-      const linha = {
-        aluno:  p.aluno_nome || "Aluno",
-        previsto,
-        pago,
-        falta,
-        estado: p.estado || "",
-        mes:    mesLabel,
-        avisado:"—",
-      };
-
-      if (pago > 0 && falta === 0) {
-        pagas.push(linha);
-        totalPagoPagas     += pago;
-        totalPrevistoPagas += previsto;
-      } else {
-        pendentes.push(linha);
-        totalPrevistoPend  += previsto;
-        totalFaltaPend     += falta;
-      }
-    });
-
-    // 2) Fallback: se NÃO houver qualquer linha para esse mês/ano,
-    // construímos as previsões com base nos alunos ativos
-    if (!pendentes.length && !pagas.length) {
-      (ALUNOS_CACHE || []).forEach((a) => {
-        if (a.is_active === false) return;
-
-        const v = Number(a.valor_explicacao) || 0;
-        const s = Number(a.sessoes_mes) || 0;
-        const mensal = v * s;
-
-        if (mensal <= 0) return;
-
-        const nomeAluno =
-          [a.nome, a.apelido].filter(Boolean).join(" ") || "Aluno";
-
-        const linha = {
-          aluno:    nomeAluno,
-          previsto: mensal,
-          pago:     0,
-          falta:    mensal,
-          estado:   "Pendente",
-          mes:      mesLabel,
-          avisado:  "—",
-        };
-
-        pendentes.push(linha);
-        totalPrevistoPend  += mensal;
-        totalFaltaPend     += mensal;
-      });
+  // Mapear registos da view por id_aluno
+  const pagamentosDoMes = new Map();
+  (PAGAMENTOS_CACHE || []).forEach((p) => {
+    if (p.ano === ano && p.mes === mes) {
+      pagamentosDoMes.set(String(p.id_aluno), p);
     }
+  });
 
-    return {
-      ano,
-      mes,
-      mesLabel,
-      pendentes,
-      pagas,
-      totalPrevistoPend,
-      totalFaltaPend,
-      totalPagoPagas,
-      totalPrevistoPagas,
+  // Agora processamos TODOS os alunos ativos
+  (ALUNOS_CACHE || []).forEach((a) => {
+    if (a.is_active === false) return;
+
+    const chave = String(a.id_aluno);
+
+    const nomeAluno = [a.nome, a.apelido].filter(Boolean).join(" ");
+
+    const mensalidade = (Number(a.valor_explicacao) || 0) * (Number(a.sessoes_mes) || 0);
+
+    // Obter registo real (se existir)
+    const p = pagamentosDoMes.get(chave);
+
+    const previsto = p ? (Number(p.valor_previsto) || mensalidade) : mensalidade;
+    const pago     = p ? (Number(p.valor_pago) || 0) : 0;
+
+    const falta = Math.max(previsto - pago, 0);
+
+    const linha = {
+      aluno: nomeAluno,
+      previsto,
+      pago,
+      falta,
+      estado: falta === 0 && pago > 0 ? "Pago" : "Pendente",
+      mes: mesLabel,
+      avisado: "—",
     };
-  }
+
+    if (falta > 0) {
+      pendentes.push(linha);
+      totalPrevistoPend += previsto;
+      totalFaltaPend    += falta;
+    } else {
+      pagas.push(linha);
+      totalPagoPagas     += pago;
+      totalPrevistoPagas += previsto;
+    }
+  });
+
+  return {
+    ano,
+    mes,
+    mesLabel,
+    pendentes,
+    pagas,
+    totalPrevistoPend,
+    totalFaltaPend,
+    totalPagoPagas,
+    totalPrevistoPagas,
+  };
+}
 
   // ---------- RESUMO MENSAL (tabelas) ----------
   function renderResumoMensal() {
@@ -2050,7 +2029,7 @@
       realizado[idx] += Number(p.valor_pago || 0);
     });
 
-    // 2) PREVISÃO AUTOMÁTICA PARA MESES SEM PAGAMENTOS
+    // 2) PREVISÃO AUTOMÁTICA / CORREÇÃO COM BASE NA MENSALIDADE
     const mensalBase = (() => {
       let tot = 0;
       (ALUNOS_CACHE || []).forEach(a => {
@@ -2066,10 +2045,8 @@
 
     if (mensalBase > 0) {
       for (let i = 0; i < 12; i++) {
-        const temPagamentos = (PAGAMENTOS_CACHE || [])
-          .some(p => p.ano === anoAtual && Number(p.mes) === i + 1);
-
-        if (!temPagamentos && previsto[i] === 0) {
+        // usa sempre a mensalidade como mínimo do previsto
+        if (previsto[i] < mensalBase) {
           previsto[i] = mensalBase;
         }
       }
@@ -2210,64 +2187,112 @@
     });
   }
 
+  // ---------- Gráfico mês corrente --------- //
   let chartFatMesCorr = null;
 
   async function renderGraficoFatMesCorrente() {
-    const canvas = document.getElementById("chart-fat-mes-corrente");
-    if (!canvas) return;
+      const canvas = document.getElementById("chart-fat-mes-corrente");
+      if (!canvas) return;
 
-    const ctx = canvas.getContext("2d");
+      const ctx = canvas.getContext("2d");
 
-    const hoje = new Date();
-    const ano  = hoje.getFullYear();
-    const mes  = hoje.getMonth() + 1;
+      const hoje = new Date();
+      const ano  = hoje.getFullYear();
+      const mes  = hoje.getMonth() + 1;
 
-    const { data, error } = await supabase.rpc("fat_mes_corrente", {
-      p_id_explicador: EXPLICADOR.id_explicador,
-      p_ano: ano,
-      p_mes: mes
-    });
+      const { data, error } = await supabase.rpc("fat_mes_corrente", {
+        p_id_explicador: EXPLICADOR.id_explicador,
+        p_ano: ano,
+        p_mes: mes,
+      });
 
-    if (error) {
-      console.error("Erro RPC fat_mes_corrente:", error);
-      return;
-    }
-
-    // <<< GUARDA AQUI PARA O OUTRO GRÁFICO
-    PAGAMENTOS_MES = data || [];
-
-    const labels    = PAGAMENTOS_MES.map(r => r.aluno_nome);
-    const previsto  = PAGAMENTOS_MES.map(r => Number(r.valor_previsto || 0));
-    const realizado = PAGAMENTOS_MES.map(r => Number(r.valor_pago || 0));
-
-    if (window.chartFatMesCorrente) window.chartFatMesCorrente.destroy();
-
-    window.chartFatMesCorrente = new Chart(ctx, {
-      type: "bar",
-      data: {
-        labels,
-        datasets: [
-          {
-            label: "Previsto (€)",
-            data: previsto,
-            backgroundColor: "#3b82f6" // azul
-          },
-          {
-            label: "Pago (€)",
-            data: realizado,
-            backgroundColor: "#ec4899" // rosa
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          y: { beginAtZero: true }
-        }
+      if (error) {
+        console.error("Erro RPC fat_mes_corrente:", error);
+        return;
       }
-    });
-  }
+
+      // Guarda para outros gráficos / tabelas
+      PAGAMENTOS_MES = data || [];
+
+      // ---- AGRUPAR POR ALUNO (1 entrada por aluno) ----
+      const porAluno = new Map();
+
+      (PAGAMENTOS_MES || []).forEach((r) => {
+        // chave: idealmente o id_aluno; se não houver, usa o nome
+        const chave =
+          r.id_aluno != null
+            ? String(r.id_aluno)
+            : (r.aluno_nome || "Aluno");
+
+        const previstoLinha = Number(r.valor_previsto || 0);
+        const pagoLinha     = Number(r.valor_pago || 0);
+
+        let entry = porAluno.get(chave);
+        if (!entry) {
+          entry = {
+            nome: r.aluno_nome || "Aluno",
+            previsto: 0,
+            pago: 0,
+          };
+        }
+
+        // somar valores
+        entry.previsto += previstoLinha;
+        entry.pago     += pagoLinha;
+
+        // se vier um nome "melhor" (por ex. com apelido), usa esse
+        if (
+          r.aluno_nome &&
+          (!entry.nome || r.aluno_nome.length > entry.nome.length)
+        ) {
+          entry.nome = r.aluno_nome;
+        }
+
+        porAluno.set(chave, entry);
+      });
+
+      // ---- ARRAYS FINAIS PARA O GRÁFICO ----
+      const labels    = [];
+      const previsto  = [];
+      const realizado = [];
+
+      porAluno.forEach((val) => {
+        labels.push(val.nome);
+        previsto.push(val.previsto);
+        realizado.push(val.pago);
+      });
+
+      // ---- DESENHAR GRÁFICO ----
+      if (window.chartFatMesCorrente) {
+        window.chartFatMesCorrente.destroy();
+      }
+
+      window.chartFatMesCorrente = new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels,
+          datasets: [
+            {
+              label: "Previsto (€)",
+              data: previsto,
+              backgroundColor: "#3b82f6", // azul
+            },
+            {
+              label: "Pago (€)",
+              data: realizado,
+              backgroundColor: "#ec4899", // rosa
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: { beginAtZero: true },
+          },
+        },
+      });
+    }
 
   // ---------- FATURAÇÃO: INICIAR FILTROS (MÊS/ANO) ----------
   function initFiltrosFaturacao() {
@@ -2361,216 +2386,203 @@
       realizadoMesAtual = 0,
       previstoAnoAtual = 0,
       realizadoAnoAtual = 0,
+      pendenteTotalMesAtual = 0,
     } = {}) {
-      // 1) Total de alunos
-      const total = (ALUNOS_CACHE || []).length;
-      const ativos = (ALUNOS_CACHE || []).filter(a => a.is_active !== false).length;
 
-      const elTot = document.getElementById("rel-kpi-total-alunos");
-      const elTotSub = document.getElementById("rel-kpi-total-alunos-sub");
-      if (elTot) elTot.textContent = String(total);
-      if (elTotSub) {
-        elTotSub.textContent =
-          ativos === 1 ? "1 ativo" : `${ativos} ativos`;
+    // 1) Total de alunos
+    const total  = (ALUNOS_CACHE || []).length;
+    const ativos = (ALUNOS_CACHE || []).filter(a => a.is_active !== false).length;
+
+    const elTot    = document.getElementById("rel-kpi-total-alunos");
+    const elTotSub = document.getElementById("rel-kpi-total-alunos-sub");
+    if (elTot)    elTot.textContent    = String(total);
+    if (elTotSub) elTotSub.textContent = ativos === 1 ? "1 ativo" : `${ativos} ativos`;
+
+    // 2) Taxa de retenção = % da mensalidade em falta (mês atual)
+    const elRet = document.getElementById("rel-kpi-retencao");
+    if (elRet) {
+      let perc = 0;
+      if (previstoMesAtual > 0) {
+        perc = (pendenteTotalMesAtual / previstoMesAtual) * 100;
+      }
+      elRet.textContent = `${perc.toFixed(1)}%`;
+    }
+
+    // 3) Faturação média / mês – usar janela de 12 meses que passámos
+    const mesesConsiderados = 12; // porque já resumimos últimos 12
+    const mediaMes = mesesConsiderados > 0
+      ? realizadoAnoAtual / mesesConsiderados
+      : 0;
+
+    const elFatMed = document.getElementById("rel-kpi-fat-media");
+    if (elFatMed) elFatMed.textContent = `€ ${mediaMes.toFixed(0)}/mês`;
+
+    // 4) Crescimento vs mês anterior (usa PAGAMENTOS_CACHE)
+    const hoje       = new Date();
+    const anoAtual   = hoje.getFullYear();
+    const mesAtual   = hoje.getMonth() + 1;
+    let mesAnterior  = mesAtual - 1;
+    let anoMesAnt    = anoAtual;
+    if (mesAnterior < 1) {
+      mesAnterior = 12;
+      anoMesAnt   = anoAtual - 1;
+    }
+
+    let realizadoMesAnterior = 0;
+    (PAGAMENTOS_CACHE || []).forEach(p => {
+      if (p.ano === anoMesAnt && p.mes === mesAnterior) {
+        realizadoMesAnterior += Number(p.valor_pago) || 0;
+      }
+    });
+
+    let crescimentoTxt = "—";
+    if (realizadoMesAnterior > 0) {
+      const diff = realizadoMesAtual - realizadoMesAnterior;
+      const perc = (diff / realizadoMesAnterior) * 100;
+      const sinal = perc >= 0 ? "+" : "";
+      crescimentoTxt = `${sinal}${perc.toFixed(1)}%`;
+    }
+
+    const elCresc = document.getElementById("rel-kpi-crescimento");
+    if (elCresc) elCresc.textContent = crescimentoTxt;
+
+    // 5) Sessões / mês (média últimos 3 meses) – mantém como já está
+    // (código que já tens com SESSOES_EXPLICADOR)
+  }
+
+  // ---------- KPI financeiros ----------
+  async function loadKpisFinanceiros() {
+    if (!EXPLICADOR.id_explicador) return;
+
+    const cardTotalPrev = document.getElementById("card-total-previsto");
+    const cardTotalMes  = document.getElementById("card-total-mes");
+    const cardPendentes = document.getElementById("card-pendentes");
+
+    try {
+      const { data, error } = await supabase
+        .from("v_pagamentos_detalhe")
+        .select("ano, mes, id_aluno, valor_previsto, valor_pago, estado")
+        .eq("id_explicador", EXPLICADOR.id_explicador);
+
+      if (error) {
+        console.error("Erro a carregar KPI financeiros", error);
+        return;
       }
 
-      // 2) Faturação média / mês (ano atual)
-      const hoje = new Date();
-      const mesAtual = hoje.getMonth() + 1;
-      const mesesConsiderados = Math.max(mesAtual, 1);
-      const mediaMes = realizadoAnoAtual / mesesConsiderados;
+      PAGAMENTOS_CACHE = data || [];
 
-      const elFatMed = document.getElementById("rel-kpi-fat-media");
-      if (elFatMed) elFatMed.textContent = `€ ${mediaMes.toFixed(0)}/mês`;
+      const now      = new Date();
+      const anoAtual = now.getFullYear();
+      const mesAtual = now.getMonth() + 1;
 
-      // 3) Crescimento vs mês anterior
-      let realizadoMesAnterior = 0;
-      const anoAtual = hoje.getFullYear();
-      let mesAnterior = mesAtual - 1;
-      let anoMesAnterior = anoAtual;
+      // --- 1) PREVISTO / PENDENTE = sempre com base nas mensalidades configuradas ---
+      let previstoMesAtual      = 0;
+      let realizadoMesAtual     = 0;
+      let pendenteTotalMesAtual = 0;
+      let previstoUltimos12     = 0;
+      let realizadoUltimos12    = 0;
 
-      if (mesAnterior < 1) {
-        mesAnterior = 12;
-        anoMesAnterior = anoAtual - 1;
-      }
+      // mapa auxiliar: total pago por aluno no mês atual
+      const pagoMesPorAluno = new Map();
 
-      (PAGAMENTOS_CACHE || []).forEach(p => {
-        if (p.ano === anoMesAnterior && p.mes === mesAnterior) {
-          realizadoMesAnterior += Number(p.valor_pago) || 0;
+      (PAGAMENTOS_CACHE || []).forEach((p) => {
+        const previsto = Number(p.valor_previsto) || 0;
+        const pago     = Number(p.valor_pago) || 0;
+
+        // janela últimos 12 meses (para média e “ano atual”)
+        const diffMeses = (p.ano - anoAtual) * 12 + (p.mes - mesAtual);
+        if (diffMeses >= -11 && diffMeses <= 0) {
+          previstoUltimos12  += previsto;
+          realizadoUltimos12 += pago;
+        }
+
+        // pagos do mês atual (independente do previsto na view)
+        if (p.ano === anoAtual && p.mes === mesAtual && p.id_aluno) {
+          realizadoMesAtual += pago;
+          const key = String(p.id_aluno);
+          pagoMesPorAluno.set(key, (pagoMesPorAluno.get(key) || 0) + pago);
         }
       });
 
-      let crescimentoTxt = "—";
-      if (realizadoMesAnterior > 0) {
-        const diff = realizadoMesAtual - realizadoMesAnterior;
-        const perc = (diff / realizadoMesAnterior) * 100;
-        const sinal = perc >= 0 ? "+" : "";
-        crescimentoTxt = `${sinal}${perc.toFixed(1)}%`;
+      // soma de mensalidades de TODOS os alunos ativos
+      (ALUNOS_CACHE || []).forEach((a) => {
+        if (a.is_active === false) return;
+
+        const v = Number(a.valor_explicacao) || 0;
+        const s = Number(a.sessoes_mes) || 0;
+        const mensalidade = v * s;
+        if (!mensalidade) return;
+
+        previstoMesAtual += mensalidade;
+
+        const pagoAluno = pagoMesPorAluno.get(String(a.id_aluno)) || 0;
+        const falta     = Math.max(mensalidade - pagoAluno, 0);
+        pendenteTotalMesAtual += falta;
+      });
+
+      // contar quantos alunos têm falta > 0
+      let nAlunosPend = 0;
+      (ALUNOS_CACHE || []).forEach((a) => {
+        if (a.is_active === false) return;
+
+        const v = Number(a.valor_explicacao) || 0;
+        const s = Number(a.sessoes_mes) || 0;
+        const mensalidade = v * s;
+        if (!mensalidade) return;
+
+        const pagoAluno = pagoMesPorAluno.get(String(a.id_aluno)) || 0;
+        const falta     = Math.max(mensalidade - pagoAluno, 0);
+        if (falta > 0.005) nAlunosPend++;
+      });
+
+      // ---- Cards na dashboard ----
+      if (cardTotalPrev) {
+        cardTotalPrev.textContent = `€ ${previstoMesAtual.toFixed(2)}`;
       }
 
-      const elCresc = document.getElementById("rel-kpi-crescimento");
-      if (elCresc) elCresc.textContent = crescimentoTxt;
-
-      // 4) Sessões / mês (média últimos 3 meses)
-      const elSessoes = document.getElementById("rel-kpi-sessoes-mes");
-      if (elSessoes) {
-        if (!SESSOES_EXPLICADOR || !SESSOES_EXPLICADOR.length) {
-          elSessoes.textContent = "—";
-        } else {
-          const hoje = new Date();
-          const limite = new Date();
-          limite.setMonth(hoje.getMonth() - 2); // últimos 3 meses
-
-          let cont = 0;
-          (SESSOES_EXPLICADOR || []).forEach(s => {
-            if (!s.data) return;
-            const d = new Date(s.data);
-            if (d >= limite && d <= hoje) cont++;
-          });
-
-          const media3m = cont / 3;
-          elSessoes.textContent = media3m.toFixed(1);
-        }
+      if (cardTotalMes) {
+        cardTotalMes.textContent =
+          `€ ${realizadoMesAtual.toFixed(2)} de € ${previstoMesAtual.toFixed(2)}`;
       }
+
+      if (cardPendentes) {
+        const labelAlunos =
+          nAlunosPend === 0
+            ? "Nenhum aluno em falta"
+            : nAlunosPend === 1
+            ? "1 aluno em falta"
+            : `${nAlunosPend} alunos em falta`;
+
+        cardPendentes.textContent =
+          `€ ${pendenteTotalMesAtual.toFixed(2)} (${labelAlunos})`;
+      }
+
+      // ---- Resumo + KPIs dos relatórios ----
+      const nAlunosAtivos = (ALUNOS_CACHE || []).filter(a => a.is_active !== false).length;
+      updateResumoRelatorios({
+        previstoMesAtual,
+        realizadoMesAtual,
+        pendenteTotal: pendenteTotalMesAtual,
+        previstoAnoAtual:  previstoUltimos12,
+        realizadoAnoAtual: realizadoUltimos12,
+        nAlunosAtivos,
+      });
+      updateRelatorioKpis({
+        previstoMesAtual,
+        realizadoMesAtual,
+        previstoAnoAtual:  previstoUltimos12,
+        realizadoAnoAtual: realizadoUltimos12,
+        pendenteTotalMesAtual,
+      });
+
+      prepararFiltrosFaturacao();
+      renderResumoMensal();
+      atualizarGraficosPagamentos && atualizarGraficosPagamentos();
+      atualizarGraficoEvolucaoAnual && atualizarGraficoEvolucaoAnual();
+    } catch (err) {
+      console.error("Erro inesperado em loadKpisFinanceiros", err);
     }
-
-  // ---------- KPI financeiros ----------
-    async function loadKpisFinanceiros() {
-      if (!EXPLICADOR.id_explicador) return;
-
-      const cardTotalPrev = document.getElementById("card-total-previsto");
-      const cardTotalMes  = document.getElementById("card-total-mes");
-      const cardPendentes = document.getElementById("card-pendentes");
-
-      try {
-        const { data, error } = await supabase
-          .from("v_pagamentos_detalhe")
-          .select("ano, mes, id_aluno, aluno_nome, valor_previsto, valor_pago, estado")
-          .eq("id_explicador", EXPLICADOR.id_explicador);
-
-        if (error) {
-          console.error("Erro a carregar KPI financeiros", error);
-          return;
-        }
-
-        // cache global com todos os pagamentos
-        PAGAMENTOS_CACHE = data || [];
-
-        const now      = new Date();
-        const anoAtual = now.getFullYear();
-        const mesAtual = now.getMonth() + 1;
-
-        let previstoMesAtual      = 0;
-        let realizadoMesAtual     = 0;
-        let previstoAnoAtual      = 0;
-        let realizadoAnoAtual     = 0;
-        let pendenteTotalMesAtual = 0;
-        const alunosComPendencias = new Set();
-
-        (PAGAMENTOS_CACHE || []).forEach((p) => {
-          const previsto = Number(p.valor_previsto) || 0;
-          const pago     = Number(p.valor_pago) || 0;
-          const falta    = Math.max(previsto - pago, 0);
-
-          // Ano inteiro
-          if (p.ano === anoAtual) {
-            previstoAnoAtual  += previsto;
-            realizadoAnoAtual += pago;
-          }
-
-          // Só mês atual (para os cards da dashboard)
-          if (p.ano === anoAtual && p.mes === mesAtual) {
-            previstoMesAtual      += previsto;
-            realizadoMesAtual     += pago;
-            pendenteTotalMesAtual += falta;
-
-            if (falta > 0 && p.id_aluno) {
-              alunosComPendencias.add(p.id_aluno);
-            }
-          }
-        });
-
-        // -------- Fallback: se não houver registos de pagamentos para o mês atual,
-        // usa a soma das mensalidades dos alunos ativos (valor_explicacao * sessoes_mes)
-        let nAlunosPend = alunosComPendencias.size;
-        const temRegistosMesAtual = (PAGAMENTOS_CACHE || []).some(
-          (p) => p.ano === anoAtual && p.mes === mesAtual
-        );
-
-        if (!temRegistosMesAtual) {
-          let somaMensal      = 0;
-          let ativosComValor  = 0;
-
-          (ALUNOS_CACHE || []).forEach((a) => {
-            if (a.is_active === false) return;
-
-            const v = Number(a.valor_explicacao) || 0;
-            const s = Number(a.sessoes_mes) || 0;
-            const mensal = v * s;
-
-            if (mensal > 0) {
-              somaMensal += mensal;
-              ativosComValor++;
-            }
-          });
-
-          if (somaMensal > 0) {
-            previstoMesAtual      = somaMensal;
-            // como não há pagamentos registados, o realizado é 0
-            realizadoMesAtual     = 0;
-            pendenteTotalMesAtual = somaMensal;
-            if (!nAlunosPend) nAlunosPend = ativosComValor;
-          }
-        }
-
-        // ---- Cards na dashboard ----
-        if (cardTotalPrev) {
-          cardTotalPrev.textContent = `€ ${previstoMesAtual.toFixed(2)}`;
-        }
-
-        if (cardTotalMes) {
-          cardTotalMes.textContent =
-            `€ ${realizadoMesAtual.toFixed(2)} de € ${previstoMesAtual.toFixed(2)}`;
-        }
-
-        if (cardPendentes) {
-          const labelAlunos =
-            nAlunosPend === 0
-              ? "Nenhum aluno em falta"
-              : nAlunosPend === 1
-              ? "1 aluno em falta"
-              : `${nAlunosPend} alunos em falta`;
-
-          cardPendentes.textContent =
-            `€ ${pendenteTotalMesAtual.toFixed(2)} (${labelAlunos})`;
-        }
-
-        // ---- Resumo dos relatórios (texto) ----
-        const nAlunosAtivos = (ALUNOS_CACHE || []).filter(a => a.is_active !== false).length;
-        updateResumoRelatorios({
-          previstoMesAtual,
-          realizadoMesAtual,
-          pendenteTotal: pendenteTotalMesAtual,
-          previstoAnoAtual,
-          realizadoAnoAtual,
-          nAlunosAtivos,
-        });
-        updateRelatorioKpis({
-          previstoMesAtual,
-          realizadoMesAtual,
-          previstoAnoAtual,
-          realizadoAnoAtual,
-        });
-
-        // ---- Secção Faturação + Gráficos ----
-        prepararFiltrosFaturacao();   // preenche <select> mês/ano
-        renderResumoMensal();         // tabelas "pagas" + "em falta"
-        atualizarGraficosPagamentos && atualizarGraficosPagamentos();
-        atualizarGraficoEvolucaoAnual && atualizarGraficoEvolucaoAnual();
-      } catch (err) {
-        console.error("Erro inesperado em loadKpisFinanceiros", err);
-      }
-    }
+  }
 
 // ------ Carregar Relatórios Financeiros ------
     
@@ -2628,19 +2640,11 @@ async function loadRelatorios() {
       await loadKpisFinanceiros();
     }
   }
-
-  if (typeof updateRelatorioKpis === "function") {
-    updateRelatorioKpis();
-  }
-
   atualizarGraficoEvolucaoAnual();
-
   // 2) Previsto vs Pago no mês corrente (total + alimenta PAGAMENTOS_MES)
   await renderGraficoFatMesCorrente();
-
   // 3) Previsto vs Pago por aluno no mês corrente (usa PAGAMENTOS_MES)
   renderGraficoFatAlunoMesCorrente();
-
   // 4) Sessões previstas vs realizadas por mês
   renderGraficoSessoesMensais();
 }
@@ -4574,7 +4578,7 @@ async function onClickSessaoCalendario(ev) {
     renderTodasSessoes();
         // atualizar KPIs e gráfico de sessões nos Relatórios, se existirem
     if (typeof updateRelatorioKpis === "function") {
-      updateRelatorioKpis();
+      //updateRelatorioKpis();
     }
     renderGraficoSessoesMensais();
 
