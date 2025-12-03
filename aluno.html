@@ -26,11 +26,19 @@
 <div class="capa__overlay"></div>
 
 <main class="auth">
-  <section class="auth__panel">
-    <h1>Bem-vindo 👋</h1>
-    <p id="alunoInfo">A carregar…</p>
+  
+    <!-- HEADER DO ALUNO -->
+    <div class="aluno-header">
+      <div class="aluno-header-main">
+        <div class="avatar" id="alunoAvatar">??</div>
+        <div>
+          <h1 id="alunoNomeTitulo">Bem-vindo 👋</h1>
+          <p id="alunoInfo">A carregar…</p>
+        </div>
+      </div>
+    </div>
 
-        <!-- RESUMO RÁPIDO -->
+    <!-- RESUMO RÁPIDO -->
     <div class="card card--highlight" id="resumoRapido">
       <h2>Resumo rápido</h2>
       <div class="resumo-grid">
@@ -54,133 +62,417 @@
       </div>
       <p class="resumo-hint" id="resumoHint"></p>
     </div>
+    <div class="aluno-grid">
 
-    <!-- Próximas explicações -->
-    <div class="card">
-      <h2>Próximas explicações</h2>
-      <div id="agenda">
-        <p>A carregar agenda…</p>
-      </div>
-    </div>
-
-        <!-- Calendário interativo -->
-    <div class="card">
-      <h2>Calendário de explicações</h2>
-      <div class="calendario-header">
-        <button id="calPrev" class="icon-button" type="button">◀</button>
-        <p id="calMesTitulo"></p>
-        <button id="calNext" class="icon-button" type="button">▶</button>
-      </div>
-      <ul id="calList" class="cal-list">
-        <li>A carregar calendário…</li>
-      </ul>
-      <p class="cal-hint">
-        Confirma a tua presença nas sessões futuras para ajudar o explicador a planear.
-      </p>
-    </div>
-
-
-    <!-- Pagamentos -->
-    <div class="card">
-      <h2>Pagamentos</h2>
-      <div class="table-wrapper">
-        <table id="tabPag">
-          <thead>
-            <tr>
-              <th>Mês</th>
-              <th>Previsto</th>
-              <th>Pago</th>
-              <th>Estado</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td colspan="4">A carregar pagamentos…</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Exercícios -->
-    <div class="card">
-      <h2>Exercícios</h2>
-      <ul id="exlist">
-        <li>A carregar exercícios…</li>
-      </ul>
-    </div>
-
-        <!-- Mensagens com o explicador -->
-    <div class="card">
-      <h2>Mensagens</h2>
-      <div id="msgList" class="msg-list">
-        <p>A carregar conversas…</p>
+      <!-- Calendário interativo -->
+      <div class="card">
+        <h2>Calendário de explicações</h2>
+        <div class="calendario-header">
+          <button id="calPrev" class="icon-button" type="button">◀</button>
+          <p id="calMesTitulo"></p>
+          <button id="calNext" class="icon-button" type="button">▶</button>
+        </div>
+        <ul id="calList" class="cal-list">
+          <li>A carregar calendário…</li>
+        </ul>
+        <p class="cal-hint">
+          Confirma a tua presença nas sessões futuras para ajudar o explicador a planear.
+        </p>
       </div>
 
-      <form id="fMsg" class="msg-form">
-        <label for="msgInput">Enviar mensagem ao explicador</label>
-        <textarea id="msgInput" name="msg" rows="3" required
-          placeholder="Escreve aqui a tua mensagem…"></textarea>
-        <button type="submit" class="button">Enviar</button>
-        <p id="msgStatus" class="form__msg"></p>
-      </form>
-    </div>
+      <!-- Pagamentos -->
+      <div class="card">
+        <h2>Pagamentos</h2>
+        <div class="table-wrapper">
+          <table id="tabPag" class="table table--wide">
+            <thead>
+              <tr>
+                <th>Mês</th>
+                <th>Previsto</th>
+                <th>Pago</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td colspan="4">A carregar pagamentos…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Exercícios -->
+      <div class="card">
+        <h2>Exercícios</h2>
+        <ul id="exlist">
+          <li>A carregar exercícios…</li>
+        </ul>
+      </div>
+
+          <!-- Mensagens com o explicador -->
+      <div class="card">
+        <h2>Mensagens</h2>
+        <div id="msgList" class="msg-list">
+          <p>A carregar conversas…</p>
+        </div>
+
+        <form id="fMsg" class="msg-form">
+          <label for="msgInput">Enviar mensagem ao explicador</label>
+          <textarea id="msgInput" name="msg" rows="3" required
+            placeholder="Escreve aqui a tua mensagem…"></textarea>
+          <button type="submit" class="button">Enviar</button>
+          <p id="msgStatus" class="form__msg"></p>
+        </form>
+      </div>
 
 
-    <!-- Alterar password -->
-    <div class="card">
-      <h2>Alterar palavra-passe</h2>
-      <form id="fPwd">
-        <label for="pwd">Nova palavra-passe</label>
-        <input
-          type="password"
-          id="pwd"
-          name="pwd"
-          required
-          minlength="6"
-          autocomplete="new-password"
-        />
-        <button type="submit" class="button">Atualizar palavra-passe</button>
-        <p id="pwdMsg" class="form__msg"></p>
-      </form>
+      <!-- Alterar password -->
+      <div class="card">
+        <h2>Alterar palavra-passe</h2>
+        <form id="fPwd">
+          <label for="pwd">Nova palavra-passe</label>
+          <input
+            type="password"
+            id="pwd"
+            name="pwd"
+            required
+            minlength="6"
+            autocomplete="new-password"
+          />
+          <button type="submit" class="button">Atualizar palavra-passe</button>
+          <p id="pwdMsg" class="form__msg"></p>
+        </form>
+      </div>
     </div>
-  </section>
 </main>
 
 <footer>© <span id="y"></span> EduSphere</footer>
 
 <script>
-  // ano no footer
-  document.getElementById('y').textContent = new Date().getFullYear();
+  // =========================
+  // UTIL: ano no footer
+  // =========================
+  const yEl = document.getElementById('y');
+  if (yEl) yEl.textContent = new Date().getFullYear();
 
-  // manter o que já tinhas para carregar nome + ano do aluno
+  // =========================
+  // ESTADO GLOBAL
+  // =========================
+  window.ALUNO = null;
+  let CAL_ANO_ATUAL;
+  let CAL_MES_ATUAL;
+
+  // =========================
+  // BOOTSTRAP DA PÁGINA
+  // =========================
   (async () => {
     const user = await Auth.requireRole('aluno', './login.html');
     if (!user) return;
 
+    // 1) mapear utilizador -> aluno
     const { data: map, error: mapErr } = await supabase
       .from('app_users')
       .select('ref_id')
       .eq('user_id', user.id)
       .single();
 
-    console.log('DEBUG app_users map', { map, mapErr });
+    if (mapErr || !map?.ref_id) {
+      console.error('Erro a mapear utilizador para aluno', mapErr);
+      const infoEl = document.getElementById('alunoInfo');
+      if (infoEl) infoEl.textContent = 'Não foi possível carregar os dados do aluno.';
+      return;
+    }
 
+    // 2) obter dados do aluno
     const { data: aluno, error: alunoErr } = await supabase
       .from('alunos')
       .select('id_aluno, nome, apelido, ano')
       .eq('id_aluno', map.ref_id)
       .single();
 
-    if (alunoErr) {
+    if (alunoErr || !aluno) {
       console.error('Erro a carregar aluno', alunoErr);
+      const infoEl = document.getElementById('alunoInfo');
+      if (infoEl) infoEl.textContent = 'Perfil não encontrado';
+      return;
     }
 
-    const t = aluno
-      ? `${aluno.nome} ${aluno.apelido ?? ''} — Ano ${aluno.ano ?? 'n/d'}`
-      : 'Perfil não encontrado';
+    // guardar globalmente
+    window.ALUNO = aluno;
 
-    document.getElementById('alunoInfo').textContent = t;
+    // 3) preencher header (nome + ano + avatar)
+    const nomeCompleto = `${aluno.nome} ${aluno.apelido ?? ''}`.trim();
+    const iniciais = (aluno.nome?.[0] || '?') + (aluno.apelido?.[0] || '');
+    const titulo = `${nomeCompleto} — Ano ${aluno.ano ?? 'n/d'}`;
+
+    const infoEl = document.getElementById('alunoInfo');
+    if (infoEl) infoEl.textContent = titulo;
+
+    const avatarEl = document.getElementById('alunoAvatar');
+    const tituloEl = document.getElementById('alunoNomeTitulo');
+    if (avatarEl) avatarEl.textContent = iniciais.toUpperCase();
+    if (tituloEl) tituloEl.textContent = nomeCompleto || 'Bem-vindo 👋';
+
+    // 4) inicializar navegação do calendário (mês atual)
+    initCalendarioEstadoInicial();
+
+    // 5) carregar cartões
+    await Promise.all([
+      carregarResumoPagamentos(),
+      carregarProximasExplicacoes(),
+      carregarCalendarioExplicacoes(),
+    ]);
   })();
+
+  // =========================
+  // PRÓXIMAS EXPLICAÇÕES
+  // =========================
+  async function carregarProximasExplicacoes() {
+    const container = document.getElementById('agenda');
+    if (!container) return;
+
+    if (!window.ALUNO || !ALUNO.id_aluno) {
+      container.innerHTML = '<p>Erro ao carregar sessões.</p>';
+      return;
+    }
+
+    container.innerHTML = '<p>A carregar agenda…</p>';
+
+    const hojeStr = new Date().toISOString().slice(0, 10);
+
+    const { data, error } = await supabase
+      .from('sessoes_explicacao')
+      .select('id_sessao, data, hora_inicio, duracao_min, estado, observacoes')
+      .eq('id_aluno', ALUNO.id_aluno)
+      .gte('data', hojeStr)               // só hoje em diante
+      .order('data', { ascending: true })
+      .order('hora_inicio', { ascending: true })
+      .limit(5);
+
+    if (error) {
+      console.error('Erro a carregar sessões do aluno', error);
+      container.innerHTML = '<p>Erro ao carregar sessões.</p>';
+      return;
+    }
+
+    const sessoes = data || [];
+
+    if (!sessoes.length) {
+      container.innerHTML = '<p>Não tens próximas explicações agendadas.</p>';
+      return;
+    }
+
+    const fmtData = { day: '2-digit', month: '2-digit', year: 'numeric' };
+
+    const html = `
+      <ul class="agenda-list">
+        ${sessoes
+          .map((s) => {
+            const d = s.data ? new Date(s.data) : null;
+            const dataLabel = d ? d.toLocaleDateString('pt-PT', fmtData) : '—';
+            const hora = s.hora_inicio ? s.hora_inicio.slice(0, 5) : '--:--';
+            const dur =
+              s.duracao_min != null && s.duracao_min !== ''
+                ? `${s.duracao_min} min`
+                : '';
+            const estado = s.estado || '';
+            return `
+              <li>
+                <strong>${dataLabel}</strong> · ${hora}
+                ${dur ? ' · ' + dur : ''} — ${estado}
+              </li>
+            `;
+          })
+          .join('')}
+      </ul>
+    `;
+
+    container.innerHTML = html;
+  }
+
+  // =========================
+  // CALENDÁRIO MENSAL
+  // =========================
+  function initCalendarioEstadoInicial() {
+    const hoje = new Date();
+    CAL_ANO_ATUAL = hoje.getFullYear();
+    CAL_MES_ATUAL = hoje.getMonth() + 1;
+
+    const btnPrev = document.getElementById('calPrev');
+    const btnNext = document.getElementById('calNext');
+
+    btnPrev?.addEventListener('click', () => {
+      CAL_MES_ATUAL--;
+      if (CAL_MES_ATUAL === 0) {
+        CAL_MES_ATUAL = 12;
+        CAL_ANO_ATUAL--;
+      }
+      carregarCalendarioExplicacoes();
+    });
+
+    btnNext?.addEventListener('click', () => {
+      CAL_MES_ATUAL++;
+      if (CAL_MES_ATUAL === 13) {
+        CAL_MES_ATUAL = 1;
+        CAL_ANO_ATUAL++;
+      }
+      carregarCalendarioExplicacoes();
+    });
+  }
+
+  async function carregarCalendarioExplicacoes() {
+    const ul = document.getElementById('calList');
+    const titulo = document.getElementById('calMesTitulo');
+    if (!ul || !titulo) return;
+    if (!window.ALUNO || !ALUNO.id_aluno) return;
+
+    const nomesMeses = [
+      'janeiro',
+      'fevereiro',
+      'março',
+      'abril',
+      'maio',
+      'junho',
+      'julho',
+      'agosto',
+      'setembro',
+      'outubro',
+      'novembro',
+      'dezembro',
+    ];
+
+    titulo.textContent =
+      (nomesMeses[CAL_MES_ATUAL - 1] || CAL_MES_ATUAL) +
+      ' de ' +
+      CAL_ANO_ATUAL;
+
+    ul.innerHTML = '<li>A carregar calendário…</li>';
+
+    const inicio = new Date(CAL_ANO_ATUAL, CAL_MES_ATUAL - 1, 1)
+      .toISOString()
+      .slice(0, 10);
+    const fim = new Date(CAL_ANO_ATUAL, CAL_MES_ATUAL, 0)
+      .toISOString()
+      .slice(0, 10);
+
+    const { data, error } = await supabase
+      .from('sessoes_explicacao')
+      .select('id_sessao, data, hora_inicio, duracao_min, estado')
+      .eq('id_aluno', ALUNO.id_aluno)
+      .gte('data', inicio)
+      .lte('data', fim)
+      .order('data', { ascending: true })
+      .order('hora_inicio', { ascending: true });
+
+    if (error) {
+      console.error('Erro ao carregar calendário', error);
+      ul.innerHTML = '<li>Erro ao carregar sessões.</li>';
+      return;
+    }
+
+    const sessoes = data || [];
+
+    if (!sessoes.length) {
+      ul.innerHTML = '<li>Sem explicações neste mês.</li>';
+      return;
+    }
+
+    ul.innerHTML = '';
+
+    // agrupar por data
+    const grupos = {};
+    sessoes.forEach((s) => {
+      if (!s.data) return;
+      if (!grupos[s.data]) grupos[s.data] = [];
+      grupos[s.data].push(s);
+    });
+
+    Object.keys(grupos)
+      .sort()
+      .forEach((dataStr) => {
+        const d = new Date(dataStr);
+        const dataLabel = d.toLocaleDateString('pt-PT', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+        });
+
+        const li = document.createElement('li');
+        li.innerHTML =
+          `<strong>${dataLabel}</strong>` +
+          '<ul>' +
+          grupos[dataStr]
+            .map((s) => {
+              const hora = s.hora_inicio
+                ? s.hora_inicio.slice(0, 5)
+                : '--:--';
+              const dur =
+                s.duracao_min != null ? `${s.duracao_min} min` : '';
+              const estado = s.estado || '';
+              return `<li>${hora}${dur ? ' · ' + dur : ''} — ${estado}</li>`;
+            })
+            .join('') +
+          '</ul>';
+        ul.appendChild(li);
+      });
+  }
+
+  // =========================
+  // PAGAMENTOS (tabela)
+  // =========================
+  async function carregarResumoPagamentos() {
+    const tbody = document.querySelector('#tabPag tbody');
+    if (!tbody) return;
+
+    if (!window.ALUNO || !ALUNO.id_aluno) {
+      tbody.innerHTML =
+        "<tr><td colspan='4'>Erro ao carregar pagamentos.</td></tr>";
+      return;
+    }
+
+    tbody.innerHTML =
+      "<tr><td colspan='4'>A carregar…</td></tr>";
+
+    const { data, error } = await supabase
+      .from('v_pagamentos_detalhe')
+      .select('ano, mes, valor_previsto, valor_pago, estado')
+      .eq('id_aluno', ALUNO.id_aluno)
+      .order('ano', { ascending: true })
+      .order('mes', { ascending: true });
+
+    if (error) {
+      console.error('Erro a carregar pagamentos do aluno', error);
+      tbody.innerHTML =
+        "<tr><td colspan='4'>Erro ao carregar pagamentos.</td></tr>";
+      return;
+    }
+
+    const pag = data || [];
+    if (!pag.length) {
+      tbody.innerHTML =
+        "<tr><td colspan='4'>Ainda não existem pagamentos registados.</td></tr>";
+      return;
+    }
+
+    tbody.innerHTML = pag
+      .map((p) => {
+        const mes = String(p.mes).padStart(2, '0');
+        const labelMes = `${mes}/${p.ano}`;
+        const previsto = Number(p.valor_previsto) || 0;
+        const pago = Number(p.valor_pago) || 0;
+        const estado = p.estado || '—';
+        return `
+          <tr>
+            <td>${labelMes}</td>
+            <td>${previsto.toFixed(2)} €</td>
+            <td>${pago.toFixed(2)} €</td>
+            <td>${estado}</td>
+          </tr>
+        `;
+      })
+      .join('');
+  }
 </script>
+
 
 <!-- Toast / feedback visual -->
 <div id="toast" class="toast" aria-live="polite" aria-atomic="true"></div>

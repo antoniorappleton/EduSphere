@@ -2,14 +2,19 @@
    ALUNO.CSS — área do aluno
    ================================ */
 
-.auth__panel {
-  background: #fff;
-  border-radius: 14px;
-  padding: 20px 24px;
-  border: 1px solid var(--border);
-  box-shadow: 0 2px 10px #0001;
-  color: var(--text-dark);
+   /* Espaçamento global confortável */
+.card {
+  margin-bottom: 24px;
 }
+
+/* Alinhar o header do aluno com estilo premium */
+.aluno-header {
+  margin: 10px 0 26px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
 
 #alunoInfo { margin-bottom: 12px; font-size: 1rem; }
 
@@ -58,4 +63,37 @@
 /* TABLE PAGAMENTOS */
 #tabPag td {
   font-size: 0.95rem;
+}
+/* HEADER DO ALUNO (nome + avatar) */
+.aluno-header {
+  margin-bottom: 18px;
+}
+
+.aluno-header-main {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+/* Reaproveita .avatar de aluno-perfil.css, já incluído no HTML */
+.aluno-header-main h1 {
+  margin: 0;
+  font-size: 1.35rem;
+}
+
+.aluno-header-main p {
+  margin: 4px 0 0;
+  color: var(--text-soft);
+  font-size: 0.95rem;
+}
+/* extra opcional para garantir scroll horizontal se a tabela crescer */
+#tabPag {
+  min-width: 520px;
+}
+/* GRID DE CARTÕES (como no explicador) */
+.aluno-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+  gap: 22px;
+  margin-top: 25px;
 }
