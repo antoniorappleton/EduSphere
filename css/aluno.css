@@ -974,7 +974,7 @@
 .pag-dados-mono {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
-/* ===== PAGAMENTOS (aluno) ===== */
+/* ==== PAGAMENTOS ==== */
 
 .pag-card {
   margin-bottom: 18px;
@@ -1063,7 +1063,8 @@
 
 .pag-dados-iban,
 .pag-dados-ref {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
 }
 
 .pag-dados-actions {

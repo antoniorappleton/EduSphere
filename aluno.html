@@ -255,26 +255,26 @@
         </section>
 
         <!-- ========== VISTA: PAGAMENTOS ========== -->
-        <section class="expl-section" data-view-name="pagamentos" style="display:none;">
-          <!-- Cabeçalho + alerta + cartões -->
+        <section id="pagamentos" class="expl-section" data-view-name="pagamentos">
+          <!-- Cabeçalho -->
           <article class="expl-card pag-card">
             <h2 class="expl-section-title">Pagamentos</h2>
             <p class="expl-section-sub">Consulte o estado dos seus pagamentos</p>
 
             <!-- ALERTA pagamento pendente -->
-            <div id="pagAlert" class="pag-alert" aria-live="polite"></div>
+            <div id="pagAlert" class="pag-alert" aria-live="polite" style="display:none;"></div>
 
             <!-- 3 cartões de resumo -->
             <div class="pag-resumo-grid">
               <div class="pag-resumo-card" id="pagCardTotal">
                 <p class="pag-resumo-label">Total Pago</p>
-                <p class="pag-resumo-valor pag-resumo-valor--green" id="pagTotalPago">—</p>
+                <p class="pag-resumo-valor pag-resumo-valor--green" id="pagTotalPago">€0,00</p>
                 <p class="pag-resumo-sub">Desde o início</p>
               </div>
 
               <div class="pag-resumo-card" id="pagCardPendente">
                 <p class="pag-resumo-label">Valor Pendente</p>
-                <p class="pag-resumo-valor pag-resumo-valor--orange" id="pagValorPendente">—</p>
+                <p class="pag-resumo-valor pag-resumo-valor--orange" id="pagValorPendente">€0,00</p>
                 <p class="pag-resumo-sub">A pagar</p>
               </div>
 
@@ -324,13 +324,12 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr><td colspan="6">A carregar pagamentos…</td></tr>
+                  <!-- preenchido por JS -->
                 </tbody>
               </table>
             </div>
           </article>
         </section>
-
         <!-- ========== VISTA: EXERCÍCIOS ========== -->
         <section class="expl-section" data-view-name="exercicios" style="display:none;">
           <article class="expl-card">
@@ -784,91 +783,65 @@ async function carregarResumoPagamentos() {
   const btnPagarAgora = document.getElementById('btnPagarAgora');
   const btnComprovativo = document.getElementById('btnComprovativo');
 
+  // cartão rápido do dashboard
+  const resumoValorEl = document.getElementById('resumoValor');
+  const resumoMesLabelEl = document.getElementById('resumoMesLabel');
+  const resumoEstadoEl = document.getElementById('resumoEstado');
+  const resumoHintEl = document.getElementById('resumoHint');
+  const btnDownloadFatura = document.getElementById('btnDownloadFatura');
+
   if (!tbody) return;
 
   if (!window.ALUNO || !ALUNO.id_aluno) {
     tbody.innerHTML =
       "<tr><td colspan='6'>Erro ao carregar pagamentos.</td></tr>";
-    if (alertEl) alertEl.textContent = 'Erro ao identificar o aluno.';
+    if (alertEl) {
+      alertEl.style.display = 'block';
+      alertEl.textContent = 'Erro ao identificar o aluno.';
+    }
     return;
   }
 
+  // estado inicial de carregamento
   tbody.innerHTML =
     "<tr><td colspan='6'>A carregar…</td></tr>";
+  if (alertEl) {
+    alertEl.style.display = 'none';
+    alertEl.textContent = '';
+  }
 
-  // ⚠️ ajusta os campos à tua view v_pagamentos_detalhe
+  // ------- pedido ao backend (view v_pagamentos_detalhe) -------
   const { data, error } = await supabase
     .from('v_pagamentos_detalhe')
-    .select(`
-      ano,
-      mes,
-      valor_previsto,
-      valor_pago,
-      estado,
-      data_pagamento,
-      metodo,
-      referencia,
-      iban,
-      vencimento
-    `)
-    .eq('id_aluno', ALUNO.id_aluno)
+    .select('*') // não assumimos nomes de colunas aqui
     .order('ano', { ascending: true })
     .order('mes', { ascending: true });
 
   if (error) {
-    console.error('Erro a carregar pagamentos do aluno', error);
+    console.error(
+      'Erro a carregar pagamentos do aluno',
+      error.message,
+      error.details,
+      error.hint
+    );
     tbody.innerHTML =
       "<tr><td colspan='6'>Erro ao carregar pagamentos.</td></tr>";
-    if (alertEl) alertEl.textContent = 'Erro ao carregar pagamentos.';
-    return;
-  }
-
-  const pag = data || [];
-
-  if (!pag.length) {
-    tbody.innerHTML =
-      "<tr><td colspan='6'>Ainda não existem pagamentos registados.</td></tr>";
-
-    if (totalPagoEl) totalPagoEl.textContent = '€0,00';
-    if (pendenteEl) pendenteEl.textContent = '€0,00';
-    if (proxVencEl) proxVencEl.textContent = '—';
-    if (proxMesEl) proxMesEl.textContent = 'Sem mensalidades';
-
-    if (dadosEl) {
-      dadosEl.innerHTML =
-        '<p class="pag-empty">Ainda não existem mensalidades configuradas.</p>';
+    if (alertEl) {
+      alertEl.style.display = 'block';
+      alertEl.textContent = 'Erro ao carregar pagamentos.';
     }
-    if (alertEl) alertEl.innerHTML = '';
-    btnPagarAgora && (btnPagarAgora.disabled = true);
-    btnComprovativo && (btnComprovativo.disabled = true);
+    // dashboard
+    if (resumoValorEl) resumoValorEl.textContent = '—';
+    if (resumoMesLabelEl) resumoMesLabelEl.textContent = 'Próxima mensalidade';
+    if (resumoEstadoEl) resumoEstadoEl.textContent = 'Erro';
+    if (resumoHintEl) resumoHintEl.textContent = 'Tenta voltar a carregar a página.';
+    if (btnDownloadFatura) btnDownloadFatura.disabled = true;
     return;
   }
 
-  // -------- 1) cálculos de resumo --------
-  const totalPago = pag.reduce(
-    (acc, p) => acc + (Number(p.valor_pago) || 0),
-    0
-  );
+  const pag = (data || []).filter(Boolean);
 
-  // consideramos "pendente" tudo o que não está marcado como "Pago"
-  const pendentes = pag.filter(
-    (p) => (p.estado || '').toLowerCase() !== 'pago'
-  );
-  const totalPendente = pendentes.reduce(
-    (acc, p) =>
-      acc + (Number(p.valor_previsto) || 0) - (Number(p.valor_pago) || 0),
-    0
-  );
-
-  // próximo vencimento: primeiro pendente (por ano/mes)
-  let prox = null;
-  if (pendentes.length) {
-    prox = [...pendentes].sort((a, b) => {
-      if (a.ano !== b.ano) return a.ano - b.ano;
-      return a.mes - b.mes;
-    })[0];
-  }
-
+  // ------- helpers locais -------
   function labelMesAno(ano, mes) {
     if (!ano || !mes) return '—';
     const d = new Date(ano, mes - 1, 1);
@@ -886,29 +859,164 @@ async function carregarResumoPagamentos() {
     });
   }
 
+  // tentar adaptar a vários esquemas de backend
+  const campos = {
+    valorPrevisto(p) {
+      return (
+        Number(
+          p.valor_previsto ??
+            p.valor_mensalidade ??
+            p.valor ??
+            p.montante_previsto ??
+            0
+        ) || 0
+      );
+    },
+    valorPago(p) {
+      return (
+        Number(
+          p.valor_pago ??
+            p.total_pago ??
+            p.montante_pago ??
+            0
+        ) || 0
+      );
+    },
+    estado(p) {
+      return String(p.estado ?? p.status ?? '').toLowerCase();
+    },
+    referencia(p) {
+      return (
+        p.referencia ??
+        p.ref_pagamento ??
+        p.ref ??
+        ''
+      );
+    },
+    iban(p) {
+      return (
+        p.iban ??
+        p.iban_pagamento ??
+        ''
+      );
+    },
+    vencimentoRaw(p) {
+      return (
+        p.vencimento ??
+        p.data_vencimento ??
+        p.data_limite ??
+        null
+      );
+    },
+    dataPagamento(p) {
+      return (
+        p.data_pagamento ??
+        p.dt_pagamento ??
+        p.pago_em ??
+        null
+      );
+    },
+    metodo(p) {
+      return (
+        p.metodo ??
+        p.metodo_pagamento ??
+        p.metodo_pgto ??
+        ''
+      );
+    },
+  };
+
+  function formatDataCurta(dateLike) {
+    if (!dateLike) return '—';
+    const d = new Date(dateLike);
+    if (Number.isNaN(d.getTime())) return '—';
+    return d.toLocaleDateString('pt-PT', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
+  }
+
+  // ------- se não há pagamentos na view -------
+  if (!pag.length) {
+    tbody.innerHTML =
+      "<tr><td colspan='6'>Ainda não existem pagamentos registados.</td></tr>";
+
+    if (totalPagoEl) totalPagoEl.textContent = formatEuro(0);
+    if (pendenteEl) pendenteEl.textContent = formatEuro(0);
+    if (proxVencEl) proxVencEl.textContent = '—';
+    if (proxMesEl) proxMesEl.textContent = 'Sem mensalidades';
+
+    if (dadosEl) {
+      dadosEl.innerHTML =
+        '<p class="pag-empty">Ainda não existem mensalidades configuradas.</p>';
+    }
+    if (alertEl) {
+      alertEl.style.display = 'block';
+      alertEl.innerHTML =
+        '<strong>Sem dados de pagamentos.</strong> Contacta a secretaria se achares que é um erro.';
+    }
+
+    // cartão rápido
+    if (resumoValorEl) resumoValorEl.textContent = '—';
+    if (resumoMesLabelEl) resumoMesLabelEl.textContent = 'Próxima mensalidade';
+    if (resumoEstadoEl) resumoEstadoEl.textContent = 'Sem dados';
+    if (resumoHintEl)
+      resumoHintEl.textContent =
+        'Ainda não existem mensalidades configuradas para a tua conta.';
+    if (btnDownloadFatura) btnDownloadFatura.disabled = true;
+
+    btnPagarAgora && (btnPagarAgora.disabled = true);
+    btnComprovativo && (btnComprovativo.disabled = true);
+
+    window.PAG_PROX_PENDENTE = null;
+    return;
+  }
+
+  // -------- 1) cálculos de resumo --------
+  const totalPago = pag.reduce(
+    (acc, p) => acc + campos.valorPago(p),
+    0
+  );
+
+  // consideramos "pendente" tudo o que não está marcado como "pago"
+  const pendentes = pag.filter((p) => campos.estado(p) !== 'pago');
+
+  const totalPendente = pendentes.reduce(
+    (acc, p) => acc + (campos.valorPrevisto(p) - campos.valorPago(p)),
+    0
+  );
+
+  // próximo vencimento: primeiro pendente (por ano/mes)
+  let prox = null;
+  if (pendentes.length) {
+    prox = [...pendentes].sort((a, b) => {
+      if (a.ano !== b.ano) return a.ano - b.ano;
+      return a.mes - b.mes;
+    })[0];
+  }
+
   if (totalPagoEl) totalPagoEl.textContent = formatEuro(totalPago);
   if (pendenteEl) pendenteEl.textContent = formatEuro(totalPendente);
 
   if (prox) {
     const mesLabel = labelMesAno(prox.ano, prox.mes);
+    const vencRaw = campos.vencimentoRaw(prox);
     const vencLabel =
-      prox.vencimento ||
-      // fallback: dia 31 do mês desse ano
-      new Date(prox.ano, prox.mes - 1, 31).toLocaleDateString('pt-PT', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-      });
+      vencRaw
+        ? formatDataCurta(vencRaw)
+        : formatDataCurta(new Date(prox.ano, prox.mes - 1, 31));
+    const valorEmFalta = campos.valorPrevisto(prox) - campos.valorPago(prox);
 
     if (proxVencEl) proxVencEl.textContent = vencLabel;
     if (proxMesEl) proxMesEl.textContent = mesLabel;
 
     // alerta
     if (alertEl) {
+      alertEl.style.display = 'block';
       alertEl.innerHTML = `
         Tem um pagamento de <strong>${formatEuro(
-          (Number(prox.valor_previsto) || 0) -
-            (Number(prox.valor_pago) || 0)
+          valorEmFalta
         )}</strong> referente a
         <strong>${mesLabel}</strong> com vencimento a
         <strong>${vencLabel}</strong>.
@@ -924,21 +1032,18 @@ async function carregarResumoPagamentos() {
         </div>
         <div class="pag-dados-row">
           <span class="pag-dados-label">Valor:</span>
-          <span class="pag-dados-value">${formatEuro(
-            (Number(prox.valor_previsto) || 0) -
-              (Number(prox.valor_pago) || 0)
-          )}</span>
+          <span class="pag-dados-value">${formatEuro(valorEmFalta)}</span>
         </div>
         <div class="pag-dados-row">
           <span class="pag-dados-label">Referência:</span>
           <span class="pag-dados-value pag-dados-ref">${
-            prox.referencia || '—'
+            campos.referencia(prox) || '—'
           }</span>
         </div>
         <div class="pag-dados-row">
           <span class="pag-dados-label">IBAN:</span>
           <span class="pag-dados-value pag-dados-iban">${
-            prox.iban || 'PT50 0000 0000 0000 0000 0000 0'
+            campos.iban(prox) || 'PT50 0000 0000 0000 0000 0000 0'
           }</span>
         </div>
       `;
@@ -946,11 +1051,23 @@ async function carregarResumoPagamentos() {
 
     btnPagarAgora && (btnPagarAgora.disabled = false);
     btnComprovativo && (btnComprovativo.disabled = false);
+
+    // cartão rápido
+    if (resumoValorEl) resumoValorEl.textContent = formatEuro(valorEmFalta);
+    if (resumoMesLabelEl) resumoMesLabelEl.textContent = mesLabel;
+    if (resumoEstadoEl) resumoEstadoEl.textContent = 'Pendente';
+    if (resumoHintEl)
+      resumoHintEl.textContent = `Vence a ${vencLabel}.`;
+    if (btnDownloadFatura) btnDownloadFatura.disabled = false;
+
+    // guardar dados do próximo pendente
+    window.PAG_PROX_PENDENTE = { ...prox, valor_em_falta: valorEmFalta };
   } else {
     // não há pendentes
     if (proxVencEl) proxVencEl.textContent = '—';
     if (proxMesEl) proxMesEl.textContent = 'Sem mensalidades pendentes';
     if (alertEl) {
+      alertEl.style.display = 'block';
       alertEl.innerHTML =
         '<strong>Sem pagamentos pendentes.</strong> Todas as mensalidades estão em dia. 🎉';
     }
@@ -959,12 +1076,24 @@ async function carregarResumoPagamentos() {
         '<p class="pag-empty">Sem pagamentos pendentes neste momento.</p>';
     }
     btnPagarAgora && (btnPagarAgora.disabled = true);
-    btnComprovativo && (btnComprovativo.disabled = true);
+    // ainda podes querer descarregar faturas antigas
+    btnComprovativo && (btnComprovativo.disabled = false);
+
+    // cartão rápido
+    if (resumoValorEl) resumoValorEl.textContent = formatEuro(0);
+    if (resumoMesLabelEl) resumoMesLabelEl.textContent = 'Próxima mensalidade';
+    if (resumoEstadoEl) resumoEstadoEl.textContent = 'Em dia';
+    if (resumoHintEl)
+      resumoHintEl.textContent =
+        'Não tens mensalidades em atraso. 👍';
+    if (btnDownloadFatura) btnDownloadFatura.disabled = false;
+
+    window.PAG_PROX_PENDENTE = null;
   }
 
   // -------- 2) tabela de histórico --------
   const historico = pag
-    .filter((p) => (p.estado || '').toLowerCase() === 'pago')
+    .filter((p) => campos.estado(p) === 'pago')
     .sort((a, b) => {
       if (a.ano !== b.ano) return b.ano - a.ano;
       return b.mes - a.mes;
@@ -977,21 +1106,21 @@ async function carregarResumoPagamentos() {
     tbody.innerHTML = historico
       .map((p) => {
         const mesLabel = labelMesAno(p.ano, p.mes);
-        const dataPag = p.data_pagamento
-          ? new Date(p.data_pagamento).toLocaleDateString('pt-PT')
+        const dataPag = campos.dataPagamento(p)
+          ? formatDataCurta(campos.dataPagamento(p))
           : '—';
-        const metodo = p.metodo || '—';
-        const estado = p.estado || '—';
+        const metodo = campos.metodo(p) || '—';
+        const estado = p.estado || p.status || '—';
 
         const badgeClass =
-          estado.toLowerCase() === 'pago'
+          String(estado).toLowerCase() === 'pago'
             ? 'pag-badge pag-badge--pago'
             : 'pag-badge pag-badge--pendente';
 
         return `
           <tr>
             <td><strong>${mesLabel}</strong></td>
-            <td>${formatEuro(p.valor_previsto)}</td>
+            <td>${formatEuro(campos.valorPrevisto(p))}</td>
             <td>${dataPag}</td>
             <td>${metodo}</td>
             <td><span class="${badgeClass}">${estado}</span></td>
@@ -1005,25 +1134,213 @@ async function carregarResumoPagamentos() {
       })
       .join('');
   }
+
+  // -------- 3) handlers de botões (uso do estado calculado) --------
+  if (btnPagarAgora && !btnPagarAgora._bound) {
+    btnPagarAgora._bound = true;
+    btnPagarAgora.addEventListener('click', () => {
+      const prox = window.PAG_PROX_PENDENTE;
+      if (!prox) {
+        alert('Neste momento não tens pagamentos pendentes.');
+        return;
+      }
+      const mesLabel = labelMesAno(prox.ano, prox.mes);
+      const vencRaw = campos.vencimentoRaw(prox);
+      const vencLabel = vencRaw ? formatDataCurta(vencRaw) : '—';
+      alert(
+        `Pagamento de ${formatEuro(
+          prox.valor_em_falta
+        )} referente a ${mesLabel}.\n\n` +
+          `Vencimento: ${vencLabel}\n` +
+          `Referência: ${campos.referencia(prox) || '—'}\n` +
+          `IBAN: ${campos.iban(prox) || 'PT50 0000 0000 0000 0000 0000 0'}`
+      );
+      // aqui podes redirecionar para o fluxo de pagamento real
+    });
+  }
+
+  if (btnComprovativo && !btnComprovativo._bound) {
+    btnComprovativo._bound = true;
+    btnComprovativo.addEventListener('click', () => {
+      alert(
+        'Aqui ligas este botão a um endpoint que devolve o PDF do recibo/fatura.'
+      );
+    });
+  }
+
+  if (btnDownloadFatura && !btnDownloadFatura._bound) {
+    btnDownloadFatura._bound = true;
+    btnDownloadFatura.addEventListener('click', () => {
+      alert(
+        'Download da fatura/recibo mais recente.\n' +
+          'Liga este botão ao endpoint da API que devolve o PDF.'
+      );
+    });
+  }
 }
 
-// =========================
-  document.addEventListener("DOMContentLoaded", () => {
-    const btnLogout = document.getElementById("btnLogout");
-    if (!btnLogout) return;
+  // =========================
+document.addEventListener("DOMContentLoaded", () => {
+  const resumo = {
+    totalPago: "€640.00",
+    pendente: "€80.00",
+    proximoVencimento: "31 Jan 2025",
+  };
 
-    btnLogout.addEventListener("click", async () => {
-      // 1. terminar sessao no Supabase
-      await supabase.auth.signOut();
+  const pagamentoPendente = {
+    mes: "Janeiro 2025",
+    valor: "€80.00",
+    vencimento: "31 Jan 2025",
+    referencia: "REF-2025-01-001",
+  };
 
-      // 2. limpar caches e storage
-      sessionStorage.clear();
-      localStorage.clear();
+  const historico = [
+    {
+      id: 1,
+      mes: "Dezembro 2024",
+      valor: "€80.00",
+      dataPagamento: "28/12/2024",
+      estado: "Pago",
+      metodo: "Transferência",
+    },
+    {
+      id: 2,
+      mes: "Novembro 2024",
+      valor: "€80.00",
+      dataPagamento: "25/11/2024",
+      estado: "Pago",
+      metodo: "MB Way",
+    },
+    {
+      id: 3,
+      mes: "Outubro 2024",
+      valor: "€80.00",
+      dataPagamento: "30/10/2024",
+      estado: "Pago",
+      metodo: "Transferência",
+    },
+    {
+      id: 4,
+      mes: "Setembro 2024",
+      valor: "€80.00",
+      dataPagamento: "28/09/2024",
+      estado: "Pago",
+      metodo: "MB Way",
+    },
+    {
+      id: 5,
+      mes: "Agosto 2024",
+      valor: "€80.00",
+      dataPagamento: "25/08/2024",
+      estado: "Pago",
+      metodo: "Transferência",
+    },
+  ];
 
-      // 3. redirecionar
-      window.location.href = "./login.html";
+  // Elementos do DOM
+  const totalPagoEl = document.getElementById("pagTotalPago");
+  const pendenteEl = document.getElementById("pagValorPendente");
+  const proxVencEl = document.getElementById("pagProxVencimento");
+  const proxMesEl = document.getElementById("pagProxMes");
+  const alertEl = document.getElementById("pagAlert");
+  const dadosEl = document.getElementById("pagDados");
+  const btnPagarAgora = document.getElementById("btnPagarAgora");
+  const btnComprovativo = document.getElementById("btnComprovativo");
+  const tbody = document.querySelector("#tabPag tbody");
+
+  // ---- Resumo ----
+  if (totalPagoEl) totalPagoEl.textContent = resumo.totalPago;
+  if (pendenteEl) pendenteEl.textContent = resumo.pendente;
+  if (proxVencEl) proxVencEl.textContent = resumo.proximoVencimento;
+  if (proxMesEl) proxMesEl.textContent = pagamentoPendente.mes;
+
+  // ---- Alerta + Dados para pagamento ----
+  if (pagamentoPendente) {
+    if (alertEl) {
+      alertEl.style.display = "block";
+      alertEl.innerHTML = `
+        Tem um pagamento de <strong>${pagamentoPendente.valor}</strong> referente a
+        <strong>${pagamentoPendente.mes}</strong> com vencimento a
+        <strong>${pagamentoPendente.vencimento}</strong>.
+      `;
+    }
+
+    if (dadosEl) {
+      dadosEl.innerHTML = `
+        <div class="pag-dados-row">
+          <span class="pag-dados-label">Mês:</span>
+          <span class="pag-dados-value">${pagamentoPendente.mes}</span>
+        </div>
+        <div class="pag-dados-row">
+          <span class="pag-dados-label">Valor:</span>
+          <span class="pag-dados-value">${pagamentoPendente.valor}</span>
+        </div>
+        <div class="pag-dados-row">
+          <span class="pag-dados-label">Referência:</span>
+          <span class="pag-dados-value pag-dados-ref">${pagamentoPendente.referencia}</span>
+        </div>
+        <div class="pag-dados-row">
+          <span class="pag-dados-label">IBAN:</span>
+          <span class="pag-dados-value pag-dados-iban">PT50 0000 0000 0000 0000 0000 0</span>
+        </div>
+      `;
+    }
+
+    if (btnPagarAgora) btnPagarAgora.disabled = false;
+    if (btnComprovativo) btnComprovativo.disabled = false;
+  } else {
+    if (alertEl) alertEl.style.display = "none";
+    if (dadosEl) {
+      dadosEl.innerHTML =
+        '<p class="pag-empty">Não existem pagamentos pendentes neste momento. 🎉</p>';
+    }
+    if (btnPagarAgora) btnPagarAgora.disabled = true;
+    if (btnComprovativo) btnComprovativo.disabled = true;
+  }
+
+  // ---- Histórico ----
+  if (tbody) {
+    if (!historico.length) {
+      tbody.innerHTML =
+        "<tr><td colspan='6'>Ainda não existem pagamentos registados.</td></tr>";
+    } else {
+      tbody.innerHTML = historico
+        .map(
+          (p) => `
+        <tr>
+          <td><strong>${p.mes}</strong></td>
+          <td>${p.valor}</td>
+          <td>${p.dataPagamento}</td>
+          <td>${p.metodo}</td>
+          <td>
+            <span class="pag-badge pag-badge--pago">${p.estado}</span>
+          </td>
+          <td class="text-right">
+            <button class="button secondary" style="padding:4px 8px;font-size:0.8rem;">
+              ⬇
+            </button>
+          </td>
+        </tr>
+      `
+        )
+        .join("");
+    }
+  }
+
+  // Aqui podes ligar os botões a handlers reais,
+  // ex: abrir página de pagamento ou download de comprovativo
+  if (btnPagarAgora) {
+    btnPagarAgora.addEventListener("click", () => {
+      alert("Aqui chamavas o fluxo de pagamento (MB Way, referência, etc.)");
     });
-  });
+  }
+
+  if (btnComprovativo) {
+    btnComprovativo.addEventListener("click", () => {
+      alert("Aqui fazias o download do comprovativo.");
+    });
+  }
+});
 
 </script>
 
