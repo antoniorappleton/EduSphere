@@ -3,15 +3,21 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <link rel="stylesheet" href="./css/aluno.css" />
+
+  <!-- estilos do aluno -->
   <link rel="stylesheet" href="./css/base.css" />
+  <link rel="stylesheet" href="./css/aluno.css" />
   <link rel="stylesheet" href="./css/aluno-perfil.css" />
+
+  <!-- estilos do painel (cards, sidebar, grids) -->
+  <link rel="stylesheet" href="./css/explicador.css" />
 
   <title>EduSphere — Área do Aluno</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="./public/js/supabaseClient.js"></script>
   <script src="./public/js/auth.js"></script>
 </head>
+
 <body class="home">
 <header>
   <div class="header-inner">
@@ -26,124 +32,318 @@
 <div class="capa__overlay"></div>
 
 <main class="auth">
-  
-    <!-- HEADER DO ALUNO -->
-    <div class="aluno-header">
-      <div class="aluno-header-main">
-        <div class="avatar" id="alunoAvatar">??</div>
-        <div>
-          <h1 id="alunoNomeTitulo">Bem-vindo 👋</h1>
-          <p id="alunoInfo">A carregar…</p>
-        </div>
+
+  <!-- SHELL DO PAINEL DO ALUNO (layout igual ao explicador) -->
+  <section id="alunoShell" class="expl-shell">
+
+    <!-- MENU LATERAL -->
+    <nav class="expl-sidebar-nav aluno-sidebar-nav">
+      <button class="expl-nav-btn expl-nav-btn--active" data-target="inicio">
+        <span class="expl-nav-icon">
+          <!-- ícone “dashboard” -->
+          <svg class="expl-nav-svg" viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="4" y="4" width="7" height="7" rx="1.5" />
+            <rect x="13" y="4" width="7" height="7" rx="1.5" />
+            <rect x="4" y="13" width="7" height="7" rx="1.5" />
+            <rect x="13" y="13" width="7" height="7" rx="1.5" />
+          </svg>
+        </span>
+        <span class="expl-nav-label">Início</span>
+      </button>
+
+      <button class="expl-nav-btn" data-target="calendario">
+        <span class="expl-nav-icon">
+          <!-- ícone calendário -->
+          <svg class="expl-nav-svg" viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="4" y="5.5" width="16" height="14" rx="2" />
+            <path d="M4 10h16" />
+            <path d="M9 4v3" />
+            <path d="M15 4v3" />
+          </svg>
+        </span>
+        <span class="expl-nav-label">Calendário</span>
+      </button>
+
+      <button class="expl-nav-btn" data-target="pagamentos">
+        <span class="expl-nav-icon">
+          <!-- ícone € -->
+          <svg class="expl-nav-svg" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M7 8h7.5" />
+            <path d="M7 12h6" />
+            <path d="M10 4v16" />
+          </svg>
+        </span>
+        <span class="expl-nav-label">Pagamentos</span>
+      </button>
+
+      <button class="expl-nav-btn" data-target="exercicios">
+        <span class="expl-nav-icon">
+          <!-- ícone livro -->
+          <svg class="expl-nav-svg" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M5 4h11a2 2 0 0 1 2 2v13H7a2 2 0 0 1-2-2V4z" />
+            <path d="M7 4v13a2 2 0 0 0 2 2h11" />
+          </svg>
+        </span>
+        <span class="expl-nav-label">Exercícios</span>
+      </button>
+
+      <button class="expl-nav-btn" data-target="notificacoes">
+        <span class="expl-nav-icon">
+          <!-- ícone sino -->
+          <svg class="expl-nav-svg" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M18 15V11a6 6 0 0 0-12 0v4L4 17v1h16v-1z" />
+            <path d="M10 20a2 2 0 0 0 4 0" />
+          </svg>
+        </span>
+        <span class="expl-nav-label">Notificações</span>
+      </button>
+
+      <button class="expl-nav-btn" data-target="perfil">
+        <span class="expl-nav-icon">
+          <!-- ícone utilizador -->
+          <svg class="expl-nav-svg" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="9" r="3.2" />
+            <path d="M6.5 19.5c1.2-2.3 3-3.6 5.5-3.6s4.3 1.3 5.5 3.6" />
+          </svg>
+        </span>
+        <span class="expl-nav-label">Perfil</span>
+      </button>
+    </nav>
+
+    <!-- COLUNA PRINCIPAL -->
+    <div class="expl-main">
+      <div class="expl-body">
+
+        <!-- ========== VISTA: INÍCIO (DASHBOARD) ========== -->
+        <section class="expl-section aluno-dashboard" data-view-name="inicio">
+          <!-- HEADER DO ALUNO -->
+          <div class="aluno-header">
+            <div class="aluno-header-main">
+              <div class="avatar" id="alunoAvatar">??</div>
+              <div>
+                <h1 id="alunoNomeTitulo">Bem-vindo 👋</h1>
+                <p id="alunoInfo">A carregar…</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick stats (4 cards) -->
+          <div class="expl-kpi-grid aluno-kpi-grid">
+            <!-- Próxima aula -->
+            <article class="expl-card expl-kpi-card" data-goto="calendario">
+              <p class="expl-kpi-label">Próxima Aula</p>
+              <p class="expl-kpi-value" id="kpiProximaAula">—</p>
+              <p class="expl-section-sub" id="kpiProximaAulaDesc">
+                Vê os detalhes em “Próximas aulas”.
+              </p>
+            </article>
+
+            <!-- Exercícios pendentes -->
+            <article class="expl-card expl-kpi-card" data-goto="exercicios">
+              <p class="expl-kpi-label">Exercícios Pendentes</p>
+              <p class="expl-kpi-value expl-kpi-value--orange" id="kpiExerciciosPendentes">—</p>
+              <p class="expl-section-sub">Por completar</p>
+            </article>
+
+            <!-- Pagamento / resumo rápido (usa IDs existentes) -->
+            <article class="expl-card expl-kpi-card card--highlight" id="resumoRapido" data-goto="pagamentos">
+              <p class="expl-kpi-label">Pagamento</p>
+              <p class="expl-kpi-value" id="resumoValor">—</p>
+              <p class="expl-section-sub">
+                <span id="resumoMesLabel">Próxima mensalidade</span> ·
+                <span class="resumo-badge" id="resumoEstado">—</span>
+              </p>
+              <div class="resumo-actions" style="margin-top:10px;">
+                <button id="btnDownloadFatura" class="button secondary" disabled>
+                  📄 Download fatura
+                </button>
+              </div>
+              <p class="resumo-hint" id="resumoHint"></p>
+            </article>
+
+            <!-- Notificações -->
+            <article class="expl-card expl-kpi-card" data-goto="notificacoes">
+              <p class="expl-kpi-label">Notificações</p>
+              <p class="expl-kpi-value expl-kpi-value--red" id="kpiNotificacoes">—</p>
+              <p class="expl-section-sub">Não lidas</p>
+              <div class="notif-preferences" style="margin-top:12px;">
+                <label class="expl-section-sub" style="display:flex;align-items:center;gap:8px;">
+                  <input type="checkbox" id="chkEmailNotif" />
+                  Receber alertas por email
+                </label>
+              </div>
+            </article>
+          </div>
+
+          <!-- Próximas aulas + Exercícios pendentes -->
+          <div class="expl-grid-2" style="margin-top:2rem;">
+            <!-- Próximas Aulas (usa #agenda que o aluno.js preenche) -->
+            <article class="expl-card">
+              <div class="expl-section-header">
+                <h2 class="expl-subsection-title">Próximas Aulas</h2>
+                <span class="expl-section-link" data-goto="calendario">Ver todas →</span>
+              </div>
+              <div id="agenda" class="agenda-list">
+                <p>A carregar agenda…</p>
+              </div>
+            </article>
+
+            <!-- Exercícios Pendentes (usa #exlist) -->
+            <article class="expl-card">
+              <div class="expl-section-header">
+                <h2 class="expl-subsection-title">Exercícios Pendentes</h2>
+                <span class="expl-section-link" data-goto="exercicios">Ver todos →</span>
+              </div>
+              <ul id="exlist" class="ex-list">
+                <li>A carregar exercícios…</li>
+              </ul>
+            </article>
+          </div>
+
+          <!-- Notificações Recentes (estático por agora ou podes ligar a dados) -->
+          <article class="expl-card" style="margin-top:2rem;">
+            <div class="expl-section-header">
+              <h2 class="expl-subsection-title">Notificações Recentes</h2>
+              <span class="expl-section-link" data-goto="notificacoes">Ver todas →</span>
+            </div>
+            <div id="notifRecentes" class="notif-list">
+              <div class="notif-item notif-item--unread">
+                <span class="notif-dot"></span>
+                <div>
+                  <p class="notif-msg">Novo exercício disponível: Equações 2º Grau</p>
+                  <p class="notif-time">há 2 horas</p>
+                </div>
+              </div>
+              <div class="notif-item">
+                <span class="notif-dot"></span>
+                <div>
+                  <p class="notif-msg">Lembrete: Aula de Matemática amanhã às 14:00</p>
+                  <p class="notif-time">há 1 dia</p>
+                </div>
+              </div>
+            </div>
+          </article>
+        </section>
+
+        <!-- ========== VISTA: CALENDÁRIO ========== -->
+        <section class="expl-section" data-view-name="calendario" style="display:none;">
+          <article class="expl-card">
+            <div class="expl-section-header">
+              <h2 class="expl-section-title">Calendário de explicações</h2>
+              <p class="expl-section-sub">Visualiza as tuas sessões por mês.</p>
+            </div>
+
+            <div class="calendario-header">
+              <button id="calPrev" class="icon-button" type="button">◀</button>
+              <p id="calMesTitulo"></p>
+              <button id="calNext" class="icon-button" type="button">▶</button>
+            </div>
+
+            <ul id="calList" class="cal-list">
+              <li>A carregar calendário…</li>
+            </ul>
+
+            <p class="cal-hint">
+              Confirma a tua presença nas sessões futuras para ajudar o explicador a planear.
+            </p>
+          </article>
+        </section>
+
+        <!-- ========== VISTA: PAGAMENTOS ========== -->
+        <section class="expl-section" data-view-name="pagamentos" style="display:none;">
+          <article class="expl-card">
+            <h2 class="expl-section-title">Pagamentos</h2>
+            <p class="expl-section-sub">Histórico de mensalidades registadas.</p>
+
+            <div class="table-wrapper">
+              <table id="tabPag" class="table table--wide">
+                <thead>
+                  <tr>
+                    <th>Mês</th>
+                    <th>Previsto</th>
+                    <th>Pago</th>
+                    <th>Estado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td colspan="4">A carregar pagamentos…</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+
+        <!-- ========== VISTA: EXERCÍCIOS ========== -->
+        <section class="expl-section" data-view-name="exercicios" style="display:none;">
+          <article class="expl-card">
+            <h2 class="expl-section-title">Exercícios</h2>
+            <p class="expl-section-sub">
+              Ficheiros e links de exercícios enviados pelo explicador.
+            </p>
+            <ul id="exlist-detalhe" class="ex-list">
+              <!-- opcional: podes duplicar a lista aqui via JS se quiseres uma vista mais detalhada -->
+              <li>Usar a mesma fonte de dados do painel.</li>
+            </ul>
+          </article>
+        </section>
+
+        <!-- ========== VISTA: NOTIFICAÇÕES / MENSAGENS ========== -->
+        <section class="expl-section" data-view-name="notificacoes" style="display:none;">
+          <article class="expl-card">
+            <h2 class="expl-section-title">Mensagens</h2>
+            <p class="expl-section-sub">
+              Comunica diretamente com o teu explicador. As últimas mensagens funcionam como notificações.
+            </p>
+
+            <div id="msgList" class="msg-list">
+              <p>A carregar conversas…</p>
+            </div>
+
+            <form id="fMsg" class="msg-form">
+              <label for="msgInput">Enviar mensagem ao explicador</label>
+              <textarea
+                id="msgInput"
+                name="msg"
+                rows="3"
+                required
+                placeholder="Escreve aqui a tua mensagem…"
+              ></textarea>
+              <button type="submit" class="button">Enviar</button>
+              <p id="msgStatus" class="form__msg"></p>
+            </form>
+          </article>
+        </section>
+
+        <!-- ========== VISTA: PERFIL (PASSWORD) ========== -->
+        <section class="expl-section" data-view-name="perfil" style="display:none;">
+          <article class="expl-card">
+            <h2 class="expl-section-title">Perfil</h2>
+            <p class="expl-section-sub">
+              Atualiza a tua palavra-passe de acesso à plataforma.
+            </p>
+
+            <form id="fPwd">
+              <label for="pwd">Nova palavra-passe</label>
+              <input
+                type="password"
+                id="pwd"
+                name="pwd"
+                required
+                minlength="6"
+                autocomplete="new-password"
+              />
+              <button type="submit" class="button">Atualizar palavra-passe</button>
+              <p id="pwdMsg" class="form__msg"></p>
+            </form>
+          </article>
+        </section>
+
       </div>
     </div>
-
-    <!-- RESUMO RÁPIDO -->
-    <div class="card card--highlight" id="resumoRapido">
-      <h2>Resumo rápido</h2>
-      <div class="resumo-grid">
-        <div>
-          <p class="resumo-label">Próxima mensalidade</p>
-          <p class="resumo-value" id="resumoMesLabel">—</p>
-        </div>
-        <div>
-          <p class="resumo-label">Estado</p>
-          <p class="resumo-badge" id="resumoEstado">—</p>
-        </div>
-        <div>
-          <p class="resumo-label">Valor</p>
-          <p class="resumo-value" id="resumoValor">—</p>
-        </div>
-        <div class="resumo-actions">
-          <button id="btnDownloadFatura" class="button secondary" disabled>
-            📄 Download fatura
-          </button>
-        </div>
-      </div>
-      <p class="resumo-hint" id="resumoHint"></p>
-    </div>
-    <div class="aluno-grid">
-
-      <!-- Calendário interativo -->
-      <div class="card">
-        <h2>Calendário de explicações</h2>
-        <div class="calendario-header">
-          <button id="calPrev" class="icon-button" type="button">◀</button>
-          <p id="calMesTitulo"></p>
-          <button id="calNext" class="icon-button" type="button">▶</button>
-        </div>
-        <ul id="calList" class="cal-list">
-          <li>A carregar calendário…</li>
-        </ul>
-        <p class="cal-hint">
-          Confirma a tua presença nas sessões futuras para ajudar o explicador a planear.
-        </p>
-      </div>
-
-      <!-- Pagamentos -->
-      <div class="card">
-        <h2>Pagamentos</h2>
-        <div class="table-wrapper">
-          <table id="tabPag" class="table table--wide">
-            <thead>
-              <tr>
-                <th>Mês</th>
-                <th>Previsto</th>
-                <th>Pago</th>
-                <th>Estado</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr><td colspan="4">A carregar pagamentos…</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Exercícios -->
-      <div class="card">
-        <h2>Exercícios</h2>
-        <ul id="exlist">
-          <li>A carregar exercícios…</li>
-        </ul>
-      </div>
-
-          <!-- Mensagens com o explicador -->
-      <div class="card">
-        <h2>Mensagens</h2>
-        <div id="msgList" class="msg-list">
-          <p>A carregar conversas…</p>
-        </div>
-
-        <form id="fMsg" class="msg-form">
-          <label for="msgInput">Enviar mensagem ao explicador</label>
-          <textarea id="msgInput" name="msg" rows="3" required
-            placeholder="Escreve aqui a tua mensagem…"></textarea>
-          <button type="submit" class="button">Enviar</button>
-          <p id="msgStatus" class="form__msg"></p>
-        </form>
-      </div>
-
-
-      <!-- Alterar password -->
-      <div class="card">
-        <h2>Alterar palavra-passe</h2>
-        <form id="fPwd">
-          <label for="pwd">Nova palavra-passe</label>
-          <input
-            type="password"
-            id="pwd"
-            name="pwd"
-            required
-            minlength="6"
-            autocomplete="new-password"
-          />
-          <button type="submit" class="button">Atualizar palavra-passe</button>
-          <p id="pwdMsg" class="form__msg"></p>
-        </form>
-      </div>
-    </div>
+  </section>
 </main>
+
+
 
 <footer>© <span id="y"></span> EduSphere</footer>
 
@@ -153,6 +353,51 @@
   // =========================
   const yEl = document.getElementById('y');
   if (yEl) yEl.textContent = new Date().getFullYear();
+
+  // =========================
+  // NAVEGAÇÃO ENTRE VISTAS
+  // (menu lateral + "Ver todas →" nos cards)
+  // =========================
+  document.addEventListener('DOMContentLoaded', () => {
+    const navButtons = document.querySelectorAll('.expl-nav-btn');
+    const views = document.querySelectorAll('[data-view-name]');
+    const gotoEls = document.querySelectorAll('[data-goto]');
+
+    function showView(name) {
+      // mostra / esconde secções principais
+      views.forEach((v) => {
+        const active = v.dataset.viewName === name;
+        v.style.display = active ? '' : 'none';
+      });
+
+      // atualiza estado visual do menu lateral
+      navButtons.forEach((btn) => {
+        btn.classList.toggle(
+          'expl-nav-btn--active',
+          btn.dataset.target === name
+        );
+      });
+    }
+
+    // clicar nos botões do menu
+    navButtons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const target = btn.dataset.target;
+        if (target) showView(target);
+      });
+    });
+
+    // elementos com data-goto="vista" (cards, links "Ver todas →")
+    gotoEls.forEach((el) => {
+      el.addEventListener('click', () => {
+        const target = el.dataset.goto;
+        if (target) showView(target);
+      });
+    });
+
+    // vista inicial
+    showView('inicio');
+  });
 
   // =========================
   // ESTADO GLOBAL
@@ -215,7 +460,7 @@
     // 4) inicializar navegação do calendário (mês atual)
     initCalendarioEstadoInicial();
 
-    // 5) carregar cartões
+    // 5) carregar cartões / dados iniciais
     await Promise.all([
       carregarResumoPagamentos(),
       carregarProximasExplicacoes(),
@@ -258,6 +503,12 @@
 
     if (!sessoes.length) {
       container.innerHTML = '<p>Não tens próximas explicações agendadas.</p>';
+
+      // KPI de próxima aula
+      const kpi = document.getElementById('kpiProximaAula');
+      const kpiDesc = document.getElementById('kpiProximaAulaDesc');
+      if (kpi) kpi.textContent = '—';
+      if (kpiDesc) kpiDesc.textContent = 'Sem sessões agendadas.';
       return;
     }
 
@@ -287,6 +538,22 @@
     `;
 
     container.innerHTML = html;
+
+    // Atualizar KPI "Próxima Aula" com a primeira sessão
+    const primeira = sessoes[0];
+    const kpi = document.getElementById('kpiProximaAula');
+    const kpiDesc = document.getElementById('kpiProximaAulaDesc');
+    if (primeira && kpi && kpiDesc) {
+      const d = primeira.data ? new Date(primeira.data) : null;
+      const diaMes = d
+        ? d.toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' })
+        : '—';
+      const hora = primeira.hora_inicio
+        ? primeira.hora_inicio.slice(0, 5)
+        : '--:--';
+      kpi.textContent = diaMes;
+      kpiDesc.textContent = `Explicação às ${hora}`;
+    }
   }
 
   // =========================
@@ -417,7 +684,7 @@
   }
 
   // =========================
-  // PAGAMENTOS (tabela)
+  // PAGAMENTOS (tabela + KPI)
   // =========================
   async function carregarResumoPagamentos() {
     const tbody = document.querySelector('#tabPag tbody');
@@ -450,6 +717,14 @@
     if (!pag.length) {
       tbody.innerHTML =
         "<tr><td colspan='4'>Ainda não existem pagamentos registados.</td></tr>";
+
+      const resumoValor = document.getElementById('resumoValor');
+      const resumoMesLabel = document.getElementById('resumoMesLabel');
+      const resumoEstado = document.getElementById('resumoEstado');
+      if (resumoValor) resumoValor.textContent = '—';
+      if (resumoMesLabel) resumoMesLabel.textContent = 'Sem mensalidades';
+      if (resumoEstado) resumoEstado.textContent = 'N/A';
+
       return;
     }
 
@@ -470,9 +745,22 @@
         `;
       })
       .join('');
+
+    // Atualizar card "Pagamento" com o último mês
+    const ultimo = pag[pag.length - 1];
+    const resumoValor = document.getElementById('resumoValor');
+    const resumoMesLabel = document.getElementById('resumoMesLabel');
+    const resumoEstado = document.getElementById('resumoEstado');
+
+    if (ultimo && resumoValor && resumoMesLabel && resumoEstado) {
+      const previsto = Number(ultimo.valor_previsto) || 0;
+      const mes = String(ultimo.mes).padStart(2, '0');
+      resumoValor.textContent = `${previsto.toFixed(2)} €`;
+      resumoMesLabel.textContent = `Mensalidade ${mes}/${ultimo.ano}`;
+      resumoEstado.textContent = ultimo.estado || '—';
+    }
   }
 </script>
-
 
 <!-- Toast / feedback visual -->
 <div id="toast" class="toast" aria-live="polite" aria-atomic="true"></div>
