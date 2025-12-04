@@ -603,7 +603,7 @@
   display: flex !important;
   flex-direction: column;
   gap: 6px;
-  background: rgba(234, 235, 240, 0.98);      /* quase preto azulado */
+  background: rgba(248, 248, 250, 0.98);      /* quase preto azulado */
   color: rgba(211, 26, 26, 0.85);      /* texto branco suave */
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
   border-radius: 0;
@@ -699,5 +699,107 @@
 
 /* menos margem entre cartões */
 .expl-card {
+  margin-bottom: 16px;
+}
+/* ===== MODERN CALENDAR VIEW ===== */
+
+.cal-grid {
+  display: grid;
+  gap: 24px;
+}
+
+@media (min-width: 900px) {
+  .cal-grid {
+    grid-template-columns: 1fr 2fr;
+  }
+  .cal-col-span-2 {
+    grid-column: span 1 / span 1;
+  }
+}
+
+.calendar-ui {
+  border: 1px solid rgba(148,163,184,0.3);
+  border-radius: 12px;
+  padding: 12px;
+  background: white;
+  min-height: 320px; /* espaço reservado */
+}
+
+/* Lista moderna (cartões) */
+.cal-list-modern > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border: 1px solid rgba(148,163,184,0.3);
+  background: white;
+  border-radius: 12px;
+  padding: 14px 18px;
+  margin-bottom: 12px;
+  transition: box-shadow 0.25s;
+}
+
+.cal-list-modern > div:hover {
+  box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+}
+
+.cal-item-left {
+  display: flex;
+  gap: 12px;
+}
+
+.cal-icon-box {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: rgba(59,130,246,0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cal-item-title {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.cal-item-details {
+  margin-top: 6px;
+  color: var(--text-soft);
+  font-size: 0.85rem;
+}
+
+.cal-item-right {
+  text-align: right;
+  font-weight: 600;
+  color: #111827;
+}
+/* ================================
+   OVERRIDES VISTA CALENDÁRIO ALUNO
+   ================================ */
+
+/* A secção em si */
+.expl-section[data-view-name="calendario"] {
+  padding-top: 16px;
+  padding-bottom: 16px;
+}
+
+/* Garante que o wrapper do calendário não está com position/height marados
+   herdados do explicador.css */
+.expl-section[data-view-name="calendario"] .cal-view {
+  display: block;
+  position: relative;
+}
+
+/* Garante que os cards aparecem como caixas brancas, mesmo que
+   algum outro CSS tenha mudado .expl-card */
+.expl-section[data-view-name="calendario"] .expl-card {
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid rgba(148,163,184,0.35);
+  padding: 16px 18px;
+}
+
+/* Só para ter alguma margem em cima do primeiro título */
+.expl-section[data-view-name="calendario"] .cal-header-block {
   margin-bottom: 16px;
 }

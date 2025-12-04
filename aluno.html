@@ -218,28 +218,42 @@
         </section>
 
         <!-- ========== VISTA: CALENDÁRIO ========== -->
-        <section class="expl-section" data-view-name="calendario" style="display:none;">
-          <article class="expl-card">
-            <div class="expl-section-header">
-              <h2 class="expl-section-title">Calendário de explicações</h2>
-              <p class="expl-section-sub">Visualiza as tuas sessões por mês.</p>
+        <section class="expl-section" data-view-name="calendario">
+          <div class="cal-view">
+            <div class="cal-header-block">
+              <h2 class="expl-section-title">Calendário de Explicações</h2>
+              <p class="expl-section-sub">Consulta e gere as tuas aulas agendadas</p>
             </div>
 
-            <div class="calendario-header">
-              <button id="calPrev" class="icon-button" type="button">◀</button>
-              <p id="calMesTitulo"></p>
-              <button id="calNext" class="icon-button" type="button">▶</button>
+            <div class="cal-grid">
+              <article class="expl-card">
+                <div class="expl-section-header">
+                  <h3 class="expl-subsection-title">Calendário</h3>
+                </div>
+                <div id="cal-ui" class="calendar-ui"></div>
+              </article>
+
+              <article class="expl-card cal-col-span-2">
+                <div class="expl-section-header">
+                  <h3 class="expl-subsection-title">Próximas Aulas</h3>
+                </div>
+                <div id="calProximas" class="cal-list-modern">
+                  <p>A carregar…</p>
+                </div>
+              </article>
             </div>
 
-            <ul id="calList" class="cal-list">
-              <li>A carregar calendário…</li>
-            </ul>
-
-            <p class="cal-hint">
-              Confirma a tua presença nas sessões futuras para ajudar o explicador a planear.
-            </p>
-          </article>
+            <article class="expl-card" style="margin-top:2rem;">
+              <div class="expl-section-header">
+                <h3 class="expl-subsection-title">Histórico de Aulas</h3>
+              </div>
+              <div id="calHistorico" class="cal-list-modern">
+                <p>A carregar…</p>
+              </div>
+            </article>
+          </div>
         </section>
+
 
         <!-- ========== VISTA: PAGAMENTOS ========== -->
         <section class="expl-section" data-view-name="pagamentos" style="display:none;">
@@ -355,22 +369,26 @@
     const gotoEls = document.querySelectorAll('[data-goto]');
 
     function showView(name) {
-      // mostra / esconde secções principais
       views.forEach((v) => {
         const active = v.dataset.viewName === name;
         v.style.display = active ? '' : 'none';
       });
 
-      // atualiza estado visual do menu lateral
       navButtons.forEach((btn) => {
         btn.classList.toggle(
           'expl-nav-btn--active',
           btn.dataset.target === name
         );
       });
+
+      console.log('Vista activa:', name);
+
+      // sempre que entrares no calendário, recarrega os dados
+      if (name === 'calendario') {
+        carregarCalendarioNovo();
+      }
     }
 
-    // clicar nos botões do menu
     navButtons.forEach((btn) => {
       btn.addEventListener('click', () => {
         const target = btn.dataset.target;
@@ -378,7 +396,6 @@
       });
     });
 
-    // elementos com data-goto="vista" (cards, links "Ver todas →")
     gotoEls.forEach((el) => {
       el.addEventListener('click', () => {
         const target = el.dataset.goto;
@@ -394,8 +411,117 @@
   // ESTADO GLOBAL
   // =========================
   window.ALUNO = null;
-  let CAL_ANO_ATUAL;
-  let CAL_MES_ATUAL;
+
+  // ========= CALENDÁRIO (Próximas + Histórico) =========
+  async function carregarCalendarioNovo() {
+    const proxContainer = document.getElementById("calProximas");
+    const histContainer = document.getElementById("calHistorico");
+
+    if (!proxContainer || !histContainer) return;
+
+    if (!window.ALUNO || !ALUNO.id_aluno) {
+      proxContainer.innerHTML = "<p>Erro ao identificar o aluno.</p>";
+      histContainer.innerHTML = "<p>Erro ao identificar o aluno.</p>";
+      return;
+    }
+
+    const hoje = new Date().toISOString().slice(0, 10);
+
+    const { data, error } = await supabase
+      .from("sessoes_explicacao")
+      .select(`
+        id_sessao,
+        data,
+        hora_inicio,
+        duracao_min,
+        estado,
+        explicador:explicadores(nome)
+      `)
+      .eq("id_aluno", ALUNO.id_aluno)
+      .order("data", { ascending: true })
+      .order("hora_inicio", { ascending: true });
+
+    if (error) {
+      console.error("Erro ao carregar aulas", error);
+      proxContainer.innerHTML = "<p>Erro ao carregar aulas.</p>";
+      histContainer.innerHTML = "<p>Erro ao carregar aulas.</p>";
+      return;
+    }
+
+    const sessoes = data || [];
+    const futuras = sessoes.filter((s) => s.data >= hoje);
+    const passadas = sessoes.filter((s) => s.data < hoje);
+
+    proxContainer.innerHTML = futuras.length
+      ? futuras.map((a) => renderCalendarioItem(a)).join("")
+      : "<p>Sem aulas futuras.</p>";
+
+    histContainer.innerHTML = passadas.length
+      ? passadas.map((a) => renderCalendarioItem(a)).join("")
+      : "<p>Sem histórico de aulas.</p>";
+  }
+
+function renderCalendarioItem(a) {
+  const dataFmt = a.data
+    ? new Date(a.data).toLocaleDateString("pt-PT", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      })
+    : "—";
+
+  const hora = a.hora_inicio ? a.hora_inicio.slice(0, 5) : "--:--";
+  const dur = a.duracao_min ? `${a.duracao_min} min` : "";
+  const expl = a.explicador?.nome || "";
+
+  return `
+    <div>
+      <div class="cal-item-left">
+        <div class="cal-icon-box">📅</div>
+        <div>
+          <p class="cal-item-title">${dataFmt}</p>
+          <p class="cal-item-details">
+            ${hora}${dur ? " · " + dur : ""}${expl ? " · " + expl : ""}
+          </p>
+        </div>
+      </div>
+      <div class="cal-item-right">
+        ${a.estado || ""}
+      </div>
+    </div>
+  `;
+}
+
+
+  function renderCalendarioItem(a) {
+    const dataFmt = a.data
+      ? new Date(a.data).toLocaleDateString("pt-PT", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        })
+      : "—";
+
+    const hora = a.hora_inicio ? a.hora_inicio.slice(0, 5) : "--:--";
+    const dur = a.duracao_min ? `${a.duracao_min} min` : "";
+
+    return `
+      <div>
+        <div class="cal-item-left">
+          <div class="cal-icon-box">📅</div>
+          <div>
+            <p class="cal-item-title">${dataFmt}</p>
+            <p class="cal-item-details">
+              ${hora}${dur ? " · " + dur : ""} 
+            </p>
+          </div>
+        </div>
+        <div class="cal-item-right">
+          ${a.estado || ""}
+        </div>
+      </div>
+    `;
+  }
 
   // =========================
   // BOOTSTRAP DA PÁGINA
@@ -448,19 +574,16 @@
     if (avatarEl) avatarEl.textContent = iniciais.toUpperCase();
     if (tituloEl) tituloEl.textContent = nomeCompleto || 'Bem-vindo 👋';
 
-    // 4) inicializar navegação do calendário (mês atual)
-    initCalendarioEstadoInicial();
-
-    // 5) carregar cartões / dados iniciais
+    // 4) carregar cartões / dados iniciais
     await Promise.all([
       carregarResumoPagamentos(),
       carregarProximasExplicacoes(),
-      carregarCalendarioExplicacoes(),
+      carregarCalendarioNovo(),
     ]);
   })();
 
   // =========================
-  // PRÓXIMAS EXPLICAÇÕES
+  // PRÓXIMAS EXPLICAÇÕES (dashboard)
   // =========================
   async function carregarProximasExplicacoes() {
     const container = document.getElementById('agenda');
@@ -479,7 +602,7 @@
       .from('sessoes_explicacao')
       .select('id_sessao, data, hora_inicio, duracao_min, estado, observacoes')
       .eq('id_aluno', ALUNO.id_aluno)
-      .gte('data', hojeStr)               // só hoje em diante
+      .gte('data', hojeStr)
       .order('data', { ascending: true })
       .order('hora_inicio', { ascending: true })
       .limit(5);
@@ -495,7 +618,6 @@
     if (!sessoes.length) {
       container.innerHTML = '<p>Não tens próximas explicações agendadas.</p>';
 
-      // KPI de próxima aula
       const kpi = document.getElementById('kpiProximaAula');
       const kpiDesc = document.getElementById('kpiProximaAulaDesc');
       if (kpi) kpi.textContent = '—';
@@ -530,7 +652,7 @@
 
     container.innerHTML = html;
 
-    // Atualizar KPI "Próxima Aula" com a primeira sessão
+    // KPI "Próxima Aula" com a primeira sessão
     const primeira = sessoes[0];
     const kpi = document.getElementById('kpiProximaAula');
     const kpiDesc = document.getElementById('kpiProximaAulaDesc');
@@ -545,133 +667,6 @@
       kpi.textContent = diaMes;
       kpiDesc.textContent = `Explicação às ${hora}`;
     }
-  }
-
-  // =========================
-  // CALENDÁRIO MENSAL
-  // =========================
-  function initCalendarioEstadoInicial() {
-    const hoje = new Date();
-    CAL_ANO_ATUAL = hoje.getFullYear();
-    CAL_MES_ATUAL = hoje.getMonth() + 1;
-
-    const btnPrev = document.getElementById('calPrev');
-    const btnNext = document.getElementById('calNext');
-
-    btnPrev?.addEventListener('click', () => {
-      CAL_MES_ATUAL--;
-      if (CAL_MES_ATUAL === 0) {
-        CAL_MES_ATUAL = 12;
-        CAL_ANO_ATUAL--;
-      }
-      carregarCalendarioExplicacoes();
-    });
-
-    btnNext?.addEventListener('click', () => {
-      CAL_MES_ATUAL++;
-      if (CAL_MES_ATUAL === 13) {
-        CAL_MES_ATUAL = 1;
-        CAL_ANO_ATUAL++;
-      }
-      carregarCalendarioExplicacoes();
-    });
-  }
-
-  async function carregarCalendarioExplicacoes() {
-    const ul = document.getElementById('calList');
-    const titulo = document.getElementById('calMesTitulo');
-    if (!ul || !titulo) return;
-    if (!window.ALUNO || !ALUNO.id_aluno) return;
-
-    const nomesMeses = [
-      'janeiro',
-      'fevereiro',
-      'março',
-      'abril',
-      'maio',
-      'junho',
-      'julho',
-      'agosto',
-      'setembro',
-      'outubro',
-      'novembro',
-      'dezembro',
-    ];
-
-    titulo.textContent =
-      (nomesMeses[CAL_MES_ATUAL - 1] || CAL_MES_ATUAL) +
-      ' de ' +
-      CAL_ANO_ATUAL;
-
-    ul.innerHTML = '<li>A carregar calendário…</li>';
-
-    const inicio = new Date(CAL_ANO_ATUAL, CAL_MES_ATUAL - 1, 1)
-      .toISOString()
-      .slice(0, 10);
-    const fim = new Date(CAL_ANO_ATUAL, CAL_MES_ATUAL, 0)
-      .toISOString()
-      .slice(0, 10);
-
-    const { data, error } = await supabase
-      .from('sessoes_explicacao')
-      .select('id_sessao, data, hora_inicio, duracao_min, estado')
-      .eq('id_aluno', ALUNO.id_aluno)
-      .gte('data', inicio)
-      .lte('data', fim)
-      .order('data', { ascending: true })
-      .order('hora_inicio', { ascending: true });
-
-    if (error) {
-      console.error('Erro ao carregar calendário', error);
-      ul.innerHTML = '<li>Erro ao carregar sessões.</li>';
-      return;
-    }
-
-    const sessoes = data || [];
-
-    if (!sessoes.length) {
-      ul.innerHTML = '<li>Sem explicações neste mês.</li>';
-      return;
-    }
-
-    ul.innerHTML = '';
-
-    // agrupar por data
-    const grupos = {};
-    sessoes.forEach((s) => {
-      if (!s.data) return;
-      if (!grupos[s.data]) grupos[s.data] = [];
-      grupos[s.data].push(s);
-    });
-
-    Object.keys(grupos)
-      .sort()
-      .forEach((dataStr) => {
-        const d = new Date(dataStr);
-        const dataLabel = d.toLocaleDateString('pt-PT', {
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric',
-        });
-
-        const li = document.createElement('li');
-        li.innerHTML =
-          `<strong>${dataLabel}</strong>` +
-          '<ul>' +
-          grupos[dataStr]
-            .map((s) => {
-              const hora = s.hora_inicio
-                ? s.hora_inicio.slice(0, 5)
-                : '--:--';
-              const dur =
-                s.duracao_min != null ? `${s.duracao_min} min` : '';
-              const estado = s.estado || '';
-              return `<li>${hora}${dur ? ' · ' + dur : ''} — ${estado}</li>`;
-            })
-            .join('') +
-          '</ul>';
-        ul.appendChild(li);
-      });
   }
 
   // =========================
@@ -753,9 +748,9 @@
   }
 </script>
 
+
 <!-- Toast / feedback visual -->
 <div id="toast" class="toast" aria-live="polite" aria-atomic="true"></div>
 <!-- script com a lógica de agenda/pagamentos/exercícios/password -->
-<script src="./public/js/pages/aluno.js"></script>
 </body>
 </html>
