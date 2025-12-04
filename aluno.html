@@ -26,7 +26,7 @@
       <span>EduSphere</span>
     </a>
     <!-- usa id="logout" para o aluno.js apanhar -->
-    <button id="logout" class="button" style="margin-left:auto">Sair</button>
+    <button id="btnLogout" class="button" style="margin-left:auto">Sair</button>
   </div>
 </header>
 <div class="capa__overlay"></div>
@@ -353,6 +353,23 @@
 <footer>© <span id="y"></span> EduSphere</footer>
 
 <script>
+  // força o browser a não usar cache para esta página
+      if (window.history && window.history.replaceState) {
+        window.history.replaceState(null, '', window.location.href);
+      }
+
+      window.addEventListener("pageshow", (event) => {
+        if (event.persisted) {
+          window.location.reload();
+        }
+      });
+
+  // Bloquear voltar atrás após logout
+      window.history.pushState(null, "", window.location.href);
+      window.addEventListener("popstate", function () {
+        window.history.pushState(null, "", window.location.href);
+      });
+
   // =========================
   // UTIL: ano no footer
   // =========================
@@ -841,6 +858,23 @@ function renderCalendarioItem(a) {
       resumoEstado.textContent = ultimo.estado || '—';
     }
   }
+  document.addEventListener("DOMContentLoaded", () => {
+    const btnLogout = document.getElementById("btnLogout");
+    if (!btnLogout) return;
+
+    btnLogout.addEventListener("click", async () => {
+      // 1. terminar sessao no Supabase
+      await supabase.auth.signOut();
+
+      // 2. limpar caches e storage
+      sessionStorage.clear();
+      localStorage.clear();
+
+      // 3. redirecionar
+      window.location.href = "./login.html";
+    });
+  });
+
 </script>
 
 
