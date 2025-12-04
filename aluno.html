@@ -813,7 +813,8 @@ async function carregarResumoPagamentos() {
   // ------- pedido ao backend (view v_pagamentos_detalhe) -------
   const { data, error } = await supabase
     .from('v_pagamentos_detalhe')
-    .select('*') // não assumimos nomes de colunas aqui
+    .select('*')
+    .eq('id_aluno', ALUNO.id_aluno)        // 👉 filtro pelo aluno
     .order('ano', { ascending: true })
     .order('mes', { ascending: true });
 
@@ -859,7 +860,6 @@ async function carregarResumoPagamentos() {
     });
   }
 
-  // tentar adaptar a vários esquemas de backend
   const campos = {
     valorPrevisto(p) {
       return (
@@ -937,7 +937,7 @@ async function carregarResumoPagamentos() {
     });
   }
 
-  // ------- se não há pagamentos na view -------
+  // ------- se não há pagamentos -------
   if (!pag.length) {
     tbody.innerHTML =
       "<tr><td colspan='6'>Ainda não existem pagamentos registados.</td></tr>";
@@ -973,13 +973,12 @@ async function carregarResumoPagamentos() {
     return;
   }
 
-  // -------- 1) cálculos de resumo --------
+  // -------- 1) resumo --------
   const totalPago = pag.reduce(
     (acc, p) => acc + campos.valorPago(p),
     0
   );
 
-  // consideramos "pendente" tudo o que não está marcado como "pago"
   const pendentes = pag.filter((p) => campos.estado(p) !== 'pago');
 
   const totalPendente = pendentes.reduce(
@@ -987,7 +986,6 @@ async function carregarResumoPagamentos() {
     0
   );
 
-  // próximo vencimento: primeiro pendente (por ano/mes)
   let prox = null;
   if (pendentes.length) {
     prox = [...pendentes].sort((a, b) => {
@@ -1011,7 +1009,6 @@ async function carregarResumoPagamentos() {
     if (proxVencEl) proxVencEl.textContent = vencLabel;
     if (proxMesEl) proxMesEl.textContent = mesLabel;
 
-    // alerta
     if (alertEl) {
       alertEl.style.display = 'block';
       alertEl.innerHTML = `
@@ -1023,7 +1020,6 @@ async function carregarResumoPagamentos() {
       `;
     }
 
-    // dados para pagamento
     if (dadosEl) {
       dadosEl.innerHTML = `
         <div class="pag-dados-row">
@@ -1060,10 +1056,8 @@ async function carregarResumoPagamentos() {
       resumoHintEl.textContent = `Vence a ${vencLabel}.`;
     if (btnDownloadFatura) btnDownloadFatura.disabled = false;
 
-    // guardar dados do próximo pendente
     window.PAG_PROX_PENDENTE = { ...prox, valor_em_falta: valorEmFalta };
   } else {
-    // não há pendentes
     if (proxVencEl) proxVencEl.textContent = '—';
     if (proxMesEl) proxMesEl.textContent = 'Sem mensalidades pendentes';
     if (alertEl) {
@@ -1076,7 +1070,6 @@ async function carregarResumoPagamentos() {
         '<p class="pag-empty">Sem pagamentos pendentes neste momento.</p>';
     }
     btnPagarAgora && (btnPagarAgora.disabled = true);
-    // ainda podes querer descarregar faturas antigas
     btnComprovativo && (btnComprovativo.disabled = false);
 
     // cartão rápido
@@ -1135,7 +1128,7 @@ async function carregarResumoPagamentos() {
       .join('');
   }
 
-  // -------- 3) handlers de botões (uso do estado calculado) --------
+  // -------- 3) handlers dos botões --------
   if (btnPagarAgora && !btnPagarAgora._bound) {
     btnPagarAgora._bound = true;
     btnPagarAgora.addEventListener('click', () => {
@@ -1155,7 +1148,6 @@ async function carregarResumoPagamentos() {
           `Referência: ${campos.referencia(prox) || '—'}\n` +
           `IBAN: ${campos.iban(prox) || 'PT50 0000 0000 0000 0000 0000 0'}`
       );
-      // aqui podes redirecionar para o fluxo de pagamento real
     });
   }
 
