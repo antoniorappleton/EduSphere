@@ -412,54 +412,119 @@
   // =========================
   window.ALUNO = null;
 
-  // ========= CALENDÁRIO (Próximas + Histórico) =========
-  async function carregarCalendarioNovo() {
-    const proxContainer = document.getElementById("calProximas");
-    const histContainer = document.getElementById("calHistorico");
+// ========= CALENDÁRIO (Próximas + Histórico + grelha visual) =========
+async function carregarCalendarioNovo() {
+  const proxContainer = document.getElementById("calProximas");
+  const histContainer = document.getElementById("calHistorico");
+  const calUi = document.getElementById("cal-ui");
 
-    if (!proxContainer || !histContainer) return;
+  if (!proxContainer || !histContainer || !calUi) return;
 
-    if (!window.ALUNO || !ALUNO.id_aluno) {
-      proxContainer.innerHTML = "<p>Erro ao identificar o aluno.</p>";
-      histContainer.innerHTML = "<p>Erro ao identificar o aluno.</p>";
-      return;
-    }
-
-    const hoje = new Date().toISOString().slice(0, 10);
-
-    const { data, error } = await supabase
-      .from("sessoes_explicacao")
-      .select(`
-        id_sessao,
-        data,
-        hora_inicio,
-        duracao_min,
-        estado,
-        explicador:explicadores(nome)
-      `)
-      .eq("id_aluno", ALUNO.id_aluno)
-      .order("data", { ascending: true })
-      .order("hora_inicio", { ascending: true });
-
-    if (error) {
-      console.error("Erro ao carregar aulas", error);
-      proxContainer.innerHTML = "<p>Erro ao carregar aulas.</p>";
-      histContainer.innerHTML = "<p>Erro ao carregar aulas.</p>";
-      return;
-    }
-
-    const sessoes = data || [];
-    const futuras = sessoes.filter((s) => s.data >= hoje);
-    const passadas = sessoes.filter((s) => s.data < hoje);
-
-    proxContainer.innerHTML = futuras.length
-      ? futuras.map((a) => renderCalendarioItem(a)).join("")
-      : "<p>Sem aulas futuras.</p>";
-
-    histContainer.innerHTML = passadas.length
-      ? passadas.map((a) => renderCalendarioItem(a)).join("")
-      : "<p>Sem histórico de aulas.</p>";
+  if (!window.ALUNO || !ALUNO.id_aluno) {
+    proxContainer.innerHTML = "<p>Erro ao identificar o aluno.</p>";
+    histContainer.innerHTML = "<p>Erro ao identificar o aluno.</p>";
+    calUi.innerHTML = "<p>Erro ao identificar o aluno.</p>";
+    return;
   }
+
+  const hoje = new Date().toISOString().slice(0, 10);
+
+  const { data, error } = await supabase
+    .from("sessoes_explicacao")
+    .select(`
+      id_sessao,
+      data,
+      hora_inicio,
+      duracao_min,
+      estado,
+      explicador:explicadores(nome)
+    `)
+    .eq("id_aluno", ALUNO.id_aluno)
+    .order("data", { ascending: true })
+    .order("hora_inicio", { ascending: true });
+
+  if (error) {
+    console.error("Erro ao carregar aulas", error);
+    proxContainer.innerHTML = "<p>Erro ao carregar aulas.</p>";
+    histContainer.innerHTML = "<p>Erro ao carregar aulas.</p>";
+    calUi.innerHTML = "<p>Erro ao carregar aulas.</p>";
+    return;
+  }
+
+  const sessoes = data || [];
+  const futuras = sessoes.filter((s) => s.data >= hoje);
+  const passadas = sessoes.filter((s) => s.data < hoje);
+
+  proxContainer.innerHTML = futuras.length
+    ? futuras.map((a) => renderCalendarioItem(a)).join("")
+    : "<p>Sem aulas futuras.</p>";
+
+  histContainer.innerHTML = passadas.length
+    ? passadas.map((a) => renderCalendarioItem(a)).join("")
+    : "<p>Sem histórico de aulas.</p>";
+
+  // desenhar o calendário visual com TODAS as sessões
+  renderCalendarioVisual(sessoes);
+}
+
+function renderCalendarioVisual(sessoes) {
+  const cal = document.getElementById("cal-ui");
+  if (!cal) return;
+
+  const hoje = new Date();
+  const ano = hoje.getFullYear();
+  const mesIndex = hoje.getMonth(); // 0 = janeiro
+
+  // Mapa dia -> sessões nesse dia (apenas mês actual)
+  const sessoesPorDia = {};
+  sessoes.forEach((s) => {
+    if (!s.data) return;
+    const d = new Date(s.data);
+    if (d.getFullYear() !== ano || d.getMonth() !== mesIndex) return;
+    const dia = d.getDate();
+    if (!sessoesPorDia[dia]) sessoesPorDia[dia] = [];
+    sessoesPorDia[dia].push(s);
+  });
+
+  const firstDay = new Date(ano, mesIndex, 1);
+  const lastDay = new Date(ano, mesIndex + 1, 0);
+  const diasNoMes = lastDay.getDate();
+
+  // Em JS: 0=Dom,1=Seg,... Queremos calendário a começar em Seg
+  const offsetSegunda = (firstDay.getDay() + 6) % 7;
+
+  const labelMes = firstDay.toLocaleDateString("pt-PT", {
+    month: "long",
+    year: "numeric",
+  });
+
+  let html = `
+    <div class="cal-month-header">${labelMes}</div>
+    <div class="cal-weekdays">
+      <span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span><span>Dom</span>
+    </div>
+    <div class="cal-month-grid">
+  `;
+
+  // espaços em branco antes do primeiro dia
+  for (let i = 0; i < offsetSegunda; i++) {
+    html += `<div class="cal-day cal-day--empty"></div>`;
+  }
+
+  for (let dia = 1; dia <= diasNoMes; dia++) {
+    const temSessao = !!sessoesPorDia[dia];
+    html += `
+      <div class="cal-day ${temSessao ? "cal-day--has" : ""}">
+        <span class="cal-day-number">${dia}</span>
+        ${temSessao ? '<span class="cal-day-dot"></span>' : ""}
+      </div>
+    `;
+  }
+
+  html += `</div>`; // fecha .cal-month-grid
+
+  cal.innerHTML = html;
+}
 
 function renderCalendarioItem(a) {
   const dataFmt = a.data
@@ -492,8 +557,38 @@ function renderCalendarioItem(a) {
   `;
 }
 
+function renderCalendarioItem(a) {
+  const dataFmt = a.data
+    ? new Date(a.data).toLocaleDateString("pt-PT", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      })
+    : "—";
 
-  function renderCalendarioItem(a) {
+  const hora = a.hora_inicio ? a.hora_inicio.slice(0, 5) : "--:--";
+  const dur = a.duracao_min ? `${a.duracao_min} min` : "";
+  const expl = a.explicador?.nome || "";
+
+  return `
+    <div>
+      <div class="cal-item-left">
+        <div class="cal-icon-box">📅</div>
+        <div>
+          <p class="cal-item-title">${dataFmt}</p>
+          <p class="cal-item-details">
+            ${hora}${dur ? " · " + dur : ""}${expl ? " · " + expl : ""}
+          </p>
+        </div>
+      </div>
+      <div class="cal-item-right">
+        ${a.estado || ""}
+      </div>
+    </div>
+  `;
+}
+
+function renderCalendarioItem(a) {
     const dataFmt = a.data
       ? new Date(a.data).toLocaleDateString("pt-PT", {
           day: "2-digit",

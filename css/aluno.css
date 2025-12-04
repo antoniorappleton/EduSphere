@@ -803,3 +803,62 @@
 .expl-section[data-view-name="calendario"] .cal-header-block {
   margin-bottom: 16px;
 }
+.cal-month-header {
+  text-align: center;
+  font-weight: 600;
+  text-transform: capitalize;
+  margin-bottom: 8px;
+}
+
+.cal-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  font-size: 0.8rem;
+  text-align: center;
+  color: var(--text-soft);
+  margin-bottom: 4px;
+}
+
+.cal-weekdays span {
+  padding: 4px 0;
+}
+
+.cal-month-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.cal-day {
+  min-height: 38px;
+  border-radius: 8px;
+  padding: 4px;
+  font-size: 0.85rem;
+  text-align: right;
+  position: relative;
+  background: #f9fafb;
+}
+
+.cal-day--empty {
+  background: transparent;
+}
+
+.cal-day-number {
+  display: block;
+}
+
+.cal-day-dot {
+  position: absolute;
+  left: 50%;
+  bottom: 4px;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: #2563eb; /* azulinho para marcar sessões */
+  transform: translateX(-50%);
+}
+
+.cal-day--has {
+  background: #eff6ff;
+  font-weight: 600;
+}
