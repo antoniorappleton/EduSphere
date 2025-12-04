@@ -32,10 +32,8 @@
 <div class="capa__overlay"></div>
 
 <main class="auth">
-
-  <!-- SHELL DO PAINEL DO ALUNO (layout igual ao explicador) -->
-  <section id="alunoShell" class="expl-shell">
-
+  <section class="expl-shell aluno-shell">
+    
     <!-- MENU LATERAL -->
     <nav class="expl-sidebar-nav aluno-sidebar-nav">
       <button class="expl-nav-btn expl-nav-btn--active" data-target="inicio">
@@ -53,7 +51,6 @@
 
       <button class="expl-nav-btn" data-target="calendario">
         <span class="expl-nav-icon">
-          <!-- ícone calendário -->
           <svg class="expl-nav-svg" viewBox="0 0 24 24" aria-hidden="true">
             <rect x="4" y="5.5" width="16" height="14" rx="2" />
             <path d="M4 10h16" />
@@ -66,7 +63,6 @@
 
       <button class="expl-nav-btn" data-target="pagamentos">
         <span class="expl-nav-icon">
-          <!-- ícone € -->
           <svg class="expl-nav-svg" viewBox="0 0 24 24" aria-hidden="true">
             <path d="M7 8h7.5" />
             <path d="M7 12h6" />
@@ -78,7 +74,6 @@
 
       <button class="expl-nav-btn" data-target="exercicios">
         <span class="expl-nav-icon">
-          <!-- ícone livro -->
           <svg class="expl-nav-svg" viewBox="0 0 24 24" aria-hidden="true">
             <path d="M5 4h11a2 2 0 0 1 2 2v13H7a2 2 0 0 1-2-2V4z" />
             <path d="M7 4v13a2 2 0 0 0 2 2h11" />
@@ -89,7 +84,6 @@
 
       <button class="expl-nav-btn" data-target="notificacoes">
         <span class="expl-nav-icon">
-          <!-- ícone sino -->
           <svg class="expl-nav-svg" viewBox="0 0 24 24" aria-hidden="true">
             <path d="M18 15V11a6 6 0 0 0-12 0v4L4 17v1h16v-1z" />
             <path d="M10 20a2 2 0 0 0 4 0" />
@@ -100,7 +94,6 @@
 
       <button class="expl-nav-btn" data-target="perfil">
         <span class="expl-nav-icon">
-          <!-- ícone utilizador -->
           <svg class="expl-nav-svg" viewBox="0 0 24 24" aria-hidden="true">
             <circle cx="12" cy="9" r="3.2" />
             <path d="M6.5 19.5c1.2-2.3 3-3.6 5.5-3.6s4.3 1.3 5.5 3.6" />
@@ -110,11 +103,10 @@
       </button>
     </nav>
 
-    <!-- COLUNA PRINCIPAL -->
+    <!-- CONTEÚDO PRINCIPAL -->
     <div class="expl-main">
       <div class="expl-body">
-
-        <!-- ========== VISTA: INÍCIO (DASHBOARD) ========== -->
+                <!-- ========== VISTA: INÍCIO (DASHBOARD) ========== -->
         <section class="expl-section aluno-dashboard" data-view-name="inicio">
           <!-- HEADER DO ALUNO -->
           <div class="aluno-header">
@@ -337,12 +329,11 @@
             </form>
           </article>
         </section>
-
       </div>
     </div>
+
   </section>
 </main>
-
 
 
 <footer>© <span id="y"></span> EduSphere</footer>

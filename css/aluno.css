@@ -1,72 +1,19 @@
 /* ================================
-   ALUNO.CSS — área do aluno
+   ALUNO.CSS — Área do Aluno
    ================================ */
 
-   /* Espaçamento global confortável */
+/* --------------------------------
+   1) DASHBOARD / HEADER / KPIs
+   -------------------------------- */
+
+/* Margem genérica de cards simples (caso uses .card noutros sítios) */
 .card {
   margin-bottom: 24px;
 }
 
-/* Alinhar o header do aluno com estilo premium */
+/* Header do aluno (avatar + nome) */
 .aluno-header {
-  margin: 10px 0 26px;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-
-#alunoInfo { margin-bottom: 12px; font-size: 1rem; }
-
-/* RESUMO RÁPIDO */
-.resumo-grid {
-  display: grid;
-  grid-template-columns: repeat(4,1fr);
-  gap: 16px;
-}
-@media (max-width: 800px) {
-  .resumo-grid { grid-template-columns: repeat(2,1fr); }
-}
-
-/* BADGES */
-.resumo-badge {
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-weight: 600;
-}
-
-.resumo-badge.Pago { background: #dcfce7; color: #166534; }
-.resumo-badge.Parcial { background: #fef9c3; color: #854d0e; }
-.resumo-badge.EmAtraso { background: #fee2e2; color: #991b1b; }
-
-/* AGENDA */
-#agenda p { color: var(--text-soft); }
-
-/* CALENDÁRIO */
-.calendario-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.cal-list {
-  list-style: none;
-  padding: 0;
-  margin-top: 16px;
-}
-
-/* MENSAGENS */
-.msg-list { padding: 10px 0; }
-.msg-form textarea {
-  resize: vertical;
-}
-
-/* TABLE PAGAMENTOS */
-#tabPag td {
-  font-size: 0.95rem;
-}
-/* HEADER DO ALUNO (nome + avatar) */
-.aluno-header {
-  margin-bottom: 18px;
+  margin: 10px 0 12px;
 }
 
 .aluno-header-main {
@@ -75,31 +22,24 @@
   gap: 14px;
 }
 
-/* Reaproveita .avatar de aluno-perfil.css, já incluído no HTML */
 .aluno-header-main h1 {
   margin: 0;
   font-size: 1.35rem;
+  font-weight: 600;
 }
 
-.aluno-header-main p {
+.aluno-header-main p,
+#alunoInfo {
   margin: 4px 0 0;
-  color: var(--text-soft);
   font-size: 0.95rem;
+  color: var(--text-soft);
 }
-/* extra opcional para garantir scroll horizontal se a tabela crescer */
-#tabPag {
-  min-width: 520px;
-}
-/* GRID DE CARTÕES (como no explicador) */
-.aluno-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
-  gap: 22px;
-  margin-top: 25px;
-}
-/* 4 cards em linha no desktop */
+
+/* GRID de KPIs (4 cards no desktop) */
 .aluno-kpi-grid {
   margin-top: 18px;
+  display: grid;
+  gap: 16px;
 }
 
 @media (min-width: 960px) {
@@ -108,18 +48,39 @@
   }
 }
 
-/* header da dashboard tipo "Início / Bem-vindo" */
-.aluno-header-main h1 {
-  font-size: 1.35rem;
+/* Resumo rápido / badge de estado de pagamento */
+.resumo-badge {
+  padding: 4px 10px;
+  border-radius: 999px;
   font-weight: 600;
+  font-size: 0.8rem;
 }
 
-.aluno-header-main p {
-  font-size: 0.95rem;
+.resumo-badge.Pago {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.resumo-badge.Parcial {
+  background: #fef9c3;
+  color: #854d0e;
+}
+
+.resumo-badge.EmAtraso {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* --------------------------------
+   2) AGENDA, CALENDÁRIO, MENSAGENS
+   -------------------------------- */
+
+/* Agenda / próximas aulas */
+#agenda p {
   color: var(--text-soft);
 }
 
-/* lista de próximas aulas no dashboard */
+/* lista de próximas aulas em cartão simples */
 .agenda-list .card {
   display: flex;
   justify-content: space-between;
@@ -132,7 +93,42 @@
   margin-bottom: 10px;
 }
 
-/* lista de exercícios */
+/* Calendário mensal */
+.calendario-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cal-list {
+  list-style: none;
+  padding: 0;
+  margin-top: 16px;
+}
+
+/* Mensagens */
+.msg-list {
+  padding: 10px 0;
+}
+
+.msg-form textarea {
+  resize: vertical;
+}
+
+/* --------------------------------
+   3) PAGAMENTOS / EXERCÍCIOS
+   -------------------------------- */
+
+/* Tabela de pagamentos da dashboard */
+#tabPag {
+  min-width: 520px;
+}
+
+#tabPag td {
+  font-size: 0.95rem;
+}
+
+/* Lista de exercícios */
 .ex-list li {
   padding: 12px 16px;
   border-radius: 12px;
@@ -141,7 +137,10 @@
   margin-bottom: 10px;
 }
 
-/* notificações recentes */
+/* --------------------------------
+   4) NOTIFICAÇÕES RECENTES
+   -------------------------------- */
+
 .notif-list {
   display: flex;
   flex-direction: column;
@@ -174,7 +173,7 @@
 }
 
 .notif-item--unread .notif-dot {
-  background: #ef4444;
+  background: #b91c1c;
 }
 
 .notif-msg {
@@ -192,14 +191,14 @@
   color: #1d4ed8;
   cursor: pointer;
 }
+
 .expl-section-link:hover {
   text-decoration: underline;
 }
-/* =========================================
-   PERFIL DO ALUNO
-   ========================================= */
 
-/* ======== LAYOUT BASE ======== */
+/* --------------------------------
+   5) PERFIL DO ALUNO
+   -------------------------------- */
 
 .perfil-wrapper {
   max-width: 1150px;
@@ -231,8 +230,7 @@
   color: var(--primary);
 }
 
-/* ======== CARDS GENÉRICOS ======== */
-
+/* Cards genéricos do perfil */
 .perfil-card {
   background: #ffffff;
   border-radius: 12px;
@@ -242,7 +240,6 @@
   margin-bottom: 18px;
 }
 
-/* card principal com info + KPIs */
 .perfil-card--main {
   display: flex;
   justify-content: space-between;
@@ -250,25 +247,23 @@
   gap: 24px;
 }
 
-/* card da próxima aula */
 .perfil-card--next {
   padding: 14px 20px;
 }
 
-/* card que contém tabs + conteúdos */
 .perfil-card--tabs {
   padding: 0;
   overflow: hidden;
 }
 
-/* ======== BLOCO ESQUERDO (INFO DO ALUNO) ======== */
-
+/* Bloco esquerdo (info do aluno) */
 .perfil-left {
   display: flex;
   gap: 16px;
   align-items: flex-start;
 }
 
+/* .avatar já existe em aluno-perfil.css – aqui é só um fallback */
 .avatar {
   width: 64px;
   height: 64px;
@@ -295,8 +290,7 @@
   color: var(--gray-600);
 }
 
-/* BADGES */
-
+/* Badges */
 .badge-row {
   display: flex;
   flex-wrap: wrap;
@@ -321,15 +315,13 @@
   background: #e5e7eb;
 }
 
-/* CONTACTOS */
-
+/* Contactos */
 .contact-row p {
   font-size: 14px;
   margin: 4px 0;
 }
 
-/* ======== BLOCO DIREITO (KPIs + BOTÃO) ======== */
-
+/* Bloco direito (KPIs + botão) */
 .perfil-right {
   display: flex;
   align-items: center;
@@ -360,8 +352,7 @@
   color: #6b7280;
 }
 
-/* Botão Editar Perfil */
-
+/* Botão "Editar perfil" */
 .edit-btn {
   align-self: flex-start;
   margin-left: 8px;
@@ -375,8 +366,7 @@
   font-size: 14px;
 }
 
-/* ======== PRÓXIMA AULA ======== */
-
+/* Próxima aula dentro do perfil */
 .proxima-aula {
   display: flex;
   align-items: center;
@@ -392,8 +382,7 @@
   margin-right: 4px;
 }
 
-/* ======== TABS (ESTILO BARRA) ======== */
-
+/* Tabs do perfil */
 .tabs {
   display: flex;
   background: #f9fafb;
@@ -418,13 +407,9 @@
   box-shadow: inset 0 -2px 0 var(--primary-dark);
 }
 
-/* wrapper interno dos conteúdos das tabs */
-
 .tabs-content-wrapper {
   padding: 18px 20px 22px;
 }
-
-/* conteúdos das tabs */
 
 .tab-content {
   display: none;
@@ -445,8 +430,7 @@
   color: #6b7280;
 }
 
-/* ======== TABELAS ======== */
-
+/* Tabelas do perfil */
 .tabela {
   width: 100%;
   border-collapse: collapse;
@@ -473,8 +457,7 @@
   border-top: 1px solid #e5e7eb;
 }
 
-/* Cabeçalho da secção de pagamentos (título + total à direita) */
-
+/* Cabeçalho da secção de pagamentos do perfil */
 .pag-header {
   display: flex;
   justify-content: space-between;
@@ -494,8 +477,7 @@
   color: #666666;
 }
 
-/* ======== RESPONSIVO ======== */
-
+/* Responsivo do perfil */
 @media (max-width: 900px) {
   .perfil-card--main {
     flex-direction: column;
@@ -510,6 +492,11 @@
     margin-left: 0;
   }
 }
+
+/* --------------------------------
+   6) AÇÕES EM SESSÕES (ícones)
+   -------------------------------- */
+
 .acoes-exp {
   margin-left: 0.5rem;
   display: inline-flex;
@@ -526,40 +513,30 @@
   line-height: 1;
 }
 
-.sessao-btn:hover {
-  transform: scale(1.1);
-}
 .icon16 {
   width: 18px;
   height: 18px;
   display: block;
 }
 
-.acoes-exp {
-  display: inline-flex;
-  gap: 6px;
-  margin-left: 8px;
-  vertical-align: middle;
-}
-
-.sessao-btn {
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-}
-
 .sessao-btn:hover .icon16 path {
-  fill: #dc2626 !important;     /* hover mais forte */
+  fill: #dc2626 !important;
   stroke: #dc2626 !important;
 }
 
 .sessao-btn:active .icon16 path {
   transform: scale(0.95);
 }
-/* Tabelas do perfil do aluno – garantir largura mínima para scroll no mobile */
+
+/* --------------------------------
+   7) TABELAS LARGAS (scroll)
+   -------------------------------- */
+
 .perfil-table-wrapper {
+  width: 100%;
   margin-top: 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .perfil-tabela {
@@ -577,124 +554,150 @@
     padding: 8px 10px;
   }
 }
-.perfil-table-wrapper {
-  width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
 
-.perfil-tabela {
-  min-width: 600px;
-}
-
-@media (max-width: 480px) {
-  .perfil-tabela {
-    min-width: 520px;
-    font-size: 12px;
-  }
-}
-
-/* faturação ainda mais larga */
+/* Faturação ainda mais larga */
 #tblMensalidadesPendentes,
 #tblMensalidadesPagas {
   min-width: 700px;
 }
-/* 4 cards em linha no desktop */
-.aluno-kpi-grid {
-  margin-top: 18px;
+
+/* --------------------------------
+   8) SHELL + SIDEBAR DO ALUNO
+   -------------------------------- */
+
+/* altura aproximada do header global (ajusta se for preciso) */
+:root {
+  --altura-header-global: 72px;
 }
 
-@media (min-width: 960px) {
-  .aluno-kpi-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
+/* Shell principal: reserva espaço para a sidebar fixa à esquerda */
+.aluno-shell {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+
+  /* pouco espaço acima dos cartões + laterais simpáticos */
+  padding-top: 24px;
+  padding-right: 32px;
+  padding-bottom: 32px;
+  padding-left: 32px;
 }
 
-/* header da dashboard tipo "Início / Bem-vindo" */
-.aluno-header-main h1 {
-  font-size: 1.35rem;
+/* Conteúdo principal ao lado da sidebar */
+.aluno-shell .expl-main {
+  flex: 1;
+  min-width: 0;
+  margin-left: 240px; /* igual à largura da sidebar */
+}
+
+/* Sidebar fixa, por baixo do header */
+.expl-sidebar-nav.aluno-sidebar-nav {
+  position: fixed;
+  top: var(--altura-header-global);
+  left: 0;
+  bottom: 0;
+
+  width: 240px;
+  padding: 20px 18px;
+  display: flex !important;
+  flex-direction: column;
+  gap: 6px;
+  background: rgba(234, 235, 240, 0.98);      /* quase preto azulado */
+  color: rgba(211, 26, 26, 0.85);      /* texto branco suave */
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  border-radius: 0;
+}
+
+/* Branding opcional na sidebar (se usado no HTML) */
+.aluno-sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding: 4px 4px 10px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.aluno-sidebar-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: #f97316;
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.aluno-sidebar-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #f9fafb;
+}
+
+.aluno-sidebar-subtitle {
+  font-size: 0.75rem;
+  color: rgba(209, 213, 219, 0.8);
+}
+
+/* Botões do menu – ligeiro ajuste de tamanho */
+.expl-sidebar-nav.aluno-sidebar-nav .expl-nav-btn {
+  font-size: 0.92rem;
+}
+
+/* Badge de notificações na sidebar */
+.aluno-nav-badge {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #b91c1c;
+  color: #f9fafb;
+  font-size: 10px;
   font-weight: 600;
 }
 
-.aluno-header-main p {
-  font-size: 0.95rem;
-  color: var(--text-soft);
+.aluno-nav-badge.is-hidden {
+  display: none;
 }
 
-/* lista de próximas aulas no dashboard */
-.agenda-list .card {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  border-radius: 12px;
-  border: 1px solid rgba(148, 163, 184, 0.35);
-  background: #fff;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
-  margin-bottom: 10px;
+/* Responsivo: em ecrãs pequenos, sidebar deixa de ser fixa */
+@media (max-width: 900px) {
+  .aluno-shell {
+    padding: 16px;
+  }
+
+  .aluno-shell .expl-main {
+    margin-left: 0;
+  }
+
+  .expl-sidebar-nav.aluno-sidebar-nav {
+    position: static;
+    width: 100%;
+    height: auto;
+    border-radius: 16px;
+    margin-bottom: 16px;
+  }
 }
 
-/* lista de exercícios */
-.ex-list li {
-  padding: 12px 16px;
-  border-radius: 12px;
-  border: 1px solid rgba(148, 163, 184, 0.35);
-  background: #fff;
-  margin-bottom: 10px;
+/* --------------------------------
+   9) ESPAÇAMENTO DOS CARTÕES
+   -------------------------------- */
+
+/* reduzir o “acolchoamento” vertical dentro do main */
+.expl-main {
+  padding-top: 8px;
+  padding-bottom: 40px;
 }
 
-/* notificações recentes */
-.notif-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+/* menos margem entre cartões */
+.expl-card {
+  margin-bottom: 16px;
 }
-
-.notif-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 10px 14px;
-  border-radius: 10px;
-  border: 1px solid rgba(148, 163, 184, 0.25);
-  background: #fff;
-  opacity: 0.6;
-}
-
-.notif-item--unread {
-  border-color: rgba(59, 130, 246, 0.5);
-  background: rgba(59, 130, 246, 0.04);
-  opacity: 1;
-}
-
-.notif-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-  background: #111827;
-  margin-top: 6px;
-}
-
-.notif-item--unread .notif-dot {
-  background: #ef4444;
-}
-
-.notif-msg {
-  font-size: 0.9rem;
-}
-
-.notif-time {
-  font-size: 0.75rem;
-  color: var(--text-soft);
-}
-
-/* link "Ver todas →" no header dos cards */
-.expl-section-link {
-  font-size: 0.85rem;
-  color: #1d4ed8;
-  cursor: pointer;
-}
-.expl-section-link:hover {
-  text-decoration: underline;
-}
-
