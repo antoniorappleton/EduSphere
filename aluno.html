@@ -544,68 +544,6 @@ function renderCalendarioVisual(sessoes) {
 }
 
 function renderCalendarioItem(a) {
-  const dataFmt = a.data
-    ? new Date(a.data).toLocaleDateString("pt-PT", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      })
-    : "—";
-
-  const hora = a.hora_inicio ? a.hora_inicio.slice(0, 5) : "--:--";
-  const dur = a.duracao_min ? `${a.duracao_min} min` : "";
-  const expl = a.explicador?.nome || "";
-
-  return `
-    <div>
-      <div class="cal-item-left">
-        <div class="cal-icon-box">📅</div>
-        <div>
-          <p class="cal-item-title">${dataFmt}</p>
-          <p class="cal-item-details">
-            ${hora}${dur ? " · " + dur : ""}${expl ? " · " + expl : ""}
-          </p>
-        </div>
-      </div>
-      <div class="cal-item-right">
-        ${a.estado || ""}
-      </div>
-    </div>
-  `;
-}
-
-function renderCalendarioItem(a) {
-  const dataFmt = a.data
-    ? new Date(a.data).toLocaleDateString("pt-PT", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      })
-    : "—";
-
-  const hora = a.hora_inicio ? a.hora_inicio.slice(0, 5) : "--:--";
-  const dur = a.duracao_min ? `${a.duracao_min} min` : "";
-  const expl = a.explicador?.nome || "";
-
-  return `
-    <div>
-      <div class="cal-item-left">
-        <div class="cal-icon-box">📅</div>
-        <div>
-          <p class="cal-item-title">${dataFmt}</p>
-          <p class="cal-item-details">
-            ${hora}${dur ? " · " + dur : ""}${expl ? " · " + expl : ""}
-          </p>
-        </div>
-      </div>
-      <div class="cal-item-right">
-        ${a.estado || ""}
-      </div>
-    </div>
-  `;
-}
-
-function renderCalendarioItem(a) {
     const dataFmt = a.data
       ? new Date(a.data).toLocaleDateString("pt-PT", {
           day: "2-digit",
