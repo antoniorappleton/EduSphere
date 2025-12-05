@@ -436,372 +436,372 @@
 
 <footer>© <span id="y"></span> EduSphere</footer>
 
-<script>
-  // força o browser a não usar cache para esta página
-      if (window.history && window.history.replaceState) {
-        window.history.replaceState(null, '', window.location.href);
-      }
-
-      window.addEventListener("pageshow", (event) => {
-        if (event.persisted) {
-          window.location.reload();
+  <script>
+    // força o browser a não usar cache para esta página
+        if (window.history && window.history.replaceState) {
+          window.history.replaceState(null, '', window.location.href);
         }
-      });
 
-  // Bloquear voltar atrás após logout
-      window.history.pushState(null, "", window.location.href);
-      window.addEventListener("popstate", function () {
+        window.addEventListener("pageshow", (event) => {
+          if (event.persisted) {
+            window.location.reload();
+          }
+        });
+
+    // Bloquear voltar atrás após logout
         window.history.pushState(null, "", window.location.href);
-      });
+        window.addEventListener("popstate", function () {
+          window.history.pushState(null, "", window.location.href);
+        });
 
-  // =========================
-  // UTIL: ano no footer
-  // =========================
-  const yEl = document.getElementById('y');
-  if (yEl) yEl.textContent = new Date().getFullYear();
+    // =========================
+    // UTIL: ano no footer
+    // =========================
+    const yEl = document.getElementById('y');
+    if (yEl) yEl.textContent = new Date().getFullYear();
 
-  // =========================
-  // NAVEGAÇÃO ENTRE VISTAS
-  // (menu lateral + "Ver todas →" nos cards)
-  // =========================
-  document.addEventListener('DOMContentLoaded', () => {
-    const navButtons = document.querySelectorAll('.expl-nav-btn');
-    const views = document.querySelectorAll('[data-view-name]');
-    const gotoEls = document.querySelectorAll('[data-goto]');
+    // =========================
+    // NAVEGAÇÃO ENTRE VISTAS
+    // (menu lateral + "Ver todas →" nos cards)
+    // =========================
+    document.addEventListener('DOMContentLoaded', () => {
+      const navButtons = document.querySelectorAll('.expl-nav-btn');
+      const views = document.querySelectorAll('[data-view-name]');
+      const gotoEls = document.querySelectorAll('[data-goto]');
 
-    function showView(name) {
-      views.forEach((v) => {
-        const active = v.dataset.viewName === name;
-        v.style.display = active ? '' : 'none';
-      });
+      function showView(name) {
+        views.forEach((v) => {
+          const active = v.dataset.viewName === name;
+          v.style.display = active ? '' : 'none';
+        });
+
+        navButtons.forEach((btn) => {
+          btn.classList.toggle(
+            'expl-nav-btn--active',
+            btn.dataset.target === name
+          );
+        });
+
+        console.log('Vista activa:', name);
+
+        // sempre que entrares no calendário, recarrega os dados
+        if (name === 'calendario') {
+          carregarCalendarioNovo();
+        }
+      }
 
       navButtons.forEach((btn) => {
-        btn.classList.toggle(
-          'expl-nav-btn--active',
-          btn.dataset.target === name
-        );
+        btn.addEventListener('click', () => {
+          const target = btn.dataset.target;
+          if (target) showView(target);
+        });
       });
 
-      console.log('Vista activa:', name);
-
-      // sempre que entrares no calendário, recarrega os dados
-      if (name === 'calendario') {
-        carregarCalendarioNovo();
-      }
-    }
-
-    navButtons.forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const target = btn.dataset.target;
-        if (target) showView(target);
+      gotoEls.forEach((el) => {
+        el.addEventListener('click', () => {
+          const target = el.dataset.goto;
+          if (target) showView(target);
+        });
       });
+
+      // vista inicial
+      showView('inicio');
     });
 
-    gotoEls.forEach((el) => {
-      el.addEventListener('click', () => {
-        const target = el.dataset.goto;
-        if (target) showView(target);
-      });
-    });
+    // =========================
+    // ESTADO GLOBAL
+    // =========================
+    window.ALUNO = null;
 
-    // vista inicial
-    showView('inicio');
-  });
+  // ========= CALENDÁRIO (Próximas + Histórico + grelha visual) =========
+  async function carregarCalendarioNovo() {
+    const proxContainer = document.getElementById("calProximas");
+    const histContainer = document.getElementById("calHistorico");
+    const calUi = document.getElementById("cal-ui");
 
-  // =========================
-  // ESTADO GLOBAL
-  // =========================
-  window.ALUNO = null;
-
-// ========= CALENDÁRIO (Próximas + Histórico + grelha visual) =========
-async function carregarCalendarioNovo() {
-  const proxContainer = document.getElementById("calProximas");
-  const histContainer = document.getElementById("calHistorico");
-  const calUi = document.getElementById("cal-ui");
-
-  if (!proxContainer || !histContainer || !calUi) return;
-
-  if (!window.ALUNO || !ALUNO.id_aluno) {
-    proxContainer.innerHTML = "<p>Erro ao identificar o aluno.</p>";
-    histContainer.innerHTML = "<p>Erro ao identificar o aluno.</p>";
-    calUi.innerHTML = "<p>Erro ao identificar o aluno.</p>";
-    return;
-  }
-
-  const hoje = new Date().toISOString().slice(0, 10);
-
-  const { data, error } = await supabase
-    .from("sessoes_explicacao")
-    .select(`
-      id_sessao,
-      data,
-      hora_inicio,
-      duracao_min,
-      estado,
-      explicador:explicadores(nome)
-    `)
-    .eq("id_aluno", ALUNO.id_aluno)
-    .order("data", { ascending: true })
-    .order("hora_inicio", { ascending: true });
-
-  if (error) {
-    console.error("Erro ao carregar aulas", error);
-    proxContainer.innerHTML = "<p>Erro ao carregar aulas.</p>";
-    histContainer.innerHTML = "<p>Erro ao carregar aulas.</p>";
-    calUi.innerHTML = "<p>Erro ao carregar aulas.</p>";
-    return;
-  }
-
-  const sessoes = data || [];
-  const futuras = sessoes.filter((s) => s.data >= hoje);
-  const passadas = sessoes.filter((s) => s.data < hoje);
-
-  proxContainer.innerHTML = futuras.length
-    ? futuras.map((a) => renderCalendarioItem(a)).join("")
-    : "<p>Sem aulas futuras.</p>";
-
-  histContainer.innerHTML = passadas.length
-    ? passadas.map((a) => renderCalendarioItem(a)).join("")
-    : "<p>Sem histórico de aulas.</p>";
-
-  // desenhar o calendário visual com TODAS as sessões
-  renderCalendarioVisual(sessoes);
-}
-
-function renderCalendarioVisual(sessoes) {
-  const cal = document.getElementById("cal-ui");
-  if (!cal) return;
-
-  const hoje = new Date();
-  const ano = hoje.getFullYear();
-  const mesIndex = hoje.getMonth(); // 0 = janeiro
-
-  // Mapa dia -> sessões nesse dia (apenas mês actual)
-  const sessoesPorDia = {};
-  sessoes.forEach((s) => {
-    if (!s.data) return;
-    const d = new Date(s.data);
-    if (d.getFullYear() !== ano || d.getMonth() !== mesIndex) return;
-    const dia = d.getDate();
-    if (!sessoesPorDia[dia]) sessoesPorDia[dia] = [];
-    sessoesPorDia[dia].push(s);
-  });
-
-  const firstDay = new Date(ano, mesIndex, 1);
-  const lastDay = new Date(ano, mesIndex + 1, 0);
-  const diasNoMes = lastDay.getDate();
-
-  // Em JS: 0=Dom,1=Seg,... Queremos calendário a começar em Seg
-  const offsetSegunda = (firstDay.getDay() + 6) % 7;
-
-  const labelMes = firstDay.toLocaleDateString("pt-PT", {
-    month: "long",
-    year: "numeric",
-  });
-
-  let html = `
-    <div class="cal-month-header">${labelMes}</div>
-    <div class="cal-weekdays">
-      <span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span><span>Dom</span>
-    </div>
-    <div class="cal-month-grid">
-  `;
-
-  // espaços em branco antes do primeiro dia
-  for (let i = 0; i < offsetSegunda; i++) {
-    html += `<div class="cal-day cal-day--empty"></div>`;
-  }
-
-  for (let dia = 1; dia <= diasNoMes; dia++) {
-    const temSessao = !!sessoesPorDia[dia];
-    html += `
-      <div class="cal-day ${temSessao ? "cal-day--has" : ""}">
-        <span class="cal-day-number">${dia}</span>
-        ${temSessao ? '<span class="cal-day-dot"></span>' : ""}
-      </div>
-    `;
-  }
-
-  html += `</div>`; // fecha .cal-month-grid
-
-  cal.innerHTML = html;
-}
-
-function renderCalendarioItem(a) {
-    const dataFmt = a.data
-      ? new Date(a.data).toLocaleDateString("pt-PT", {
-          day: "2-digit",
-          month: "short",
-          year: "numeric",
-        })
-      : "—";
-
-    const hora = a.hora_inicio ? a.hora_inicio.slice(0, 5) : "--:--";
-    const dur = a.duracao_min ? `${a.duracao_min} min` : "";
-
-    return `
-      <div>
-        <div class="cal-item-left">
-          <div class="cal-icon-box">📅</div>
-          <div>
-            <p class="cal-item-title">${dataFmt}</p>
-            <p class="cal-item-details">
-              ${hora}${dur ? " · " + dur : ""} 
-            </p>
-          </div>
-        </div>
-        <div class="cal-item-right">
-          ${a.estado || ""}
-        </div>
-      </div>
-    `;
-  }
-
-  // =========================
-  // BOOTSTRAP DA PÁGINA
-  // =========================
-  (async () => {
-    const user = await Auth.requireRole('aluno', './login.html');
-    if (!user) return;
-
-    // 1) mapear utilizador -> aluno
-    const { data: map, error: mapErr } = await supabase
-      .from('app_users')
-      .select('ref_id')
-      .eq('user_id', user.id)
-      .single();
-
-    if (mapErr || !map?.ref_id) {
-      console.error('Erro a mapear utilizador para aluno', mapErr);
-      const infoEl = document.getElementById('alunoInfo');
-      if (infoEl) infoEl.textContent = 'Não foi possível carregar os dados do aluno.';
-      return;
-    }
-
-    // 2) obter dados do aluno
-    const { data: aluno, error: alunoErr } = await supabase
-      .from('alunos')
-      .select('id_aluno, nome, apelido, ano')
-      .eq('id_aluno', map.ref_id)
-      .single();
-
-    if (alunoErr || !aluno) {
-      console.error('Erro a carregar aluno', alunoErr);
-      const infoEl = document.getElementById('alunoInfo');
-      if (infoEl) infoEl.textContent = 'Perfil não encontrado';
-      return;
-    }
-
-    // guardar globalmente
-    window.ALUNO = aluno;
-
-    // 3) preencher header (nome + ano + avatar)
-    const nomeCompleto = `${aluno.nome} ${aluno.apelido ?? ''}`.trim();
-    const iniciais = (aluno.nome?.[0] || '?') + (aluno.apelido?.[0] || '');
-    const titulo = `${nomeCompleto} — Ano ${aluno.ano ?? 'n/d'}`;
-
-    const infoEl = document.getElementById('alunoInfo');
-    if (infoEl) infoEl.textContent = titulo;
-
-    const avatarEl = document.getElementById('alunoAvatar');
-    const tituloEl = document.getElementById('alunoNomeTitulo');
-    if (avatarEl) avatarEl.textContent = iniciais.toUpperCase();
-    if (tituloEl) tituloEl.textContent = nomeCompleto || 'Bem-vindo 👋';
-
-    // 4) carregar cartões / dados iniciais
-    await Promise.all([
-      carregarResumoPagamentos(),
-      carregarProximasExplicacoes(),
-      carregarCalendarioNovo(),
-    ]);
-  })();
-
-  // =========================
-  // PRÓXIMAS EXPLICAÇÕES (dashboard)
-  // =========================
-  async function carregarProximasExplicacoes() {
-    const container = document.getElementById('agenda');
-    if (!container) return;
+    if (!proxContainer || !histContainer || !calUi) return;
 
     if (!window.ALUNO || !ALUNO.id_aluno) {
-      container.innerHTML = '<p>Erro ao carregar sessões.</p>';
+      proxContainer.innerHTML = "<p>Erro ao identificar o aluno.</p>";
+      histContainer.innerHTML = "<p>Erro ao identificar o aluno.</p>";
+      calUi.innerHTML = "<p>Erro ao identificar o aluno.</p>";
       return;
     }
 
-    container.innerHTML = '<p>A carregar agenda…</p>';
-
-    const hojeStr = new Date().toISOString().slice(0, 10);
+    const hoje = new Date().toISOString().slice(0, 10);
 
     const { data, error } = await supabase
-      .from('sessoes_explicacao')
-      .select('id_sessao, data, hora_inicio, duracao_min, estado, observacoes')
-      .eq('id_aluno', ALUNO.id_aluno)
-      .gte('data', hojeStr)
-      .order('data', { ascending: true })
-      .order('hora_inicio', { ascending: true })
-      .limit(5);
+      .from("sessoes_explicacao")
+      .select(`
+        id_sessao,
+        data,
+        hora_inicio,
+        duracao_min,
+        estado,
+        explicador:explicadores(nome)
+      `)
+      .eq("id_aluno", ALUNO.id_aluno)
+      .order("data", { ascending: true })
+      .order("hora_inicio", { ascending: true });
 
     if (error) {
-      console.error('Erro a carregar sessões do aluno', error);
-      container.innerHTML = '<p>Erro ao carregar sessões.</p>';
+      console.error("Erro ao carregar aulas", error);
+      proxContainer.innerHTML = "<p>Erro ao carregar aulas.</p>";
+      histContainer.innerHTML = "<p>Erro ao carregar aulas.</p>";
+      calUi.innerHTML = "<p>Erro ao carregar aulas.</p>";
       return;
     }
 
     const sessoes = data || [];
+    const futuras = sessoes.filter((s) => s.data >= hoje);
+    const passadas = sessoes.filter((s) => s.data < hoje);
 
-    if (!sessoes.length) {
-      container.innerHTML = '<p>Não tens próximas explicações agendadas.</p>';
+    proxContainer.innerHTML = futuras.length
+      ? futuras.map((a) => renderCalendarioItem(a)).join("")
+      : "<p>Sem aulas futuras.</p>";
 
-      const kpi = document.getElementById('kpiProximaAula');
-      const kpiDesc = document.getElementById('kpiProximaAulaDesc');
-      if (kpi) kpi.textContent = '—';
-      if (kpiDesc) kpiDesc.textContent = 'Sem sessões agendadas.';
-      return;
-    }
+    histContainer.innerHTML = passadas.length
+      ? passadas.map((a) => renderCalendarioItem(a)).join("")
+      : "<p>Sem histórico de aulas.</p>";
 
-    const fmtData = { day: '2-digit', month: '2-digit', year: 'numeric' };
+    // desenhar o calendário visual com TODAS as sessões
+    renderCalendarioVisual(sessoes);
+  }
 
-    const html = `
-      <ul class="agenda-list">
-        ${sessoes
-          .map((s) => {
-            const d = s.data ? new Date(s.data) : null;
-            const dataLabel = d ? d.toLocaleDateString('pt-PT', fmtData) : '—';
-            const hora = s.hora_inicio ? s.hora_inicio.slice(0, 5) : '--:--';
-            const dur =
-              s.duracao_min != null && s.duracao_min !== ''
-                ? `${s.duracao_min} min`
-                : '';
-            const estado = s.estado || '';
-            return `
-              <li>
-                <strong>${dataLabel}</strong> · ${hora}
-                ${dur ? ' · ' + dur : ''} — ${estado}
-              </li>
-            `;
-          })
-          .join('')}
-      </ul>
+  function renderCalendarioVisual(sessoes) {
+    const cal = document.getElementById("cal-ui");
+    if (!cal) return;
+
+    const hoje = new Date();
+    const ano = hoje.getFullYear();
+    const mesIndex = hoje.getMonth(); // 0 = janeiro
+
+    // Mapa dia -> sessões nesse dia (apenas mês actual)
+    const sessoesPorDia = {};
+    sessoes.forEach((s) => {
+      if (!s.data) return;
+      const d = new Date(s.data);
+      if (d.getFullYear() !== ano || d.getMonth() !== mesIndex) return;
+      const dia = d.getDate();
+      if (!sessoesPorDia[dia]) sessoesPorDia[dia] = [];
+      sessoesPorDia[dia].push(s);
+    });
+
+    const firstDay = new Date(ano, mesIndex, 1);
+    const lastDay = new Date(ano, mesIndex + 1, 0);
+    const diasNoMes = lastDay.getDate();
+
+    // Em JS: 0=Dom,1=Seg,... Queremos calendário a começar em Seg
+    const offsetSegunda = (firstDay.getDay() + 6) % 7;
+
+    const labelMes = firstDay.toLocaleDateString("pt-PT", {
+      month: "long",
+      year: "numeric",
+    });
+
+    let html = `
+      <div class="cal-month-header">${labelMes}</div>
+      <div class="cal-weekdays">
+        <span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span><span>Dom</span>
+      </div>
+      <div class="cal-month-grid">
     `;
 
-    container.innerHTML = html;
-
-    // KPI "Próxima Aula" com a primeira sessão
-    const primeira = sessoes[0];
-    const kpi = document.getElementById('kpiProximaAula');
-    const kpiDesc = document.getElementById('kpiProximaAulaDesc');
-    if (primeira && kpi && kpiDesc) {
-      const d = primeira.data ? new Date(primeira.data) : null;
-      const diaMes = d
-        ? d.toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' })
-        : '—';
-      const hora = primeira.hora_inicio
-        ? primeira.hora_inicio.slice(0, 5)
-        : '--:--';
-      kpi.textContent = diaMes;
-      kpiDesc.textContent = `Explicação às ${hora}`;
+    // espaços em branco antes do primeiro dia
+    for (let i = 0; i < offsetSegunda; i++) {
+      html += `<div class="cal-day cal-day--empty"></div>`;
     }
+
+    for (let dia = 1; dia <= diasNoMes; dia++) {
+      const temSessao = !!sessoesPorDia[dia];
+      html += `
+        <div class="cal-day ${temSessao ? "cal-day--has" : ""}">
+          <span class="cal-day-number">${dia}</span>
+          ${temSessao ? '<span class="cal-day-dot"></span>' : ""}
+        </div>
+      `;
+    }
+
+    html += `</div>`; // fecha .cal-month-grid
+
+    cal.innerHTML = html;
   }
+
+  function renderCalendarioItem(a) {
+      const dataFmt = a.data
+        ? new Date(a.data).toLocaleDateString("pt-PT", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+          })
+        : "—";
+
+      const hora = a.hora_inicio ? a.hora_inicio.slice(0, 5) : "--:--";
+      const dur = a.duracao_min ? `${a.duracao_min} min` : "";
+
+      return `
+        <div>
+          <div class="cal-item-left">
+            <div class="cal-icon-box">📅</div>
+            <div>
+              <p class="cal-item-title">${dataFmt}</p>
+              <p class="cal-item-details">
+                ${hora}${dur ? " · " + dur : ""} 
+              </p>
+            </div>
+          </div>
+          <div class="cal-item-right">
+            ${a.estado || ""}
+          </div>
+        </div>
+      `;
+    }
+
+    // =========================
+    // BOOTSTRAP DA PÁGINA
+    // =========================
+    (async () => {
+      const user = await Auth.requireRole('aluno', './login.html');
+      if (!user) return;
+
+      // 1) mapear utilizador -> aluno
+      const { data: map, error: mapErr } = await supabase
+        .from('app_users')
+        .select('ref_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (mapErr || !map?.ref_id) {
+        console.error('Erro a mapear utilizador para aluno', mapErr);
+        const infoEl = document.getElementById('alunoInfo');
+        if (infoEl) infoEl.textContent = 'Não foi possível carregar os dados do aluno.';
+        return;
+      }
+
+      // 2) obter dados do aluno
+      const { data: aluno, error: alunoErr } = await supabase
+        .from('alunos')
+        .select('id_aluno, nome, apelido, ano')
+        .eq('id_aluno', map.ref_id)
+        .single();
+
+      if (alunoErr || !aluno) {
+        console.error('Erro a carregar aluno', alunoErr);
+        const infoEl = document.getElementById('alunoInfo');
+        if (infoEl) infoEl.textContent = 'Perfil não encontrado';
+        return;
+      }
+
+      // guardar globalmente
+      window.ALUNO = aluno;
+
+      // 3) preencher header (nome + ano + avatar)
+      const nomeCompleto = `${aluno.nome} ${aluno.apelido ?? ''}`.trim();
+      const iniciais = (aluno.nome?.[0] || '?') + (aluno.apelido?.[0] || '');
+      const titulo = `${nomeCompleto} — Ano ${aluno.ano ?? 'n/d'}`;
+
+      const infoEl = document.getElementById('alunoInfo');
+      if (infoEl) infoEl.textContent = titulo;
+
+      const avatarEl = document.getElementById('alunoAvatar');
+      const tituloEl = document.getElementById('alunoNomeTitulo');
+      if (avatarEl) avatarEl.textContent = iniciais.toUpperCase();
+      if (tituloEl) tituloEl.textContent = nomeCompleto || 'Bem-vindo 👋';
+
+      // 4) carregar cartões / dados iniciais
+      await Promise.all([
+        carregarResumoPagamentos(),
+        carregarProximasExplicacoes(),
+        carregarCalendarioNovo(),
+      ]);
+    })();
+
+    // =========================
+    // PRÓXIMAS EXPLICAÇÕES (dashboard)
+    // =========================
+    async function carregarProximasExplicacoes() {
+      const container = document.getElementById('agenda');
+      if (!container) return;
+
+      if (!window.ALUNO || !ALUNO.id_aluno) {
+        container.innerHTML = '<p>Erro ao carregar sessões.</p>';
+        return;
+      }
+
+      container.innerHTML = '<p>A carregar agenda…</p>';
+
+      const hojeStr = new Date().toISOString().slice(0, 10);
+
+      const { data, error } = await supabase
+        .from('sessoes_explicacao')
+        .select('id_sessao, data, hora_inicio, duracao_min, estado, observacoes')
+        .eq('id_aluno', ALUNO.id_aluno)
+        .gte('data', hojeStr)
+        .order('data', { ascending: true })
+        .order('hora_inicio', { ascending: true })
+        .limit(5);
+
+      if (error) {
+        console.error('Erro a carregar sessões do aluno', error);
+        container.innerHTML = '<p>Erro ao carregar sessões.</p>';
+        return;
+      }
+
+      const sessoes = data || [];
+
+      if (!sessoes.length) {
+        container.innerHTML = '<p>Não tens próximas explicações agendadas.</p>';
+
+        const kpi = document.getElementById('kpiProximaAula');
+        const kpiDesc = document.getElementById('kpiProximaAulaDesc');
+        if (kpi) kpi.textContent = '—';
+        if (kpiDesc) kpiDesc.textContent = 'Sem sessões agendadas.';
+        return;
+      }
+
+      const fmtData = { day: '2-digit', month: '2-digit', year: 'numeric' };
+
+      const html = `
+        <ul class="agenda-list">
+          ${sessoes
+            .map((s) => {
+              const d = s.data ? new Date(s.data) : null;
+              const dataLabel = d ? d.toLocaleDateString('pt-PT', fmtData) : '—';
+              const hora = s.hora_inicio ? s.hora_inicio.slice(0, 5) : '--:--';
+              const dur =
+                s.duracao_min != null && s.duracao_min !== ''
+                  ? `${s.duracao_min} min`
+                  : '';
+              const estado = s.estado || '';
+              return `
+                <li>
+                  <strong>${dataLabel}</strong> · ${hora}
+                  ${dur ? ' · ' + dur : ''} — ${estado}
+                </li>
+              `;
+            })
+            .join('')}
+        </ul>
+      `;
+
+      container.innerHTML = html;
+
+      // KPI "Próxima Aula" com a primeira sessão
+      const primeira = sessoes[0];
+      const kpi = document.getElementById('kpiProximaAula');
+      const kpiDesc = document.getElementById('kpiProximaAulaDesc');
+      if (primeira && kpi && kpiDesc) {
+        const d = primeira.data ? new Date(primeira.data) : null;
+        const diaMes = d
+          ? d.toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' })
+          : '—';
+        const hora = primeira.hora_inicio
+          ? primeira.hora_inicio.slice(0, 5)
+          : '--:--';
+        kpi.textContent = diaMes;
+        kpiDesc.textContent = `Explicação às ${hora}`;
+      }
+    }
 
   // =========================
 // PAGAMENTOS (resumo + detalhes + histórico)
@@ -867,7 +867,7 @@ async function carregarResumoPagamentos() {
 
   const pag = (data || []).filter(Boolean);
 
-  // ------- helpers -------
+  // ------- helpers (ANTES de usar campos!) -------
   function labelMesAno(ano, mes) {
     if (!ano || !mes) return '—';
     const d = new Date(ano, mes - 1, 1);
@@ -974,136 +974,136 @@ async function carregarResumoPagamentos() {
     return;
   }
 
-  // ---- regra do "mês seguinte pendente a partir do dia 8" ----
-  const hoje = new Date();
-  const diaHoje = hoje.getDate();
-  const anoHoje = hoje.getFullYear();
-  const mesHoje = hoje.getMonth() + 1;
-
-  let nextMes = mesHoje + 1;
-  let nextAno = anoHoje;
-  if (nextMes === 13) {
-    nextMes = 1;
-    nextAno += 1;
-  }
-
-  function estadoLogico(p) {
-    const base = campos.estado(p); // ex: 'pago', 'pendente', 'futuro'...
-
-    if (base === 'pago') return 'pago';
-
-    const isNextMonth = p.ano === nextAno && p.mes === nextMes;
-
-    // Antes do dia 8 do mês, o mês seguinte ainda não aparece como pendente
-    if (isNextMonth && diaHoje < 8) {
-      return 'futuro';
-    }
-
-    // A partir do dia 8, o mês seguinte é tratado como pendente
-    if (isNextMonth && diaHoje >= 8) {
-      return 'pendente';
-    }
-
-    // fallback: se não for pago, considera pendente
-    return base || 'pendente';
-  }
-
-  // -------- 1) resumo --------
+  // -------- 1) total pago --------
   const totalPago = pag.reduce((acc, p) => acc + campos.valorPago(p), 0);
 
-  const pendentes = pag.filter((p) => estadoLogico(p) === 'pendente');
+  // -------- 2) último mês pago --------
+  const pagos = pag
+    .filter((p) => campos.estado(p) === 'pago')
+    .sort((a, b) => {
+      if (a.ano !== b.ano) return b.ano - a.ano;
+      return b.mes - a.mes;
+    });
 
-  const totalPendente = pendentes.reduce(
-    (acc, p) => acc + (campos.valorPrevisto(p) - campos.valorPago(p)),
-    0
-  );
+  const ultimoPago = pagos[0] || null;
 
-  // Próxima mensalidade pendente (mais antiga)
-  let prox = null;
-  if (pendentes.length) {
-    prox = [...pendentes].sort((a, b) => {
-      if (a.ano !== b.ano) return a.ano - b.ano;
-      return a.mes - b.mes;
-    })[0];
+  // -------- 3) mês pendente = mês seguinte ao último pago --------
+  let pagamentoPendente = null;
+
+  if (ultimoPago) {
+    let anoPend = ultimoPago.ano;
+    let mesPend = ultimoPago.mes + 1;
+    if (mesPend === 13) {
+      mesPend = 1;
+      anoPend++;
+    }
+
+    // buscar explicações agendadas para esse mês (usando campo data)
+    const anoStr = String(anoPend);
+    const mesStr = String(mesPend).padStart(2, '0');
+    const inicioMes = `${anoStr}-${mesStr}-01`;
+    const fimMesDate = new Date(anoPend, mesPend, 0); // dia 0 = último do mês anterior
+    const fimMes = fimMesDate.toISOString().slice(0, 10);
+
+    const { data: expMes, error: expErr } = await supabase
+      .from('sessoes_explicacao')
+      .select('id_sessao, data')
+      .eq('id_aluno', ALUNO.id_aluno)
+      .gte('data', inicioMes)
+      .lte('data', fimMes);
+
+    if (expErr) {
+      console.error('Erro a carregar sessões do mês pendente', expErr);
+    }
+
+    const numeroExpPend = expMes?.length || 0;
+    const VALOR_EXPLICACAO = 25;
+    const valorPendente = numeroExpPend * VALOR_EXPLICACAO;
+
+    pagamentoPendente = {
+      ano: anoPend,
+      mes: mesPend,
+      mes_label: labelMesAno(anoPend, mesPend),
+      valor: valorPendente,
+      numeroExp: numeroExpPend,
+    };
   }
 
+  // -------- 4) preencher cards de resumo + dados para pagamento --------
+
+  // Card "Total Pago"
   if (totalPagoEl) totalPagoEl.textContent = formatEuro(totalPago);
-  if (pendenteEl) pendenteEl.textContent = formatEuro(totalPendente);
 
-  if (prox) {
-    const mesLabel = labelMesAno(prox.ano, prox.mes);
-    const vencRaw = campos.vencimentoRaw(prox);
-    const vencLabel =
-      vencRaw
-        ? formatDataCurta(vencRaw)
-        : formatDataCurta(new Date(prox.ano, prox.mes - 1, 31));
+  if (pagamentoPendente && pagamentoPendente.valor > 0) {
+    // Card "Valor Pendente"
+    if (pendenteEl)
+      pendenteEl.textContent = formatEuro(pagamentoPendente.valor);
 
-    const valorEmFalta =
-      campos.valorPrevisto(prox) - campos.valorPago(prox) || 0;
+    // Próximo vencimento (não tens data real → deixo só o mês)
+    if (proxVencEl) proxVencEl.textContent = '—';
+    if (proxMesEl) proxMesEl.textContent = pagamentoPendente.mes_label;
 
-    if (proxVencEl) proxVencEl.textContent = vencLabel;
-    if (proxMesEl) proxMesEl.textContent = mesLabel;
-
+    // ALERTA
     if (alertEl) {
       alertEl.style.display = 'block';
       alertEl.innerHTML = `
         Tem um pagamento de <strong>${formatEuro(
-          valorEmFalta
+          pagamentoPendente.valor
         )}</strong> referente a
-        <strong>${mesLabel}</strong> com vencimento a
-        <strong>${vencLabel}</strong>.
+        <strong>${pagamentoPendente.mes_label}</strong>.
+        (${pagamentoPendente.numeroExp} explicações agendadas)
       `;
     }
 
+    // DADOS PARA PAGAMENTO
     if (dadosEl) {
       dadosEl.innerHTML = `
         <div class="pag-dados-row">
           <span class="pag-dados-label">Mês:</span>
-          <span class="pag-dados-value">${mesLabel}</span>
+          <span class="pag-dados-value">${pagamentoPendente.mes_label}</span>
         </div>
+
         <div class="pag-dados-row">
           <span class="pag-dados-label">Valor:</span>
-          <span class="pag-dados-value">${formatEuro(valorEmFalta)}</span>
+          <span class="pag-dados-value">${formatEuro(pagamentoPendente.valor)}</span>
         </div>
+
         <div class="pag-dados-row">
-          <span class="pag-dados-label">Referência:</span>
-          <span class="pag-dados-value pag-dados-ref">${
-            campos.referencia(prox) || '—'
-          }</span>
+          <span class="pag-dados-label">Explicações:</span>
+          <span class="pag-dados-value">${pagamentoPendente.numeroExp}</span>
         </div>
+
+
+
         <div class="pag-dados-row">
           <span class="pag-dados-label">IBAN:</span>
-          <span class="pag-dados-value pag-dados-iban">${
-            campos.iban(prox) || 'PT50 0000 0000 0000 0000 0000 0'
-          }</span>
-        </div>
-        <div class="pag-dados-row">
-          <span class="pag-dados-label">MbWay:</span>
-          <span class="pag-dados-value">
-            Referência de pagamento por MB Way associada a esta mensalidade.
+          <span class="pag-dados-value pag-dados-iban">
+            PT50 0023 0000 4571 5712 9719 4
           </span>
         </div>
       `;
     }
 
+    // Dashboard mini-card
+    if (resumoValorEl)
+      resumoValorEl.textContent = formatEuro(pagamentoPendente.valor);
+    if (resumoMesLabelEl)
+      resumoMesLabelEl.textContent = pagamentoPendente.mes_label;
+    if (resumoEstadoEl) resumoEstadoEl.textContent = 'Pendente';
+    if (resumoHintEl)
+      resumoHintEl.textContent = 'Mensalidade por pagar.';
+
+    if (btnDownloadFatura) btnDownloadFatura.disabled = false;
+
+    // Ativar botões
     btnPagarAgora && (btnPagarAgora.disabled = false);
     btnComprovativo && (btnComprovativo.disabled = false);
 
-    // cartão rápido na dashboard
-    if (resumoValorEl) resumoValorEl.textContent = formatEuro(valorEmFalta);
-    if (resumoMesLabelEl) resumoMesLabelEl.textContent = mesLabel;
-    if (resumoEstadoEl) resumoEstadoEl.textContent = 'Pendente';
-    if (resumoHintEl) resumoHintEl.textContent = `Vence a ${vencLabel}.`;
-    if (btnDownloadFatura) btnDownloadFatura.disabled = false;
-
-    // guardar info para o botão "Pagar Agora"
-    window.PAG_PROX_PENDENTE = {
-      ...prox,
-      valor_em_falta: valorEmFalta,
-      mes_label: mesLabel,
-    };
+    // Guardar para botão “Pagar Agora”
+    window.PAG_PROX_PENDENTE = pagamentoPendente;
   } else {
-    // Sem pendentes
+    // Sem mensalidade pendente calculada
+    if (pendenteEl) pendenteEl.textContent = formatEuro(0);
     if (proxVencEl) proxVencEl.textContent = '—';
     if (proxMesEl) proxMesEl.textContent = 'Sem mensalidades pendentes';
 
@@ -1118,10 +1118,7 @@ async function carregarResumoPagamentos() {
         '<p class="pag-empty">Sem pagamentos pendentes neste momento.</p>';
     }
 
-    btnPagarAgora && (btnPagarAgora.disabled = true);
-    btnComprovativo && (btnComprovativo.disabled = false);
-
-    // cartão rápido
+    // dashboard
     if (resumoValorEl) resumoValorEl.textContent = formatEuro(0);
     if (resumoMesLabelEl) resumoMesLabelEl.textContent = 'Próxima mensalidade';
     if (resumoEstadoEl) resumoEstadoEl.textContent = 'Em dia';
@@ -1129,16 +1126,14 @@ async function carregarResumoPagamentos() {
       resumoHintEl.textContent = 'Não tens mensalidades em atraso. 👍';
     if (btnDownloadFatura) btnDownloadFatura.disabled = false;
 
+    btnPagarAgora && (btnPagarAgora.disabled = true);
+    btnComprovativo && (btnComprovativo.disabled = false);
+
     window.PAG_PROX_PENDENTE = null;
   }
 
-  // -------- 2) tabela de histórico --------
-  const historico = pag
-    .filter((p) => estadoLogico(p) === 'pago')
-    .sort((a, b) => {
-      if (a.ano !== b.ano) return b.ano - a.ano;
-      return b.mes - a.mes;
-    });
+  // -------- 5) tabela de histórico (usa só "pagos") --------
+  const historico = pagos; // já está ordenado do mais recente para o mais antigo
 
   if (!historico.length) {
     tbody.innerHTML =
@@ -1151,8 +1146,6 @@ async function carregarResumoPagamentos() {
           ? formatDataCurta(campos.dataPagamento(p))
           : '—';
         const metodo = campos.metodo(p) || '—';
-        const est = 'Pago';
-        const badgeClass = 'pag-badge pag-badge--pago';
 
         return `
           <tr>
@@ -1160,7 +1153,7 @@ async function carregarResumoPagamentos() {
             <td>${formatEuro(campos.valorPrevisto(p))}</td>
             <td>${dataPag}</td>
             <td>${metodo}</td>
-            <td><span class="${badgeClass}">${est}</span></td>
+            <td><span class="pag-badge pag-badge--pago">Pago</span></td>
             <td class="text-right">
               <button class="button secondary" style="padding:4px 8px;font-size:0.8rem;">
                 ⬇
@@ -1172,7 +1165,7 @@ async function carregarResumoPagamentos() {
       .join('');
   }
 
-  // -------- 3) handlers dos botões --------
+  // -------- 6) handlers dos botões --------
   if (btnPagarAgora && !btnPagarAgora._bound) {
     btnPagarAgora._bound = true;
     btnPagarAgora.addEventListener('click', () => {
@@ -1182,22 +1175,12 @@ async function carregarResumoPagamentos() {
         return;
       }
 
-      const mesLabel =
-        prox.mes_label || labelMesAno(prox.ano, prox.mes);
-      const valor = typeof prox.valor_em_falta === 'number'
-        ? prox.valor_em_falta
-        : campos.valorPrevisto(prox) - campos.valorPago(prox);
-
-      const vencRaw = campos.vencimentoRaw(prox);
-      const vencLabel = vencRaw ? formatDataCurta(vencRaw) : '—';
+      const mesLabel = prox.mes_label;
+      const valor = prox.valor;
 
       alert(
         `Pagamento de ${formatEuro(valor)} referente a ${mesLabel}.\n\n` +
-          `Vencimento: ${vencLabel}\n` +
-          `Referência: ${campos.referencia(prox) || '—'}\n` +
-          `IBAN: ${
-            campos.iban(prox) || 'PT50 0000 0000 0000 0000 0000 0'
-          }\n` +
+          `IBAN: PT50 0023 0000 4571 5712 9719 4\n` +
           `Método: MB Way / Transferência`
       );
     });
@@ -1223,7 +1206,7 @@ async function carregarResumoPagamentos() {
   }
 }
 
-</script>
+  </script>
 
 <!-- Toast / feedback visual -->
 <div id="toast" class="toast" aria-live="polite" aria-atomic="true"></div>
