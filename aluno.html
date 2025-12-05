@@ -717,6 +717,33 @@
     })();
 
     // =========================
+    // LOGOUT
+    // =========================
+    document.getElementById('btnLogout')?.addEventListener('click', async () => {
+      try {
+        // terminar sessão supabase
+        const { error } = await supabase.auth.signOut();
+        if (error) {
+          console.error('Erro ao fazer logout:', error);
+        }
+
+        // limpar dados locais
+        window.ALUNO = null;
+
+        // bloquear voltar atrás
+        window.history.pushState(null, '', './login.html');
+        window.location.href = './login.html';
+      } catch (e) {
+        console.error('Erro inesperado no logout:', e);
+      }
+    });
+
+// impedir voltar atrás depois do logout
+window.addEventListener('popstate', () => {
+  window.history.pushState(null, '', './login.html');
+});
+
+    // =========================
     // PRÓXIMAS EXPLICAÇÕES (dashboard)
     // =========================
     async function carregarProximasExplicacoes() {
