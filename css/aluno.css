@@ -1115,3 +1115,191 @@
 .text-right {
   text-align: right;
 }
+/* ==== PAGAMENTOS – estilo tipo shadcn ==== */
+
+.pag-card {
+  margin-bottom: 18px;
+}
+
+/* ALERTA superior (Pagamento pendente) */
+.pag-alert {
+  margin-top: 14px;
+  margin-bottom: 18px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid #fed7aa;
+  background: #fff7ed;
+  font-size: 0.9rem;
+  color: #7c2d12;
+  display: none; /* mostrado via JS */
+}
+
+/* Usa o vermelho da marca nos textos fortes */
+.pag-alert strong {
+  font-weight: 600;
+  color: #b91c1c;
+}
+
+/* ==== Cartões RESUMO (Total Pago / Valor Pendente / Próximo vencimento) ==== */
+
+.pag-resumo-grid {
+  margin-top: 10px;
+  display: grid;
+  gap: 16px;
+}
+
+@media (min-width: 960px) {
+  .pag-resumo-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.pag-resumo-card {
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  padding: 14px 16px;
+}
+
+/* Cabeçalho do cartão + ícone redondo */
+.pag-resumo-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.pag-resumo-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+}
+
+.pag-resumo-svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 1.8;
+  stroke: currentColor;
+  fill: none;
+}
+
+/* Cartão verde (Total Pago) */
+.pag-resumo-card--total {
+  background: #ecfdf3;
+  border-color: #bbf7d0;
+}
+
+/* Cartão laranja/vermelho (Valor Pendente) – aproxima à tua cor #b91c1c */
+.pag-resumo-card--pendente {
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+/* Cores dos ícones */
+.pag-resumo-icon--green {
+  color: #16a34a;
+  background: rgba(22, 163, 74, 0.08);
+}
+
+.pag-resumo-icon--orange {
+  color: #b91c1c;
+  background: rgba(185, 28, 28, 0.08);
+}
+
+.pag-resumo-label {
+  font-size: 0.85rem;
+  color: #6b7280;
+  margin-bottom: 6px;
+}
+
+.pag-resumo-valor {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.pag-resumo-valor--green {
+  color: #16a34a;
+}
+
+.pag-resumo-valor--orange {
+  color: #b91c1c;
+}
+
+.pag-resumo-sub {
+  margin-top: 4px;
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+/* ==== Bloco "Dados para Pagamento" ==== */
+
+.pag-dados {
+  margin-top: 12px;
+  padding: 16px 18px;
+  border-radius: 12px;
+  background: #f9fafb;
+  font-size: 0.9rem;
+}
+
+.pag-dados-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.pag-dados-label {
+  color: #6b7280;
+}
+
+.pag-dados-value {
+  font-weight: 500;
+}
+
+.pag-dados-iban,
+.pag-dados-ref {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
+}
+
+/* Botões em baixo */
+.pag-dados-actions {
+  margin-top: 14px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pag-btn-primary {
+  flex: 1;
+}
+
+.pag-btn-secondary {
+  min-width: 150px;
+}
+
+/* Badge do histórico */
+.pag-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.pag-badge--pago {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.pag-badge--pendente {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.text-right {
+  text-align: right;
+}
