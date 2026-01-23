@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <link rel="stylesheet" href="../../css/base.css" />
+  <link rel="stylesheet" href="../../css/admin.css" />
+  
+  <title>EduSphere — Admin</title>
+  
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="../../public/js/supabaseClient.js"></script>
+</head>
+<body class="home">
+
+  <main class="admin-main">
+    <header style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem;">
+       <h1>Painel de Administração</h1>
+       <button class="button secondary" id="btnLogout">Sair</button>
+    </header>
+
+    <div class="grid2">
+       <div class="admin-card">
+          <h3>Explicadores</h3>
+          <p>Gerir contas de explicadores.</p>
+          <button class="button" style="margin-top:1rem">Ver Explicadores</button>
+       </div>
+       <div class="admin-card">
+          <h3>Sistema</h3>
+          <p>Configurações globais.</p>
+       </div>
+    </div>
+  </main>
+
+  <script>
+    document.getElementById('btnLogout')?.addEventListener('click', async () => {
+       await supabase.auth.signOut();
+       location.href = '../../index.html';
+    });
+    
+    (async () => {
+       const { data: { session } } = await supabase.auth.getSession();
+       if (!session) { location.href = '../../index.html'; return; }
+    })();
+  </script>
+</body>
+</html>

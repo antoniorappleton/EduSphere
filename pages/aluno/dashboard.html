@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <link rel="stylesheet" href="../../css/base.css" />
+  <link rel="stylesheet" href="../../css/aluno.css" />
+  <link rel="stylesheet" href="../../css/explicador.css" />
+  
+  <title>EduSphere — Aluno Dashboard</title>
+  
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="../../public/js/supabaseClient.js"></script>
+</head>
+<body class="home">
+
+  <section class="expl-shell aluno-shell">
+    
+    <!-- MENU LATERAL -->
+    <nav class="expl-sidebar-nav aluno-sidebar-nav">
+      <button class="expl-nav-btn expl-nav-btn--active" onclick="location.href='dashboard.html'">
+        <span class="expl-nav-icon"><svg class="expl-nav-svg" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg></span>
+        <span class="expl-nav-label">Início</span>
+      </button>
+
+      <button class="expl-nav-btn" onclick="location.href='calendario.html'">
+        <span class="expl-nav-icon"><svg class="expl-nav-svg" viewBox="0 0 24 24"><rect x="4" y="5.5" width="16" height="14" rx="2"/><path d="M4 10h16"/><path d="M9 4v3"/><path d="M15 4v3"/></svg></span>
+        <span class="expl-nav-label">Calendário</span>
+      </button>
+
+      <button class="expl-nav-btn" onclick="location.href='pagamentos.html'">
+        <span class="expl-nav-icon"><svg class="expl-nav-svg" viewBox="0 0 24 24"><path d="M7 8h7.5"/><path d="M7 12h6"/><path d="M10 4v16"/></svg></span>
+        <span class="expl-nav-label">Pagamentos</span>
+      </button>
+
+      <div style="margin-top:auto">
+         <button class="expl-nav-btn" id="btnLogoutNav" style="color:#ef4444">
+           <span class="expl-nav-label">Sair</span>
+         </button>
+      </div>
+    </nav>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <div class="expl-main">
+      <div class="expl-body">
+         
+         <!-- HEADER DO ALUNO -->
+          <div class="aluno-header" style="display:flex; justify-content:space-between; align-items:center;">
+            <div class="aluno-header-main">
+              <div class="avatar" id="alunoAvatar">?</div>
+              <div>
+                <h1 id="alunoNomeTitulo">Bem-vindo 👋</h1>
+                <p id="alunoInfo">A carregar…</p>
+              </div>
+            </div>
+            <button id="btnLogoutHeader" style="background:none; border:none; color:#ef4444; cursor:pointer;" title="Sair">
+               <svg style="width:24px;height:24px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            </button>
+          </div>
+
+          <!-- Quick stats (4 cards) -->
+          <div class="expl-kpi-grid aluno-kpi-grid">
+            <!-- Próxima aula -->
+            <article class="expl-card expl-kpi-card" onclick="location.href='calendario.html'" style="cursor:pointer">
+              <p class="expl-kpi-label">Próxima Aula</p>
+              <p class="expl-kpi-value" id="kpiProximaAula">—</p>
+              <p class="expl-section-sub" id="kpiProximaAulaDesc">Vê os detalhes em “Calendário”.</p>
+            </article>
+
+            <!-- Pagamento / resumo rápido -->
+            <article class="expl-card expl-kpi-card card--highlight" id="resumoRapido" onclick="location.href='pagamentos.html'" style="cursor:pointer">
+              <p class="expl-kpi-label">Pagamento</p>
+              <p class="expl-kpi-value" id="resumoValor">—</p>
+              <p class="expl-section-sub">
+                <span id="resumoMesLabel">Estado</span> · 
+                <span class="resumo-badge" id="resumoEstado">—</span>
+              </p>
+            </article>
+          </div>
+
+          <!-- Próximas aulas -->
+          <div class="expl-grid-2" style="margin-top:2rem;">
+            <article class="expl-card">
+              <div class="expl-section-header">
+                <h2 class="expl-subsection-title">Próximas Aulas</h2>
+                <span class="expl-section-link" onclick="location.href='calendario.html'" style="cursor:pointer">Ver todas →</span>
+              </div>
+              <div id="agenda" class="agenda-list">
+                <p>A carregar agenda…</p>
+              </div>
+            </article>
+          </div>
+
+      </div>
+    </div>
+  </section>
+
+  <script>
+     // Logout
+     const handleLogout = async () => {
+        await supabase.auth.signOut();
+        location.href = '../../index.html';
+     };
+     document.getElementById('btnLogoutNav')?.addEventListener('click', handleLogout);
+     document.getElementById('btnLogoutHeader')?.addEventListener('click', handleLogout);
+
+     // Load Data
+     // Load Data
+     (async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) { location.href = '../../index.html'; return; }
+
+        // Get Aluno Profile directly using user_id
+        // Schema: alunos (id, user_id, nome, ...)
+        const { data: aluno, error: errAluno } = await supabase
+          .from('alunos')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .maybeSingle();
+
+        if (errAluno) { console.error(errAluno); return; }
+
+        if (!aluno) {
+           // Admin visiting as Aluno?
+           document.getElementById('alunoNomeTitulo').textContent = "Visitante (Sem Perfil)";
+           document.getElementById('alunoInfo').textContent = "---";
+           document.getElementById('agenda').innerHTML = "<p>Sem perfil de aluno associado.</p>";
+           return;
+        }
+
+        // Populate Header
+        document.getElementById('alunoNomeTitulo').textContent = `Olá, ${aluno.nome}!`;
+        document.getElementById('alunoInfo').textContent = `${aluno.ano_escolaridade || '?'}º Ano`;
+        if (aluno.nome) document.getElementById('alunoAvatar').textContent = aluno.nome[0].toUpperCase();
+
+        // Load Agenda (Brief) from 'explicacoes' table
+        // Schema: explicacoes (id, aluno_id, starts_at, ...)
+        const today = new Date().toISOString();
+        const { data: sessoes, error: errSess } = await supabase
+          .from('explicacoes')
+          .select('*')
+          .eq('aluno_id', aluno.id)
+          .gte('starts_at', today)
+          .order('starts_at', {ascending:true})
+          .limit(3);
+        
+        const container = document.getElementById('agenda');
+        if (sessoes && sessoes.length > 0) {
+           const kpi = document.getElementById('kpiProximaAula');
+           
+           // Update KPI logic
+           const prox = sessoes[0];
+           const d = new Date(prox.starts_at);
+           kpi.textContent = d.toLocaleDateString('pt-PT', {day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'});
+           
+           container.innerHTML = `<ul class="agenda-list">` + sessoes.map(s => {
+              const dateObj = new Date(s.starts_at);
+              return `<li>${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</li>`;
+           }).join('') + `</ul>`;
+        } else {
+           container.innerHTML = '<p>Sem aulas próximas.</p>';
+           document.getElementById('kpiProximaAula').textContent = '—';
+        }
+
+        // Load Payments (Brief)
+        // Schema: pagamentos (aluno_id, estado, valor_previsto, ...)
+        const { data: pags } = await supabase
+           .from('pagamentos')
+           .select('*')
+           .eq('aluno_id', aluno.id)
+           .eq('estado', 'EM_ATRASO')
+           .limit(1);
+        
+        if (pags && pags.length > 0) {
+           document.getElementById('resumoValor').textContent = "€" + pags[0].valor_previsto;
+           document.getElementById('resumoEstado').textContent = "Em Atraso";
+           document.getElementById('resumoEstado').style.background = "#fee2e2";
+           document.getElementById('resumoEstado').style.color = "#991b1b";
+        } else {
+           document.getElementById('resumoValor').textContent = "Regularizado"; 
+           document.getElementById('resumoEstado').textContent = "Em dia";
+           document.getElementById('resumoEstado').style.background = "#dcfce7";
+           document.getElementById('resumoEstado').style.color = "#166534";
+        }
+     })();
+  </script>
+</body>
+</html>
