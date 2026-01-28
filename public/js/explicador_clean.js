@@ -2803,57 +2803,18 @@ async function carregarPerfilAluno(alunoOuId) {
     btnCreate.disabled = false;
   });
 
-  // Funcao para abrir modal de sessao (CRIAR ou EDITAR)
-  function abrirModalSessao(sessao = null) {
-      if (!formSessao) return;
-      msgSessao.textContent = "";
-
-      // 1) Preencher Select de Alunos
-      const selAluno = document.getElementById("sessao-modal-aluno");
-      if (selAluno) {
-          selAluno.innerHTML = '<option value="">-- Selecionar Aluno --</option>';
-          (ALUNOS_CACHE || []).filter(a => a.is_active !== false).forEach(a => {
-             const nome = (a.nome + " " + (a.apelido||"")).trim();
-             const opt = document.createElement("option");
-             opt.value = a.id_aluno;
-             opt.textContent = nome;
-             selAluno.appendChild(opt);
-          });
-
-          // Pre-selecionar
-          if (sessao && (sessao.aluno_id || sessao.id_aluno)) {
-               selAluno.value = sessao.aluno_id || sessao.id_aluno;
-          } else if (ALUNO_ATUAL && ALUNO_ATUAL.id_aluno) {
-               selAluno.value = ALUNO_ATUAL.id_aluno;
-          }
-      }
-
-      // 2) Preencher dados da sessão
-      if (sessao) {
-          SESSAO_ATUAL_ID = sessao.id_sessao;
-          formSessao.data_sessao.value = sessao.data || "";
-          formSessao.hora_inicio.value = sessao.hora_inicio || "";
-          formSessao.hora_fim.value = sessao.hora_fim || "";
-          formSessao.duracao_min.value = sessao.duracao_min || "";
-          formSessao.estado.value = sessao.estado || "AGENDADA";
-          formSessao.observacoes.value = sessao.observacoes || "";
-          btnDeleteSessao.style.display = "inline-flex";
-          btnSaveSessao.textContent = "Atualizar sessão";
-      } else {
-          SESSAO_ATUAL_ID = null;
-          formSessao.reset();
-          // Se selector existe, restaurar a seleção que fizemos acima (o reset limpa)
-          if(selAluno && ALUNO_ATUAL) selAluno.value = ALUNO_ATUAL.id_aluno;
-          btnDeleteSessao.style.display = "none";
-          btnSaveSessao.textContent = "Agendar sessão";
-      }
-
-      openModal(modalSessao);
-  }
-
   // Botão "Agendar explicação" no topo da secção Calendário
   btnAgendarExplicacao?.addEventListener("click", () => {
-    // Agora permitimos abrir sem aluno selecionado (usará o seletor)
+    if (!ALUNO_ATUAL || !ALUNO_ATUAL.id_aluno) {
+      alert("Seleciona primeiro um aluno na lista de Alunos para agendar uma sessão.");
+
+      // muda para o tab Alunos automaticamente
+      const tabAlunos = document.querySelector('.expl-nav-btn[data-target="alunos"]');
+      tabAlunos?.click();
+      return;
+    }
+
+    // abre o modal de sessão em modo "nova sessão"
     abrirModalSessao(null);
   });
 
@@ -2862,16 +2823,12 @@ async function carregarPerfilAluno(alunoOuId) {
     ev.preventDefault();
     msgSessao.textContent = "";
 
-    const f = ev.target;
-    
-    // Obter ID do aluno do seletor OU do contexto atual
-    const selAluno = document.getElementById("sessao-modal-aluno");
-    let alunoId = selAluno ? selAluno.value : (ALUNO_ATUAL?.id_aluno);
-
-    if (!alunoId) {
-      msgSessao.textContent = "Selecione um aluno.";
+    if (!ALUNO_ATUAL || !ALUNO_ATUAL.id_aluno) {
+      msgSessao.textContent = "Nenhum aluno selecionado.";
       return;
     }
+
+    const f = ev.target;
 
     const data = f.data_sessao.value;
     if (!data) {
@@ -2881,7 +2838,7 @@ async function carregarPerfilAluno(alunoOuId) {
 
     const payload = {
       id_sessao: SESSAO_ATUAL_ID || undefined,
-      aluno_id: alunoId,
+      aluno_id: ALUNO_ATUAL.id_aluno,
       data,
       hora_inicio: f.hora_inicio.value || null,
       hora_fim: f.hora_fim.value || null,

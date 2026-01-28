@@ -1,4 +1,4 @@
-Ôªø
+
 // ---------- helper DOM ----------
 const $ = (s) => document.querySelector(s);
 
@@ -10,7 +10,7 @@ const accessToken = session?.access_token;
 if (!accessToken) {
   return {
     data: null,
-    error: { message: 'Sem sess√É¬£o v√É¬°lida (faz login primeiro).', status: 401 },
+    error: { message: 'Sem sess√£o v√°lida (faz login primeiro).', status: 401 },
   };
 }
 
@@ -42,9 +42,9 @@ let chartEvolucaoAnual = null;   // <-- novo
 let chartPrevistoPago = null;
 let chartPagamentosPorAluno = null;
 let SESSOES_EXPLICADOR = [];
-let semanaOffset = 0; // 0 = semana atual, -1 = anterior, +1 = pr√É¬≥xima
+let semanaOffset = 0; // 0 = semana atual, -1 = anterior, +1 = pr√≥xima
 
-// novos gr√É¬°ficos da sec√É¬ß√É¬£o Relat√É¬≥rios
+// novos gr√°ficos da sec√ß√£o Relat√≥rios
 let chartFatMesCorrente = null;
 let chartFatAlunoMesCorrente = null;
 let chartSessoesMensais = null;
@@ -124,7 +124,7 @@ let ALUNOS_CACHE     = [];
 let PAGAMENTOS_CACHE = [];
 let ALUNO_ATUAL      = null;
 let SESSAO_ATUAL_ID  = null;
-  // Filtros atuais da sec√É¬ß√É¬£o de fatura√É¬ß√É¬£o
+  // Filtros atuais da sec√ß√£o de fatura√ß√£o
 let FAT_ANO_SELEC = null;
 let FAT_MES_SELEC = null;
 let SESSOES_ALUNO_ATUAL = [];
@@ -143,9 +143,9 @@ function preencherPerfilAlunoBasico(aluno) {
   const elStatus = document.getElementById("alunoStatus");
 
   if (elNome)   elNome.textContent = nomeCompleto || "Aluno";
-  if (elAno)    elAno.textContent  = aluno.ano ? `${aluno.ano}√Ç¬∫ Ano` : "√¢‚Ç¨‚Äù";
-  if (elEmail)  elEmail.textContent = aluno.email || "√¢‚Ç¨‚Äù";
-  if (elTele)   elTele.textContent  = aluno.telemovel || "√¢‚Ç¨‚Äù";
+  if (elAno)    elAno.textContent  = aluno.ano ? `${aluno.ano}¬∫ Ano` : "‚Äî";
+  if (elEmail)  elEmail.textContent = aluno.email || "‚Äî";
+  if (elTele)   elTele.textContent  = aluno.telemovel || "‚Äî";
 
   if (elAvatar) {
     const ini =
@@ -164,14 +164,14 @@ function preencherPerfilAlunoBasico(aluno) {
 
 function getInicioSemana(date) {
   const d = new Date(date);
-  const day = d.getDay(); // 0=Dom,1=Seg,...6=S√É¬°b
-  const diff = (day + 6) % 7; // queremos come√É¬ßar em SEG
+  const day = d.getDay(); // 0=Dom,1=Seg,...6=S√°b
+  const diff = (day + 6) % 7; // queremos come√ßar em SEG
   d.setDate(d.getDate() - diff);
   d.setHours(0, 0, 0, 0);
   return d;
 }
 
-const NOMES_DIAS_CURTOS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'S√É¬°b', 'Dom'];
+const NOMES_DIAS_CURTOS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'S√°b', 'Dom'];
 
 // ---------- helpers supabase ----------
 async function hasRole(uid, roleName) {
@@ -202,7 +202,7 @@ function setState({ loading = false, isExpl = false, isAuthed = false }) {
   if (loading) {
     if(loginBox) loginBox.style.display = 'block';
     if(panel) panel.style.display    = 'none';
-    if(msgLogin) msgLogin.textContent   = 'A verificar sess√É¬£o...';
+    if(msgLogin) msgLogin.textContent   = 'A verificar sess√£o...';
     if(btnLogout) btnLogout.style.display = 'none';
     if(headerNav) headerNav.style.display = 'none';
     return;
@@ -216,7 +216,7 @@ function setState({ loading = false, isExpl = false, isAuthed = false }) {
     const mainAuth = document.querySelector('main.auth');
     if(mainAuth) mainAuth.style.display = 'block';
   } else {
-    // Caso de exce√É¬ß√É¬£o ou logout, mas que deve ser tratado pelo auth.js na verdade
+    // Caso de exce√ß√£o ou logout, mas que deve ser tratado pelo auth.js na verdade
     // Mantemos aqui caso o utilizador entre diretamente
     if(loginBox) loginBox.style.display = 'block';
     if(panel) panel.style.display    = 'none';
@@ -234,7 +234,7 @@ function updateQuotaUI(total) {
 
   if (!max) {
     if(elLimite) elLimite.textContent    = 'Sem limite';
-    if(elRestantes) elRestantes.textContent = '√¢‚Ç¨‚Äù';
+    if(elRestantes) elRestantes.textContent = '‚Äî';
     btnCreate && (btnCreate.disabled = false);
     return;
   }
@@ -265,14 +265,14 @@ function renderDashboardAlunos() {
 
   if (!totalAtivos) {
     grid.innerHTML =
-      '<p class="expl-section-sub">Ainda n√É¬£o tens alunos ativos registados.</p>';
+      '<p class="expl-section-sub">Ainda n√£o tens alunos ativos registados.</p>';
     return;
   }
 
-  // S√É¬≥ mostramos at√É¬© 3, como no mock
+  // S√≥ mostramos at√© 3, como no mock
   const top3 = alunosAtivos.slice(0, 3);
 
-  // helper para mapear estado √¢‚Ä†‚Äô label + classe de badge
+  // helper para mapear estado ‚Üí label + classe de badge
   function getEstadoInfo(rawEstado) {
     const e = (rawEstado || "").toString().trim().toUpperCase();
 
@@ -300,10 +300,10 @@ function renderDashboardAlunos() {
   grid.innerHTML = top3
     .map((a) => {
       const nome = [a.nome, a.apelido].filter(Boolean).join(" ") || "Aluno";
-      const anoLabel = a.ano ? `${a.ano}√Ç¬∫ Ano` : "√¢‚Ç¨‚Äù";
+      const anoLabel = a.ano ? `${a.ano}¬∫ Ano` : "‚Äî";
 
-      // Pr√É¬≥xima explica√É¬ß√É¬£o
-      let proxExpLabel = "Nenhuma explica√É¬ß√É¬£o agendada";
+      // Pr√≥xima explica√ß√£o
+      let proxExpLabel = "Nenhuma explica√ß√£o agendada";
       if (a.proxima_sessao_data) {
         const d = new Date(a.proxima_sessao_data);
         if (!isNaN(d.getTime())) {
@@ -316,13 +316,13 @@ function renderDashboardAlunos() {
           });
           const hora = (a.proxima_sessao_hora || "").slice(0, 5);
           proxExpLabel = hora
-            ? `${dataNum} (${diaSemana}) √Ç¬∑ ${hora}`
+            ? `${dataNum} (${diaSemana}) ¬∑ ${hora}`
             : `${dataNum} (${diaSemana})`;
         }
       }
 
-      // pr√É¬≥xima mensalidade
-      let proxMensLabel = "√¢‚Ç¨‚Äù";
+      // pr√≥xima mensalidade
+      let proxMensLabel = "‚Äî";
       if (a.proxima_mensalidade) {
         const d = new Date(a.proxima_mensalidade);
         if (!isNaN(d.getTime())) {
@@ -356,7 +356,7 @@ function renderDashboardAlunos() {
                   <h3 class="dash-aluno-card__name">${nome}</h3>
                   <p class="dash-aluno-card__year">${anoLabel}</p>
                   <p class="aluno-card__phone">
-                    Telem√É¬≥vel: <span>${a.telemovel || "√¢‚Ç¨‚Äù"}</span>
+                    Telem√≥vel: <span>${a.telemovel || "‚Äî"}</span>
                   </p>
                 </div>
               </div>
@@ -366,12 +366,12 @@ function renderDashboardAlunos() {
               </span>
             </div>
 
-            <p class="dash-aluno-card__label">Pr√É¬≥xima explica√É¬ß√É¬£o:</p>
+            <p class="dash-aluno-card__label">Pr√≥xima explica√ß√£o:</p>
             <p class="dash-aluno-card__date">${proxExpLabel}</p>
 
             <div class="aluno-card__mensalidade-row">
               <div>
-                <p class="dash-aluno-card__label">Mensalidade (m√É¬™s atual):</p>
+                <p class="dash-aluno-card__label">Mensalidade (m√™s atual):</p>
                 <span class="${badgeClass}">
                   ${estadoLabel}
                 </span>
@@ -401,7 +401,7 @@ function renderDashboardAlunos() {
               </button>
             </div>
 
-            <p class="dash-aluno-card__label">Pr√É¬≥xima mensalidade:</p>
+            <p class="dash-aluno-card__label">Pr√≥xima mensalidade:</p>
             <p class="dash-aluno-card__date">${proxMensLabel}</p>
           </div>
 
@@ -421,7 +421,7 @@ function renderDashboardAlunos() {
               data-action="perfil"
               data-id-aluno="${a.id_aluno}"
             >
-              Informa√É¬ß√É¬µes r√É¬°pidas
+              Informa√ß√µes r√°pidas
             </button>
           </div>
         </article>
@@ -429,7 +429,7 @@ function renderDashboardAlunos() {
     })
     .join("");
 
-  // --- BOT√É‚Ä¢ES "Ver perfil" / "Informa√É¬ß√É¬µes r√É¬°pidas" ---
+  // --- BOT√ïES "Ver perfil" / "Informa√ß√µes r√°pidas" ---
   grid
     .querySelectorAll(".aluno-card__btn")
     .forEach((btn) => {
@@ -442,7 +442,7 @@ function renderDashboardAlunos() {
         );
         if (!aluno) return;
 
-        // √¢≈æ≈ì Ver perfil completo
+        // ‚ûú Ver perfil completo
         if (acao === "ver") {
           preencherPerfilAlunoBasico(aluno);
           mostrarPainelAluno(aluno);
@@ -450,7 +450,7 @@ function renderDashboardAlunos() {
           return;
         }
 
-        // √¢≈æ≈ì Informa√É¬ß√É¬µes r√É¬°pidas
+        // ‚ûú Informa√ß√µes r√°pidas
         if (acao === "perfil") {
           mostrarPainelAluno(aluno);
           ativarScreen("alunos");
@@ -507,7 +507,7 @@ function renderDashboardAlunos() {
             );
             btn.dataset.avisado = String(avisadoAtual);
 
-            alert("N√É¬£o foi poss√É¬≠vel atualizar o estado de aviso.");
+            alert("N√£o foi poss√≠vel atualizar o estado de aviso.");
             return;
           }
 
@@ -527,9 +527,9 @@ function renderAlunosList() {
   const alunos = ALUNOS_CACHE || [];
   updateQuotaUI(alunos.length);
 
-  // Se n√É¬£o houver alunos
+  // Se n√£o houver alunos
   if (alunos.length === 0) {
-    alunosGrid.innerHTML = '<p class="text-muted">Ainda n√É¬£o tens alunos registados.</p>';
+    alunosGrid.innerHTML = '<p class="text-muted">Ainda n√£o tens alunos registados.</p>';
     return;
   }
 
@@ -560,9 +560,9 @@ function renderAlunosList() {
   alunosGrid.innerHTML = alunos
     .map((a) => {
       const nome = [a.nome, a.apelido].filter(Boolean).join(" ") || "Aluno";
-      const anoLabel = a.ano ? `${a.ano}√Ç¬∫ Ano` : "√¢‚Ç¨‚Äù";
-      const tel = a.telemovel || "√¢‚Ç¨‚Äù";
-      let proxExpLabel = "√¢‚Ç¨‚Äù";
+      const anoLabel = a.ano ? `${a.ano}¬∫ Ano` : "‚Äî";
+      const tel = a.telemovel || "‚Äî";
+      let proxExpLabel = "‚Äî";
       if (a.proxima_sessao_data) {
         const d = new Date(a.proxima_sessao_data);
         if (!isNaN(d.getTime())) {
@@ -576,13 +576,13 @@ function renderAlunosList() {
 
           const hora = (a.proxima_sessao_hora || "").slice(0, 5);
           proxExpLabel = hora
-            ? `${dataNum} (${diaSemana}) √Ç¬∑ ${hora}`
+            ? `${dataNum} (${diaSemana}) ¬∑ ${hora}`
             : `${dataNum} (${diaSemana})`;
         }
       }
 
-      // pr√É¬≥xima mensalidade
-      let proxMensLabel = "√¢‚Ç¨‚Äù";
+      // pr√≥xima mensalidade
+      let proxMensLabel = "‚Äî";
       if (a.proxima_mensalidade) {
         const d = new Date(a.proxima_mensalidade);
         if (!isNaN(d.getTime())) {
@@ -616,7 +616,7 @@ function renderAlunosList() {
                   <h3 class="dash-aluno-card__name">${nome}</h3>
                   <p class="dash-aluno-card__year">${anoLabel}</p>
                   <p class="aluno-card__phone">
-                    Telem√É¬≥vel: <span>${tel}</span>
+                    Telem√≥vel: <span>${tel}</span>
                   </p>
                 </div>
               </div>
@@ -626,12 +626,12 @@ function renderAlunosList() {
               </span>
             </div>
 
-            <p class="dash-aluno-card__label">Pr√É¬≥xima explica√É¬ß√É¬£o:</p>
+            <p class="dash-aluno-card__label">Pr√≥xima explica√ß√£o:</p>
             <p class="dash-aluno-card__date">${proxExpLabel}</p>
 
             <div class="aluno-card__mensalidade-row">
               <div>
-                <p class="dash-aluno-card__label">Mensalidade (m√É¬™s atual):</p>
+                <p class="dash-aluno-card__label">Mensalidade (m√™s atual):</p>
                 <span class="${badgeClass}">
                   ${estadoLabel}
                 </span>
@@ -661,7 +661,7 @@ function renderAlunosList() {
               </button>
             </div>
 
-            <p class="dash-aluno-card__label">Pr√É¬≥xima mensalidade:</p>
+            <p class="dash-aluno-card__label">Pr√≥xima mensalidade:</p>
             <p class="dash-aluno-card__date">${proxMensLabel}</p>
           </div>
 
@@ -681,7 +681,7 @@ function renderAlunosList() {
               data-action="perfil"
               data-id-aluno="${a.id_aluno}"
             >
-              Informa√É¬ß√É¬µes r√É¬°pidas
+              Informa√ß√µes r√°pidas
             </button>
           </div>
         </article>
@@ -689,7 +689,7 @@ function renderAlunosList() {
     })
     .join("");
 
-  // --- BOT√É‚Ä¢ES "Ver perfil" / "Informa√É¬ß√É¬µes r√É¬°pidas" ---
+  // --- BOT√ïES "Ver perfil" / "Informa√ß√µes r√°pidas" ---
   alunosGrid
     .querySelectorAll(".aluno-card__btn")
     .forEach((btn) => {
@@ -702,7 +702,7 @@ function renderAlunosList() {
         );
         if (!aluno) return;
 
-        // √¢≈æ≈ì Ver perfil completo
+        // ‚ûú Ver perfil completo
         if (acao === "ver") {
           preencherPerfilAlunoBasico(aluno);
           mostrarPainelAluno(aluno);
@@ -710,7 +710,7 @@ function renderAlunosList() {
           return;
         }
 
-        // √¢≈æ≈ì Informa√É¬ß√É¬µes r√É¬°pidas
+        // ‚ûú Informa√ß√µes r√°pidas
         if (acao === "perfil") {
           mostrarPainelAluno(aluno);
           ativarScreen("alunos");
@@ -767,7 +767,7 @@ function renderAlunosList() {
             );
             btn.dataset.avisado = String(avisadoAtual);
 
-            alert("N√É¬£o foi poss√É¬≠vel atualizar o estado de aviso.");
+            alert("N√£o foi poss√≠vel atualizar o estado de aviso.");
             return;
           }
 
@@ -780,7 +780,7 @@ function renderAlunosList() {
     });
 }
 
-// Devolve { ano, mes, mesLabel } garantindo que escolhemos um m√É¬™s com dados
+// Devolve { ano, mes, mesLabel } garantindo que escolhemos um m√™s com dados
 function getMesAnoSelecionadosOuUltimoComDados() {
   const selMes = document.getElementById("fat-filtro-mes");
   const selAno = document.getElementById("fat-filtro-ano");
@@ -794,7 +794,7 @@ function getMesAnoSelecionadosOuUltimoComDados() {
   if (selMes) selMes.value = String(mes);
 
   const nomesMeses = [
-    "Janeiro", "Fevereiro", "Mar√É¬ßo", "Abril", "Maio", "Junho",
+    "Janeiro", "Fevereiro", "Mar√ßo", "Abril", "Maio", "Junho",
     "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
   ];
   const mesLabel = nomesMeses[mes - 1] || String(mes);
@@ -851,7 +851,7 @@ const pagamentosDoMes = new Map();
     falta,
     estado: falta === 0 && pago > 0 ? "Pago" : "Pendente",
     mes: mesLabel,
-    avisado: "√¢‚Ç¨‚Äù",
+    avisado: "‚Äî",
   };
 
   if (falta > 0) {
@@ -902,7 +902,7 @@ function renderResumoMensal() {
   // Pendentes
   if (!pendentes.length) {
     tbodyPend.innerHTML =
-      '<tr><td colspan="7">Ainda n√£o existem mensalidades em falta neste m√™s.</td></tr>';
+      '<tr><td colspan="7">Ainda n„o existem mensalidades em falta neste mÍs.</td></tr>';
   } else {
     const rowsPend = pendentes
       .map(
@@ -910,9 +910,9 @@ function renderResumoMensal() {
       <tr>
         <td>${r.aluno}</td>
         <td>${r.mes}</td>
-        <td>‚Ç¨ ${r.previsto.toFixed(2)}</td>
-        <td>‚Ç¨ ${r.pago.toFixed(2)}</td>
-        <td>‚Ç¨ ${r.falta.toFixed(2)}</td>
+        <td>Ä ${r.previsto.toFixed(2)}</td>
+        <td>Ä ${r.pago.toFixed(2)}</td>
+        <td>Ä ${r.falta.toFixed(2)}</td>
         <td>${r.estado}</td>
         <td>${r.avisado}</td>
       </tr>
@@ -924,9 +924,9 @@ function renderResumoMensal() {
     <tr>
       <td><strong>Total</strong></td>
       <td>${mesLabel}</td>
-      <td><strong>‚Ç¨ ${totalPrevistoPend.toFixed(2)}</strong></td>
+      <td><strong>Ä ${totalPrevistoPend.toFixed(2)}</strong></td>
       <td></td>
-      <td><strong>‚Ç¨ ${totalFaltaPend.toFixed(2)}</strong></td>
+      <td><strong>Ä ${totalFaltaPend.toFixed(2)}</strong></td>
       <td colspan="2"></td>
     </tr>
   `;
@@ -937,7 +937,7 @@ function renderResumoMensal() {
   // Pagas
   if (!pagas.length) {
     tbodyPagas.innerHTML =
-      '<tr><td colspan="5">Ainda n√£o existem mensalidades pagas neste m√™s.</td></tr>';
+      '<tr><td colspan="5">Ainda n„o existem mensalidades pagas neste mÍs.</td></tr>';
   } else {
     const rowsPagas = pagas
       .map(
@@ -945,8 +945,8 @@ function renderResumoMensal() {
       <tr>
         <td>${r.aluno}</td>
         <td>${r.mes}</td>
-        <td>‚Ç¨ ${r.pago.toFixed(2)}</td>
-        <td>‚Ç¨ ${r.previsto.toFixed(2)}</td>
+        <td>Ä ${r.pago.toFixed(2)}</td>
+        <td>Ä ${r.previsto.toFixed(2)}</td>
         <td>${r.estado}</td>
       </tr>
     `
@@ -957,8 +957,8 @@ function renderResumoMensal() {
     <tr>
       <td><strong>Total</strong></td>
       <td>${mesLabel}</td>
-      <td><strong>‚Ç¨ ${totalPagoPagas.toFixed(2)}</strong></td>
-      <td><strong>‚Ç¨ ${totalPrevistoPagas.toFixed(2)}</strong></td>
+      <td><strong>Ä ${totalPagoPagas.toFixed(2)}</strong></td>
+      <td><strong>Ä ${totalPrevistoPagas.toFixed(2)}</strong></td>
       <td></td>
     </tr>
   `;
@@ -983,7 +983,7 @@ function atualizarGraficosPagamentos() {
   const totalPago     = todos.reduce((acc, r) => acc + (r.pago || 0), 0);
   const totalFalta    = Math.max(totalPrevisto - totalPago, 0);
 
-  // --- Gr√°fico 1: Previsto vs Pago vs Em falta ---
+  // --- Gr·fico 1: Previsto vs Pago vs Em falta ---
   if (chartPrevistoPago) {
     chartPrevistoPago.destroy();
   }
@@ -1002,7 +1002,7 @@ function atualizarGraficosPagamentos() {
       },
       options: {
         responsive: true,
-        maintainAspectRatio: false,   // < importante com CSS que vamos p√¥r
+        maintainAspectRatio: false,   // < importante com CSS que vamos pÙr
         plugins: {
           legend: { display: false },
         },
@@ -1013,7 +1013,7 @@ function atualizarGraficosPagamentos() {
     });
   }
 
-  // --- Gr√°fico 2: Pagamentos por aluno ---
+  // --- Gr·fico 2: Pagamentos por aluno ---
   if (chartPagamentosPorAluno) {
     chartPagamentosPorAluno.destroy();
   }
@@ -1078,7 +1078,7 @@ function atualizarGraficoEvolucaoAnual() {
     realizado[idx] += Number(p.valor_pago || 0);
   });
 
-  // 2) PREVIS√ÉO AUTOM√ÅTICA / CORRE√á√ÉO COM BASE NA MENSALIDADE
+  // 2) PREVIS√O AUTOM¡TICA / CORRE«√O COM BASE NA MENSALIDADE
   const mensalBase = (() => {
     let tot = 0;
     (ALUNOS_CACHE || []).forEach(a => {
@@ -1094,29 +1094,29 @@ function atualizarGraficoEvolucaoAnual() {
 
   if (mensalBase > 0) {
     for (let i = 0; i < 12; i++) {
-      // usa sempre a mensalidade como m√≠nimo do previsto
+      // usa sempre a mensalidade como mÌnimo do previsto
       if (previsto[i] < mensalBase) {
         previsto[i] = mensalBase;
       }
     }
   }
 
-  // 3) Destruir gr√°fico antigo
+  // 3) Destruir gr·fico antigo
   if (window.chartEvolucaoAnual) window.chartEvolucaoAnual.destroy();
 
-  // 4) Criar gr√°fico final
+  // 4) Criar gr·fico final
   window.chartEvolucaoAnual = new Chart(ctx, {
     type: "bar",
     data: {
       labels: nomesMesesCurtos,
       datasets: [
         {
-          label: "Previsto (‚Ç¨)",
+          label: "Previsto (Ä)",
           data: previsto,
           backgroundColor: "#3b82f6"
         },
         {
-          label: "Realizado (‚Ç¨)",
+          label: "Realizado (Ä)",
           data: realizado,
           backgroundColor: "#ec4899"
         }
@@ -1236,7 +1236,7 @@ function renderGraficoSessoesMensais() {
   });
 }
 
-// ---------- Gr√°fico m√™s corrente --------- //
+// ---------- Gr·fico mÍs corrente --------- //
 let chartFatMesCorr = null;
 
 async function renderGraficoFatMesCorrente() {
@@ -1260,14 +1260,14 @@ async function renderGraficoFatMesCorrente() {
       return;
     }
 
-    // Guarda para outros gr√°ficos / tabelas
+    // Guarda para outros gr·ficos / tabelas
     PAGAMENTOS_MES = data || [];
 
     // ---- AGRUPAR POR ALUNO (1 entrada por aluno) ----
     const porAluno = new Map();
 
     (PAGAMENTOS_MES || []).forEach((r) => {
-      // chave: idealmente o id_aluno; se n√£o houver, usa o nome
+      // chave: idealmente o id_aluno; se n„o houver, usa o nome
       const chave =
         r.id_aluno != null
           ? String(r.id_aluno)
@@ -1300,7 +1300,7 @@ async function renderGraficoFatMesCorrente() {
       porAluno.set(chave, entry);
     });
 
-    // ---- ARRAYS FINAIS PARA O GR√ÅFICO ----
+    // ---- ARRAYS FINAIS PARA O GR¡FICO ----
     const labels    = [];
     const previsto  = [];
     const realizado = [];
@@ -1311,7 +1311,7 @@ async function renderGraficoFatMesCorrente() {
       realizado.push(val.pago);
     });
 
-    // ---- DESENHAR GR√ÅFICO ----
+    // ---- DESENHAR GR¡FICO ----
     if (window.chartFatMesCorrente) {
       window.chartFatMesCorrente.destroy();
     }
@@ -1322,12 +1322,12 @@ async function renderGraficoFatMesCorrente() {
         labels,
         datasets: [
           {
-            label: "Previsto (‚Ç¨)",
+            label: "Previsto (Ä)",
             data: previsto,
             backgroundColor: "#3b82f6", // azul
           },
           {
-            label: "Pago (‚Ç¨)",
+            label: "Pago (Ä)",
             data: realizado,
             backgroundColor: "#ec4899", // rosa
           },
@@ -1344,7 +1344,7 @@ async function renderGraficoFatMesCorrente() {
   }
 
 
-  // ---------- FATURA√á√ÉO: INICIAR FILTROS (M√äS/ANO) ----------
+  // ---------- FATURA«√O: INICIAR FILTROS (M S/ANO) ----------
   function initFiltrosFaturacao() {
     if (!selFatMes || !selFatAno) return;
 
@@ -1352,7 +1352,7 @@ async function renderGraficoFatMesCorrente() {
     const anoSistema   = agora.getFullYear();
     const mesSistema   = agora.getMonth() + 1;
 
-    // Se ainda n√£o houver sele√ß√£o, usar m√™s/ano atuais
+    // Se ainda n„o houver seleÁ„o, usar mÍs/ano atuais
     if (!FAT_ANO_SELEC) FAT_ANO_SELEC = anoSistema;
     if (!FAT_MES_SELEC) FAT_MES_SELEC = mesSistema;
 
@@ -1375,7 +1375,7 @@ async function renderGraficoFatMesCorrente() {
     selFatMes.value = String(FAT_MES_SELEC);
     selFatAno.value = String(FAT_ANO_SELEC);
 
-    // Listeners (s√≥ ligamos uma vez)
+    // Listeners (sÛ ligamos uma vez)
     if (!selFatMes.dataset.bound) {
       selFatMes.addEventListener("change", () => {
         FAT_MES_SELEC = Number(selFatMes.value) || mesSistema;
@@ -1393,7 +1393,7 @@ async function renderGraficoFatMesCorrente() {
     }
   }
 
-  // ---------- RELAT√ìRIOS: RESUMOS NO CART√ÉO ----------
+  // ---------- RELAT”RIOS: RESUMOS NO CART√O ----------
   function updateResumoRelatorios({
     previstoMesAtual = 0,
     realizadoMesAtual = 0,
@@ -1408,20 +1408,20 @@ async function renderGraficoFatMesCorrente() {
 
     if (elMensal) {
       elMensal.textContent =
-        `Este m√™s: ‚Ç¨ ${realizadoMesAtual.toFixed(2)} recebidos ` +
-        `de ‚Ç¨ ${previstoMesAtual.toFixed(2)} previstos  ` +
-        `‚Ç¨ ${pendenteTotal.toFixed(2)} em falta.`;
+        `Este mÍs: Ä ${realizadoMesAtual.toFixed(2)} recebidos ` +
+        `de Ä ${previstoMesAtual.toFixed(2)} previstos  ` +
+        `Ä ${pendenteTotal.toFixed(2)} em falta.`;
     }
 
     if (elTend) {
       elTend.textContent =
-        `Ano atual: ‚Ç¨ ${realizadoAnoAtual.toFixed(2)} faturados ` +
-        `de ‚Ç¨ ${previstoAnoAtual.toFixed(2)} previstos.`;
+        `Ano atual: Ä ${realizadoAnoAtual.toFixed(2)} faturados ` +
+        `de Ä ${previstoAnoAtual.toFixed(2)} previstos.`;
     }
 
     if (elAlunos) {
       if (nAlunosAtivos <= 0) {
-        elAlunos.textContent = "Ainda n√£o tens alunos ativos registados.";
+        elAlunos.textContent = "Ainda n„o tens alunos ativos registados.";
       } else if (nAlunosAtivos === 1) {
         elAlunos.textContent = "A acompanhar 1 aluno ativo.";
       } else {
@@ -1430,7 +1430,7 @@ async function renderGraficoFatMesCorrente() {
     }
   }
 
-  // ------- KPIs Report cart√µes -----------
+  // ------- KPIs Report cartıes -----------
   function updateRelatorioKpis({
       previstoMesAtual = 0,
       realizadoMesAtual = 0,
@@ -1448,7 +1448,7 @@ async function renderGraficoFatMesCorrente() {
     if (elTot)    elTot.textContent    = String(total);
     if (elTotSub) elTotSub.textContent = ativos === 1 ? "1 ativo" : `${ativos} ativos`;
 
-    // 2) Taxa de reten√ß√£o = % da mensalidade em falta (m√™s atual)
+    // 2) Taxa de retenÁ„o = % da mensalidade em falta (mÍs atual)
     const elRet = document.getElementById("rel-kpi-retencao");
     if (elRet) {
       let perc = 0;
@@ -1458,16 +1458,16 @@ async function renderGraficoFatMesCorrente() {
       elRet.textContent = `${perc.toFixed(1)}%`;
     }
 
-    // 3) Fatura√ß√£o m√©dia / m√™s  usar janela de 12 meses que pass√°mos
-    const mesesConsiderados = 12; // porque j√° resumimos √∫ltimos 12
+    // 3) FaturaÁ„o mÈdia / mÍs  usar janela de 12 meses que pass·mos
+    const mesesConsiderados = 12; // porque j· resumimos ˙ltimos 12
     const mediaMes = mesesConsiderados > 0
       ? realizadoAnoAtual / mesesConsiderados
       : 0;
 
     const elFatMed = document.getElementById("rel-kpi-fat-media");
-    if (elFatMed) elFatMed.textContent = `‚Ç¨ ${mediaMes.toFixed(0)}/m√™s`;
+    if (elFatMed) elFatMed.textContent = `Ä ${mediaMes.toFixed(0)}/mÍs`;
 
-    // 4) Crescimento vs m√™s anterior (usa PAGAMENTOS_CACHE)
+    // 4) Crescimento vs mÍs anterior (usa PAGAMENTOS_CACHE)
     const hoje       = new Date();
     const anoAtual   = hoje.getFullYear();
     const mesAtual   = hoje.getMonth() + 1;
@@ -1529,21 +1529,21 @@ async function renderGraficoFatMesCorrente() {
       let previstoUltimos12     = 0;
       let realizadoUltimos12    = 0;
 
-      // mapa auxiliar: total pago por aluno no m√™s atual
+      // mapa auxiliar: total pago por aluno no mÍs atual
       const pagoMesPorAluno = new Map();
 
       (PAGAMENTOS_CACHE || []).forEach((p) => {
         const previsto = Number(p.valor_previsto) || 0;
         const pago     = Number(p.valor_pago) || 0;
 
-        // janela √∫ltimos 12 meses (para m√©dia e ano atual)
+        // janela ˙ltimos 12 meses (para mÈdia e ano atual)
         const diffMeses = (p.ano - anoAtual) * 12 + (p.mes - mesAtual);
         if (diffMeses >= -11 && diffMeses <= 0) {
           previstoUltimos12  += previsto;
           realizadoUltimos12 += pago;
         }
 
-        // pagos do m√™s atual (independente do previsto na view)
+        // pagos do mÍs atual (independente do previsto na view)
         if (p.ano === anoAtual && p.mes === mesAtual && p.id_aluno) {
           realizadoMesAtual += pago;
           const key = String(p.id_aluno);
@@ -1567,7 +1567,7 @@ async function renderGraficoFatMesCorrente() {
         pendenteTotalMesAtual += falta;
       });
 
-      // contar quantos alunos t√™m falta > 0
+      // contar quantos alunos tÍm falta > 0
       let nAlunosPend = 0;
       (ALUNOS_CACHE || []).forEach((a) => {
         if (a.is_active === false) return;
@@ -1584,12 +1584,12 @@ async function renderGraficoFatMesCorrente() {
 
       // ---- Cards na dashboard ----
       if (cardTotalPrev) {
-        cardTotalPrev.textContent = `‚Ç¨ ${previstoMesAtual.toFixed(2)}`;
+        cardTotalPrev.textContent = `Ä ${previstoMesAtual.toFixed(2)}`;
       }
 
       if (cardTotalMes) {
         cardTotalMes.textContent =
-          `‚Ç¨ ${realizadoMesAtual.toFixed(2)} de ‚Ç¨ ${previstoMesAtual.toFixed(2)}`;
+          `Ä ${realizadoMesAtual.toFixed(2)} de Ä ${previstoMesAtual.toFixed(2)}`;
       }
 
       if (cardPendentes) {
@@ -1601,10 +1601,10 @@ async function renderGraficoFatMesCorrente() {
             : `${nAlunosPend} alunos em falta`;
 
         cardPendentes.textContent =
-          `‚Ç¨ ${pendenteTotalMesAtual.toFixed(2)} (${labelAlunos})`;
+          `Ä ${pendenteTotalMesAtual.toFixed(2)} (${labelAlunos})`;
       }
 
-      // ---- Resumo + KPIs dos relat√≥rios ----
+      // ---- Resumo + KPIs dos relatÛrios ----
       const nAlunosAtivos = (ALUNOS_CACHE || []).filter(a => a.is_active !== false).length;
       updateResumoRelatorios({
         previstoMesAtual,
@@ -1631,7 +1631,7 @@ async function renderGraficoFatMesCorrente() {
     }
   }
 
-// ---------- FATURA√á√ÉO: filtros de m√™s/ano (REDUNDANTE MAS MANTIDO) ----------
+// ---------- FATURA«√O: filtros de mÍs/ano (REDUNDANTE MAS MANTIDO) ----------
 function prepararFiltrosFaturacao() {
     const selMes = document.getElementById("fat-filtro-mes");
     const selAno = document.getElementById("fat-filtro-ano");
@@ -1651,7 +1651,7 @@ function prepararFiltrosFaturacao() {
       .map((a) => `<option value="${a}">${a}</option>`)
       .join("");
 
-    // m√™s/ano por defeito
+    // mÍs/ano por defeito
     const now = new Date();
     if (!selMes.value) {
       selMes.value = String(now.getMonth() + 1);
@@ -1667,7 +1667,7 @@ function prepararFiltrosFaturacao() {
       if (typeof atualizarGraficosPagamentos === "function") atualizarGraficosPagamentos();
     };
 
-    // evitar adicionar m√∫ltiplos listeners cada vez que chamas loadKpisFinanceiros
+    // evitar adicionar m˙ltiplos listeners cada vez que chamas loadKpisFinanceiros
     if (!selMes.dataset.bound) {
       selMes.addEventListener("change", onChange);
       selMes.dataset.bound = "1";
@@ -1679,18 +1679,18 @@ function prepararFiltrosFaturacao() {
   }
 
 async function loadRelatorios() {
-  // Garantir que j√° tens KPIs financeiros carregados
+  // Garantir que j· tens KPIs financeiros carregados
   if (!PAGAMENTOS_CACHE || !PAGAMENTOS_CACHE.length) {
     if (typeof loadKpisFinanceiros === "function") {
       await loadKpisFinanceiros();
     }
   }
   if (typeof atualizarGraficoEvolucaoAnual === "function") atualizarGraficoEvolucaoAnual();
-  // 2) Previsto vs Pago no m√™s corrente (total + alimenta PAGAMENTOS_MES)
+  // 2) Previsto vs Pago no mÍs corrente (total + alimenta PAGAMENTOS_MES)
   await renderGraficoFatMesCorrente();
-  // 3) Previsto vs Pago por aluno no m√™s corrente (usa PAGAMENTOS_MES)
+  // 3) Previsto vs Pago por aluno no mÍs corrente (usa PAGAMENTOS_MES)
   renderGraficoFatAlunoMesCorrente();
-  // 4) Sess√µes previstas vs realizadas por m√™s
+  // 4) Sessıes previstas vs realizadas por mÍs
   renderGraficoSessoesMensais();
 }
 
@@ -1722,10 +1722,10 @@ function updateRelatorioKpisFromData(faturacao, alunos_mes, sessoes_mes) {
       ? faturacao.reduce((a, b) => a + Number(b.total || 0), 0) / faturacao.length
       : 0;
   document.getElementById("rel-kpi-fat-media").textContent =
-    "‚Ç¨ " + mediaFat.toFixed(0);
+    "Ä " + mediaFat.toFixed(0);
 }
 
-// ---------- CARREGAR SESS√ïES DO ALUNO ----------
+// ---------- CARREGAR SESS’ES DO ALUNO ----------
 async function loadSessoesAluno(alunoId) {
   if (!alunoId) return;
 
@@ -1738,14 +1738,14 @@ async function loadSessoesAluno(alunoId) {
     const tblBody = document.querySelector("#listaExplicacoes");
     if (tblBody) {
       tblBody.innerHTML =
-        '<tr><td colspan="5">Erro a carregar sess√µes do aluno.</td></tr>';
+        '<tr><td colspan="5">Erro a carregar sessıes do aluno.</td></tr>';
     }
     return;
   }
 
   SESSOES_ALUNO_ATUAL = data || [];
 
-  // Atualiza tabela + KPI + pr√≥xima aula
+  // Atualiza tabela + KPI + prÛxima aula
   atualizarPerfilComSessoes(SESSOES_ALUNO_ATUAL);
 }
 
@@ -1758,7 +1758,7 @@ async function loadSessoesAluno(alunoId) {
 
   if (!sessoes || !sessoes.length) {
     tbody.innerHTML =
-      '<tr><td colspan="5">Ainda n√£o existem explica√ß√µes registadas.</td></tr>';
+      '<tr><td colspan="5">Ainda n„o existem explicaÁıes registadas.</td></tr>';
     if (kpiAulasEl) kpiAulasEl.textContent = "0/0";
     if (proxEl) proxEl.textContent = "Nenhuma aula agendada";
     return;
@@ -1781,7 +1781,7 @@ async function loadSessoesAluno(alunoId) {
     const dur    = s.duracao_min != null ? s.duracao_min : "";
     const estado = s.estado || "";
 
-    // Pr√≥xima aula (AGENDADA no futuro)
+    // PrÛxima aula (AGENDADA no futuro)
     if (s.data) {
       const d = new Date(s.data);
       d.setHours(0, 0, 0, 0);
@@ -1839,7 +1839,7 @@ async function loadSessoesAluno(alunoId) {
 
   tbody.innerHTML = rows.join("");
 
-  // KPI aulas conclu√≠das
+  // KPI aulas concluÌdas
   if (kpiAulasEl) {
     const total = sessoes.length;
     const concluidas = sessoes.filter(
@@ -1848,7 +1848,7 @@ async function loadSessoesAluno(alunoId) {
     kpiAulasEl.textContent = `${concluidas}/${total}`;
   }
 
-  // Pr√≥xima aula
+  // PrÛxima aula
   if (proxEl) {
     if (!proximaSessao) {
       proxEl.textContent = "Nenhuma aula agendada";
@@ -1858,11 +1858,11 @@ async function loadSessoesAluno(alunoId) {
       const hora = proximaSessao.hora_inicio
         ? proximaSessao.hora_inicio.slice(0, 5)
         : "";
-      proxEl.textContent = hora ? `${dataNice} √†s ${hora}` : dataNice;
+      proxEl.textContent = hora ? `${dataNice} ‡s ${hora}` : dataNice;
     }
   }
 
-  // ligar handlers uma vez (delega√ß√£o no tbody)
+  // ligar handlers uma vez (delegaÁ„o no tbody)
   if (!tbody.dataset.boundSessao) {
     tbody.addEventListener("click", onClickAcaoSessao);
     tbody.dataset.boundSessao = "1";
@@ -1885,10 +1885,10 @@ async function loadSessoesAluno(alunoId) {
   );
   if (!sessao) return;
 
-  // EDITAR  abre modal da sess√£o (N√ÉO o perfil do aluno)
+  // EDITAR  abre modal da sess„o (N√O o perfil do aluno)
   if (acao === "editar") {
     if (typeof preencherModalSessao === "function") {
-      preencherModalSessao(sessao);   // fun√ß√£o que preenche o form da sess√£o
+      preencherModalSessao(sessao);   // funÁ„o que preenche o form da sess„o
     }
     if (typeof modalSessao !== "undefined") {
       openModal(modalSessao);
@@ -1913,7 +1913,7 @@ async function loadSessoesAluno(alunoId) {
       const { error } = await callExplFn("upsert_sessao_aluno", payload);
       if (error) {
         console.error(error);
-        alert("N√£o foi poss√≠vel atualizar a sess√£o.");
+        alert("N„o foi possÌvel atualizar a sess„o.");
         return;
       }
 
@@ -1921,14 +1921,14 @@ async function loadSessoesAluno(alunoId) {
       await loadResumoCalendario();
     } catch (e) {
       console.error(e);
-      alert("Erro inesperado ao atualizar sess√£o.");
+      alert("Erro inesperado ao atualizar sess„o.");
     }
     return;
   }
 
   // APAGAR
   if (acao === "apagar") {
-    const conf = confirm("Tens a certeza que queres apagar esta sess√£o?");
+    const conf = confirm("Tens a certeza que queres apagar esta sess„o?");
     if (!conf) return;
 
     try {
@@ -1938,7 +1938,7 @@ async function loadSessoesAluno(alunoId) {
 
       if (error) {
         console.error(error);
-        alert("N√£o foi poss√≠vel apagar a sess√£o.");
+        alert("N„o foi possÌvel apagar a sess„o.");
         return;
       }
 
@@ -1946,7 +1946,7 @@ async function loadSessoesAluno(alunoId) {
       await loadResumoCalendario();
     } catch (e) {
       console.error(e);
-      alert("Erro inesperado ao apagar sess√£o.");
+      alert("Erro inesperado ao apagar sess„o.");
     }
   }
 }
@@ -1954,12 +1954,12 @@ async function loadSessoesAluno(alunoId) {
   function obterIdAluno(alunoOuId) {
   if (!alunoOuId) return null;
 
-  // j√° √© id
+  // j· È id
   if (typeof alunoOuId === "number" || typeof alunoOuId === "string") {
     return alunoOuId;
   }
 
-  // √© objeto aluno
+  // È objeto aluno
   if (typeof alunoOuId === "object" && alunoOuId.id_aluno) {
     return alunoOuId.id_aluno;
   }
@@ -1974,7 +1974,7 @@ function renderGraficoAlunos(alunos_mes) {
   const ctx = canvas.getContext("2d");
   if (chartAlunosMes) chartAlunosMes.destroy();
 
-  // ADAPTA AQUI a chave corresponde ao n¬∫ de alunos
+  // ADAPTA AQUI a chave corresponde ao n∫ de alunos
   const labels = (alunos_mes || []).map(m => m.mes_label || m.mes || "");
   const valores = (alunos_mes || []).map(m =>
     Number(
@@ -2013,7 +2013,7 @@ function renderGraficoSessoes(sessoes_mes) {
   const ctx = canvas.getContext("2d");
   if (chartSessoes) chartSessoes.destroy();
 
-  // ADAPTA AQUI a chave para n¬∫ de sess√µes
+  // ADAPTA AQUI a chave para n∫ de sessıes
   const labels = (sessoes_mes || []).map(m => m.mes_label || m.mes || "");
   const valores = (sessoes_mes || []).map(m =>
     Number(
@@ -2030,7 +2030,7 @@ function renderGraficoSessoes(sessoes_mes) {
       labels,
       datasets: [
         {
-          label: "Sess√µes",
+          label: "Sessıes",
           data: valores,
           tension: 0.3
         }
@@ -2049,7 +2049,7 @@ function renderGraficoSessoes(sessoes_mes) {
 async function carregarPerfilAluno(alunoOuId) {
     const idAluno = obterIdAluno(alunoOuId);
     if (!idAluno) {
-      console.error("carregarPerfilAluno: idAluno inv√°lido", alunoOuId);
+      console.error("carregarPerfilAluno: idAluno inv·lido", alunoOuId);
       return;
     }
 
@@ -2061,12 +2061,12 @@ async function carregarPerfilAluno(alunoOuId) {
 
     ALUNO_ATUAL = aluno;
 
-    // aqui usas a tua fun√ß√£o que preenche o cart√£o grande
+    // aqui usas a tua funÁ„o que preenche o cart„o grande
     if (typeof preencherCartaoPerfil === "function") {
       preencherCartaoPerfil(ALUNO_ATUAL);
     }
 
-    // e mostra a sec√ß√£o correta
+    // e mostra a secÁ„o correta
     mostrarSecao("aluno-perfil");
   }
 
@@ -2078,13 +2078,13 @@ async function carregarPerfilAluno(alunoOuId) {
 
   if (!pagamentos || !pagamentos.length) {
     tbody.innerHTML =
-      '<tr><td colspan="5">Ainda n√£o existem pagamentos registados.</td></tr>';
+      '<tr><td colspan="5">Ainda n„o existem pagamentos registados.</td></tr>';
     if (totalEl) totalEl.textContent = "0.00";
     return;
   }
 
   const nomesMesesLong = [
-    "Janeiro","Fevereiro","Mar√ßo","Abril","Maio","Junho",
+    "Janeiro","Fevereiro","MarÁo","Abril","Maio","Junho",
     "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro",
   ];
 
@@ -2109,7 +2109,7 @@ async function carregarPerfilAluno(alunoOuId) {
       <tr>
         <td>${dataLabel}</td>
         <td>${periodo}</td>
-        <td>‚Ç¨ ${pago.toFixed(2)}</td>
+        <td>Ä ${pago.toFixed(2)}</td>
         <td>${metodo}</td>
         <td>
           ${estado}
@@ -2154,7 +2154,7 @@ async function carregarPerfilAluno(alunoOuId) {
     totalEl.textContent = totalRecebido.toFixed(2);
   }
 
-  // Ligar bot√µes de EDITAR / APAGAR (pagamentos)
+  // Ligar botıes de EDITAR / APAGAR (pagamentos)
   tbody.querySelectorAll(".pag-btn").forEach((btn) => {
     btn.addEventListener("click", async (ev) => {
       ev.stopPropagation();
@@ -2169,13 +2169,13 @@ async function carregarPerfilAluno(alunoOuId) {
 
       // EDITAR
       if (acao === "editar") {
-        // usa o mesmo modal que j√° tens para pagamentos do aluno
+        // usa o mesmo modal que j· tens para pagamentos do aluno
         // -> modo "editar"
         if (typeof abrirModalPagamento === "function") {
-          // se tiveres esta fun√ß√£o, podes passarlhe o pagamento
+          // se tiveres esta funÁ„o, podes passarlhe o pagamento
           abrirModalPagamento("editar", pagamento);
         } else if (typeof preencherModalPagamento === "function") {
-          // fallback para a tua fun√ß√£o antiga
+          // fallback para a tua funÁ„o antiga
           preencherModalPagamento(pagamento);
         }
         return;
@@ -2229,25 +2229,25 @@ async function carregarPerfilAluno(alunoOuId) {
     inputValor.style.display = "none";
 
     if (modo === "iniciar") {
-      pagModalTitle.textContent = "Iniciar fatura√ß√£o";
+      pagModalTitle.textContent = "Iniciar faturaÁ„o";
       pagModalHint.textContent  =
-        "Defina o m√™s/ano de in√≠cio e o dia de pagamento da mensalidade.";
+        "Defina o mÍs/ano de inÌcio e o dia de pagamento da mensalidade.";
       inputDiaPag.style.display = "block";
-      btnSavePag.textContent    = "Iniciar fatura√ß√£o";
+      btnSavePag.textContent    = "Iniciar faturaÁ„o";
 
     } else if (modo === "registar") {
       pagModalTitle.textContent = "Registar pagamento";
       pagModalHint.textContent  =
-        "Regista um pagamento a acrescentar ao valor j√° pago nesse m√™s.";
+        "Regista um pagamento a acrescentar ao valor j· pago nesse mÍs.";
       inputValor.style.display  = "block";
       btnSavePag.textContent    = "Registar pagamento";
 
     } else { // "editar"
       pagModalTitle.textContent = "Editar pagamento";
       pagModalHint.textContent  =
-        "Substitui o valor pago nesse m√™s pelo valor indicado.";
+        "Substitui o valor pago nesse mÍs pelo valor indicado.";
       inputValor.style.display  = "block";
-      btnSavePag.textContent    = "Guardar altera√ß√µes";
+      btnSavePag.textContent    = "Guardar alteraÁıes";
     }
 
     openModal(modalPag);
@@ -2282,18 +2282,18 @@ async function carregarPerfilAluno(alunoOuId) {
     const valor = inputValor.value ? Number(inputValor.value) : null;
 
     if (!ano || !mes || mes < 1 || mes > 12) {
-      msgPag.textContent = "Ano ou m√™s inv√°lidos.";
+      msgPag.textContent = "Ano ou mÍs inv·lidos.";
       return;
     }
 
     if (modo === "iniciar") {
       if (!dia || dia < 1 || dia > 31) {
-        msgPag.textContent = "Dia de pagamento inv√°lido.";
+        msgPag.textContent = "Dia de pagamento inv·lido.";
         return;
       }
     } else {
       if (valor === null || isNaN(valor) || valor < 0) {
-        msgPag.textContent = "Valor inv√°lido.";
+        msgPag.textContent = "Valor inv·lido.";
         return;
       }
     }
@@ -2347,7 +2347,7 @@ async function carregarPerfilAluno(alunoOuId) {
             }
           } catch {}
         }
-        msgPag.textContent = "N√£o foi poss√≠vel guardar." + extra;
+        msgPag.textContent = "N„o foi possÌvel guardar." + extra;
         btnSavePag.disabled = false;
         return;
       }
@@ -2369,7 +2369,7 @@ async function carregarPerfilAluno(alunoOuId) {
         await mostrarPainelAluno(alunoAtualizado);
       }
 
-      // 4) Atualiza o resumo do calend√°rio
+      // 4) Atualiza o resumo do calend·rio
       await loadResumoCalendario();
       setTimeout(() => closeModal(modalPag), 600);
     } catch (e) {
@@ -2405,7 +2405,7 @@ async function carregarPerfilAluno(alunoOuId) {
 
     document.getElementById("aluno-detail-valor").textContent =
       aluno.valor_explicacao != null
-        ? `‚Ç¨ ${Number(aluno.valor_explicacao).toFixed(2)}`
+        ? `Ä ${Number(aluno.valor_explicacao).toFixed(2)}`
         : "";
 
     document.getElementById("aluno-detail-sessoes").textContent =
@@ -2464,9 +2464,9 @@ async function carregarPerfilAluno(alunoOuId) {
         emFaltaTotal += falta;
       });
 
-      // Fallback: se N√ÉO houver registos para o m√™s atual,
+      // Fallback: se N√O houver registos para o mÍs atual,
       // mas o aluno tiver valor_explicacao e sessoes_mes,
-      // usamos a mensalidade configurada como "previsto" do m√™s atual.
+      // usamos a mensalidade configurada como "previsto" do mÍs atual.
       if (
         !temRegistosMesAtual &&
         aluno.valor_explicacao != null &&
@@ -2477,20 +2477,20 @@ async function carregarPerfilAluno(alunoOuId) {
 
         previstoMes = estimado;
 
-        // Se n√£o houver qualquer pagamento em lado nenhum,
+        // Se n„o houver qualquer pagamento em lado nenhum,
         // o total em falta passa a ser o estimado.
         if (!temAlgumPagamento) {
           emFaltaTotal = estimado;
         }
-        // Se j√° existem d√≠vidas de meses anteriores, mantemos essas
+        // Se j· existem dÌvidas de meses anteriores, mantemos essas
         // e o "em falta" continua a somar apenas o que vem da view.
       }
 
       if (elPrevistoMes)
-        elPrevistoMes.textContent = `‚Ç¨ ${previstoMes.toFixed(2)}`;
-      if (elPagoMes) elPagoMes.textContent = `‚Ç¨ ${pagoMes.toFixed(2)}`;
+        elPrevistoMes.textContent = `Ä ${previstoMes.toFixed(2)}`;
+      if (elPagoMes) elPagoMes.textContent = `Ä ${pagoMes.toFixed(2)}`;
       if (elEmFalta)
-        elEmFalta.textContent = `‚Ç¨ ${emFaltaTotal.toFixed(2)}`;
+        elEmFalta.textContent = `Ä ${emFaltaTotal.toFixed(2)}`;
     } catch (err) {
       console.error("Erro inesperado ao calcular resumo do aluno", err);
       if (elPrevistoMes) elPrevistoMes.textContent = "";
@@ -2516,7 +2516,7 @@ async function carregarPerfilAluno(alunoOuId) {
     return { ok: true, data };
   }
 
-  // ---------- MODAIS (add / edit / sess√£o) ----------
+  // ---------- MODAIS (add / edit / sess„o) ----------
   modalAddAluno?.addEventListener("click", (ev) => {
     if (ev.target.hasAttribute("data-modal-close")) {
       closeModal(modalAddAluno);
@@ -2550,7 +2550,7 @@ async function carregarPerfilAluno(alunoOuId) {
     }
   });
 
-  // ---------- PREENCHER MODAL DE EDI√á√ÉO DO ALUNO ----------
+  // ---------- PREENCHER MODAL DE EDI«√O DO ALUNO ----------
   function preencherModalEdicao(aluno) {
     if (!formEdit || !aluno) return;
 
@@ -2596,7 +2596,7 @@ async function carregarPerfilAluno(alunoOuId) {
       if (!confirma) return;
     }
 
-    // feedback m√≠nimo
+    // feedback mÌnimo
     if (alunoStatusBadge) {
       alunoStatusBadge.textContent = "A atualizar...";
     }
@@ -2608,7 +2608,7 @@ async function carregarPerfilAluno(alunoOuId) {
 
     if (error) {
       console.error("Erro ao alterar estado do aluno", error);
-      alert("N√£o foi poss√≠vel atualizar o estado do aluno.");
+      alert("N„o foi possÌvel atualizar o estado do aluno.");
       // volta ao estado anterior no UI
       updateAlunoStatusUI(ALUNO_ATUAL);
       return;
@@ -2673,7 +2673,7 @@ async function carregarPerfilAluno(alunoOuId) {
     };
 
     btnSaveEdit.disabled = true;
-    msgEditAluno.textContent = "A guardar altera√ß√µes...";
+    msgEditAluno.textContent = "A guardar alteraÁıes...";
 
     try {
       const { data, error } = await callExplFn("update_aluno", payload);
@@ -2693,13 +2693,13 @@ async function carregarPerfilAluno(alunoOuId) {
           } catch {}
         }
         msgEditAluno.textContent =
-          "N√£o foi poss√≠vel guardar as altera√ß√µes." + extra;
+          "N„o foi possÌvel guardar as alteraÁıes." + extra;
         btnSaveEdit.disabled = false;
         return;
       }
 
       msgEditAluno.style.color = "#126b3a";
-      msgEditAluno.textContent = "Altera√ß√µes guardadas com sucesso.";
+      msgEditAluno.textContent = "AlteraÁıes guardadas com sucesso.";
 
       await loadAlunos();
       const alunoAtualizado = ALUNOS_CACHE.find(
@@ -2714,7 +2714,7 @@ async function carregarPerfilAluno(alunoOuId) {
       }, 600);
     } catch (e) {
       console.error("update_aluno error", e);
-      msgEditAluno.textContent = "Erro inesperado ao guardar altera√ß√µes.";
+      msgEditAluno.textContent = "Erro inesperado ao guardar alteraÁıes.";
     } finally {
       btnSaveEdit.disabled = false;
     }
@@ -2726,7 +2726,7 @@ async function carregarPerfilAluno(alunoOuId) {
     msgNewAluno.textContent = "";
 
     if (!EXPLICADOR.id_explicador) {
-      msgNewAluno.textContent = "Perfil de explicador inv√°lido.";
+      msgNewAluno.textContent = "Perfil de explicador inv·lido.";
       return;
     }
 
@@ -2771,7 +2771,7 @@ async function carregarPerfilAluno(alunoOuId) {
         try {
           const resp = error.context;
           const raw = await resp.text();
-          console.log("Erro bruto da fun√ß√£o expl-alunos:", raw);
+          console.log("Erro bruto da funÁ„o expl-alunos:", raw);
 
           try {
             const json = JSON.parse(raw);
@@ -2784,13 +2784,13 @@ async function carregarPerfilAluno(alunoOuId) {
             extra = " " + raw;
           }
         } catch (e) {
-          console.warn("N√£o consegui ler o body da resposta da fun√ß√£o", e);
+          console.warn("N„o consegui ler o body da resposta da funÁ„o", e);
         }
       }
 
       console.error("create_aluno error", error);
       msgNewAluno.textContent =
-        "N√£o foi poss√≠vel criar o aluno." + extra;
+        "N„o foi possÌvel criar o aluno." + extra;
       btnCreate.disabled = false;
       return;
     }
@@ -2803,85 +2803,42 @@ async function carregarPerfilAluno(alunoOuId) {
     btnCreate.disabled = false;
   });
 
-  // Funcao para abrir modal de sessao (CRIAR ou EDITAR)
-  function abrirModalSessao(sessao = null) {
-      if (!formSessao) return;
-      msgSessao.textContent = "";
-
-      // 1) Preencher Select de Alunos
-      const selAluno = document.getElementById("sessao-modal-aluno");
-      if (selAluno) {
-          selAluno.innerHTML = '<option value="">-- Selecionar Aluno --</option>';
-          (ALUNOS_CACHE || []).filter(a => a.is_active !== false).forEach(a => {
-             const nome = (a.nome + " " + (a.apelido||"")).trim();
-             const opt = document.createElement("option");
-             opt.value = a.id_aluno;
-             opt.textContent = nome;
-             selAluno.appendChild(opt);
-          });
-
-          // Pre-selecionar
-          if (sessao && (sessao.aluno_id || sessao.id_aluno)) {
-               selAluno.value = sessao.aluno_id || sessao.id_aluno;
-          } else if (ALUNO_ATUAL && ALUNO_ATUAL.id_aluno) {
-               selAluno.value = ALUNO_ATUAL.id_aluno;
-          }
-      }
-
-      // 2) Preencher dados da sess√£o
-      if (sessao) {
-          SESSAO_ATUAL_ID = sessao.id_sessao;
-          formSessao.data_sessao.value = sessao.data || "";
-          formSessao.hora_inicio.value = sessao.hora_inicio || "";
-          formSessao.hora_fim.value = sessao.hora_fim || "";
-          formSessao.duracao_min.value = sessao.duracao_min || "";
-          formSessao.estado.value = sessao.estado || "AGENDADA";
-          formSessao.observacoes.value = sessao.observacoes || "";
-          btnDeleteSessao.style.display = "inline-flex";
-          btnSaveSessao.textContent = "Atualizar sess√£o";
-      } else {
-          SESSAO_ATUAL_ID = null;
-          formSessao.reset();
-          // Se selector existe, restaurar a sele√ß√£o que fizemos acima (o reset limpa)
-          if(selAluno && ALUNO_ATUAL) selAluno.value = ALUNO_ATUAL.id_aluno;
-          btnDeleteSessao.style.display = "none";
-          btnSaveSessao.textContent = "Agendar sess√£o";
-      }
-
-      openModal(modalSessao);
-  }
-
-  // Bot√£o "Agendar explica√ß√£o" no topo da sec√ß√£o Calend√°rio
+  // Bot„o "Agendar explicaÁ„o" no topo da secÁ„o Calend·rio
   btnAgendarExplicacao?.addEventListener("click", () => {
-    // Agora permitimos abrir sem aluno selecionado (usar√° o seletor)
+    if (!ALUNO_ATUAL || !ALUNO_ATUAL.id_aluno) {
+      alert("Seleciona primeiro um aluno na lista de Alunos para agendar uma sess„o.");
+
+      // muda para o tab Alunos automaticamente
+      const tabAlunos = document.querySelector('.expl-nav-btn[data-target="alunos"]');
+      tabAlunos?.click();
+      return;
+    }
+
+    // abre o modal de sess„o em modo "nova sess„o"
     abrirModalSessao(null);
   });
 
-  // ---------- SESS√ïES: SUBMIT ----------
+  // ---------- SESS’ES: SUBMIT ----------
   formSessao?.addEventListener("submit", async (ev) => {
     ev.preventDefault();
     msgSessao.textContent = "";
 
-    const f = ev.target;
-    
-    // Obter ID do aluno do seletor OU do contexto atual
-    const selAluno = document.getElementById("sessao-modal-aluno");
-    let alunoId = selAluno ? selAluno.value : (ALUNO_ATUAL?.id_aluno);
-
-    if (!alunoId) {
-      msgSessao.textContent = "Selecione um aluno.";
+    if (!ALUNO_ATUAL || !ALUNO_ATUAL.id_aluno) {
+      msgSessao.textContent = "Nenhum aluno selecionado.";
       return;
     }
 
+    const f = ev.target;
+
     const data = f.data_sessao.value;
     if (!data) {
-      msgSessao.textContent = "Data √© obrigat√≥ria.";
+      msgSessao.textContent = "Data È obrigatÛria.";
       return;
     }
 
     const payload = {
       id_sessao: SESSAO_ATUAL_ID || undefined,
-      aluno_id: alunoId,
+      aluno_id: ALUNO_ATUAL.id_aluno,
       data,
       hora_inicio: f.hora_inicio.value || null,
       hora_fim: f.hora_fim.value || null,
@@ -2891,7 +2848,7 @@ async function carregarPerfilAluno(alunoOuId) {
     };
 
     btnSaveSessao.disabled = true;
-    msgSessao.textContent = "A guardar sess√£o...";
+    msgSessao.textContent = "A guardar sess„o...";
 
     try {
       const { data, error } = await callExplFn("upsert_sessao_aluno", payload);
@@ -2911,13 +2868,13 @@ async function carregarPerfilAluno(alunoOuId) {
           } catch {}
         }
         msgSessao.textContent =
-          "N√£o foi poss√≠vel guardar a sess√£o." + extra;
+          "N„o foi possÌvel guardar a sess„o." + extra;
         btnSaveSessao.disabled = false;
         return;
       }
 
       msgSessao.style.color = "#126b3a";
-      msgSessao.textContent = "Sess√£o guardada com sucesso.";
+      msgSessao.textContent = "Sess„o guardada com sucesso.";
 
       await loadSessoesAluno(ALUNO_ATUAL.id_aluno);
       await loadResumoCalendario();
@@ -2926,13 +2883,13 @@ async function carregarPerfilAluno(alunoOuId) {
       }, 500);
     } catch (e) {
       console.error("upsert_sessao_aluno error", e);
-      msgSessao.textContent = "Erro inesperado ao guardar sess√£o.";
+      msgSessao.textContent = "Erro inesperado ao guardar sess„o.";
     } finally {
       btnSaveSessao.disabled = false;
     }
   });
 
-  // ---------- SESS√ïES: APAGAR ----------
+  // ---------- SESS’ES: APAGAR ----------
   btnDeleteSessao?.addEventListener("click", async () => {
     if (!SESSAO_ATUAL_ID) {
       return;
@@ -2942,10 +2899,10 @@ async function carregarPerfilAluno(alunoOuId) {
       return;
     }
 
-    const conf = confirm("Tens a certeza que queres apagar esta sess√£o?");
+    const conf = confirm("Tens a certeza que queres apagar esta sess„o?");
     if (!conf) return;
 
-    msgSessao.textContent = "A apagar sess√£o...";
+    msgSessao.textContent = "A apagar sess„o...";
     btnDeleteSessao.disabled = true;
 
     try {
@@ -2968,13 +2925,13 @@ async function carregarPerfilAluno(alunoOuId) {
           } catch {}
         }
         msgSessao.textContent =
-          "N√£o foi poss√≠vel apagar a sess√£o." + extra;
+          "N„o foi possÌvel apagar a sess„o." + extra;
         btnDeleteSessao.disabled = false;
         return;
       }
 
       msgSessao.style.color = "#126b3a";
-      msgSessao.textContent = "Sess√£o apagada com sucesso.";
+      msgSessao.textContent = "Sess„o apagada com sucesso.";
 
       await loadSessoesAluno(ALUNO_ATUAL.id_aluno);
       await loadResumoCalendario();
@@ -2983,14 +2940,14 @@ async function carregarPerfilAluno(alunoOuId) {
       }, 400);
     } catch (e) {
       console.error("delete_sessao_aluno error", e);
-      msgSessao.textContent = "Erro inesperado ao apagar sess√£o.";
+      msgSessao.textContent = "Erro inesperado ao apagar sess„o.";
     } finally {
       btnDeleteSessao.disabled = false;
     }
   });
 
   // ------------------------------------------------------------------
-  // RENDER CALEND√ÅRIO SEMANAL
+  // RENDER CALEND¡RIO SEMANAL
   // ------------------------------------------------------------------
   function renderCalendarioSemanal() {
     const grid = document.getElementById("calendar-grid");
@@ -3011,7 +2968,7 @@ async function carregarPerfilAluno(alunoOuId) {
     const fmt = { day: "2-digit", month: "2-digit" };
     label.textContent = `Semana ${dias[0].toLocaleDateString("pt-PT", fmt)}  ${dias[6].toLocaleDateString("pt-PT", fmt)}`;
 
-    const nomes = ["Seg", "Ter", "Qua", "Qui", "Sex", "S√°b", "Dom"];
+    const nomes = ["Seg", "Ter", "Qua", "Qui", "Sex", "S·b", "Dom"];
 
     grid.innerHTML = dias.map((d, idx) => {
       const dataStr = d.toISOString().slice(0, 10);
@@ -3028,7 +2985,7 @@ async function carregarPerfilAluno(alunoOuId) {
       `.trim();
 
       const lista = sessoes.length === 0
-        ? `<p class="calendar-empty">Sem sess√µes</p>`
+        ? `<p class="calendar-empty">Sem sessıes</p>`
         : sessoes.map(s => `
             <div class="calendar-session">
               <strong>${s.hora_inicio?.slice(0,5) || "--:--"}</strong>
@@ -3087,16 +3044,16 @@ async function carregarPerfilAluno(alunoOuId) {
         if (a._dataObj - b._dataObj !== 0) {
           return a._dataObj - b._dataObj;
         }
-        // ordenar tamb√©m por hora se existir
+        // ordenar tambÈm por hora se existir
         const ha = a.hora_inicio || "";
         const hb = b.hora_inicio || "";
         return ha.localeCompare(hb);
       })
-      .slice(0, 10);                                    // top 10 pr√≥ximas
+      .slice(0, 10);                                    // top 10 prÛximas
 
     if (!proximas.length) {
       container.innerHTML =
-        '<p class="calendar-empty">N√£o tens pr√≥ximas explica√ß√µes agendadas.</p>';
+        '<p class="calendar-empty">N„o tens prÛximas explicaÁıes agendadas.</p>';
       return;
     }
 
@@ -3190,7 +3147,7 @@ async function carregarPerfilAluno(alunoOuId) {
     const sessoes = filtrarSessoesParaLista();
 
     if (!sessoes.length) {
-      const emptyHtml = '<p class="calendar-empty">N√£o existem sess√µes com os filtros atuais.</p>';
+      const emptyHtml = '<p class="calendar-empty">N„o existem sessıes com os filtros atuais.</p>';
       viewLista.innerHTML = emptyHtml;
       viewTimeline.innerHTML = emptyHtml;
       return;
@@ -3206,7 +3163,7 @@ async function carregarPerfilAluno(alunoOuId) {
 
       const horaLabel = s.hora_inicio ? s.hora_inicio.slice(0, 5) : "--:--";
       const dur = s.duracao_min != null ? `${s.duracao_min} min` : "";
-      const estadoInfo = getBadgeInfoSessao(s.estado); // j√° tens esta helper
+      const estadoInfo = getBadgeInfoSessao(s.estado); // j· tens esta helper
 
       return `
         <div class="sessao-list-item">
@@ -3271,7 +3228,7 @@ async function carregarPerfilAluno(alunoOuId) {
         .map(s => {
           const hora = s.hora_inicio ? s.hora_inicio.slice(0, 5) : "--:--";
           const dur  = s.duracao_min != null ? `${s.duracao_min} min` : "";
-          const estadoInfo = getBadgeInfoSessao(s.estado); // j√° existe no teu JS
+          const estadoInfo = getBadgeInfoSessao(s.estado); // j· existe no teu JS
 
           return `
             <div class="cal-timeline-ponto">
@@ -3309,7 +3266,7 @@ async function carregarPerfilAluno(alunoOuId) {
     }).join("");
   }
 
-  // Delega√ß√£o de clique na lista "Todas as explica√ß√µes"
+  // DelegaÁ„o de clique na lista "Todas as explicaÁıes"
   const listaTodasSessoes = document.querySelector("#cal-view-lista");
 
   listaTodasSessoes?.addEventListener("click", onClickSessaoCalendario);
@@ -3330,16 +3287,16 @@ async function carregarPerfilAluno(alunoOuId) {
       (s) => String(s.id_sessao) === String(idSessao)
     );
     if (!sessao) {
-      alert("Sess√£o n√£o encontrada.");
+      alert("Sess„o n„o encontrada.");
       return;
     }
 
     // ---------- EDITAR ----------
     if (acao === "editar") {
-      // 1) tentar obter o id do aluno da sess√£o
+      // 1) tentar obter o id do aluno da sess„o
       let alunoId = sessao.aluno_id || sessao.id_aluno || idAluno;
 
-      // 2) se ainda n√£o tivermos, tentar encontrar pelo nome
+      // 2) se ainda n„o tivermos, tentar encontrar pelo nome
       if (!alunoId && sessao.aluno_nome && Array.isArray(ALUNOS_CACHE)) {
         const match = ALUNOS_CACHE.find(a => {
           const nomeCompleto = [a.nome, a.apelido].filter(Boolean).join(" ").trim();
@@ -3351,7 +3308,7 @@ async function carregarPerfilAluno(alunoOuId) {
       }
 
       if (!alunoId) {
-        alert("N√£o foi poss√≠vel identificar o aluno desta sess√£o. Abre primeiro o aluno na sec√ß√£o 'Alunos' e tenta novamente.");
+        alert("N„o foi possÌvel identificar o aluno desta sess„o. Abre primeiro o aluno na secÁ„o 'Alunos' e tenta novamente.");
         return;
       }
 
@@ -3361,26 +3318,26 @@ async function carregarPerfilAluno(alunoOuId) {
         : null;
 
       if (!alunoObj) {
-        alunoObj = { id_aluno: alunoId }; // fallback m√≠nimo
+        alunoObj = { id_aluno: alunoId }; // fallback mÌnimo
       }
 
       ALUNO_ATUAL = alunoObj;
 
-      // 4) abrir o mesmo modal de sess√£o que j√° usas no perfil
+      // 4) abrir o mesmo modal de sess„o que j· usas no perfil
       if (typeof abrirModalSessao === "function") {
         abrirModalSessao(sessao); // preenche form + mostra modal
       } else if (typeof preencherModalSessao === "function") {
         preencherModalSessao(sessao);
         openModal(modalSessao);
       } else {
-        console.warn("Fun√ß√£o de abrir modal de sess√£o n√£o encontrada.");
+        console.warn("FunÁ„o de abrir modal de sess„o n„o encontrada.");
       }
       return;
     }
 
     // ---------- APAGAR / CANCELAR ----------
     if (acao === "apagar") {
-      const confirmar = confirm("Tens a certeza que queres cancelar/apagar esta sess√£o?");
+      const confirmar = confirm("Tens a certeza que queres cancelar/apagar esta sess„o?");
       if (!confirmar) return;
 
       try {
@@ -3390,33 +3347,33 @@ async function carregarPerfilAluno(alunoOuId) {
 
         if (error) {
           console.error(error);
-          alert("N√£o foi poss√≠vel apagar a sess√£o.");
+          alert("N„o foi possÌvel apagar a sess„o.");
           return;
         }
 
-        // Recarregar calend√°rio + listas
+        // Recarregar calend·rio + listas
         await loadResumoCalendario();
 
-        // Se o perfil desse aluno estiver aberto, atualiza tamb√©m
+        // Se o perfil desse aluno estiver aberto, atualiza tambÈm
         if (ALUNO_ATUAL && ALUNO_ATUAL.id_aluno &&
             String(ALUNO_ATUAL.id_aluno) === String(sessao.aluno_id || idAluno)) {
           await loadSessoesAluno(ALUNO_ATUAL.id_aluno);
         }
       } catch (e) {
         console.error(e);
-        alert("Erro inesperado ao apagar sess√£o.");
+        alert("Erro inesperado ao apagar sess„o.");
       }
     }
   }
 
   // --------------------------------------------------------------------
-  // CARREGAR RESUMO DE CALEND√ÅRIO
+  // CARREGAR RESUMO DE CALEND¡RIO
   // --------------------------------------------------------------------
   async function loadResumoCalendario() {
     const { data, error } = await callExplFn("list_sessoes_explicador", null);
 
     if (error) {
-      console.error("Erro a carregar sess√µes do explicador", error);
+      console.error("Erro a carregar sessıes do explicador", error);
       return;
     }
 
@@ -3424,14 +3381,14 @@ async function carregarPerfilAluno(alunoOuId) {
     SESSOES_EXPLICADOR = sessoes;
     atualizarResumoSemana(SESSOES_EXPLICADOR);
     renderTodasSessoes();
-        // atualizar KPIs e gr√°fico de sess√µes nos Relat√≥rios, se existirem
+        // atualizar KPIs e gr·fico de sessıes nos RelatÛrios, se existirem
     if (typeof updateRelatorioKpis === "function") {
       //updateRelatorioKpis();
     }
     renderGraficoSessoesMensais();
 
 
-    //Estat√≠sticas r√°pidas Explica√ß√µes
+    //EstatÌsticas r·pidas ExplicaÁıes
     function atualizarResumoSemana(sessoes) {
       const elTotal = document.querySelector("#cal-kpi-sessoes-semana");
       const elHoras = document.querySelector("#cal-kpi-horas");
@@ -3441,7 +3398,7 @@ async function carregarPerfilAluno(alunoOuId) {
 
       const hoje = new Date();
       hoje.setHours(0,0,0,0);
-      const inicio = getInicioSemana(hoje);   // j√° usas esta fun√ß√£o no calend√°rio semanal
+      const inicio = getInicioSemana(hoje);   // j· usas esta funÁ„o no calend·rio semanal
       const fim = new Date(inicio);
       fim.setDate(fim.getDate() + 6);
 
@@ -3457,15 +3414,15 @@ async function carregarPerfilAluno(alunoOuId) {
         return acc + mins / 60;
       }, 0);
 
-      // Aqui n√£o tens ainda um campo "valor" na sess√£o.
+      // Aqui n„o tens ainda um campo "valor" na sess„o.
       // Se mais tarde adicionares (ex: s.preco_sessao), basta somar aqui.
       const faturacaoSemana = 0; // placeholder
 
       elTotal.textContent = totalSessoes.toString();
       elHoras.textContent = horasTotais ? `${horasTotais.toFixed(1)}h` : "0h";
-      elFat.textContent   = faturacaoSemana ? `${faturacaoSemana.toFixed(2)}‚Ç¨` : "";
+      elFat.textContent   = faturacaoSemana ? `${faturacaoSemana.toFixed(2)}Ä` : "";
 
-      // Pr√≥xima sess√£o (j√° calculas algo semelhante para "Pr√≥ximas explica√ß√µes")
+      // PrÛxima sess„o (j· calculas algo semelhante para "PrÛximas explicaÁıes")
       const agora = new Date();
       const futuras = (sessoes || [])
         .filter(s => s.data)
@@ -3481,7 +3438,7 @@ async function carregarPerfilAluno(alunoOuId) {
         .sort((a, b) => a._dt - b._dt);
 
       if (!futuras.length) {
-        elProx.textContent = "Sem pr√≥ximas sess√µes";
+        elProx.textContent = "Sem prÛximas sessıes";
       } else {
         const prox = futuras[0];
         const dataLabel = prox._dt.toLocaleDateString("pt-PT", {
@@ -3496,19 +3453,19 @@ async function carregarPerfilAluno(alunoOuId) {
     const hojeStr = new Date().toISOString().slice(0, 10);
     const sessoesHoje = sessoes.filter(s => s.data === hojeStr);
 
-    let txtHoje = "Sem sess√µes registadas";
+    let txtHoje = "Sem sessıes registadas";
     if (sessoesHoje.length > 0) {
       const detalhes = sessoesHoje
         .map(s => `${s.hora_inicio?.slice(0, 5) || "--:--"} ${s.aluno_nome || ""}`.trim())
         .join(", ");
 
-      txtHoje = `${sessoesHoje.length} sess√£o(√µes) hoje  ${detalhes}`;
+      txtHoje = `${sessoesHoje.length} sess„o(ıes) hoje  ${detalhes}`;
     }
 
     const elHoje = document.querySelector("#cal-resumo-hoje");
     if (elHoje) elHoje.textContent = txtHoje;
 
-    // PR√ìXIMOS 7 DIAS
+    // PR”XIMOS 7 DIAS
     const hojeDate = new Date();
     const seteDiasDepois = new Date();
     seteDiasDepois.setDate(hojeDate.getDate() + 7);
@@ -3523,7 +3480,7 @@ async function carregarPerfilAluno(alunoOuId) {
     if (sessoesSemana.length > 0) {
       const alunosUnicos = new Set(sessoesSemana.map(s => s.aluno_nome));
       txtSemana =
-        `${sessoesSemana.length} sess√µes nos pr√≥ximos 7 dias  ` +
+        `${sessoesSemana.length} sessıes nos prÛximos 7 dias  ` +
         `${alunosUnicos.size} aluno(s) diferente(s)`;
     }
 
@@ -3531,10 +3488,10 @@ async function carregarPerfilAluno(alunoOuId) {
     if (elSemana) elSemana.textContent = txtSemana;
 
     // ----------------------------------------------------
-    // PR√ìXIMAS EXPLICA√á√ïES (lista √† direita)
+    // PR”XIMAS EXPLICA«’ES (lista ‡ direita)
     // ----------------------------------------------------
     if (listaProximas) {
-      // s√≥ sess√µes futuras ou de hoje com hora >= agora
+      // sÛ sessıes futuras ou de hoje com hora >= agora
       const agora = new Date();
       const futuras = (sessoes || [])
         .filter((s) => {
@@ -3551,11 +3508,11 @@ async function carregarPerfilAluno(alunoOuId) {
           const db = new Date(b.data + "T" + (b.hora_inicio || "00:00"));
           return da - db;
         })
-        .slice(0, 10); // mostra no m√°ximo 10
+        .slice(0, 10); // mostra no m·ximo 10
 
       if (!futuras.length) {
         listaProximas.innerHTML =
-          '<p class="expl-section-sub">N√£o tens pr√≥ximas explica√ß√µes agendadas.</p>';
+          '<p class="expl-section-sub">N„o tens prÛximas explicaÁıes agendadas.</p>';
       } else {
         listaProximas.innerHTML = futuras
           .map((s) => {
@@ -3612,7 +3569,7 @@ async function carregarPerfilAluno(alunoOuId) {
   const RADIUS_DESKTOP = 160;
   const RADIUS_MOBILE  = 135;
 
-  // dist√¢ncia das labels para fora do arco (se as estiveres a usar)
+  // dist‚ncia das labels para fora do arco (se as estiveres a usar)
   const LABEL_OFFSET = 70;
 
   function getRadius() {
@@ -3626,8 +3583,8 @@ async function carregarPerfilAluno(alunoOuId) {
     const radius = getRadius();
 
     // CANTO INFERIOR ESQUERDO:
-    // centro do arco a 315¬∫ (diagonal para cima/direita)
-    // abertura de 90¬∫ -> de 270¬∫ (cima) at√© 360¬∫ (direita)
+    // centro do arco a 315∫ (diagonal para cima/direita)
+    // abertura de 90∫ -> de 270∫ (cima) atÈ 360∫ (direita)
     const centerDeg = 315;
     const spreadDeg = 90;
     const startDeg  = centerDeg - spreadDeg / 2;
@@ -3640,7 +3597,7 @@ async function carregarPerfilAluno(alunoOuId) {
       const x = Math.cos(angleRad) * radius;
       const y = Math.sin(angleRad) * radius;
 
-      // move o bot√£o
+      // move o bot„o
       btn.style.setProperty("--tx", x + "px");
       btn.style.setProperty("--ty", y + "px");
 
@@ -3693,7 +3650,7 @@ async function carregarPerfilAluno(alunoOuId) {
     }
   });
 
-  // se redimensionar o ecr√£ com o menu aberto, recalcula posi√ß√µes
+  // se redimensionar o ecr„ com o menu aberto, recalcula posiÁıes
   window.addEventListener("resize", () => {
     if (fab.classList.contains("is-open")) {
       positionItems();
@@ -3701,7 +3658,7 @@ async function carregarPerfilAluno(alunoOuId) {
   });
 
 
-  // cada item navega para a sec√ß√£o e fecha o menu
+  // cada item navega para a secÁ„o e fecha o menu
   items.forEach(btn => {
     btn.addEventListener("click", () => {
       const target = btn.dataset.target;
@@ -3734,7 +3691,7 @@ async function carregarPerfilAluno(alunoOuId) {
 
 })();
 
-// Listener global para todos os sinos da p√°gina (dashboard + lista)
+// Listener global para todos os sinos da p·gina (dashboard + lista)
   document.addEventListener("click", async (ev) => {
     const btn = ev.target.closest(".aluno-card__bell");
     if (!btn) return;
@@ -3775,7 +3732,7 @@ async function carregarPerfilAluno(alunoOuId) {
         }
         btn.dataset.avisado = String(avisadoAtual);
         btn.setAttribute("aria-pressed", avisadoAtual ? "true" : "false");
-        alert("N√£o foi poss√≠vel atualizar o estado de aviso.");
+        alert("N„o foi possÌvel atualizar o estado de aviso.");
         return;
       }
 

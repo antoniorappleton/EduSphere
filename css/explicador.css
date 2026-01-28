@@ -1466,3 +1466,36 @@ body.home main.auth {
   height: 300px;
   position: relative;
 }
+
+/* Better Calendar Readability */
+.calendar-session {
+    background-color: #f3f4f6;
+    border-left: 3px solid #b91c1c;
+    padding: 4px 6px;
+    border-radius: 4px;
+    margin-top: 4px;
+    font-size: 0.75rem;
+    line-height: 1.2;
+}
+
+.calendar-session strong {
+    display: block;
+    color: #111827;
+}
+
+.calendar-session span {
+    color: #4b5563;
+}
+
+.calendar-day:hover {
+    background-color: #f9fafb;
+    border-color: #d1d5db;
+}
+
+.calendar-empty {
+    color: #9ca3af;
+    font-size: 0.85rem;
+    text-align: center;
+    padding: 1rem;
+    font-style: italic;
+}
