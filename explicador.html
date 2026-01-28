@@ -175,11 +175,17 @@
           <section class="expl-section" id="expl-sec-alunos" data-section="alunos">
             <div class="expl-section-header">
               <h2 class="expl-section-title">
-                Alunos <span class="expl-section-sub">(ativos)</span>
+                Alunos
               </h2>
-              <button class="expl-link-button" type="button" id="btn-scroll-lista">
-                Ver lista &rarr;
-              </button>
+              <div style="display:flex; gap:1rem; align-items:center;">
+                <label class="expl-filter-toggle"
+                  style="font-size:0.9rem; display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
+                  <input type="checkbox" id="toggle-show-inactive"> Mostrar inativos
+                </label>
+                <button class="expl-link-button" type="button" id="btn-scroll-lista">
+                  Ver lista &rarr;
+                </button>
+              </div>
             </div>
 
             <!-- CARTÃO PEQUENO: QUOTA + AÇÕES RÁPIDAS -->
@@ -1450,9 +1456,26 @@
       }
 
       ALUNOS_CACHE = data;
+      renderAlunosGrid(); // <--- NOVA FUNÇÃO
       updateQuotaUI(data.length);
       renderDashboardAlunos();
+    }
 
+    // ---------- NOVA FUNÇÃO: RENDER GRELHA ALUNOS COM FILTRO ----------
+    function renderAlunosGrid() {
+      if (!alunosGrid) return;
+      const chk = document.getElementById("toggle-show-inactive");
+      const mostrarInativos = chk ? chk.checked : false;
+
+      const alunosParaMostrar = (ALUNOS_CACHE || []).filter(a => {
+        if (mostrarInativos) return true;
+        return a.is_active !== false; // só ativos
+      });
+
+      if (alunosParaMostrar.length === 0) {
+        alunosGrid.innerHTML = '<p class="expl-section-sub">Nenhum aluno encontrado (com o filtro atual).</p>';
+        return;
+      }
       // helper para o badge de estado da mensalidade
       function getEstadoInfo(rawEstado) {
         const e = (rawEstado || "").toString().trim().toUpperCase();
@@ -1481,58 +1504,57 @@
       }
 
       // desenhar cartões da secção ALUNOS
-      alunosGrid.innerHTML = data
-        .map((a) => {
-          const nome = [a.nome, a.apelido].filter(Boolean).join(" ") || "Aluno";
-          const anoLabel = a.ano ? `${a.ano}º Ano` : "—";
-          const tel = a.telemovel || "—";
+      alunosGrid.innerHTML = alunosParaMostrar.map((a) => {
+        const nome = [a.nome, a.apelido].filter(Boolean).join(" ") || "Aluno";
+        const anoLabel = a.ano ? `${a.ano}º Ano` : "—";
+        const tel = a.telemovel || "—";
 
-          // próxima explicação (se vier do back-end)
-          let proxExpLabel = "—";
-          if (a.proxima_sessao_data) {
-            const d = new Date(a.proxima_sessao_data);
-            if (!isNaN(d.getTime())) {
-              const dataNum = d.toLocaleDateString("pt-PT", {
-                day: "2-digit",
-                month: "2-digit",
-              });
-              const diaSemana = d.toLocaleDateString("pt-PT", {
-                weekday: "short",
-              }); // ex: "seg.", "ter."
+        // próxima explicação (se vier do back-end)
+        let proxExpLabel = "—";
+        if (a.proxima_sessao_data) {
+          const d = new Date(a.proxima_sessao_data);
+          if (!isNaN(d.getTime())) {
+            const dataNum = d.toLocaleDateString("pt-PT", {
+              day: "2-digit",
+              month: "2-digit",
+            });
+            const diaSemana = d.toLocaleDateString("pt-PT", {
+              weekday: "short",
+            }); // ex: "seg.", "ter."
 
-              const hora = (a.proxima_sessao_hora || "").slice(0, 5);
-              proxExpLabel = hora
-                ? `${dataNum} (${diaSemana}) · ${hora}`
-                : `${dataNum} (${diaSemana})`;
-            }
+            const hora = (a.proxima_sessao_hora || "").slice(0, 5);
+            proxExpLabel = hora
+              ? `${dataNum} (${diaSemana}) · ${hora}`
+              : `${dataNum} (${diaSemana})`;
           }
+        }
 
-          // próxima mensalidade
-          let proxMensLabel = "—";
-          if (a.proxima_mensalidade) {
-            const d = new Date(a.proxima_mensalidade);
-            if (!isNaN(d.getTime())) {
-              proxMensLabel = d.toLocaleDateString("pt-PT", {
-                day: "2-digit",
-                month: "2-digit",
-              });
-            } else {
-              proxMensLabel = a.proxima_mensalidade;
-            }
+        // próxima mensalidade
+        let proxMensLabel = "—";
+        if (a.proxima_mensalidade) {
+          const d = new Date(a.proxima_mensalidade);
+          if (!isNaN(d.getTime())) {
+            proxMensLabel = d.toLocaleDateString("pt-PT", {
+              day: "2-digit",
+              month: "2-digit",
+            });
+          } else {
+            proxMensLabel = a.proxima_mensalidade;
           }
-          const { label: estadoLabel, badgeClass } = getEstadoInfo(
-            a.estado_mensalidade || "PENDENTE"
-          );
+        }
+        const { label: estadoLabel, badgeClass } = getEstadoInfo(
+          a.estado_mensalidade || "PENDENTE"
+        );
 
-          const ativo = a.is_active !== false;
-          const statusLabel = ativo ? "Ativo" : "Inativo";
-          const statusClass = ativo
-            ? "aluno-status-badge aluno-status-badge--ativo"
-            : "aluno-status-badge aluno-status-badge--inativo";
+        const ativo = a.is_active !== false;
+        const statusLabel = ativo ? "Ativo" : "Inativo";
+        const statusClass = ativo
+          ? "aluno-status-badge aluno-status-badge--ativo"
+          : "aluno-status-badge aluno-status-badge--inativo";
 
-          const avisado = !!a.mensalidade_avisada;
+        const avisado = !!a.mensalidade_avisada;
 
-          return `
+        return `
           <article class="dash-aluno-card aluno-card">
             <div>
               <div class="dash-aluno-card__top" style="justify-content: space-between;">
@@ -1612,7 +1634,7 @@
             </div>
           </article>
         `;
-        })
+      })
         .join("");
 
       // --- BOTÕES "Ver perfil" / "Informações rápidas" ---
@@ -1705,6 +1727,11 @@
           });
         });
     }
+
+    // LISTENER CHECKBOX INATIVOS
+    document.getElementById("toggle-show-inactive")?.addEventListener("change", () => {
+      renderAlunosGrid();
+    });
 
     // Devolve { ano, mes, mesLabel } garantindo que escolhemos um mês com dados
     function getMesAnoSelecionadosOuUltimoComDados() {
