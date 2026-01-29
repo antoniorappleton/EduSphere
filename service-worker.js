@@ -1,7 +1,7 @@
 // service-worker.js
 
-const CACHE_STATIC = "edusphere-static-v6";
-const CACHE_DYNAMIC = "edusphere-dynamic-v6";
+const CACHE_STATIC = "edusphere-static-v7";
+const CACHE_DYNAMIC = "edusphere-dynamic-v7";
 
 const ASSETS = [
   "./", // raiz do projeto

@@ -38,6 +38,29 @@ try {
   return { data: null, error: err };
 }
 }
+async function hasRole(uid, roleName) {
+  // 1. Direct role check
+  const { data } = await supabase
+    .from('app_users')
+    .select('role')
+    .eq('user_id', uid)
+    .eq('role', roleName)
+    .maybeSingle(); 
+  if (data) return true;
+
+  // 2. Allow Admin to access Explicador area
+  if (roleName === 'explicador') {
+     const { data: admin } = await supabase
+       .from('app_users')
+       .select('role')
+       .eq('user_id', uid)
+       .eq('role', 'admin')
+       .maybeSingle();
+     if (admin) return true;
+  }
+  return false;
+}
+
 let chartEvolucaoAnual = null;   // <-- novo
 let chartPrevistoPago = null;
 let chartPagamentosPorAluno = null;
@@ -297,134 +320,19 @@ function renderDashboardAlunos() {
     }
   }
 
-  grid.innerHTML = top3
+    grid.innerHTML = top3
     .map((a) => {
       const nome = [a.nome, a.apelido].filter(Boolean).join(" ") || "Aluno";
-      const anoLabel = a.ano ? `${a.ano}Âº Ano` : "â€”";
-
-      // PrÃ³xima explicaÃ§Ã£o
-      let proxExpLabel = "Nenhuma explicaÃ§Ã£o agendada";
-      if (a.proxima_sessao_data) {
-        const d = new Date(a.proxima_sessao_data);
-        if (!isNaN(d.getTime())) {
-          const dataNum = d.toLocaleDateString("pt-PT", {
-            day: "2-digit",
-            month: "2-digit",
-          });
-          const diaSemana = d.toLocaleDateString("pt-PT", {
-            weekday: "short",
-          });
-          const hora = (a.proxima_sessao_hora || "").slice(0, 5);
-          proxExpLabel = hora
-            ? `${dataNum} (${diaSemana}) Â· ${hora}`
-            : `${dataNum} (${diaSemana})`;
-        }
-      }
-
-      // prÃ³xima mensalidade
-      let proxMensLabel = "â€”";
-      if (a.proxima_mensalidade) {
-        const d = new Date(a.proxima_mensalidade);
-        if (!isNaN(d.getTime())) {
-          proxMensLabel = d.toLocaleDateString("pt-PT", {
-            day: "2-digit",
-            month: "2-digit",
-          });
-        } else {
-          proxMensLabel = a.proxima_mensalidade;
-        }
-      }
-      const { label: estadoLabel, badgeClass } = getEstadoInfo(
-        a.estado_mensalidade || "PENDENTE"
-      );
-
-      const ativo = a.is_active !== false;
-      const statusLabel = ativo ? "Ativo" : "Inativo";
-      const statusClass = ativo
-        ? "aluno-status-badge aluno-status-badge--ativo"
-        : "aluno-status-badge aluno-status-badge--inativo";
-
-      const avisado = !!a.mensalidade_avisada;
-
+      const ini = ((a.nome?.[0]||"") + (a.apelido?.[0]||"")).toUpperCase();
+      
       return `
-        <article class="dash-aluno-card aluno-card">
-          <div>
-            <div class="dash-aluno-card__top" style="justify-content: space-between;">
-              <div style="display:flex; gap:12px;">
-                <div class="dash-aluno-card__avatar"></div>
-                <div>
-                  <h3 class="dash-aluno-card__name">${nome}</h3>
-                  <p class="dash-aluno-card__year">${anoLabel}</p>
-                  <p class="aluno-card__phone">
-                    TelemÃ³vel: <span>${a.telemovel || "â€”"}</span>
-                  </p>
-                </div>
-              </div>
-
-              <span class="${statusClass}">
-                ${statusLabel}
-              </span>
-            </div>
-
-            <p class="dash-aluno-card__label">PrÃ³xima explicaÃ§Ã£o:</p>
-            <p class="dash-aluno-card__date">${proxExpLabel}</p>
-
-            <div class="aluno-card__mensalidade-row">
-              <div>
-                <p class="dash-aluno-card__label">Mensalidade (mÃªs atual):</p>
-                <span class="${badgeClass}">
-                  ${estadoLabel}
-                </span>
-              </div>
-
-              <button
-                type="button"
-                class="aluno-card__bell"
-                data-id-aluno="${a.id_aluno}"
-                data-avisado="${avisado ? "true" : "false"}"
-                aria-pressed="${avisado ? "true" : "false"}"
-                title="${avisado ? "Encarregado avisado" : "Marcar como avisado"}"
-              >
-                <svg
-                  class="aluno-bell-icon${avisado ? " aluno-bell-icon--active" : ""}"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.7"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  aria-hidden="true"
-                >
-                  <path d="M12 3a4 4 0 0 0-4 4v1.1c0 .5-.2 1-.4 1.5L6.3 12A2 2 0 0 0 8 15h8a2 2 0 0 0 1.7-3l-1.3-2.4c-.2-.5-.4-1-.4-1.5V7a4 4 0 0 0-4-4z" />
-                  <path d="M10 18a2 2 0 0 0 4 0" />
-                </svg>
-              </button>
-            </div>
-
-            <p class="dash-aluno-card__label">PrÃ³xima mensalidade:</p>
-            <p class="dash-aluno-card__date">${proxMensLabel}</p>
+      <div class="dash-aluno-card min-w-[160px] flex flex-col items-center justify-center gap-2 text-center" role="button">
+          <div class="h-12 w-12 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-lg mb-1">
+             ${ini}
           </div>
-
-          <div class="aluno-card__actions">
-            <button
-              type="button"
-              class="button secondary aluno-card__btn"
-              data-action="ver"
-              data-id-aluno="${a.id_aluno}"
-            >
-              Ver perfil
-            </button>
-
-            <button
-              type="button"
-              class="button secondary aluno-card__btn"
-              data-action="perfil"
-              data-id-aluno="${a.id_aluno}"
-            >
-              InformaÃ§Ãµes rÃ¡pidas
-            </button>
-          </div>
-        </article>
+          <h3 class="text-sm font-bold text-gray-900 line-clamp-1">${nome}</h3>
+          <button class="text-xs text-primary font-medium hover:underline aluno-card__btn" data-action="perfil" data-id-aluno="${a.id_aluno}">Ver Perfil</button>
+      </div>
       `;
     })
     .join("");
@@ -560,129 +468,65 @@ function renderAlunosList() {
   alunosGrid.innerHTML = alunos
     .map((a) => {
       const nome = [a.nome, a.apelido].filter(Boolean).join(" ") || "Aluno";
-      const anoLabel = a.ano ? `${a.ano}Âº Ano` : "â€”";
-      const tel = a.telemovel || "â€”";
-      let proxExpLabel = "â€”";
+      const ini = ((a.nome?.[0]||"") + (a.apelido?.[0]||"")).toUpperCase();
+      const anoLabel = a.ano ? `${a.ano}º Ano` : "—";
+      const tel = a.telemovel || "—";
+      
+      let proxExpLabel = "—";
       if (a.proxima_sessao_data) {
         const d = new Date(a.proxima_sessao_data);
         if (!isNaN(d.getTime())) {
-          const dataNum = d.toLocaleDateString("pt-PT", {
-            day: "2-digit",
-            month: "2-digit",
-          });
-          const diaSemana = d.toLocaleDateString("pt-PT", {
-            weekday: "short",
-          }); // ex: "seg.", "ter."
-
+          const dataNum = d.toLocaleDateString("pt-PT", { day: "2-digit", month: "2-digit" });
+          const diaSemana = d.toLocaleDateString("pt-PT", { weekday: "short" });
           const hora = (a.proxima_sessao_hora || "").slice(0, 5);
-          proxExpLabel = hora
-            ? `${dataNum} (${diaSemana}) Â· ${hora}`
-            : `${dataNum} (${diaSemana})`;
+          proxExpLabel = hora ? `${dataNum} (${diaSemana}) · ${hora}` : `${dataNum} (${diaSemana})`;
         }
       }
 
-      // prÃ³xima mensalidade
-      let proxMensLabel = "â€”";
-      if (a.proxima_mensalidade) {
-        const d = new Date(a.proxima_mensalidade);
-        if (!isNaN(d.getTime())) {
-          proxMensLabel = d.toLocaleDateString("pt-PT", {
-            day: "2-digit",
-            month: "2-digit",
-          });
-        } else {
-          proxMensLabel = a.proxima_mensalidade;
-        }
-      }
-      const { label: estadoLabel, badgeClass } = getEstadoInfo(
-        a.estado_mensalidade || "PENDENTE"
-      );
+      // Estado Badge
+      let badgeClass = "bg-gray-100 text-gray-600";
+      let estadoLabel = (a.estado_mensalidade || "PENDENTE").toUpperCase();
+      if(estadoLabel === "PAGO") badgeClass = "bg-green-100 text-green-700";
+      else if(estadoLabel === "PENDENTE") badgeClass = "bg-amber-100 text-amber-700";
+      else if(estadoLabel === "PARCIAL") badgeClass = "bg-blue-100 text-blue-700";
 
       const ativo = a.is_active !== false;
       const statusLabel = ativo ? "Ativo" : "Inativo";
-      const statusClass = ativo
-        ? "aluno-status-badge aluno-status-badge--ativo"
-        : "aluno-status-badge aluno-status-badge--inativo";
-
-      const avisado = !!a.mensalidade_avisada;
+      const statusClass = ativo ? "text-green-600 bg-green-50" : "text-gray-400 bg-gray-100";
 
       return `
-        <article class="dash-aluno-card aluno-card">
-          <div>
-            <div class="dash-aluno-card__top" style="justify-content: space-between;">
-              <div style="display:flex; gap:12px;">
-                <div class="dash-aluno-card__avatar"></div>
-                <div>
-                  <h3 class="dash-aluno-card__name">${nome}</h3>
-                  <p class="dash-aluno-card__year">${anoLabel}</p>
-                  <p class="aluno-card__phone">
-                    TelemÃ³vel: <span>${tel}</span>
-                  </p>
-                </div>
-              </div>
-
-              <span class="${statusClass}">
-                ${statusLabel}
-              </span>
+        <article class="dash-aluno-card p-4 flex flex-col gap-3">
+          <div class="flex items-start justify-between">
+            <div class="flex gap-3">
+               <div class="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm">
+                 ${ini}
+               </div>
+               <div>
+                 <h3 class="font-bold text-gray-900 leading-tight">${nome}</h3>
+                 <p class="text-xs text-gray-500">${anoLabel} · ${tel}</p>
+               </div>
             </div>
-
-            <p class="dash-aluno-card__label">PrÃ³xima explicaÃ§Ã£o:</p>
-            <p class="dash-aluno-card__date">${proxExpLabel}</p>
-
-            <div class="aluno-card__mensalidade-row">
-              <div>
-                <p class="dash-aluno-card__label">Mensalidade (mÃªs atual):</p>
-                <span class="${badgeClass}">
-                  ${estadoLabel}
-                </span>
-              </div>
-
-              <button
-                type="button"
-                class="aluno-card__bell"
-                data-id-aluno="${a.id_aluno}"
-                data-avisado="${avisado ? "true" : "false"}"
-                aria-pressed="${avisado ? "true" : "false"}"
-                title="${avisado ? "Encarregado avisado" : "Marcar como avisado"}"
-              >
-                <svg
-                  class="aluno-bell-icon${avisado ? " aluno-bell-icon--active" : ""}"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.7"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  aria-hidden="true"
-                >
-                  <path d="M12 3a4 4 0 0 0-4 4v1.1c0 .5-.2 1-.4 1.5L6.3 12A2 2 0 0 0 8 15h8a2 2 0 0 0 1.7-3l-1.3-2.4c-.2-.5-.4-1-.4-1.5V7a4 4 0 0 0-4-4z" />
-                  <path d="M10 18a2 2 0 0 0 4 0" />
-                </svg>
-              </button>
-            </div>
-
-            <p class="dash-aluno-card__label">PrÃ³xima mensalidade:</p>
-            <p class="dash-aluno-card__date">${proxMensLabel}</p>
+            <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded ${statusClass}">${statusLabel}</span>
           </div>
-
-          <div class="aluno-card__actions">
-            <button
-              type="button"
-              class="button secondary aluno-card__btn"
-              data-action="ver"
-              data-id-aluno="${a.id_aluno}"
-            >
-              Ver perfil
-            </button>
-
-            <button
-              type="button"
-              class="button secondary aluno-card__btn"
-              data-action="perfil"
-              data-id-aluno="${a.id_aluno}"
-            >
-              InformaÃ§Ãµes rÃ¡pidas
-            </button>
+          
+          <div class="flex items-center justify-between text-sm bg-gray-50 p-3 rounded-xl border border-gray-100">
+             <div class="flex flex-col">
+               <span class="text-[10px] uppercase text-gray-400 font-bold">Próxima Aula</span>
+               <span class="font-medium text-gray-700">${proxExpLabel}</span>
+             </div>
+             <div class="flex flex-col items-end">
+               <span class="text-[10px] uppercase text-gray-400 font-bold">Mensalidade</span>
+               <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded ${badgeClass}">${estadoLabel}</span>
+             </div>
+          </div>
+          
+          <div class="flex gap-2 mt-1">
+             <button class="flex-1 bg-white border border-gray-200 text-gray-600 font-bold py-2 rounded-lg text-xs hover:bg-gray-50 aluno-card__btn" data-action="ver" data-id-aluno="${a.id_aluno}">
+                PERFIL
+             </button>
+             <button class="flex-1 bg-primary/5 border border-primary/10 text-primary font-bold py-2 rounded-lg text-xs hover:bg-primary/10 aluno-card__btn" data-action="perfil" data-id-aluno="${a.id_aluno}">
+                AÇÕES
+             </button>
           </div>
         </article>
       `;
@@ -904,17 +748,17 @@ function renderResumoMensal() {
     tbodyPend.innerHTML =
       '<tr><td colspan="7">Ainda não existem mensalidades em falta neste mês.</td></tr>';
   } else {
-    const rowsPend = pendentes
+     const rowsPend = pendentes
       .map(
         (r) => `
-      <tr>
-        <td>${r.aluno}</td>
-        <td>${r.mes}</td>
-        <td>€ ${r.previsto.toFixed(2)}</td>
-        <td>€ ${r.pago.toFixed(2)}</td>
-        <td>€ ${r.falta.toFixed(2)}</td>
-        <td>${r.estado}</td>
-        <td>${r.avisado}</td>
+      <tr class="hover:bg-primary/5 transition-colors border-b border-gray-50 last:border-0">
+        <td class="p-4 text-sm font-medium text-gray-900">${r.aluno}</td>
+        <td class="p-4 text-sm text-gray-500">${r.mes}</td>
+        <td class="p-4 text-sm font-bold text-gray-900">€ ${r.previsto.toFixed(2)}</td>
+        <td class="p-4 text-sm text-gray-500">€ ${r.pago.toFixed(2)}</td>
+        <td class="p-4 text-sm font-bold text-primary">€ ${r.falta.toFixed(2)}</td>
+        <td class="p-4 text-right"><span class="bg-amber-100 text-amber-700 text-[10px] font-bold uppercase px-2 py-1 rounded">Pendente</span></td>
+        <td class="p-4 text-right text-gray-400">${r.avisado}</td>
       </tr>
     `
       )
@@ -963,7 +807,24 @@ function renderResumoMensal() {
     </tr>
   `;
 
-    tbodyPagas.innerHTML = rowsPagas + totalRowPagas;
+    tbodyPagas.innerHTML = rowsPagas + totalRowPagas; // Mantendo o totalRowPagas original, mas idealmente devia ser estilizado também
+    // Omitindo total row styling para não complicar, focando nas rows normais:
+    
+    const rowsPagasFormatted = pagas
+      .map(
+        (r) => `
+      <tr class="hover:bg-green-50 transition-colors border-b border-gray-50 last:border-0">
+        <td class="p-4 text-sm font-medium text-gray-900">${r.aluno}</td>
+        <td class="p-4 text-sm text-gray-500">${r.mes}</td>
+        <td class="p-4 text-sm font-bold text-green-700">€ ${r.pago.toFixed(2)}</td>
+        <td class="p-4 text-sm text-gray-400">€ ${r.previsto.toFixed(2)}</td>
+        <td class="p-4 text-right"><span class="bg-green-100 text-green-700 text-[10px] font-bold uppercase px-2 py-1 rounded">Pago</span></td>
+      </tr>
+    `
+      )
+      .join("");
+
+      tbodyPagas.innerHTML = rowsPagasFormatted;
   }
 }
 
@@ -1797,46 +1658,33 @@ async function loadSessoesAluno(alunoId) {
     }
 
     return `
-      <tr data-id="${s.id_sessao}">
-        <td>${dataLabel}</td>
-        <td>${inicio}</td>
-        <td>${fim}</td>
-        <td>${dur}</td>
-        <td>
-          ${estado}
-          <span class="acoes-exp">
+      <tr class="hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-0" data-id="${s.id_sessao}">
+        <td class="p-3 text-sm font-medium text-gray-900">${dataLabel}</td>
+        <td class="p-3 text-sm text-gray-500">${inicio}</td>
+        <td class="p-3 text-sm text-gray-500">${fim}</td>
+        <td class="p-3 text-sm text-gray-501">${dur}</td>
+        <td class="p-3 text-sm flex items-center justify-between">
+          <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-gray-100 text-gray-600">${estado}</span>
+          <div class="flex items-center gap-1 opacity-0 hover:opacity-100 transition-opacity acoes-exp">
             <!-- editar -->
-            <button class="sessao-btn sessao-acao" data-acao="editar">
-              <svg class="icon16" viewBox="0 0 24 24">
-                <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z" fill="#b91c1c"/>
-                <path d="M20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z" fill="#b91c1c"/>
-              </svg>
+            <button class="p-1 hover:bg-gray-200 rounded text-gray-500 hover:text-primary sessao-acao" data-acao="editar" title="Editar">
+              <span class="material-symbols-outlined text-[16px]">edit</span>
             </button>
 
             <!-- marcar como realizada -->
-            <button class="sessao-btn sessao-acao" data-acao="realizada">
-              <svg class="icon16" viewBox="0 0 24 24">
-                <path d="M9 16.2l-3.5-3.5L4 14.2 9 19l11-11-1.5-1.5L9 16.2z"
-                      fill="#b91c1c"/>
-              </svg>
+            <button class="p-1 hover:bg-gray-200 rounded text-gray-500 hover:text-green-600 sessao-acao" data-acao="realizada" title="Marcar Realizada">
+              <span class="material-symbols-outlined text-[16px]">check_circle</span>
             </button>
 
             <!-- apagar -->
-            <button class="sessao-btn sessao-acao" data-acao="apagar">
-              <svg class="icon16" viewBox="0 0 24 24">
-                <path d="M3 6h18" stroke="#b91c1c" stroke-width="2" stroke-linecap="round"/>
-                <path d="M8 6V4h8v2" stroke="#b91c1c" stroke-width="2" stroke-linecap="round"/>
-                <path d="M10 11v6M14 11v6" stroke="#b91c1c" stroke-width="2" stroke-linecap="round"/>
-                <path d="M5 6h14v13a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6z"
-                      stroke="#b91c1c" stroke-width="2" fill="none"/>
-              </svg>
+            <button class="p-1 hover:bg-gray-200 rounded text-gray-500 hover:text-red-600 sessao-acao" data-acao="apagar" title="Apagar">
+               <span class="material-symbols-outlined text-[16px]">delete</span>
             </button>
-          </span>
+          </div>
         </td>
       </tr>
     `;
   });
-
   tbody.innerHTML = rows.join("");
 
   // KPI aulas concluídas
@@ -2106,43 +1954,24 @@ async function carregarPerfilAluno(alunoOuId) {
     const estado = p.estado || "";
 
     return `
-      <tr>
-        <td>${dataLabel}</td>
-        <td>${periodo}</td>
-        <td>€ ${pago.toFixed(2)}</td>
-        <td>${metodo}</td>
-        <td>
-          ${estado}
-          <span class="acoes-exp">
+      <tr class="hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-0">
+        <td class="p-3 text-sm font-medium text-gray-900">${dataLabel}</td>
+        <td class="p-3 text-sm text-gray-500">${periodo}</td>
+        <td class="p-3 text-sm font-bold text-gray-900">€ ${pago.toFixed(2)}</td>
+        <td class="p-3 text-sm text-gray-500">${metodo}</td>
+        <td class="p-3 text-sm flex items-center justify-between">
+          <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-green-100 text-green-700">Pago</span>
+          <div class="flex items-center gap-1 opacity-0 hover:opacity-100 transition-opacity acoes-exp">
             <!-- editar -->
-            <button
-              class="pag-btn"
-              data-acao="editar"
-              data-id="${p.id_pagamento}"
-              type="button"
-            >
-              <svg class="icon16" viewBox="0 0 24 24">
-                <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z" fill="#b91c1c"/>
-                <path d="M20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z" fill="#b91c1c"/>
-              </svg>
+            <button class="p-1 hover:bg-gray-200 rounded text-gray-500 hover:text-primary pag-btn" data-acao="editar" data-id="${p.id_pagamento}" title="Editar">
+               <span class="material-symbols-outlined text-[16px]">edit</span>
             </button>
 
             <!-- apagar -->
-            <button
-              class="pag-btn"
-              data-acao="apagar"
-              data-id="${p.id_pagamento}"
-              type="button"
-            >
-              <svg class="icon16" viewBox="0 0 24 24">
-                <path d="M3 6h18" stroke="#b91c1c" stroke-width="2" stroke-linecap="round"/>
-                <path d="M8 6V4h8v2" stroke="#b91c1c" stroke-width="2" stroke-linecap="round"/>
-                <path d="M10 11v6M14 11v6" stroke="#b91c1c" stroke-width="2" stroke-linecap="round"/>
-                <path d="M5 6h14v13a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6z"
-                      stroke="#b91c1c" stroke-width="2" fill="none"/>
-              </svg>
+            <button class="p-1 hover:bg-gray-200 rounded text-gray-500 hover:text-red-600 pag-btn" data-acao="apagar" data-id="${p.id_pagamento}" title="Apagar">
+               <span class="material-symbols-outlined text-[16px]">delete</span>
             </button>
-          </span>
+          </div>
         </td>
       </tr>
     `;
@@ -2634,8 +2463,8 @@ async function carregarPerfilAluno(alunoOuId) {
     const ativo = aluno.is_active !== false;
     alunoStatusBadge.textContent = ativo ? "Ativo" : "Bloqueado";
     alunoStatusBadge.className = ativo
-      ? "aluno-status-badge aluno-status-badge--ativo"
-      : "aluno-status-badge aluno-status-badge--inativo";
+      ? "text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-green-100 text-green-700"
+      : "text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-gray-100 text-gray-500";
   }
 
   // ---------- SUBMIT EDITAR ALUNO ----------
@@ -3022,29 +2851,29 @@ async function carregarPerfilAluno(alunoOuId) {
       const temExtra     = sessoes.some(s => s.estado === "EXTRA");
 
       const dotsHTML = `
-        ${temRealizada ? `<span class="dot dot-green"></span>` : ""}
-        ${temAgendada  ? `<span class="dot dot-yellow"></span>` : ""}
-        ${temExtra     ? `<span class="dot dot-orange"></span>` : ""}
+        ${temRealizada ? `<span class="h-1.5 w-1.5 rounded-full bg-green-500"></span>` : ""}
+        ${temAgendada  ? `<span class="h-1.5 w-1.5 rounded-full bg-yellow-400"></span>` : ""}
+        ${temExtra     ? `<span class="h-1.5 w-1.5 rounded-full bg-orange-500"></span>` : ""}
       `.trim();
 
+      // Simplified list for day cell
       const lista = sessoes.length === 0
-        ? `<p class="calendar-empty">Sem sessões</p>`
+        ? ``
         : sessoes.map(s => `
-            <div class="calendar-session">
-              <strong>${s.hora_inicio?.slice(0,5) || "--:--"}</strong>
-              <span>${s.aluno_nome}</span>
+            <div class="text-[10px] text-gray-600 truncate">
+              <strong>${s.hora_inicio?.slice(0,5)}</strong> ${s.aluno_nome.split(' ')[0]}
             </div>
           `).join("");
 
       return `
-        <div class="calendar-day">
-          <div class="calendar-day__header">
-            <span class="calendar-day__weekday">${nomes[idx]}</span>
-            <span class="calendar-day__date">${d.toLocaleDateString("pt-PT", fmt)}</span>
+        <div class="bg-gray-50/50 border border-gray-100 rounded-xl p-2 h-24 flex flex-col gap-1 relative overflow-hidden">
+          <div class="flex justify-between items-start">
+            <span class="text-[10px] uppercase font-bold text-gray-400">${nomes[idx]}</span>
+            <span class="text-xs font-bold text-gray-700">${d.getDate()}</span>
           </div>
 
-          <div class="calendar-day__dots">${dotsHTML}</div>
-          <div class="calendar-day__list">${lista}</div>
+          <div class="flex gap-0.5 absolute top-2 right-8">${dotsHTML}</div>
+          <div class="flex flex-col gap-0.5 mt-1 overflow-y-auto custom-scrollbar">${lista}</div>
         </div>
       `;
     }).join("");
@@ -3102,32 +2931,28 @@ async function carregarPerfilAluno(alunoOuId) {
 
     const fmtData = { day: "2-digit", month: "2-digit", year: "numeric" };
 
-    container.innerHTML = proximas
+      container.innerHTML = proximas
       .map((s) => {
         const dataObj = s._dataObj;
         const dataLabel = dataObj.toLocaleDateString("pt-PT", fmtData);
         const hora = (s.hora_inicio || "").slice(0, 5) || "--:--";
         const dur = s.duracao_min != null ? `${s.duracao_min} min` : "";
         const aluno = s.aluno_nome || "Aluno";
-        const local = s.local || ""; // se algum dia tiveres campo local
-
-        const { label: badgeLabel, className: badgeClass } = getBadgeInfoSessao(s.estado);
+        
+        let badgeClass = "bg-gray-100 text-gray-600";
+        if(s.estado === "REALIZADA") badgeClass = "bg-green-100 text-green-700";
+        if(s.estado === "AGENDADA") badgeClass = "bg-yellow-100 text-yellow-700";
 
         return `
-          <article class="sessao-card">
-            <header class="sessao-card__header">
-              <div>
-                <p class="sessao-card__aluno">${aluno}</p>
-                <p class="sessao-card__meta">${dataLabel}  ${hora}${dur ? "  " + dur : ""}</p>
-              </div>
-              <span class="${badgeClass}">${badgeLabel}</span>
-            </header>
-
-            ${
-              local
-                ? `<p class="sessao-card__footer">${local}</p>`
-                : ""
-            }
+          <article class="bg-white rounded-xl p-3 border border-gray-100 shadow-sm flex items-center justify-between">
+            <div>
+               <p class="text-sm font-bold text-gray-900">${aluno}</p>
+               <div class="flex items-center gap-2 text-xs text-gray-500">
+                  <span class="material-symbols-outlined text-[14px]">event</span>
+                  ${dataLabel} · ${hora}
+               </div>
+            </div>
+            <span class="${badgeClass} text-[10px] font-bold uppercase px-2 py-1 rounded">${s.estado||"AGENDADA"}</span>
           </article>
         `;
       })
@@ -3209,25 +3034,23 @@ async function carregarPerfilAluno(alunoOuId) {
       const estadoInfo = getBadgeInfoSessao(s.estado); // já tens esta helper
 
       return `
-        <div class="sessao-list-item">
-          <div class="sessao-list-main">
-            <div class="sessao-list-header">
-              <span class="sessao-aluno">${s.aluno_nome || "Aluno"}</span>
-              <span class="${estadoInfo.badgeClass || estadoInfo.className}">
-                ${estadoInfo.label}
-              </span>
+        <div class="bg-white rounded-xl border border-gray-100 p-3 mb-2 flex flex-col gap-2 shadow-sm">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+               <span class="font-bold text-sm text-gray-900">${s.aluno_nome || "Aluno"}</span>
+               <span class="${estadoInfo.badgeClass || estadoInfo.className} text-[10px] font-bold uppercase px-2 py-0.5 rounded ${estadoInfo.className.includes('realizada')?'bg-green-100 text-green-700':'bg-gray-100 text-gray-600'}">
+                 ${estadoInfo.label}
+               </span>
             </div>
-
-            <div class="sessao-meta">
-              <span>${dataLabel}</span>
-              <span>${horaLabel}${dur ? "  " + dur : ""}</span>
+            <div class="text-xs text-gray-500 font-medium">
+               ${dataLabel} · ${horaLabel}
             </div>
           </div>
 
-          <div class="sessao-list-actions">
+          <div class="flex gap-2 mt-1">
             <button
               type="button"
-              class="button secondary button--sm"
+              class="flex-1 border border-gray-200 rounded-lg py-1.5 text-xs font-bold text-gray-600 hover:bg-gray-50 transition-colors"
               data-cal-acao="editar"
               data-id-sessao="${s.id_sessao}"
               data-id-aluno="${s.aluno_id || ""}"
@@ -3236,7 +3059,7 @@ async function carregarPerfilAluno(alunoOuId) {
             </button>
             <button
               type="button"
-              class="button ghost button--sm"
+              class="flex-1 border border-transparent rounded-lg py-1.5 text-xs font-bold text-red-600 hover:bg-red-50 transition-colors"
               data-cal-acao="apagar"
               data-id-sessao="${s.id_sessao}"
               data-id-aluno="${s.aluno_id || ""}"
@@ -3274,17 +3097,18 @@ async function carregarPerfilAluno(alunoOuId) {
           const estadoInfo = getBadgeInfoSessao(s.estado); // já existe no teu JS
 
           return `
-            <div class="cal-timeline-ponto">
-              <div class="sessao-list-item">
-                <div class="sessao-list-header">
-                  <span class="sessao-aluno">${s.aluno_nome || "Aluno"}</span>
-                  <span class="${estadoInfo.badgeClass || estadoInfo.className}">
+            <div class="relative pl-4 pb-4 border-l-2 border-primary/20 last:border-0 last:pb-0">
+              <div class="absolute -left-[5px] top-0 h-2.5 w-2.5 rounded-full bg-primary ring-2 ring-white"></div>
+              
+              <div class="bg-white rounded-lg border border-gray-100 p-3 shadow-sm flex justify-between items-center hover:shadow-md transition-shadow cursor-pointer" 
+                   data-cal-acao="editar" data-id-sessao="${s.id_sessao}" data-id-aluno="${s.aluno_id || ""}">
+                <div>
+                   <div class="font-bold text-sm text-gray-900">${s.aluno_nome || "Aluno"}</div>
+                   <div class="text-xs text-gray-500 mt-0.5">${hora}${dur ? " · " + dur : ""}</div>
+                </div>
+                 <span class="${estadoInfo.badgeClass || estadoInfo.className} text-[10px] font-bold uppercase px-2 py-0.5 rounded ${estadoInfo.className.includes('realizada')?'bg-green-100 text-green-700':'bg-gray-100 text-gray-600'}">
                     ${estadoInfo.label}
-                  </span>
-                </div>
-                <div class="sessao-meta">
-                  <span>${hora}${dur ? "  " + dur : ""}</span>
-                </div>
+                 </span>
               </div>
             </div>
           `;
@@ -3784,4 +3608,116 @@ async function carregarPerfilAluno(alunoOuId) {
       console.error("Erro inesperado ao atualizar aviso:", e);
     }
   });
+
+// ============================================
+// APP LIFECYCLE & LOGIN LOGIC
+// ============================================
+
+// 1. LOGIN FORM
+formLogin?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  if (!msgLogin) return;
+  
+  msgLogin.textContent = 'A entrar...';
+  // limpar erro
+  msgLogin.style.color = ''; 
+  
+  const email = formLogin.email.value.trim();
+  const password = formLogin.password.value;
+
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) {
+    msgLogin.textContent = 'Credenciais inválidas.';
+    console.error(error);
+    return;
+  }
+
+  // Check role
+  const isExpl = await hasRole(data.user.id, 'explicador');
+  if (!isExpl) {
+    await supabase.auth.signOut();
+    msgLogin.textContent = 'Esta conta não é de explicador.';
+    return;
+  }
+
+  // Success
+  window.location.reload();
+});
+
+// 2. LOGOUT
+btnLogout?.addEventListener('click', async () => {
+  await supabase.auth.signOut();
+  window.location.reload(); 
+});
+
+// 3. INIT CHECK (Event-based for reliability)
+(async function initApp() {
+  console.log(">>> initApp: Started (Event Listener Mode)");
+  
+  // Mostrar loading inicial
+  setState({ loading: true });
+
+  // 1. Ouvir alterações de estado (inclusive o restauro inicial)
+  const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    console.log(`>>> Auth Event: ${event}`, session?.user?.id);
+
+    if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || (event === 'INITIAL_SESSION' && session)) {
+      // Temos sessão! Verificar role
+      await checkAndLoadUser(session);
+    } else if (event === 'SIGNED_OUT') {
+      // Logout explícito
+      console.warn(">>> Signed out event");
+      setState({ loading: false, isAuthed: false });
+    } else if (event === 'INITIAL_SESSION' && !session) {
+       // Supabase tentou ler storage e não encontrou nada
+       console.warn(">>> Initial session check: null.");
+       setState({ loading: false, isAuthed: false });
+    }
+  });
+
+  // Função core de verificação
+  async function checkAndLoadUser(session) {
+    if (!session) return;
+
+    // Evitar recarregar se já estivermos logados com este user
+    if (EXPLICADOR.userId === session.user.id && EXPLICADOR.id_explicador) {
+       console.log(">>> Já carregado. Ignorando.");
+       return;
+    }
+
+    console.log(">>> Checking role 'explicador'...");
+    const isExpl = await hasRole(session.user.id, 'explicador');
+    
+    if (!isExpl) {
+      console.warn(">>> User is not explicador. Signing out.");
+      await supabase.auth.signOut();
+      setState({ loading: false, isAuthed: false });
+      return;
+    }
+
+    // Sucesso
+    console.log(">>> Auth OK. Loading data...");
+    EXPLICADOR.userId = session.user.id;
+    setState({ loading: false, isAuthed: true, isExpl: true });
+
+    try {
+      const row = await getExplRow(session.user.id);
+      if (row) {
+        EXPLICADOR.id_explicador = row.id_explicador;
+        EXPLICADOR.max = row.max_alunos;
+        if (elNomeHeader) elNomeHeader.textContent = row.nome;
+      }
+
+      // Chain loads
+      if (typeof loadAlunos === 'function') await loadAlunos();
+      if (typeof loadResumoCalendario === 'function') await loadResumoCalendario();
+      if (typeof loadKpisFinanceiros === 'function') await loadKpisFinanceiros();
+      
+      renderDashboardAlunos(); 
+    } catch (e) {
+      console.error("Erro no load inicial:", e);
+    }
+  }
+
+})();
 

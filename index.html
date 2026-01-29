@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="pt">
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -38,38 +39,37 @@
   </header>
 
   <main class="hero">
-  <section class="hero__card">
-    <div class="hero__text">
-      <h1>Aprender juntos, de forma organizada.</h1>
-      <p>
-        A EduSphere liga alunos, explicadores e administração numa só
-        plataforma: horários, feedback, progresso e tudo o que interessa
-        num único espaço.
-      </p>
+    <section class="hero__card">
+      <div class="hero__text">
+        <h1>Aprender juntos, de forma organizada.</h1>
+        <p>
+          A EduSphere liga alunos, explicadores e administração numa só
+          plataforma: horários, feedback, progresso e tudo o que interessa
+          num único espaço.
+        </p>
 
-      <div class="hero__cta">
-        <button type="button" class="hero__btn hero__btn--aluno"
-                onclick="document.getElementById('navAluno').click()">
-          Sou Aluno
-        </button>
-        <button type="button" class="hero__btn"
-                onclick="document.getElementById('navExplicador').click()">
-          Sou Explicador
-        </button>
-        <button type="button" class="hero__btn hero__btn--ghost"
-                onclick="document.getElementById('navAdmin').click()">
-          Sou Admin
-        </button>
+        <div class="hero__cta">
+          <button type="button" class="hero__btn hero__btn--aluno"
+            onclick="document.getElementById('navAluno').click()">
+            Sou Aluno
+          </button>
+          <button type="button" class="hero__btn" onclick="document.getElementById('navExplicador').click()">
+            Sou Explicador
+          </button>
+          <button type="button" class="hero__btn hero__btn--ghost"
+            onclick="document.getElementById('navAdmin').click()">
+            Sou Admin
+          </button>
+        </div>
       </div>
-    </div>
 
-    <div class="hero__side">
-      <div class="hero__pill">Gestão de explicações</div>
-      <div class="hero__pill">Acompanhamento da evolução</div>
-      <div class="hero__pill">Comunicação simplificada</div>
-    </div>
-  </section>
-    </main>
+      <div class="hero__side">
+        <div class="hero__pill">Gestão de explicações</div>
+        <div class="hero__pill">Acompanhamento da evolução</div>
+        <div class="hero__pill">Comunicação simplificada</div>
+      </div>
+    </section>
+  </main>
 
 
   <!-- Modal Explicador (APENAS LOGIN) -->
@@ -138,215 +138,231 @@
   <footer>© <span id="y"></span> EduSphere | by antonioappleton</footer>
 
   <script>
-  // ===== Service Worker (PWA) =====
-  if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => {
-      navigator.serviceWorker
-        .register("./service-worker.js")   // <-- ou simplesmente "service-worker.js"
-        .then((reg) => {
-          if (reg.waiting) {
-            reg.waiting.postMessage({ type: "SKIP_WAITING" });
-          }
+    // ===== Service Worker (PWA) =====
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker
+          .register("./service-worker.js")   // <-- ou simplesmente "service-worker.js"
+          .then((reg) => {
+            if (reg.waiting) {
+              reg.waiting.postMessage({ type: "SKIP_WAITING" });
+            }
 
-          reg.addEventListener("updatefound", () => {
-            const newSW = reg.installing;
-            newSW?.addEventListener("statechange", () => {
-              if (
-                newSW.state === "installed" &&
-                navigator.serviceWorker.controller
-              ) {
-                console.log("Nova versão disponível. Atualiza a página.");
-              }
+            reg.addEventListener("updatefound", () => {
+              const newSW = reg.installing;
+              newSW?.addEventListener("statechange", () => {
+                if (
+                  newSW.state === "installed" &&
+                  navigator.serviceWorker.controller
+                ) {
+                  console.log("Nova versão disponível. Atualiza a página.");
+                }
+              });
             });
-          });
-        })
-        .catch((err) => console.error("SW erro:", err));
-    });
-  }
+          })
+          .catch((err) => console.error("SW erro:", err));
+      });
+    }
 
-  // ===== Helpers básicos =====
-  const $ = (s) => document.querySelector(s);
-  // ano no footer
-  document.getElementById('y').textContent = new Date().getFullYear();
+    // ===== Helpers básicos =====
+    const $ = (s) => document.querySelector(s);
+    // ano no footer
+    document.getElementById('y').textContent = new Date().getFullYear();
 
-  // Helper: verificar papel
-  async function hasRole(uid, roleName) {
-    const { data, error } = await supabase
-      .from('app_users')
-      .select('role')
-      .eq('user_id', uid)
-      .eq('role', roleName)
-      .maybeSingle(); // 0/1 → nunca 406
-    if (error) {
-      console.error('hasRole error', error);
+    // Helper: verificar papel
+    async function hasRole(uid, roleName) {
+      // 1. Check direct match
+      const { data } = await supabase
+        .from('app_users')
+        .select('role')
+        .eq('user_id', uid)
+        .eq('role', roleName)
+        .maybeSingle();
+
+      if (data) return true;
+
+      // 2. If requesting 'explicador' access, allow 'admin' too
+      if (roleName === 'explicador') {
+        const { data: admin } = await supabase
+          .from('app_users')
+          .select('role')
+          .eq('user_id', uid)
+          .eq('role', 'admin')
+          .maybeSingle();
+        if (admin) return true;
+      }
+
       return false;
     }
-    return !!data;
-  }
 
-  /* ========== MODAL GENERIC HELPERS ========== */
-  function openModal(el) {
-    el.classList.add('open');
-    el.setAttribute('aria-hidden', 'false');
-  }
-  function closeModal(el) {
-    el.classList.remove('open');
-    el.setAttribute('aria-hidden', 'true');
-  }
-
-  /* ========== LOGIN EXPLICADOR (MODAL) ========== */
-  const navExpl = $('#navExplicador');
-  const explModal = $('#explModal');
-  const explClose = $('#explClose');
-
-  navExpl?.addEventListener('click', async (e) => {
-    e.preventDefault(); // bloquear navegação normal
-
-    const href = navExpl.getAttribute('href') || './explicador.html';
-    const { data: { session } } = await supabase.auth.getSession();
-    const isExpl = session?.user && await hasRole(session.user.id, 'explicador');
-
-    if (isExpl) {
-      window.location.href = href;
-      return;
+    /* ========== MODAL GENERIC HELPERS ========== */
+    function openModal(el) {
+      el.classList.add('open');
+      el.setAttribute('aria-hidden', 'false');
     }
-    openModal(explModal);
-  });
-
-  explClose?.addEventListener('click', () => closeModal(explModal));
-  explModal?.addEventListener('click', (e) => {
-    if (e.target.classList.contains('modal__backdrop')) closeModal(explModal);
-  });
-
-  const fExpl = document.getElementById('fExplLogin');
-  fExpl?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const msg = document.getElementById('explLoginMsg');
-    msg.textContent = 'A entrar...';
-
-    const email = fExpl.email.value.trim();
-    const password = fExpl.password.value;
-
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) {
-      msg.textContent = 'Credenciais inválidas.';
-      return;
+    function closeModal(el) {
+      el.classList.remove('open');
+      el.setAttribute('aria-hidden', 'true');
     }
 
-    if (!(await hasRole(data.user.id, 'explicador'))) {
-      await supabase.auth.signOut().catch(() => {});
-      msg.textContent = 'Esta conta não é de explicador.';
-      return;
-    }
-    window.location.href = './explicador.html';
-  });
+    /* ========== LOGIN EXPLICADOR (MODAL) ========== */
+    const navExpl = $('#navExplicador');
+    const explModal = $('#explModal');
+    const explClose = $('#explClose');
 
-  /* ========== LOGIN ALUNO (MODAL) ========== */
-  const navAluno = $('#navAluno');
-  const alunoModal = $('#alunoModal');
-  const alunoClose = $('#alunoClose');
+    navExpl?.addEventListener('click', async (e) => {
+      e.preventDefault(); // bloquear navegação normal
 
-  navAluno?.addEventListener('click', async (e) => {
-    e.preventDefault();
+      const href = navExpl.getAttribute('href') || './explicador.html';
+      const { data: { session } } = await supabase.auth.getSession();
+      const isExpl = session?.user && await hasRole(session.user.id, 'explicador');
 
-    const href = navAluno.getAttribute('href') || './aluno.html';
-    const { data: { session } } = await supabase.auth.getSession();
-    const isAluno = session?.user && await hasRole(session.user.id, 'aluno');
+      if (isExpl) {
+        window.location.href = href;
+        return;
+      }
+      openModal(explModal);
+    });
 
-    if (isAluno) {
-      window.location.href = href;
-      return;
-    }
-    openModal(alunoModal);
-  });
+    explClose?.addEventListener('click', () => closeModal(explModal));
+    explModal?.addEventListener('click', (e) => {
+      if (e.target.classList.contains('modal__backdrop')) closeModal(explModal);
+    });
 
-  alunoClose?.addEventListener('click', () => closeModal(alunoModal));
-  alunoModal?.addEventListener('click', (e) => {
-    if (e.target.classList.contains('modal__backdrop')) closeModal(alunoModal);
-  });
+    const fExpl = document.getElementById('fExplLogin');
+    fExpl?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const msg = document.getElementById('explLoginMsg');
+      msg.textContent = 'A entrar...';
 
-  const fAluno = document.getElementById('fAlunoLogin');
-  fAluno?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const msg = document.getElementById('alunoLoginMsg');
-    msg.textContent = 'A entrar...';
+      const email = fExpl.email.value.trim();
+      const password = fExpl.password.value;
 
-    const email = fAluno.email.value.trim();
-    const password = fAluno.password.value;
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        msg.textContent = 'Credenciais inválidas.';
+        return;
+      }
 
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) {
-      msg.textContent = 'Credenciais inválidas.';
-      return;
-    }
+      if (!(await hasRole(data.user.id, 'explicador'))) {
+        await supabase.auth.signOut().catch(() => { });
+        msg.textContent = 'Esta conta não é de explicador.';
+        return;
+      }
+      msg.textContent = 'Login efetuado! A redirecionar...';
+      await new Promise(r => setTimeout(r, 500)); // Pequeno delay para garantir persistência
+      window.location.href = './explicador.html';
+    });
 
-    if (!(await hasRole(data.user.id, 'aluno'))) {
-      await supabase.auth.signOut().catch(() => {});
-      msg.textContent = 'Esta conta não é de aluno.';
-      return;
-    }
-    window.location.href = './aluno.html';
-  });
+    /* ========== LOGIN ALUNO (MODAL) ========== */
+    const navAluno = $('#navAluno');
+    const alunoModal = $('#alunoModal');
+    const alunoClose = $('#alunoClose');
 
-  /* ========== LOGIN ADMIN (MODAL) ========== */
-  const navAdmin = $('#navAdmin');
-  const adminModal = $('#adminModal');
-  const adminClose = $('#adminClose');
+    navAluno?.addEventListener('click', async (e) => {
+      e.preventDefault();
 
-  navAdmin?.addEventListener('click', async (e) => {
-    e.preventDefault();
+      const href = navAluno.getAttribute('href') || './aluno.html';
+      const { data: { session } } = await supabase.auth.getSession();
+      const isAluno = session?.user && await hasRole(session.user.id, 'aluno');
 
-    const href = navAdmin.getAttribute('href') || './public/admin.html';
-    const { data: { session } } = await supabase.auth.getSession();
-    const isAdmin = session?.user && await hasRole(session.user.id, 'admin');
+      if (isAluno) {
+        window.location.href = href;
+        return;
+      }
+      openModal(alunoModal);
+    });
 
-    if (isAdmin) {
-      window.location.href = href;
-      return;
-    }
-    openModal(adminModal);
-  });
+    alunoClose?.addEventListener('click', () => closeModal(alunoModal));
+    alunoModal?.addEventListener('click', (e) => {
+      if (e.target.classList.contains('modal__backdrop')) closeModal(alunoModal);
+    });
 
-  adminClose?.addEventListener('click', () => closeModal(adminModal));
-  adminModal?.addEventListener('click', (e) => {
-    if (e.target.classList.contains('modal__backdrop')) closeModal(adminModal);
-  });
+    const fAluno = document.getElementById('fAlunoLogin');
+    fAluno?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const msg = document.getElementById('alunoLoginMsg');
+      msg.textContent = 'A entrar...';
 
-  const fAdminModal = document.getElementById('fAdminLoginModal');
-  fAdminModal?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const msg = document.getElementById('adminLoginMsg');
-    msg.textContent = 'A entrar...';
+      const email = fAluno.email.value.trim();
+      const password = fAluno.password.value;
 
-    const email = fAdminModal.email.value.trim();
-    const password = fAdminModal.password.value;
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        msg.textContent = 'Credenciais inválidas.';
+        return;
+      }
 
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) {
-      msg.textContent = 'Credenciais inválidas.';
-      return;
-    }
+      if (!(await hasRole(data.user.id, 'aluno'))) {
+        await supabase.auth.signOut().catch(() => { });
+        msg.textContent = 'Esta conta não é de aluno.';
+        return;
+      }
+      msg.textContent = 'Login efetuado! A redirecionar...';
+      await new Promise(r => setTimeout(r, 500));
+      window.location.href = './aluno.html';
+    });
 
-    if (!(await hasRole(data.user.id, 'admin'))) {
-      await supabase.auth.signOut().catch(() => {});
-      msg.textContent = 'Esta conta não é de admin.';
-      return;
-    }
-    window.location.href = './public/admin.html';
-  });
+    /* ========== LOGIN ADMIN (MODAL) ========== */
+    const navAdmin = $('#navAdmin');
+    const adminModal = $('#adminModal');
+    const adminClose = $('#adminClose');
 
-  /* ========== REDIREÇÕES SE JÁ ESTIVER LOGADO ========== */
-  (async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) return;
+    navAdmin?.addEventListener('click', async (e) => {
+      e.preventDefault();
 
-    if (await hasRole(session.user.id, 'explicador')) {
-      // se quiseres redirecionar logo explicadores:
-      // window.location.href = './explicador.html';
-    }
-  })();
-</script>
+      const href = navAdmin.getAttribute('href') || './public/admin.html';
+      const { data: { session } } = await supabase.auth.getSession();
+      const isAdmin = session?.user && await hasRole(session.user.id, 'admin');
+
+      if (isAdmin) {
+        window.location.href = href;
+        return;
+      }
+      openModal(adminModal);
+    });
+
+    adminClose?.addEventListener('click', () => closeModal(adminModal));
+    adminModal?.addEventListener('click', (e) => {
+      if (e.target.classList.contains('modal__backdrop')) closeModal(adminModal);
+    });
+
+    const fAdminModal = document.getElementById('fAdminLoginModal');
+    fAdminModal?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const msg = document.getElementById('adminLoginMsg');
+      msg.textContent = 'A entrar...';
+
+      const email = fAdminModal.email.value.trim();
+      const password = fAdminModal.password.value;
+
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        msg.textContent = 'Credenciais inválidas.';
+        return;
+      }
+
+      if (!(await hasRole(data.user.id, 'admin'))) {
+        await supabase.auth.signOut().catch(() => { });
+        msg.textContent = 'Esta conta não é de admin.';
+        return;
+      }
+      window.location.href = './public/admin.html';
+    });
+
+    /* ========== REDIREÇÕES SE JÁ ESTIVER LOGADO ========== */
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return;
+
+      if (await hasRole(session.user.id, 'explicador')) {
+        // se quiseres redirecionar logo explicadores:
+        // window.location.href = './explicador.html';
+      }
+    })();
+  </script>
 
 
 </body>
+
 </html>

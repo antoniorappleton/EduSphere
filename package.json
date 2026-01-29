@@ -1,0 +1,25 @@
+{
+  "name": "edusphere",
+  "version": "1.0.0",
+  "description": "App de apoio a explicadores, pais e alunos.",
+  "main": "service-worker.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start-scheduler": "node scripts/scheduler.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/antoniorappleton/EduSphere.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/antoniorappleton/EduSphere/issues"
+  },
+  "homepage": "https://github.com/antoniorappleton/EduSphere#readme",
+  "dependencies": {
+    "node-cron": "^4.2.1",
+    "node-notifier": "^10.0.1"
+  }
+}
