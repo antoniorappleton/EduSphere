@@ -34,12 +34,17 @@ async function loadDashboard() {
   const currentMonth = today.getMonth() + 1;
   const currentYear = today.getFullYear();
 
-  const { data: pags } = await supabase
+  // Fetch ALL pagamentos for KPIs + status detection (last 12 months)
+  const { data: allPagsExpl } = await supabase
     .from('pagamentos')
-    .select('valor_previsto, valor_pago, estado, id_aluno')
+    .select('valor_previsto, valor_pago, estado, id_aluno, ano, mes')
     .eq('id_explicador', explId)
-    .eq('ano', currentYear)
-    .eq('mes', currentMonth);
+    .gte('ano', currentYear - 1)
+    .order('ano', { ascending: false })
+    .order('mes', { ascending: false });
+
+  // Current month subset for KPIs
+  const pags = (allPagsExpl || []).filter(p => Number(p.ano) === currentYear && Number(p.mes) === currentMonth);
 
   let totalPrevisto = 0;
   let totalRealizado = 0;
@@ -79,13 +84,37 @@ async function loadDashboard() {
     .order('created_at', { ascending: false })
     .limit(4);
 
+  // 5. Compute 3-state status per student:
+  //    PAGO (green)    — current month paid
+  //    PENDENTE (orange) — current month not yet paid, no gap
+  //    ATRASADO (red)  — missed month(s) between last payment and current month
   const alunosWithStatus = (alunos || []).map(aluno => {
-    const pag = pags ? pags.find(p => p.id_aluno === aluno.id_aluno) : null;
-    return {
-      ...aluno,
-      estado_pagamento: pag ? pag.estado : 'PENDENTE',
-      pagamento_mes: pag
-    };
+    const pagCurr = pags ? pags.find(p => p.id_aluno === aluno.id_aluno) : null;
+
+    if (pagCurr && pagCurr.estado === 'PAGO') {
+      return { ...aluno, estado_pagamento: 'PAGO', pagamento_mes: pagCurr };
+    }
+
+    // Check for gaps: find the last PAGO payment for this student
+    const studentPags = (allPagsExpl || [])
+      .filter(p => p.id_aluno === aluno.id_aluno && p.estado === 'PAGO')
+      .sort((a, b) => (Number(b.ano) * 100 + Number(b.mes)) - (Number(a.ano) * 100 + Number(a.mes)));
+
+    const lastPaid = studentPags.length > 0 ? studentPags[0] : null;
+
+    if (lastPaid) {
+      const lastPaidYM = Number(lastPaid.ano) * 12 + Number(lastPaid.mes);
+      const currentYM = currentYear * 12 + currentMonth;
+      const gap = currentYM - lastPaidYM;
+
+      if (gap > 1) {
+        // More than 1 month since last payment → Atrasado
+        return { ...aluno, estado_pagamento: 'ATRASADO', pagamento_mes: pagCurr };
+      }
+    }
+
+    // No gap or no payment history → Pendente
+    return { ...aluno, estado_pagamento: 'PENDENTE', pagamento_mes: pagCurr };
   });
 
   const countEl = document.getElementById('dash-alunos-contador');
@@ -97,6 +126,7 @@ async function loadDashboard() {
         .eq('is_active', true);
      countEl.textContent = `(${count || 0} ativos)`;
   }
+
 
   renderAlunos(alunosWithStatus, currentMonth, currentYear);
 
@@ -158,8 +188,13 @@ function renderAlunos(lista, mes, ano) {
     
     const init = (aluno.nome || '?')[0].toUpperCase();
     const isPago = aluno.estado_pagamento === 'PAGO';
-    const statusText = isPago ? 'Pago' : 'Pendente';
-    const statusColor = isPago ? 'background:#dcfce7; color:#166534;' : 'background:#fff7ed; color:#c2410c;';
+    const isAtrasado = aluno.estado_pagamento === 'ATRASADO';
+    const statusText = isPago ? 'Pago' : isAtrasado ? 'Atrasado' : 'Pendente';
+    const statusColor = isPago
+      ? 'background:#dcfce7; color:#166534;'
+      : isAtrasado
+        ? 'background:#fee2e2; color:#b91c1c;'
+        : 'background:#fff7ed; color:#c2410c;';
 
     const isAvisado = aluno.mensalidade_avisada && !isPago;
     const bellColor = isAvisado ? '#b91c1c' : '#94a3b8';
@@ -331,7 +366,7 @@ function openDashMonthReport(ano, mes) {
 
   titulo.textContent = `Relatório — ${DASH_MESES[mes - 1]} ${ano}`;
 
-  const items = _dashPagamentos.filter(p => p.ano === ano && p.mes === mes);
+  const items = _dashPagamentos.filter(p => Number(p.ano) === Number(ano) && Number(p.mes) === Number(mes));
   
   if (!items.length) {
     body.innerHTML = '<p style="color:#94a3b8">Sem dados para este mês.</p>';

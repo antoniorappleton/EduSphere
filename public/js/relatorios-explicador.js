@@ -16,15 +16,20 @@ document.addEventListener('DOMContentLoaded', () => { initReports(); });
 
 async function initReports() {
   try {
-    // 1. Fetch report data from Edge Function
-    const data = await ExplicadorService.getDetailedReports();
-
-    // 2. Fetch raw pagamentos for monthly list + KPIs
     const explId = await ExplicadorService.getMyExplId();
     const today = new Date();
     const curYear = today.getFullYear();
     const curMonth = today.getMonth() + 1;
 
+    // 1. Fetch report data from Edge Function (may fail if not deployed)
+    let data = { faturacao: [], sessoes_mes: [], alunos_mes: [], disciplinas: [] };
+    try {
+      data = await ExplicadorService.getDetailedReports();
+    } catch(e) {
+      console.warn("getDetailedReports falhou (Edge Function não deployed?):", e);
+    }
+
+    // 2. Fetch raw pagamentos for monthly list + KPIs
     const { data: allPags } = await supabase
       .from('pagamentos')
       .select('*, alunos!inner(nome, apelido)')
@@ -42,7 +47,7 @@ async function initReports() {
       .eq('is_active', true);
 
     // 4. Calculate KPIs from current month pagamentos
-    const curMonthPags = _cachedPagamentos.filter(p => p.ano === curYear && p.mes === curMonth);
+    const curMonthPags = _cachedPagamentos.filter(p => Number(p.ano) === curYear && Number(p.mes) === curMonth);
     let totalPago = 0, totalPrev = 0;
     curMonthPags.forEach(p => {
       totalPago += Number(p.valor_pago || 0);
@@ -50,7 +55,7 @@ async function initReports() {
     });
 
     // Sessions this month from report data
-    const sessoesMes = (data.sessoes_mes || []).find(s => s.ano === curYear && s.mes === curMonth);
+    const sessoesMes = (data.sessoes_mes || []).find(s => Number(s.ano) === curYear && Number(s.mes) === curMonth);
     const totalSessoes = sessoesMes ? Number(sessoesMes.total_sessoes || 0) : 0;
 
     renderKpis(activeCount || 0, totalPago, totalSessoes, totalPrev > 0 ? Math.round((totalPago / totalPrev) * 100) : 0);
@@ -228,7 +233,7 @@ function openMonthReport(ano, mes) {
   titulo.textContent = `Relatório — ${MESES[mes - 1]} ${ano}`;
 
   // Filter cached pagamentos
-  const items = _cachedPagamentos.filter(p => p.ano === ano && p.mes === mes);
+  const items = _cachedPagamentos.filter(p => Number(p.ano) === Number(ano) && Number(p.mes) === Number(mes));
   
   if (!items.length) {
     body.innerHTML = '<p style="color:#94a3b8">Sem dados para este mês.</p>';
