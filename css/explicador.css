@@ -329,8 +329,10 @@ body.home main.auth {
 
 .dash-alunos-grid {
   display: grid;
+  grid-template-columns: 1fr;
   gap: 16px;
   margin-top: 12px;
+  width: 100%;
 }
 
 @media (min-width: 640px) {
@@ -355,6 +357,8 @@ body.home main.auth {
   flex-direction: column;
   justify-content: space-between;
   min-height: 190px;
+  min-width: 0; /* Permite conter conteúdo longo */
+  box-sizing: border-box;
 }
 
 .dash-aluno-card__top {
@@ -368,8 +372,18 @@ body.home main.auth {
   width: 44px;
   height: 44px;
   border-radius: 999px;
-  background: #e5e7eb;
+  background: #eff6ff;
+  color: #1d4ed8;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+.dash-aluno-card__info {
+  flex: 1;
+  min-width: 0;
 }
 
 .dash-aluno-card__name {
@@ -388,14 +402,25 @@ body.home main.auth {
   color: #6b7280;
 }
 
+.dash-aluno-card__content {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dash-aluno-card__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 .dash-aluno-card__label {
-  margin: 6px 0 0;
   font-size: 0.85rem;
   color: #6b7280;
 }
 
 .dash-aluno-card__date {
-  margin: 2px 0 8px;
   font-size: 0.9rem;
   font-weight: 600;
   color: #111827;
@@ -403,33 +428,28 @@ body.home main.auth {
 
 .dash-aluno-card__badge {
   display: inline-flex;
-  align-items: center;
-  justify-content: center;
   padding: 4px 10px;
   border-radius: 999px;
   font-size: 0.76rem;
   font-weight: 600;
 }
 
-.dash-aluno-card__badge--pago {
-  background: #111827;
-  color: #ffffff;
-}
-
-.dash-aluno-card__badge--pendente {
-  background: #fef3c7;
-  color: #92400e;
-}
-
-.dash-aluno-card__badge--parcial {
-  background: #ffedd5;
-  color: #9a3412;
-}
-
 .dash-aluno-card__btn {
   margin-top: 14px;
   width: 100%;
-  justify-content: center;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 8px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.dash-aluno-card__btn:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
 }
 
 /* Badges extra usados noutros sítios */
