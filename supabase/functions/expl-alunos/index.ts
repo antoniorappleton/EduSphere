@@ -1267,6 +1267,81 @@ serve(async (req) => {
         headers: cors(origin)
       });
     }
+
+    /* =======================
+       UPSERT PAGAMENTO ALUNO
+       payload: { id_pagamento?, id_aluno, ano, mes, valor_previsto, valor_pago, data_pagamento, estado }
+       ======================= */
+    if (action === "upsert_pagamento_aluno") {
+      const p = payload || {};
+      const idPagamento = p.id_pagamento || null;
+      const idAluno = p.id_aluno;
+      const ano = Number(p.ano);
+      const mes = Number(p.mes);
+      const valorPrev = Number(p.valor_previsto) || 0;
+      const valorPago = Number(p.valor_pago) || 0;
+      const dataPag = p.data_pagamento || null;
+      const estado = p.estado || "PENDENTE";
+
+      if (!idAluno || !ano || !mes) {
+        return new Response(JSON.stringify({ error: "id_aluno, ano e mes são obrigatórios" }), {
+          status: 400,
+          headers: cors(origin)
+        });
+      }
+
+      // Validar acesso
+      const aluno = await getAlunoDoExpl(idAluno);
+      if (aluno.id_explicador !== myExplId) {
+        return new Response(JSON.stringify({ error: "Proibido" }), { status: 403, headers: cors(origin) });
+      }
+
+      const row = {
+        id_aluno: idAluno,
+        id_explicador: myExplId,
+        ano,
+        mes,
+        valor_previsto: valorPrev,
+        valor_pago: valorPago,
+        data_pagamento: dataPag,
+        estado
+      };
+
+      let result;
+      if (idPagamento) {
+        result = await svc.from("pagamentos").update(row).eq("id_pagamento", idPagamento).eq("id_explicador", myExplId);
+      } else {
+        result = await svc.from("pagamentos").insert(row);
+      }
+
+      if (result.error) {
+        console.error("error upserting pagamento", result.error);
+        return new Response(JSON.stringify({ error: result.error.message }), { status: 400, headers: cors(origin) });
+      }
+
+      return new Response(JSON.stringify({ ok: true }), { status: 200, headers: cors(origin) });
+    }
+
+    /* =======================
+       DELETE PAGAMENTO ALUNO
+       payload: { id_pagamento }
+       ======================= */
+    if (action === "delete_pagamento_aluno") {
+      const p = payload || {};
+      const idPagamento = p.id_pagamento;
+      if (!idPagamento) {
+        return new Response(JSON.stringify({ error: "id_pagamento é obrigatório" }), { status: 400, headers: cors(origin) });
+      }
+
+      const { error } = await svc.from("pagamentos").delete().eq("id_pagamento", idPagamento).eq("id_explicador", myExplId);
+      if (error) {
+        console.error("error deleting pagamento", error);
+        return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: cors(origin) });
+      }
+
+      return new Response(JSON.stringify({ ok: true }), { status: 200, headers: cors(origin) });
+    }
+
     // ação desconhecida
     return new Response(JSON.stringify({
       error: "ação inválida"

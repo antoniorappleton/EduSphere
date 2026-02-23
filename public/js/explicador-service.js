@@ -168,5 +168,25 @@ window.ExplicadorService = {
     });
     if (error) throw error;
     return data;
+  },
+
+  // 6. GESTÃO DE PAGAMENTOS (CRUD)
+  async upsertPagamento(payload) {
+    // payload: { id_pagamento?, id_aluno, ano, mes, valor_previsto, valor_pago, data_pagamento, estado }
+    const { data, error } = await supabase.functions.invoke('expl-alunos', {
+      body: { action: 'upsert_pagamento_aluno', payload }
+    });
+    if (error) throw error;
+    if (data && data.error) throw new Error(data.error);
+    return data;
+  },
+
+  async deletePagamento(id_pagamento) {
+    const { data, error } = await supabase.functions.invoke('expl-alunos', {
+      body: { action: 'delete_pagamento_aluno', payload: { id_pagamento } }
+    });
+    if (error) throw error;
+    if (data && data.error) throw new Error(data.error);
+    return data;
   }
 };

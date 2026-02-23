@@ -151,18 +151,73 @@ function renderPagamentosTable(list) {
   let totalVisible = 0;
   tbody.innerHTML = list.length ? list.map(p => {
     totalVisible += Number(p.valor_pago || 0);
+    // Armazenar os dados na row para edição fácil
+    const pJson = JSON.stringify(p).replace(/"/g, '&quot;');
     return `
-      <tr>
+      <tr data-pagamento='${pJson}'>
         <td>${p.data_pagamento ? new Date(p.data_pagamento).toLocaleDateString('pt-PT') : '—'}</td>
         <td>${p.mes}/${p.ano}</td>
-        <td>${formatCurrency(p.valor_pago)}</td>
+        <td>${formatCurrency(p.valor_pago)} / ${formatCurrency(p.valor_previsto)}</td>
         <td>Multibanco/MBWay</td>
         <td><span class="badge ${p.estado?.toLowerCase()}">${p.estado}</span></td>
+        <td>
+          <div style="display:flex; gap:8px;">
+            <button class="button secondary button--sm" onclick="openModalPagamento('${p.id_pagamento}')" title="Editar">✏️</button>
+            <button class="button secondary button--sm" onclick="handleDeletePagamento('${p.id_pagamento}')" title="Apagar">🗑️</button>
+          </div>
+        </td>
       </tr>
     `;
-  }).join('') : '<tr><td colspan="5">Sem pagamentos.</td></tr>';
+  }).join('') : '<tr><td colspan="6">Sem pagamentos.</td></tr>';
   
   if (totalEl) totalEl.textContent = totalVisible.toFixed(2);
+}
+
+async function openModalPagamento(id = null) {
+  const m = document.getElementById('modal-pagamento');
+  const form = document.getElementById('fPagamento');
+  const title = document.getElementById('modal-pagamento-titulo');
+  if (!m || !form) return;
+
+  form.reset();
+  document.getElementById('in-pag-id').value = id || '';
+  
+  const alunoId = document.getElementById('view-perfil-aluno').dataset.currentAlunoId;
+  const aluno = await ExplicadorService.getAluno(alunoId);
+
+  if (id) {
+    title.textContent = "Editar Pagamento";
+    // Procurar os dados na tabela
+    const row = document.querySelector(`tr[data-pagamento*="${id}"]`);
+    if (row) {
+      const p = JSON.parse(row.dataset.pagamento);
+      document.getElementById('in-pag-mes').value = p.mes;
+      document.getElementById('in-pag-ano').value = p.ano;
+      document.getElementById('in-pag-prev').value = p.valor_previsto;
+      document.getElementById('in-pag-pago').value = p.valor_pago;
+      document.getElementById('in-pag-data').value = p.data_pagamento || '';
+      document.getElementById('in-pag-estado').value = p.estado;
+    }
+  } else {
+    title.textContent = "Registar Pagamento";
+    document.getElementById('in-pag-mes').value = new Date().getMonth() + 1;
+    document.getElementById('in-pag-ano').value = new Date().getFullYear();
+    document.getElementById('in-pag-prev').value = aluno.valor_explicacao || 0;
+  }
+
+  m.classList.add('open');
+  m.setAttribute('aria-hidden', 'false');
+}
+
+async function handleDeletePagamento(id) {
+  if (!confirm("Tem a certeza que deseja eliminar este registo de pagamento?")) return;
+  try {
+    await ExplicadorService.deletePagamento(id);
+    const alunoId = document.getElementById('view-perfil-aluno').dataset.currentAlunoId;
+    // Recarregar pagamentos
+    const { data: pagamentos } = await supabase.from('v_pagamentos_detalhe').select('*').eq('id_aluno', alunoId).order('ano', {ascending:false}).order('mes', {ascending:false});
+    renderPagamentosTable(pagamentos || []);
+  } catch(e) { alert("Erro ao eliminar: " + e.message); }
 }
 
 function renderExerciciosTable(list) {
@@ -337,6 +392,59 @@ document.addEventListener('DOMContentLoaded', () => {
       if (msgEx) {
         msgEx.style.color = 'red';
         msgEx.textContent = 'Erro: ' + (err.message || "Falha ao enviar");
+      }
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  // Abrir Modal Novo Pagamento
+  document.getElementById('btn-registar-pagamento')?.addEventListener('click', () => {
+    openModalPagamento();
+  });
+
+  // Submeter Pagamento
+  const formPag = document.getElementById('fPagamento');
+  const msgPag = document.getElementById('msgPagamento');
+
+  formPag?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('btnSavePagamento');
+    const fd = new FormData(formPag);
+    const alunoId = document.getElementById('view-perfil-aluno').dataset.currentAlunoId;
+
+    if (msgPag) msgPag.textContent = 'A guardar...';
+    if (btn) btn.disabled = true;
+
+    try {
+      const payload = {
+        id_pagamento: fd.get('id_pagamento') || null,
+        id_aluno: alunoId,
+        ano: fd.get('ano'),
+        mes: fd.get('mes'),
+        valor_previsto: fd.get('valor_previsto'),
+        valor_pago: fd.get('valor_pago'),
+        data_pagamento: fd.get('data_pagamento') || null,
+        estado: fd.get('estado')
+      };
+
+      await ExplicadorService.upsertPagamento(payload);
+
+      if (msgPag) {
+        msgPag.style.color = 'green';
+        msgPag.textContent = 'Guardado com sucesso!';
+      }
+      
+      setTimeout(async () => {
+        closeModal('modal-pagamento');
+        const { data: pagamentos } = await supabase.from('v_pagamentos_detalhe').select('*').eq('id_aluno', alunoId).order('ano', {ascending:false}).order('mes', {ascending:false});
+        renderPagamentosTable(pagamentos || []);
+        if (msgPag) msgPag.textContent = '';
+      }, 1500);
+
+    } catch (err) {
+      console.error(err);
+      if (msgPag) {
+        msgPag.style.color = 'red';
+        msgPag.textContent = 'Erro: ' + (err.message || "Falha ao guardar");
       }
     } finally {
       if (btn) btn.disabled = false;
