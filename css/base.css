@@ -113,6 +113,42 @@ input:focus, select:focus, textarea:focus {
   outline: 3px solid color-mix(in srgb, var(--primary) 28%, transparent);
 }
 
+/* PASSWORD TOGGLE */
+.password-wrapper {
+  position: relative;
+  width: 100%;
+}
+.password-wrapper input {
+  padding-right: 45px; /* space for the eye */
+  margin-bottom: 0;   /* margin goes to wrapper */
+}
+.password-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-soft);
+  z-index: 2;
+}
+.password-toggle:hover {
+  color: var(--text-dark);
+}
+.password-wrapper + .password-wrapper,
+.password-wrapper + input,
+input + .password-wrapper {
+  margin-top: 10px;
+}
+.password-wrapper {
+  margin-bottom: 10px;
+}
+
 /* TABLES */
 .table {
   width: 100%;
