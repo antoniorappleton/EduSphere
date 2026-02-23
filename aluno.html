@@ -63,12 +63,11 @@
 <body class="text-gray-900 overflow-hidden">
 
   <!-- Mobile Container -->
-  <div
-    class="fixed inset-0 w-full h-full bg-gray-50 flex flex-col max-w-md mx-auto shadow-2xl overflow-hidden relative">
+  <div class="fixed inset-0 w-full h-full bg-gray-50 flex flex-col max-w-md mx-auto shadow-2xl relative">
 
     <!-- Header -->
     <header
-      class="bg-white/90 backdrop-blur-md border-b border-gray-100 p-4 sticky top-0 z-20 flex items-center justify-between shadow-sm">
+      class="bg-white/90 backdrop-blur-md border-b border-gray-100 p-4 sticky top-0 z-20 flex items-center justify-between shadow-sm flex-shrink-0">
       <div class="flex items-center gap-3">
         <div id="alunoAvatar"
           class="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm border border-primary/20">
@@ -86,7 +85,7 @@
     </header>
 
     <!-- Main Content Area (Scrollable) -->
-    <main class="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar pb-24 p-4 space-y-6 relative">
+    <main class="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar pb-28 p-4 space-y-6 relative">
 
       <!-- VIEW: DASHBOARD (INÍCIO) -->
       <section id="view-inicio" class="view-section space-y-6">
@@ -144,33 +143,18 @@
           </div>
         </div>
 
-        <!-- Exercícios / Notificações (Simplified) -->
+        <!-- Quick links -->
         <div class="grid grid-cols-1 gap-3">
           <div
             class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between cursor-pointer hover:bg-gray-50"
-            onclick="document.querySelector('[data-target=exercicios]').click()">
+            onclick="document.querySelector('[data-target=mensagens]').click()">
             <div class="flex items-center gap-3">
               <div class="h-8 w-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
-                <span class="material-symbols-outlined text-lg">assignment</span>
+                <span class="material-symbols-outlined text-lg">chat</span>
               </div>
               <div>
-                <p class="text-sm font-bold text-gray-900">Exercícios</p>
-                <p id="kpiExerciciosPendentes" class="text-xs text-gray-500">Verifique os trabalhos</p>
-              </div>
-            </div>
-            <span class="material-symbols-outlined text-gray-300">chevron_right</span>
-          </div>
-
-          <div
-            class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between cursor-pointer hover:bg-gray-50"
-            onclick="document.querySelector('[data-target=notificacoes]').click()">
-            <div class="flex items-center gap-3">
-              <div class="h-8 w-8 rounded-lg bg-pink-50 text-pink-600 flex items-center justify-center">
-                <span class="material-symbols-outlined text-lg">notifications</span>
-              </div>
-              <div>
-                <p class="text-sm font-bold text-gray-900">Notificações</p>
-                <p id="kpiNotificacoes" class="text-xs text-gray-500">Nenhuma nova notificação</p>
+                <p class="text-sm font-bold text-gray-900">Mensagens</p>
+                <p id="kpiMensagens" class="text-xs text-gray-500">Falar com o explicador</p>
               </div>
             </div>
             <span class="material-symbols-outlined text-gray-300">chevron_right</span>
@@ -268,44 +252,34 @@
         <span id="resumoMesLabel" class="hidden"></span>
       </section>
 
-      <!-- VIEW: EXERCICIOS -->
-      <section id="view-exercicios" class="view-section hidden space-y-4">
-        <h2 class="text-xl font-bold text-gray-900">Exercícios</h2>
-        <div class="bg-white rounded-xl border border-gray-100 p-8 text-center">
-          <div
-            class="bg-indigo-50 h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-3 text-indigo-500">
-            <span class="material-symbols-outlined text-3xl">assignment</span>
-          </div>
-          <p class="text-gray-900 font-bold mb-1">Todos os trabalhos em dia!</p>
-          <p class="text-xs text-gray-500">Não tens exercícios pendentes.</p>
-        </div>
-      </section>
+      <!-- VIEW: MENSAGENS -->
+      <section id="view-mensagens" class="view-section hidden"
+        style="flex-direction:column; height:calc(100vh - 140px);">
+        <h2 class="text-xl font-bold text-gray-900 mb-3 flex-shrink-0">Mensagens</h2>
 
-      <!-- VIEW: NOTIFICAÇÕES -->
-      <section id="view-notificacoes" class="view-section hidden space-y-4">
-        <h2 class="text-xl font-bold text-gray-900">Notificações</h2>
-        <div id="msgList" class="space-y-3">
-          <div class="bg-white p-3 rounded-lg border border-gray-100 shadow-sm flex gap-3">
-            <div class="h-8 w-8 rounded-full bg-pink-100 text-pink-600 flex items-center justify-center flex-shrink-0">
-              <span class="material-symbols-outlined text-sm">notifications</span>
+        <!-- Chat Container -->
+        <div id="chatContainer" class="flex-1 overflow-y-auto space-y-3 pb-3 custom-scrollbar" style="min-height:0;">
+          <div class="text-center py-8">
+            <div
+              class="bg-indigo-50 h-14 w-14 rounded-full flex items-center justify-center mx-auto mb-3 text-indigo-400">
+              <span class="material-symbols-outlined text-2xl">chat_bubble</span>
             </div>
-            <div>
-              <p class="text-sm text-gray-800">Bem-vindo à nova aplicação EduSphere!</p>
-              <p class="text-[10px] text-gray-400 mt-1">Hoje</p>
-            </div>
+            <p class="text-xs text-gray-400">Envia uma mensagem ao teu explicador</p>
           </div>
         </div>
 
-        <!-- Simple Form Placeholder -->
-        <form id="fMsg" class="mt-4 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-          <label class="block text-xs font-bold text-gray-700 mb-2">Nova Mensagem</label>
-          <textarea id="msgInput" rows="3"
-            class="w-full text-sm p-3 bg-gray-50 rounded-lg border-0 focus:ring-2 focus:ring-primary/20 resize-none mb-3"
-            placeholder="Escreve aqui..."></textarea>
-          <button type="submit" class="w-full bg-primary text-white text-xs font-bold py-2.5 rounded-lg">Enviar
-            Mensagem</button>
-          <p id="msgStatus" class="text-xs mt-2 text-center text-gray-500"></p>
+        <!-- Message Input -->
+        <form id="fMsg"
+          class="flex-shrink-0 bg-white border border-gray-100 rounded-xl p-2 flex items-center gap-2 shadow-sm">
+          <input type="text" name="msg" id="msgInput" autocomplete="off"
+            class="flex-1 text-sm px-3 py-2 bg-gray-50 rounded-lg border-0 focus:ring-2 focus:ring-primary/20 outline-none"
+            placeholder="Escreve aqui..." />
+          <button type="submit"
+            class="h-9 w-9 rounded-lg bg-primary text-white flex items-center justify-center flex-shrink-0 hover:bg-primary/90 active:scale-95 transition-transform">
+            <span class="material-symbols-outlined text-lg">send</span>
+          </button>
         </form>
+        <p id="msgStatus" class="text-xs text-center text-gray-500 mt-1 flex-shrink-0"></p>
       </section>
 
       <!-- VIEW: PERFIL -->
@@ -336,7 +310,8 @@
     </main>
 
     <!-- Bottom Navigation -->
-    <nav class="app-footer-nav">
+    <nav class="app-footer-nav shadow-[0_-4px_10px_rgba(0,0,0,0.05)]"
+      style="position: relative; bottom: auto; left: auto; right: auto; flex-shrink: 0;">
       <button class="app-nav-item active" data-target="inicio">
         <span class="material-symbols-outlined">dashboard</span>
         <span>Início</span>
@@ -350,9 +325,9 @@
         <span>Contas</span>
         <span id="nav-dot-pag" class="absolute top-2 right-4 h-2 w-2 rounded-full bg-red-500 hidden"></span>
       </button>
-      <button class="app-nav-item" data-target="exercicios">
-        <span class="material-symbols-outlined">assignment</span>
-        <span>TPC</span>
+      <button class="app-nav-item" data-target="mensagens">
+        <span class="material-symbols-outlined">chat</span>
+        <span>Chat</span>
       </button>
       <button class="app-nav-item" data-target="perfil">
         <span class="material-symbols-outlined">person</span>
@@ -369,10 +344,13 @@
 
     function switchTab(targetId) {
       // Hide all sections
-      sections.forEach(sec => sec.classList.add('hidden'));
+      sections.forEach(sec => { sec.classList.add('hidden'); sec.style.display = ''; });
       // Show target
       const targetSec = document.getElementById(`view-${targetId}`);
-      if (targetSec) targetSec.classList.remove('hidden');
+      if (targetSec) {
+        targetSec.classList.remove('hidden');
+        if (targetId === 'mensagens') targetSec.style.display = 'flex';
+      }
 
       // Update nav
       navBtns.forEach(btn => {
@@ -382,6 +360,7 @@
 
       // Logic hooks
       if (targetId === 'calendario') carregarCalendarioNovo();
+      if (targetId === 'mensagens') carregarMensagens();
     }
 
     navBtns.forEach(btn => {
@@ -437,42 +416,52 @@
 
       if (proxContainer) {
         proxContainer.innerHTML = futuras.length
-          ? futuras.map((a) => renderCalendarioItem(a)).join("")
+          ? futuras.map((a) => renderCalendarioItem(a, true)).join("")
           : "<p class='text-xs text-gray-400 italic'>Sem aulas agendadas.</p>";
       }
 
       if (histContainer) {
         histContainer.innerHTML = passadas.length
-          ? passadas.map((a) => renderCalendarioItem(a)).join("")
+          ? passadas.map((a) => renderCalendarioItem(a, false)).join("")
           : "<p class='text-xs text-gray-400 italic'>Histórico vazio.</p>";
       }
 
       renderCalendarioVisual(sessoes);
     }
 
-    function renderCalendarioItem(a) {
+    function renderCalendarioItem(a, isFuture) {
       const d = a.data ? new Date(a.data) : null;
       const dataFmt = d ? d.toLocaleDateString("pt-PT", { day: "2-digit", month: "short" }) : "—";
       const hora = a.hora_inicio ? a.hora_inicio.slice(0, 5) : "--:--";
       // Status Badge Logic
       let statusColor = "bg-gray-100 text-gray-500";
+      let statusText = a.estado || 'AGENDADA';
       if (a.estado === "REALIZADA") statusColor = "bg-green-100 text-green-700";
       if (a.estado === "AGENDADA") statusColor = "bg-blue-100 text-blue-700";
-      if (a.estado === "CANCELADA") statusColor = "bg-red-50 text-red-400 title='Cancelada'";
+      if (a.estado === "CONFIRMADA") { statusColor = "bg-emerald-100 text-emerald-700"; statusText = "Confirmada"; }
+      if (a.estado === "CANCELADA") statusColor = "bg-red-50 text-red-400";
+
+      // Show confirm button for future AGENDADA sessions
+      const confirmBtn = (isFuture && a.estado === 'AGENDADA')
+        ? `<button onclick="confirmarPresenca('${a.id_sessao}', this)" class="mt-2 w-full text-[10px] font-bold py-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors border border-emerald-100">Confirmar presença</button>`
+        : '';
 
       return `
-          <div class="bg-white border border-gray-100 p-3 rounded-lg flex items-center justify-between shadow-sm">
-             <div class="flex items-center gap-3">
-                <div class="h-10 w-10 rounded-lg bg-gray-50 flex flex-col items-center justify-center border border-gray-100">
-                   <span class="text-[10px] text-gray-400 uppercase font-bold leading-none">${d ? d.toLocaleDateString("pt-PT", { weekday: 'short' }).replace('.', '') : ''}</span>
-                   <span class="text-sm font-bold text-gray-900 leading-none mt-0.5">${d ? d.getDate() : ''}</span>
-                </div>
-                <div>
-                   <p class="text-sm font-bold text-gray-900">${a.explicador?.nome || 'Explicação'}</p>
-                   <p class="text-xs text-gray-500">${hora} · ${a.duracao_min} min</p>
-                </div>
+          <div class="bg-white border border-gray-100 p-3 rounded-lg shadow-sm">
+             <div class="flex items-center justify-between">
+               <div class="flex items-center gap-3">
+                 <div class="h-10 w-10 rounded-lg bg-gray-50 flex flex-col items-center justify-center border border-gray-100">
+                    <span class="text-[10px] text-gray-400 uppercase font-bold leading-none">${d ? d.toLocaleDateString("pt-PT", { weekday: 'short' }).replace('.', '') : ''}</span>
+                    <span class="text-sm font-bold text-gray-900 leading-none mt-0.5">${d ? d.getDate() : ''}</span>
+                 </div>
+                 <div>
+                    <p class="text-sm font-bold text-gray-900">${a.explicador?.nome || 'Explicação'}</p>
+                    <p class="text-xs text-gray-500">${hora} · ${a.duracao_min} min</p>
+                 </div>
+               </div>
+               <span class="text-[9px] font-bold px-1.5 py-0.5 rounded uppercase ${statusColor}">${statusText}</span>
              </div>
-             <span class="text-[9px] font-bold px-1.5 py-0.5 rounded uppercase ${statusColor}">${a.estado}</span>
+             ${confirmBtn}
           </div>
         `;
     }
@@ -511,7 +500,7 @@
            </div>
         </div>
         <div class="grid grid-cols-7 gap-1 text-center text-xs text-gray-400 font-medium mb-2">
-            <div>Mg</div><div>Tu</div><div>Wd</div><div>Th</div><div>Fr</div><div>St</div><div>Su</div>
+            <div>Seg</div><div>Ter</div><div>Qua</div><div>Qui</div><div>Sex</div><div>Sáb</div><div>Dom</div>
         </div>
         <div class="grid grid-cols-7 gap-1">
       `;
@@ -737,6 +726,11 @@
       // Fetch Aluno
       const { data: aluno } = await supabase.from('alunos').select('*').eq('id_aluno', map.ref_id).single();
       if (aluno) {
+        // Also fetch explicador's auth user_id for messaging
+        const { data: expl } = await supabase.from('explicadores').select('user_id').eq('id_explicador', aluno.id_explicador).single();
+        aluno.auth_user_id = user.id;
+        aluno.explicador_user_id = expl?.user_id || null;
+
         window.ALUNO = aluno;
         // Update Header
         document.getElementById('alunoNomeTitulo').textContent = aluno.nome + " " + (aluno.apelido || '');
@@ -747,8 +741,6 @@
         // Load Data
         carregarProximasExplicacoes();
         carregarResumoPagamentos();
-        // Only load calendar if requested to save data, OR pre-load it
-        // carregarCalendarioNovo(); 
       }
     })();
 
@@ -759,12 +751,108 @@
       window.location.href = './login.html';
     });
 
-    // --- Message Form Placeholder ---
-    document.getElementById('fMsg')?.addEventListener('submit', (e) => {
+    // --- CONFIRM ATTENDANCE ---
+    async function confirmarPresenca(idSessao, btn) {
+      btn.disabled = true;
+      btn.textContent = 'A confirmar...';
+      const { error } = await supabase
+        .from('sessoes_explicacao')
+        .update({ estado: 'CONFIRMADA' })
+        .eq('id_sessao', idSessao);
+
+      if (error) {
+        console.error(error);
+        btn.textContent = 'Erro - tentar novamente';
+        btn.disabled = false;
+      } else {
+        btn.textContent = '✓ Presença confirmada';
+        btn.className = 'mt-2 w-full text-[10px] font-bold py-1.5 rounded-lg bg-emerald-100 text-emerald-700 border border-emerald-200 cursor-default';
+        // Refresh calendar
+        setTimeout(() => carregarCalendarioNovo(), 500);
+      }
+    }
+    // Make it globally accessible
+    window.confirmarPresenca = confirmarPresenca;
+
+
+    // --- MESSAGING LOGIC ---
+    async function carregarMensagens() {
+      const container = document.getElementById('chatContainer');
+      if (!container || !ALUNO?.id_explicador) return;
+
+      try {
+        const { data, error } = await supabase
+          .from('mensagens')
+          .select('*')
+          .or(`and(de_user_id.eq.${ALUNO.auth_user_id},para_user_id.eq.${ALUNO.explicador_user_id}),and(de_user_id.eq.${ALUNO.explicador_user_id},para_user_id.eq.${ALUNO.auth_user_id})`)
+          .order('created_at', { ascending: true });
+
+        if (error) throw error;
+
+        const msgs = data || [];
+        if (!msgs.length) {
+          container.innerHTML = `
+            <div class="text-center py-8">
+              <div class="bg-indigo-50 h-14 w-14 rounded-full flex items-center justify-center mx-auto mb-3 text-indigo-400">
+                <span class="material-symbols-outlined text-2xl">chat_bubble</span>
+              </div>
+              <p class="text-xs text-gray-400">Envia uma mensagem ao teu explicador</p>
+            </div>`;
+          return;
+        }
+
+        container.innerHTML = msgs.map(m => {
+          const isMine = m.de_user_id === ALUNO.auth_user_id;
+          const time = new Date(m.created_at).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+          const date = new Date(m.created_at).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' });
+          return `
+            <div class="flex ${isMine ? 'justify-end' : 'justify-start'}">
+              <div class="max-w-[75%] px-3 py-2 rounded-2xl text-sm ${isMine ? 'bg-primary text-white rounded-br-sm' : 'bg-white border border-gray-100 text-gray-800 rounded-bl-sm shadow-sm'}">
+                <p>${m.texto}</p>
+                <p class="text-[9px] mt-1 ${isMine ? 'text-white/60' : 'text-gray-400'}">${date} ${time}</p>
+              </div>
+            </div>`;
+        }).join('');
+
+        container.scrollTop = container.scrollHeight;
+      } catch (err) {
+        console.error('Erro ao carregar mensagens:', err);
+        container.innerHTML = `
+          <div class="text-center py-8">
+            <div class="bg-indigo-50 h-14 w-14 rounded-full flex items-center justify-center mx-auto mb-3 text-indigo-400">
+              <span class="material-symbols-outlined text-2xl">chat_bubble</span>
+            </div>
+            <p class="text-xs text-gray-400">Envia uma mensagem ao teu explicador</p>
+          </div>`;
+      }
+    }
+
+    // --- Message Form ---
+    document.getElementById('fMsg')?.addEventListener('submit', async (e) => {
       e.preventDefault();
-      document.getElementById('msgStatus').textContent = "Mensagem enviada! (Demo)";
-      e.target.reset();
-      setTimeout(() => document.getElementById('msgStatus').textContent = "", 2000);
+      const input = document.getElementById('msgInput');
+      const texto = input?.value?.trim();
+      if (!texto || !ALUNO?.id_explicador) return;
+
+      const statusEl = document.getElementById('msgStatus');
+      try {
+        const { error } = await supabase.from('mensagens').insert({
+          de_user_id: ALUNO.auth_user_id,
+          para_user_id: ALUNO.explicador_user_id,
+          texto: texto,
+          id_aluno: ALUNO.id_aluno
+        });
+
+        if (error) throw error;
+        input.value = '';
+        await carregarMensagens();
+      } catch (err) {
+        console.error(err);
+        if (statusEl) {
+          statusEl.textContent = 'Erro ao enviar. Tenta novamente.';
+          setTimeout(() => statusEl.textContent = '', 3000);
+        }
+      }
     });
 
   </script>

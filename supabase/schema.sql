@@ -74,6 +74,13 @@ CREATE POLICY "Admins manage explicadores" ON public.explicadores
 CREATE POLICY "Explicador manage own data" ON public.explicadores
   FOR ALL USING (auth.uid() = user_id);
 
+CREATE POLICY "Aluno read own explicador" ON public.explicadores
+  FOR SELECT USING (
+    id_explicador IN (
+      SELECT id_explicador FROM public.alunos WHERE user_id = auth.uid()
+    )
+  );
+
 -- =============================================================================
 -- 4. TABELA alunos
 -- =============================================================================
@@ -244,3 +251,43 @@ CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
 
+-- =============================================================================
+-- 10. POLICY: Aluno pode confirmar presença (UPDATE estado)
+-- =============================================================================
+CREATE POLICY "Aluno confirm sessoes" ON public.sessoes_explicacao
+  FOR UPDATE USING (
+    id_aluno IN (
+      SELECT id_aluno FROM public.alunos WHERE user_id = auth.uid()
+    )
+  )
+  WITH CHECK (
+    id_aluno IN (
+      SELECT id_aluno FROM public.alunos WHERE user_id = auth.uid()
+    )
+  );
+
+-- =============================================================================
+-- 11. TABELA mensagens (chat aluno ⇄ explicador)
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS public.mensagens (
+  id_mensagem UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  de_user_id UUID NOT NULL,
+  para_user_id UUID NOT NULL,
+  id_aluno UUID REFERENCES public.alunos(id_aluno) ON DELETE CASCADE,
+  texto TEXT NOT NULL,
+  lida BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.mensagens ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users read own messages" ON public.mensagens
+  FOR SELECT USING (
+    auth.uid()::text = de_user_id::text
+    OR auth.uid()::text = para_user_id::text
+  );
+
+CREATE POLICY "Users insert own messages" ON public.mensagens
+  FOR INSERT WITH CHECK (
+    auth.uid()::text = de_user_id::text
+  );
