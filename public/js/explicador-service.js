@@ -141,5 +141,22 @@ window.ExplicadorService = {
       .getPublicUrl(filePath);
 
     return { path: filePath, url: publicUrl };
+  },
+
+  // 5. FATURAÇÃO & RELATÓRIOS
+  async generateMonthlyBilling(ano, mes) {
+    const { data, error } = await supabase.functions.invoke('expl-alunos', {
+      body: { action: 'generate_monthly_billing', payload: { ano, mes } }
+    });
+    if (error) throw error;
+    return data;
+  },
+
+  async getDetailedReports() {
+    const { data, error } = await supabase.functions.invoke('expl-alunos', {
+      body: { action: 'get_relatorios' }
+    });
+    if (error) throw error;
+    return data;
   }
 };

@@ -106,11 +106,29 @@
             <label class="expl-filter-field">
               <span>Ano</span>
               <select id="fat-filtro-ano">
-                <option value="2026">2026</option>
+                <option value="2024">2024</option>
                 <option value="2025">2025</option>
+                <option value="2026" selected>2026</option>
               </select>
             </label>
+            <button class="button secondary" id="btn-gerar-mensalidades">Gerar Mensalidades</button>
           </div>
+        </div>
+
+        <!-- KPIs FINANCEIROS -->
+        <div class="expl-kpi-grid" style="margin-top:1.5rem;">
+          <article class="expl-card">
+            <p class="expl-kpi-label">Total Previsto (Mês)</p>
+            <p class="expl-kpi-value" id="kpi-fat-previsto">€0,00</p>
+          </article>
+          <article class="expl-card">
+            <p class="expl-kpi-label">Total Recebido (Mês)</p>
+            <p class="expl-kpi-value" id="kpi-fat-recebido">€0,00</p>
+          </article>
+          <article class="expl-card">
+            <p class="expl-kpi-label">Pendente (Mês)</p>
+            <p class="expl-kpi-value--red" id="kpi-fat-pendente">€0,00</p>
+          </article>
         </div>
 
         <div class="expl-grid-2" style="margin-top:1.5rem;">
@@ -206,6 +224,8 @@
       if (!session) location.href = '../../index.html';
     })();
   </script>
+  <script src="../../public/js/explicador-service.js"></script>
+  <script src="../../public/js/faturacao-explicador.js"></script>
 </body>
 
 </html>

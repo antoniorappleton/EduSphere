@@ -30,7 +30,7 @@ function cors(origin = "*") {
     "Content-Type": "application/json"
   };
 }
-serve(async (req)=>{
+serve(async (req) => {
   const origin = req.headers.get("Origin") ?? "*";
   // Preflight CORS
   if (req.method === "OPTIONS") {
@@ -105,7 +105,7 @@ serve(async (req)=>{
     }
     const myExplId = explRow.id_explicador;
     // 5) Ler ação/payload do body
-    const { action, payload } = await req.json().catch((e)=>{
+    const { action, payload } = await req.json().catch((e) => {
       console.error("Body JSON inválido", e);
       return {
         action: null,
@@ -178,9 +178,9 @@ serve(async (req)=>{
       }
       return data;
     }
-  /* =======================
-   LISTAR ALUNOS
-   ======================= */
+    /* =======================
+     LISTAR ALUNOS
+     ======================= */
     if (action === "list_alunos") {
       // 1) Buscar alunos base
       const { data: alunos, error } = await svc
@@ -338,39 +338,39 @@ serve(async (req)=>{
        SET MENSALIDADE AVISADA
        payload: { aluno_id, avisado }
        ======================= */ if (action === "set_mensalidade_avisada") {
-  const p = payload || {};
-  const alunoId = String(p.aluno_id || "").trim();
-  const avisado = !!p.avisado;
+      const p = payload || {};
+      const alunoId = String(p.aluno_id || "").trim();
+      const avisado = !!p.avisado;
 
-  if (!alunoId) {
-    return new Response(
-      JSON.stringify({ error: "aluno_id em falta" }),
-      { status: 400, headers: cors(origin) },
-    );
-  }
+      if (!alunoId) {
+        return new Response(
+          JSON.stringify({ error: "aluno_id em falta" }),
+          { status: 400, headers: cors(origin) },
+        );
+      }
 
-  // garantir que o aluno pertence ao explicador autenticado
-  await getAlunoDoExpl(alunoId);
+      // garantir que o aluno pertence ao explicador autenticado
+      await getAlunoDoExpl(alunoId);
 
-  const { error: upErr } = await svc
-    .from("alunos")
-    .update({ mensalidade_avisada: avisado })
-    .eq("id_aluno", alunoId)
-    .eq("id_explicador", myExplId);
+      const { error: upErr } = await svc
+        .from("alunos")
+        .update({ mensalidade_avisada: avisado })
+        .eq("id_aluno", alunoId)
+        .eq("id_explicador", myExplId);
 
-  if (upErr) {
-    console.error("Erro em set_mensalidade_avisada", upErr);
-    return new Response(
-      JSON.stringify({ error: upErr.message }),
-      { status: 400, headers: cors(origin) },
-    );
-  }
+      if (upErr) {
+        console.error("Erro em set_mensalidade_avisada", upErr);
+        return new Response(
+          JSON.stringify({ error: upErr.message }),
+          { status: 400, headers: cors(origin) },
+        );
+      }
 
-  return new Response(
-    JSON.stringify({ ok: true, aluno_id: alunoId, avisado }),
-    { status: 200, headers: cors(origin) },
-  );
-}
+      return new Response(
+        JSON.stringify({ ok: true, aluno_id: alunoId, avisado }),
+        { status: 200, headers: cors(origin) },
+      );
+    }
 
     /* =======================
   Eliminar aluno
@@ -475,7 +475,7 @@ serve(async (req)=>{
       }).select("id_aluno").single();
       if (insErr) {
         console.error("Erro ao inserir em alunos", insErr);
-        await svc.auth.admin.deleteUser(alunoUid).catch(()=>{});
+        await svc.auth.admin.deleteUser(alunoUid).catch(() => { });
         return new Response(JSON.stringify({
           error: insErr.message
         }), {
@@ -491,8 +491,8 @@ serve(async (req)=>{
       });
       if (roleInsErr) {
         console.error("Erro ao inserir em app_users (aluno)", roleInsErr);
-        await svc.from("alunos").delete().eq("id_aluno", row.id_aluno).catch(()=>{});
-        await svc.auth.admin.deleteUser(alunoUid).catch(()=>{});
+        await svc.from("alunos").delete().eq("id_aluno", row.id_aluno).catch(() => { });
+        await svc.auth.admin.deleteUser(alunoUid).catch(() => { });
         return new Response(JSON.stringify({
           error: roleInsErr.message
         }), {
@@ -550,7 +550,7 @@ serve(async (req)=>{
       }
       // 3) preparar dados para UPDATE na tabela alunos
       const updates = {};
-      const trimOrNull = (v)=>typeof v === "string" ? v.trim() || null : v === "" ? null : v;
+      const trimOrNull = (v) => typeof v === "string" ? v.trim() || null : v === "" ? null : v;
       if (typeof p.nome !== "undefined") updates.nome = trimOrNull(p.nome);
       if (typeof p.apelido !== "undefined") updates.apelido = trimOrNull(p.apelido);
       if (typeof p.telemovel !== "undefined") updates.telemovel = trimOrNull(p.telemovel);
@@ -751,7 +751,7 @@ serve(async (req)=>{
           const sessoes = [];
           let dataSessao = primeiroDiaSessao;
           const NUM_SEMANAS = 8; // podes ajustar mais tarde
-          for(let i = 0; i < NUM_SEMANAS; i++){
+          for (let i = 0; i < NUM_SEMANAS; i++) {
             sessoes.push({
               id_explicador: myExplId,
               id_aluno: alunoId,
@@ -765,7 +765,7 @@ serve(async (req)=>{
             const { error: sessErr } = await svc.from("sessoes_explicacao").insert(sessoes);
             if (sessErr) {
               console.error("Erro a criar sessões recorrentes em iniciar_faturacao_aluno", sessErr);
-            // não fazemos return de erro para não estragar a faturação
+              // não fazemos return de erro para não estragar a faturação
             }
           }
         } else {
@@ -924,13 +924,62 @@ serve(async (req)=>{
       });
     }
     /* =======================
-   LISTAR TODAS AS SESSÕES DO EXPLICADOR
+       GERAR MENSALIDADES (BULK)
+       payload: { ano, mes }
+       ======================= */
+    if (action === "generate_monthly_billing") {
+      const p = payload || {};
+      const ano = Number(p.ano) || new Date().getFullYear();
+      const mes = Number(p.mes) || (new Date().getMonth() + 1);
+
+      // 1. Obter todos os alunos ativos deste explicador
+      const { data: alunos, error: alErr } = await svc
+        .from("alunos")
+        .select("id_aluno, valor_explicacao, sessoes_mes")
+        .eq("id_explicador", myExplId)
+        .eq("is_active", true);
+
+      if (alErr) {
+        return new Response(JSON.stringify({ error: alErr.message }), { status: 400, headers: cors(origin) });
+      }
+
+      // 2. Para cada aluno, verificar se já existe pagamento para esse mês
+      const results = [];
+      for (const al of (alunos || [])) {
+        const { data: existing } = await svc
+          .from("pagamentos")
+          .select("id_pagamento")
+          .eq("id_aluno", al.id_aluno)
+          .eq("id_explicador", myExplId)
+          .eq("ano", ano)
+          .eq("mes", mes)
+          .maybeSingle();
+
+        if (!existing) {
+          const valorPrev = (Number(al.valor_explicacao) || 0) * (Number(al.sessoes_mes) || 0);
+          const { error: insErr } = await svc.from("pagamentos").insert({
+            id_aluno: al.id_aluno,
+            id_explicador: myExplId,
+            ano: ano,
+            mes: mes,
+            valor_previsto: valorPrev,
+            valor_pago: 0,
+            estado: "PENDENTE"
+          });
+          if (!insErr) results.push(al.id_aluno);
+        }
+      }
+
+      return new Response(JSON.stringify({ ok: true, generated_count: results.length }), { status: 200, headers: cors(origin) });
+    }
+    /* =======================
+       LISTAR TODAS AS SESSÕES DO EXPLICADOR
    (para o calendário / resumos)
    ======================= */ if (action === "list_sessoes_explicador") {
       // Todas as sessões deste explicador,
       // opcionalmente já enriquecidas com nome do aluno numa VIEW
       const { data, error } = await svc.from("v_sessoes_detalhe") // ou "sessoes_explicacao" se não tiveres view
-      .select(`
+        .select(`
       id_sessao,
       id_explicador,
       id_aluno,
@@ -941,10 +990,10 @@ serve(async (req)=>{
       duracao_min,
       estado
     `).eq("id_explicador", myExplId).order("data", {
-        ascending: true
-      }).order("hora_inicio", {
-        ascending: true
-      });
+          ascending: true
+        }).order("hora_inicio", {
+          ascending: true
+        });
       if (error) {
         console.error("list_sessoes_explicador error", error);
         return new Response(JSON.stringify({
