@@ -55,6 +55,17 @@ async function loadDashboard() {
 
   updateKpis(totalPrevisto, totalRealizado, totalPendentes);
 
+  // 3.1. Auto-Reset dos Sinos (Se houver pagamento no mês, o sino desliga-se automaticamente)
+  if (pags && pags.length > 0) {
+    const alunosPagosNesteMes = pags.filter(p => p.estado === 'PAGO').map(p => p.id_aluno);
+    if (alunosPagosNesteMes.length > 0) {
+      await supabase
+        .from('alunos')
+        .update({ mensalidade_avisada: false })
+        .in('id_aluno', alunosPagosNesteMes);
+    }
+  }
+
   // 4. Fetch Alunos (Top 4 recentes ativos) e seus pagamentos do mês
   const { data: alunos } = await supabase
     .from('alunos')
@@ -116,23 +127,39 @@ function renderAlunos(lista, mes, ano) {
   lista.forEach(aluno => {
     const card = document.createElement('article');
     card.className = 'expl-card';
-    card.style = "padding: 24px;";
+    card.style = "padding: 24px; position: relative;";
     
     const init = (aluno.nome || '?')[0].toUpperCase();
     const isPago = aluno.estado_pagamento === 'PAGO';
     const statusText = isPago ? 'Pago' : 'Pendente';
     const statusColor = isPago ? 'background:#dcfce7; color:#166534;' : 'background:#fff7ed; color:#c2410c;';
 
+    // Sino de aviso (comportamento solicitado)
+    // Se estiver pago, o sino não deve estar ativo.
+    // Se estiver pendente, o explicador pode marcar.
+    const isAvisado = aluno.mensalidade_avisada && !isPago;
+    const bellColor = isAvisado ? '#b91c1c' : '#94a3b8';
+
     // Data de "mensalidade" para visualização (dia 15 do mês corrente como padrão)
     const mensalidadeData = `15/${String(mes).padStart(2, '0')}/${ano}`; 
 
     card.innerHTML = `
+      <!-- Sino de Aviso -->
+      <button onclick="toggleAviso('${aluno.id_aluno}', ${isAvisado})" 
+              style="position: absolute; top: 16px; right: 16px; background: none; border: none; cursor: pointer; padding: 4px; color: ${bellColor};"
+              title="${isAvisado ? 'Aviso ligado' : 'Marcar para aviso'}">
+        <svg style="width:20px; height:20px" viewBox="0 0 24 24" fill="${isAvisado ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+        </svg>
+      </button>
+
       <!-- Top: Avatar + Nome -->
       <div style="display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 1.5rem;">
         <div style="width: 48px; height: 48px; border-radius: 999px; background: #f8fafc; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; font-weight: 600; color: #475569; flex-shrink: 0;">
           ${init}
         </div>
-        <div style="min-width: 0;">
+        <div style="min-width: 0; padding-right: 24px;">
           <h3 style="margin: 0; font-size: 1rem; font-weight: 600; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${aluno.nome}</h3>
           <p style="margin: 2px 0 0; font-size: 0.875rem; color: #64748b;">${aluno.ano_escolaridade || '?'}º Ano</p>
         </div>
@@ -160,6 +187,28 @@ function getMesNome(m) {
   const meses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
   return meses[m-1];
 }
+
+async function toggleAviso(alunoId, currentStatus) {
+  try {
+    const { error } = await supabase
+      .from('alunos')
+      .update({ mensalidade_avisada: !currentStatus })
+      .eq('id_aluno', alunoId);
+    
+    if (error) throw error;
+    loadDashboard(); // Recarregar para mostrar o novo estado
+  } catch (err) {
+    console.error("Erro ao alternar aviso:", err);
+  }
+}
+
+async function handleLogout() {
+  await supabase.auth.signOut();
+  location.href = '../../index.html';
+}
+
+document.getElementById('btnLogoutNav')?.addEventListener('click', handleLogout);
+document.getElementById('btnLogoutHeader')?.addEventListener('click', handleLogout);
 
 // Iniciar
 loadDashboard();
