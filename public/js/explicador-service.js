@@ -66,11 +66,14 @@ window.ExplicadorService = {
 
   // 4. CALENDÁRIO / SESSÕES
   async listSessoes(alunoId = null) {
-     const { data, error } = await supabase.functions.invoke('expl-alunos', {
-        body: { action: 'list_sessoes_aluno', payload: { aluno_id: alunoId } }
-     });
-     if (error) throw error;
-     return data || [];
+      const action = alunoId ? 'list_sessoes_aluno' : 'list_sessoes_explicador';
+      const payload = alunoId ? { aluno_id: alunoId } : {};
+
+      const { data, error } = await supabase.functions.invoke('expl-alunos', {
+        body: { action, payload }
+      });
+      if (error) throw error;
+      return data || [];
   },
 
   async upsertSessao(payload) {

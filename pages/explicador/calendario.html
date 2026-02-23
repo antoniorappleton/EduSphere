@@ -7,13 +7,14 @@
   <link rel="stylesheet" href="../../styles.css" />
   <link rel="stylesheet" href="../../css/explicador.css" />
 
+  <link rel="stylesheet" href="../../css/nav.css" />
   <title>EduSphere — Calendário</title>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="../../public/js/supabaseClient.js"></script>
 </head>
 
-<body class="home">
+<body class="home has-footer-nav">
 
   <section id="explPanel" class="expl-shell">
 
@@ -199,7 +200,7 @@
       </div>
       <form id="fSessao">
         <input type="hidden" name="id_sessao" id="in-sessao-id" />
-        
+
         <label>Aluno
           <select class="input" name="id_aluno" id="sel-aluno" required>
             <option value="">A carregar alunos...</option>
@@ -212,8 +213,9 @@
         </div>
 
         <div class="expl-grid-2">
-          <label>Duração (min) <input type="number" class="input" name="duracao" id="in-sessao-dur" value="60" step="15" /></label>
-          <label>Estado 
+          <label>Duração (min) <input type="number" class="input" name="duracao" id="in-sessao-dur" value="60"
+              step="15" /></label>
+          <label>Estado
             <select class="input" name="estado" id="sel-sessao-estado">
               <option value="AGENDADA">Agendada</option>
               <option value="REALIZADA">Realizada</option>
@@ -222,12 +224,13 @@
           </label>
         </div>
 
-        <label>Notas 
+        <label>Notas
           <textarea class="input" name="notas" id="in-sessao-notas" rows="2"></textarea>
         </label>
 
         <div style="margin-top:1rem; text-align:right; display:flex; gap:10px; justify-content:flex-end;">
-          <button type="button" class="button secondary" id="btn-delete-sessao" style="display:none; background:#fee2e2; color:#ef4444; border:none;">Eliminar</button>
+          <button type="button" class="button secondary" id="btn-delete-sessao"
+            style="display:none; background:#fee2e2; color:#ef4444; border:none;">Eliminar</button>
           <button type="submit" class="button primary" id="btn-save-sessao">Gravar</button>
         </div>
         <div id="msgSessao" style="margin-top:10px; font-size:12px;"></div>

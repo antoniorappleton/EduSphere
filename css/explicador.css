@@ -94,9 +94,17 @@ body.home main.auth {
   stroke-width: 1.6;
 }
 
-/* No layout actual o menu lateral está escondido (usamos o FAB nav) */
-.expl-sidebar-nav {
-  display: none !important;
+/* No layout actual o menu lateral aparece em desktop */
+@media (min-width: 960px) {
+  .expl-sidebar-nav {
+    display: flex !important;
+  }
+}
+
+@media (max-width: 959px) {
+  .expl-sidebar-nav {
+    display: none !important;
+  }
 }
 
 /* ---------- SECÇÕES / CARTÕES ---------- */
@@ -232,15 +240,27 @@ body.home main.auth {
 
 /* 🔹 Override da largura só para as tabelas de faturação */
 .expl-section[data-section="faturacao"] .expl-card .table {
-  width: auto;                   /* anula o width:100% global */
-  min-width: 650px;              /* força a tabela a ser mais larga que o card */
+  width: 100%;
+  min-width: 700px;              /* força a tabela a ser mais larga que o card */
   border-collapse: collapse;
 }
 
 /* (Opcional) evitar quebras estranhas nas colunas */
 .expl-section[data-section="faturacao"] .expl-card .table th,
-.expl-section[data-section="faturacao"] .expl-card .table td {
+.expl-section[data-section="faturacao"] .expl-card .table td,
+.perfil-tabela th,
+.perfil-tabela td {
   white-space: nowrap;
+}
+
+.perfil-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.perfil-tabela {
+    width: 100%;
+    min-width: 600px;
 }
 
 
