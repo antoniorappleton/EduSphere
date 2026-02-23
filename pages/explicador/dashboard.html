@@ -141,25 +141,47 @@
           </div>
         </section>
 
-        <!-- CALENDAR & REPORTS -->
-        <div class="dash-grid-split" style="display: grid; gap: 1rem; margin-top: 2rem;">
-          <article class="expl-card dash-quick-card" onclick="location.href='calendario.html'" style="cursor: pointer;">
-            <h3 class="expl-subsection-title">Calendário</h3>
-            <p style="color: #64748b; font-size: 0.85rem; margin-bottom: 2rem;">Próximas explicações agendadas</p>
-            <div style="display: flex; align-items: center; justify-content: center; color: #94a3b8; gap: 8px;">
-              <span class="material-symbols-outlined">calendar_month</span>
-              <span>Calendário de explicações</span>
-            </div>
-          </article>
+        <!-- WEEKLY SESSIONS -->
+        <section class="dash-section" style="margin-top: 2rem;">
+          <div class="expl-section-header" style="margin-bottom: 1rem;">
+            <h2 class="expl-section-title" style="color: #0f172a;">Explicações Esta Semana</h2>
+            <button class="expl-link-button" type="button" onclick="location.href='calendario.html'"
+              style="color: #3b82f6; background: none; border: none; cursor: pointer; font-weight: 500;">
+              Calendário &rarr;
+            </button>
+          </div>
+          <div id="dash-week-sessions" class="dash-week-list">
+            <p style="color:#94a3b8">A carregar sessões...</p>
+          </div>
+        </section>
 
-          <article class="expl-card dash-quick-card" onclick="location.href='relatorios.html'" style="cursor: pointer;">
-            <h3 class="expl-subsection-title">Relatórios</h3>
-            <p style="color: #64748b; font-size: 0.85rem; margin-bottom: 2rem;">Estatísticas e análises</p>
-            <div style="display: flex; align-items: center; justify-content: center; color: #94a3b8; gap: 8px;">
-              <span class="material-symbols-outlined">trending_up</span>
-              <span>Gráficos e estatísticas</span>
-            </div>
-          </article>
+        <!-- MONTHLY REPORTS -->
+        <section class="dash-section" style="margin-top: 2rem;">
+          <div class="expl-section-header" style="margin-bottom: 1rem;">
+            <h2 class="expl-section-title" style="color: #0f172a;">Relatórios Mensais</h2>
+            <button class="expl-link-button" type="button" onclick="location.href='relatorios.html'"
+              style="color: #3b82f6; background: none; border: none; cursor: pointer; font-weight: 500;">
+              Ver todos &rarr;
+            </button>
+          </div>
+          <div id="dash-month-reports" class="dash-month-list">
+            <p style="color:#94a3b8">A carregar relatórios...</p>
+          </div>
+        </section>
+
+      </div>
+    </div>
+
+    <!-- MODAL RELATÓRIO MÊS (DASHBOARD) -->
+    <div class="modal" id="modal-dash-relatorio">
+      <div class="modal__backdrop" onclick="closeDashRelModal()"></div>
+      <div class="modal__dialog" style="max-width:560px;">
+        <div class="modal__header">
+          <h2 id="modal-dash-rel-titulo">Relatório — Mês</h2>
+          <button class="modal__close" onclick="closeDashRelModal()">&times;</button>
+        </div>
+        <div id="modal-dash-rel-body">
+          <p>A carregar...</p>
         </div>
       </div>
     </div>

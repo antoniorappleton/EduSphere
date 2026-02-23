@@ -1309,9 +1309,31 @@ serve(async (req) => {
 
       let result;
       if (idPagamento) {
+        // Editar pagamento existente por ID
         result = await svc.from("pagamentos").update(row).eq("id_pagamento", idPagamento).eq("id_explicador", myExplId);
       } else {
-        result = await svc.from("pagamentos").insert(row);
+        // Verificar se já existe registo para este aluno/mês/ano
+        const { data: existing, error: checkErr } = await svc
+          .from("pagamentos")
+          .select("id_pagamento")
+          .eq("id_aluno", idAluno)
+          .eq("id_explicador", myExplId)
+          .eq("ano", ano)
+          .eq("mes", mes)
+          .maybeSingle();
+
+        if (checkErr) {
+          console.error("Erro ao verificar pagamento existente", checkErr);
+          return new Response(JSON.stringify({ error: checkErr.message }), { status: 400, headers: cors(origin) });
+        }
+
+        if (existing) {
+          // Já existe → atualizar
+          result = await svc.from("pagamentos").update(row).eq("id_pagamento", existing.id_pagamento).eq("id_explicador", myExplId);
+        } else {
+          // Não existe → inserir
+          result = await svc.from("pagamentos").insert(row);
+        }
       }
 
       if (result.error) {

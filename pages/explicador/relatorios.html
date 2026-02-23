@@ -11,7 +11,7 @@
   <title>EduSphere — Relatórios</title>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="../../public/js/supabaseClient.js"></script>
 </head>
 
@@ -84,29 +84,74 @@
 
       <div class="expl-body">
 
-        <div class="relatorios-grid">
-          <!-- Gráfico 1 -->
+        <!-- KPI CARDS -->
+        <div class="rel-kpi-grid">
+          <div class="rel-kpi-card">
+            <p class="rel-kpi-label">Alunos Ativos</p>
+            <p class="rel-kpi-value" id="kpi-alunos">0</p>
+            <p class="rel-kpi-sub">este mês</p>
+          </div>
+          <div class="rel-kpi-card">
+            <p class="rel-kpi-label">Faturação do Mês</p>
+            <p class="rel-kpi-value" id="kpi-faturacao" style="color:#16a34a">€0,00</p>
+            <p class="rel-kpi-sub">recebido</p>
+          </div>
+          <div class="rel-kpi-card">
+            <p class="rel-kpi-label">Sessões do Mês</p>
+            <p class="rel-kpi-value" id="kpi-sessoes">0</p>
+            <p class="rel-kpi-sub">realizadas</p>
+          </div>
+          <div class="rel-kpi-card">
+            <p class="rel-kpi-label">Taxa de Cobrança</p>
+            <p class="rel-kpi-value" id="kpi-taxa" style="color:#2563eb">0%</p>
+            <p class="rel-kpi-sub">pago / previsto</p>
+          </div>
+        </div>
+
+        <!-- CHARTS -->
+        <div class="relatorios-grid" style="grid-template-columns: 1fr 1fr;">
           <div class="rel-card">
             <h3>Faturação Mensal</h3>
-            <p style="color:#666; font-size:0.9rem">Previsto vs Real</p>
+            <p style="color:#666; font-size:0.9rem">Previsto vs Recebido</p>
             <div class="rel-chart-box">
               <canvas id="chartFatMensal"></canvas>
             </div>
           </div>
 
-          <!-- Gráfico 2 -->
           <div class="rel-card">
-            <h3>Horas de Explicação</h3>
-            <p style="color:#666; font-size:0.9rem">Total de horas dadas (últimos 6 meses)</p>
+            <h3>Sessões Mensais</h3>
+            <p style="color:#666; font-size:0.9rem">Total de sessões por mês</p>
             <div class="rel-chart-box">
-              <canvas id="chartHoras"></canvas>
+              <canvas id="chartSessoes"></canvas>
             </div>
           </div>
         </div>
 
-        <div class="expl-card" style="margin-top:2rem;">
-          <h3>Outras estatísticas</h3>
-          <p>Em breve...</p>
+        <div class="relatorios-grid" style="margin-top:1.5rem; grid-template-columns: 1fr 1fr;">
+          <div class="rel-card">
+            <h3>Alunos Ativos</h3>
+            <p style="color:#666; font-size:0.9rem">Evolução mensal</p>
+            <div class="rel-chart-box">
+              <canvas id="chartAlunos"></canvas>
+            </div>
+          </div>
+
+          <div class="rel-card">
+            <h3>Distribuição Disciplinas</h3>
+            <p style="color:#666; font-size:0.9rem">Proporção de alunos por área</p>
+            <div class="rel-chart-box">
+              <canvas id="chartDisciplinas"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- MONTHLY REPORTS LIST -->
+        <div class="rel-card" style="margin-top:2rem;">
+          <h3>Relatórios Mensais</h3>
+          <p style="color:#666; font-size:0.9rem; margin-bottom:1rem;">Clique num mês para ver o detalhe</p>
+          <div id="monthly-reports-list">
+            <p style="color:#94a3b8">A carregar...</p>
+          </div>
         </div>
 
       </div>
@@ -136,13 +181,24 @@
     </nav>
   </section>
 
+  <!-- MODAL RELATÓRIO MÊS -->
+  <div class="modal" id="modal-relatorio-mes">
+    <div class="modal__backdrop" onclick="closeRelModal()"></div>
+    <div class="modal__dialog" style="max-width:600px;">
+      <div class="modal__header">
+        <h2 id="modal-rel-titulo">Relatório — Mês</h2>
+        <button class="modal__close" onclick="closeRelModal()">&times;</button>
+      </div>
+      <div id="modal-rel-body">
+        <p>A carregar...</p>
+      </div>
+    </div>
+  </div>
+
   <!-- Navigation Logic -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
   <script src="../../public/js/nav.js"></script>
 
-  <script>
-    // Auth Check (Opcional se o service já o fizer, mas mantemos centralizado se base.css/nav.js não o fizerem)
-  </script>
   <script src="../../public/js/explicador-service.js"></script>
   <script src="../../public/js/relatorios-explicador.js"></script>
 </body>

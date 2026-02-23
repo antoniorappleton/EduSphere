@@ -188,5 +188,15 @@ window.ExplicadorService = {
     if (error) throw error;
     if (data && data.error) throw new Error(data.error);
     return data;
+  },
+
+  // 7. SINO DE AVISO (toggle mensalidade_avisada)
+  async setMensalidadeAvisada(alunoId, avisado) {
+    const { error } = await supabase
+      .from('alunos')
+      .update({ mensalidade_avisada: avisado })
+      .eq('id_aluno', alunoId);
+    if (error) throw error;
+    return true;
   }
 };

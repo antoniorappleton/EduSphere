@@ -1,5 +1,10 @@
 // public/js/dashboard-explicador.js
 
+const DASH_MESES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+const DASH_DIAS = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
+
+let _dashPagamentos = [];
+
 async function loadDashboard() {
   console.log("Loading Dashboard...");
 
@@ -13,7 +18,6 @@ async function loadDashboard() {
   // 2. Obter ID do Explicador
   const explId = await ExplicadorService.getMyExplId();
   if (!explId) {
-    // Ver se é Admin. Se for, criar perfil dummy de Explicador automaticamente.
     const { data: userProfile } = await supabase.from('app_users').select('role').eq('user_id', session.user.id).single();
     if (userProfile && userProfile.role === 'admin') {
        console.log("Admin detetado sem perfil de Explicador. A criar...");
@@ -55,7 +59,7 @@ async function loadDashboard() {
 
   updateKpis(totalPrevisto, totalRealizado, totalPendentes);
 
-  // 3.1. Auto-Reset dos Sinos (Se houver pagamento no mês, o sino desliga-se automaticamente)
+  // 3.1. Auto-Reset dos Sinos
   if (pags && pags.length > 0) {
     const alunosPagosNesteMes = pags.filter(p => p.estado === 'PAGO').map(p => p.id_aluno);
     if (alunosPagosNesteMes.length > 0) {
@@ -66,7 +70,7 @@ async function loadDashboard() {
     }
   }
 
-  // 4. Fetch Alunos (Top 4 recentes ativos) e seus pagamentos do mês
+  // 4. Fetch Alunos (Top 4)
   const { data: alunos } = await supabase
     .from('alunos')
     .select('*')
@@ -75,13 +79,11 @@ async function loadDashboard() {
     .order('created_at', { ascending: false })
     .limit(4);
 
-  // 5. Vincular alunos com pagamentos do mês corrente para o estado no card
   const alunosWithStatus = (alunos || []).map(aluno => {
-    // Procurar pagamento deste aluno no cache 'pags' obtido no step 3
     const pag = pags ? pags.find(p => p.id_aluno === aluno.id_aluno) : null;
     return {
       ...aluno,
-      estado_pagamento: pag ? pag.estado : 'PENDENTE', // Se não houver registo, consideramos pendente
+      estado_pagamento: pag ? pag.estado : 'PENDENTE',
       pagamento_mes: pag
     };
   });
@@ -97,6 +99,31 @@ async function loadDashboard() {
   }
 
   renderAlunos(alunosWithStatus, currentMonth, currentYear);
+
+  // 5. Weekly Sessions
+  try {
+    const sessoes = await ExplicadorService.listSessoes();
+    renderWeeklySessions(sessoes);
+  } catch(e) {
+    console.warn("Erro ao carregar sessões semanais:", e);
+    const weekEl = document.getElementById('dash-week-sessions');
+    if (weekEl) weekEl.innerHTML = '<p style="color:#94a3b8">Sem sessões para mostrar.</p>';
+  }
+
+  // 6. Monthly Reports
+  try {
+    const { data: allPags } = await supabase
+      .from('pagamentos')
+      .select('*, alunos!inner(nome, apelido)')
+      .eq('id_explicador', explId)
+      .order('ano', { ascending: false })
+      .order('mes', { ascending: false });
+
+    _dashPagamentos = allPags || [];
+    renderMonthlyReports(_dashPagamentos);
+  } catch(e) {
+    console.warn("Erro ao carregar relatórios mensais:", e);
+  }
 }
 
 function updateKpis(prev, real, pend) {
@@ -134,20 +161,14 @@ function renderAlunos(lista, mes, ano) {
     const statusText = isPago ? 'Pago' : 'Pendente';
     const statusColor = isPago ? 'background:#dcfce7; color:#166534;' : 'background:#fff7ed; color:#c2410c;';
 
-    // Sino de aviso (comportamento solicitado)
-    // Se estiver pago, o sino não deve estar ativo.
-    // Se estiver pendente, o explicador pode marcar.
     const isAvisado = aluno.mensalidade_avisada && !isPago;
     const bellColor = isAvisado ? '#b91c1c' : '#94a3b8';
-
-    // Data de "mensalidade" para visualização (dia 15 do mês corrente como padrão)
-    const mensalidadeData = `15/${String(mes).padStart(2, '0')}/${ano}`; 
 
     card.innerHTML = `
       <!-- Sino de Aviso -->
       <button onclick="toggleAviso('${aluno.id_aluno}', ${isAvisado})" 
               style="position: absolute; top: 16px; right: 16px; background: none; border: none; cursor: pointer; padding: 4px; color: ${bellColor};"
-              title="${isAvisado ? 'Aviso ligado' : 'Marcar para aviso'}">
+              title="${isAvisado ? 'Aviso ligado — clique para desligar' : 'Clique para marcar como avisado'}">
         <svg style="width:20px; height:20px" viewBox="0 0 24 24" fill="${isAvisado ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
           <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
@@ -184,21 +205,181 @@ function renderAlunos(lista, mes, ano) {
 }
 
 function getMesNome(m) {
-  const meses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-  return meses[m-1];
+  return DASH_MESES[m-1] || '';
 }
+
+// ========== BELL TOGGLE VIA EDGE FUNCTION ==========
 
 async function toggleAviso(alunoId, currentStatus) {
   try {
-    const { error } = await supabase
-      .from('alunos')
-      .update({ mensalidade_avisada: !currentStatus })
-      .eq('id_aluno', alunoId);
-    
-    if (error) throw error;
-    loadDashboard(); // Recarregar para mostrar o novo estado
+    await ExplicadorService.setMensalidadeAvisada(alunoId, !currentStatus);
+    loadDashboard(); // Refresh
   } catch (err) {
     console.error("Erro ao alternar aviso:", err);
+    alert("Erro ao alternar aviso: " + err.message);
+  }
+}
+
+// ========== WEEKLY SESSIONS ==========
+
+function renderWeeklySessions(sessoes) {
+  const container = document.getElementById('dash-week-sessions');
+  if (!container) return;
+
+  // Calculate current week Mon-Sun
+  const today = new Date();
+  const dayOfWeek = today.getDay(); // 0=Sun, 1=Mon...
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+  monday.setHours(0, 0, 0, 0);
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  sunday.setHours(23, 59, 59, 999);
+
+  const mondayStr = monday.toISOString().slice(0, 10);
+  const sundayStr = sunday.toISOString().slice(0, 10);
+
+  // Filter sessions for this week
+  const weekSessions = (sessoes || []).filter(s => {
+    return s.data >= mondayStr && s.data <= sundayStr;
+  }).sort((a, b) => {
+    const cmp = a.data.localeCompare(b.data);
+    if (cmp !== 0) return cmp;
+    return (a.hora_inicio || '').localeCompare(b.hora_inicio || '');
+  });
+
+  if (!weekSessions.length) {
+    container.innerHTML = '<p style="color:#94a3b8; font-size:0.9rem;">Sem explicações agendadas esta semana.</p>';
+    return;
+  }
+
+  container.innerHTML = weekSessions.map(s => {
+    const d = new Date(s.data + 'T00:00:00');
+    const diaNome = DASH_DIAS[d.getDay()];
+    const diaNum = d.getDate();
+    const hora = s.hora_inicio ? s.hora_inicio.slice(0, 5) : '—';
+    const aluno = s.aluno_nome || 'Aluno';
+    const estadoClass = s.estado === 'REALIZADA' ? 'sessao-badge--realizada' 
+                       : s.estado === 'CANCELADA' ? 'sessao-badge--cancelada'
+                       : 'sessao-badge--agendada';
+
+    return `
+      <div class="dash-week-item">
+        <div class="dash-week-item__day">${diaNome} ${diaNum}</div>
+        <div class="dash-week-item__info">
+          <strong>${aluno}</strong> às ${hora}
+          ${s.duracao_min ? `<span style="color:#94a3b8"> · ${s.duracao_min}min</span>` : ''}
+        </div>
+        <span class="sessao-badge ${estadoClass}">${s.estado || 'AGENDADA'}</span>
+      </div>
+    `;
+  }).join('');
+}
+
+// ========== MONTHLY REPORTS LIST ==========
+
+function renderMonthlyReports(pags) {
+  const container = document.getElementById('dash-month-reports');
+  if (!container) return;
+
+  // Group by ano/mes, limit to last 6
+  const groups = {};
+  pags.forEach(p => {
+    const key = `${p.ano}-${String(p.mes).padStart(2, '0')}`;
+    if (!groups[key]) groups[key] = { ano: p.ano, mes: p.mes, items: [] };
+    groups[key].items.push(p);
+  });
+
+  const sorted = Object.values(groups)
+    .sort((a, b) => (b.ano * 100 + b.mes) - (a.ano * 100 + a.mes))
+    .slice(0, 6);
+
+  if (!sorted.length) {
+    container.innerHTML = '<p style="color:#94a3b8; font-size:0.9rem;">Sem relatórios disponíveis.</p>';
+    return;
+  }
+
+  container.innerHTML = sorted.map(g => {
+    const totalPago = g.items.reduce((s, p) => s + Number(p.valor_pago || 0), 0);
+    const totalPrev = g.items.reduce((s, p) => s + Number(p.valor_previsto || 0), 0);
+    const nAlunos = g.items.length;
+    const allPaid = g.items.every(p => p.estado === 'PAGO');
+
+    return `
+      <div class="month-row" onclick="openDashMonthReport(${g.ano}, ${g.mes})">
+        <div class="month-row__period">
+          <strong>${DASH_MESES[g.mes - 1]} ${g.ano}</strong>
+        </div>
+        <div class="month-row__stats">
+          <span>${nAlunos} aluno${nAlunos !== 1 ? 's' : ''}</span>
+          <span style="color:#16a34a; font-weight:600;">${formatCurrency(totalPago)}</span>
+          <span style="color:#94a3b8">/ ${formatCurrency(totalPrev)}</span>
+        </div>
+        <span class="sessao-badge ${allPaid ? 'sessao-badge--realizada' : 'sessao-badge--agendada'}">${allPaid ? 'Pago' : 'Pendente'}</span>
+      </div>
+    `;
+  }).join('');
+}
+
+// ========== MONTH REPORT MODAL ==========
+
+function openDashMonthReport(ano, mes) {
+  const modal = document.getElementById('modal-dash-relatorio');
+  const titulo = document.getElementById('modal-dash-rel-titulo');
+  const body = document.getElementById('modal-dash-rel-body');
+  if (!modal) return;
+
+  titulo.textContent = `Relatório — ${DASH_MESES[mes - 1]} ${ano}`;
+
+  const items = _dashPagamentos.filter(p => p.ano === ano && p.mes === mes);
+  
+  if (!items.length) {
+    body.innerHTML = '<p style="color:#94a3b8">Sem dados para este mês.</p>';
+  } else {
+    const totalPago = items.reduce((s, p) => s + Number(p.valor_pago || 0), 0);
+    const totalPrev = items.reduce((s, p) => s + Number(p.valor_previsto || 0), 0);
+
+    body.innerHTML = `
+      <div style="display:flex; gap:0.75rem; margin-bottom:1rem; flex-wrap:wrap;">
+        <div style="flex:1; min-width:100px; padding:0.75rem 1rem; background:#f8fafc; border-radius:10px; text-align:center;">
+          <p style="margin:0; font-size:0.8rem; color:#64748b;">Previsto</p>
+          <p style="margin:4px 0 0; font-size:1.1rem; font-weight:700;">${formatCurrency(totalPrev)}</p>
+        </div>
+        <div style="flex:1; min-width:100px; padding:0.75rem 1rem; background:#f0fdf4; border-radius:10px; text-align:center;">
+          <p style="margin:0; font-size:0.8rem; color:#64748b;">Recebido</p>
+          <p style="margin:4px 0 0; font-size:1.1rem; font-weight:700; color:#16a34a;">${formatCurrency(totalPago)}</p>
+        </div>
+        <div style="flex:1; min-width:100px; padding:0.75rem 1rem; background:#fef2f2; border-radius:10px; text-align:center;">
+          <p style="margin:0; font-size:0.8rem; color:#64748b;">Em falta</p>
+          <p style="margin:4px 0 0; font-size:1.1rem; font-weight:700; color:#b91c1c;">${formatCurrency(totalPrev - totalPago)}</p>
+        </div>
+      </div>
+      <div style="max-height:300px; overflow-y:auto;">
+        ${items.map(p => {
+          const nome = p.alunos ? `${p.alunos.nome} ${p.alunos.apelido || ''}`.trim() : '—';
+          const isPago = p.estado === 'PAGO';
+          return `
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:0.6rem 0; border-bottom:1px solid #f1f5f9;">
+              <span style="font-weight:500;">${nome}</span>
+              <div style="display:flex; gap:0.75rem; align-items:center;">
+                <span style="font-size:0.9rem;">${formatCurrency(p.valor_pago)} / ${formatCurrency(p.valor_previsto)}</span>
+                <span class="sessao-badge ${isPago ? 'sessao-badge--realizada' : 'sessao-badge--agendada'}">${p.estado}</span>
+              </div>
+            </div>`;
+        }).join('')}
+      </div>
+    `;
+  }
+
+  modal.classList.add('open');
+  modal.setAttribute('aria-hidden', 'false');
+}
+
+function closeDashRelModal() {
+  const modal = document.getElementById('modal-dash-relatorio');
+  if (modal) {
+    modal.classList.remove('open');
+    modal.setAttribute('aria-hidden', 'true');
   }
 }
 
