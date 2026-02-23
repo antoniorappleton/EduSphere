@@ -298,7 +298,8 @@ document.addEventListener('DOMContentLoaded', () => {
       nome: fd.get('nome'),
       apelido: fd.get('apelido'),
       email: fd.get('email'),
-      password: "mudar123",
+      password: fd.get('password'),
+      username: fd.get('username'),
       telemovel: fd.get('telemovel'),
       ano: fd.get('ano'),
       valor_explicacao: fd.get('valor_explicacao'),
@@ -500,8 +501,13 @@ document.addEventListener('DOMContentLoaded', () => {
       dia_semana_preferido: fd.get('dia_semana_preferido'),
       nome_pai_cache: fd.get('nome_pai_cache'),
       contacto_pai_cache: fd.get('contacto_pai_cache'),
+      username: fd.get('username'),
       is_active: document.getElementById('edit-active').checked
     };
+
+    // Only send password if it was filled in
+    const pw = fd.get('password')?.trim();
+    if (pw && pw.length >= 6) payload.password = pw;
 
     try {
       const res = await ExplicadorService.updateAluno(payload);
@@ -543,6 +549,8 @@ async function openEditAluno(id) {
     document.getElementById('edit-nome-pai').value = aluno.nome_pai_cache || '';
     document.getElementById('edit-contacto-pai').value = aluno.contacto_pai_cache || '';
     document.getElementById('edit-active').checked = aluno.is_active !== false;
+    document.getElementById('edit-username').value = aluno.username || '';
+    document.getElementById('edit-password').value = '';
 
     calcPrevistoEdit();
 
