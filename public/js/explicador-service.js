@@ -192,11 +192,11 @@ window.ExplicadorService = {
 
   // 7. SINO DE AVISO (toggle mensalidade_avisada)
   async setMensalidadeAvisada(alunoId, avisado) {
-    const { error } = await supabase
-      .from('alunos')
-      .update({ mensalidade_avisada: avisado })
-      .eq('id_aluno', alunoId);
+    const { data, error } = await supabase.functions.invoke('expl-alunos', {
+      body: { action: 'set_mensalidade_avisada', payload: { aluno_id: alunoId, avisado } }
+    });
     if (error) throw error;
-    return true;
+    if (data && data.error) throw new Error(data.error);
+    return data;
   }
 };

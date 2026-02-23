@@ -8,8 +8,14 @@
 //   - registar_pagamento_aluno
 //   - update_pagamento_aluno
 //   - list_sessoes_aluno
+//   - list_sessoes_explicador
 //   - upsert_sessao_aluno
 //   - delete_sessao_aluno
+//   - upsert_pagamento_aluno
+//   - delete_pagamento_aluno
+//   - set_mensalidade_avisada
+//   - get_relatorios
+//   - generate_monthly_billing
 import { serve } from "https://deno.land/std@0.223.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.47.10?target=deno";
 const URL = Deno.env.get("SUPABASE_URL");
@@ -1362,6 +1368,147 @@ serve(async (req) => {
       }
 
       return new Response(JSON.stringify({ ok: true }), { status: 200, headers: cors(origin) });
+    }
+
+    /* =======================
+       LISTAR SESSÕES DO EXPLICADOR (todas)
+       ======================= */
+    if (action === "list_sessoes_explicador") {
+      // Buscar todas as sessões deste explicador, com nome do aluno
+      const { data: sessoes, error } = await svc
+        .from("sessoes")
+        .select("*, alunos!inner(nome, apelido)")
+        .eq("id_explicador", myExplId)
+        .order("data", { ascending: true });
+
+      if (error) {
+        console.error("Erro list_sessoes_explicador", error);
+        return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: cors(origin) });
+      }
+
+      // Flatten aluno name into each session
+      const result = (sessoes || []).map(s => ({
+        ...s,
+        aluno_nome: s.alunos ? `${s.alunos.nome} ${s.alunos.apelido || ''}`.trim() : 'Aluno',
+        alunos: undefined
+      }));
+
+      return new Response(JSON.stringify(result), { status: 200, headers: cors(origin) });
+    }
+
+    /* =======================
+       SET MENSALIDADE AVISADA (sino)
+       payload: { aluno_id, avisado: boolean }
+       ======================= */
+    if (action === "set_mensalidade_avisada") {
+      const p = payload || {};
+      const alunoId = p.aluno_id;
+      const avisado = p.avisado;
+
+      if (!alunoId) {
+        return new Response(JSON.stringify({ error: "aluno_id é obrigatório" }), { status: 400, headers: cors(origin) });
+      }
+
+      const { error } = await svc
+        .from("alunos")
+        .update({ mensalidade_avisada: !!avisado })
+        .eq("id_aluno", alunoId)
+        .eq("id_explicador", myExplId);
+
+      if (error) {
+        console.error("Erro set_mensalidade_avisada", error);
+        return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: cors(origin) });
+      }
+
+      return new Response(JSON.stringify({ ok: true }), { status: 200, headers: cors(origin) });
+    }
+
+    /* =======================
+       GET RELATÓRIOS
+       Dados agregados para gráficos e KPIs
+       ======================= */
+    if (action === "get_relatorios") {
+      const now = new Date();
+      const curYear = now.getFullYear();
+      const curMonth = now.getMonth() + 1;
+
+      // 1. Faturação por mês (últimos 12 meses)
+      const { data: fatData, error: fatErr } = await svc
+        .from("pagamentos")
+        .select("ano, mes, valor_previsto, valor_pago, estado")
+        .eq("id_explicador", myExplId)
+        .gte("ano", curYear - 1)
+        .order("ano", { ascending: true })
+        .order("mes", { ascending: true });
+
+      if (fatErr) {
+        console.error("Erro get_relatorios faturacao", fatErr);
+        return new Response(JSON.stringify({ error: fatErr.message }), { status: 400, headers: cors(origin) });
+      }
+
+      // Agrupar faturação por mês
+      const fatByMonth: Record<string, { ano: number; mes: number; total_previsto: number; total_pago: number }> = {};
+      (fatData || []).forEach((p: any) => {
+        const key = `${p.ano}-${String(p.mes).padStart(2, '0')}`;
+        if (!fatByMonth[key]) fatByMonth[key] = { ano: p.ano, mes: p.mes, total_previsto: 0, total_pago: 0 };
+        fatByMonth[key].total_previsto += Number(p.valor_previsto || 0);
+        fatByMonth[key].total_pago += Number(p.valor_pago || 0);
+      });
+      const faturacao = Object.values(fatByMonth).sort((a, b) => (a.ano * 100 + a.mes) - (b.ano * 100 + b.mes)).slice(-12);
+
+      // 2. Sessões por mês (últimos 12 meses)
+      const oneYearAgo = `${curYear - 1}-${String(curMonth).padStart(2, '0')}-01`;
+      const { data: sessoesData, error: sessErr } = await svc
+        .from("sessoes")
+        .select("data, estado")
+        .eq("id_explicador", myExplId)
+        .gte("data", oneYearAgo);
+
+      if (sessErr) {
+        console.error("Erro get_relatorios sessoes", sessErr);
+      }
+
+      const sessByMonth: Record<string, { ano: number; mes: number; total_sessoes: number }> = {};
+      (sessoesData || []).forEach((s: any) => {
+        if (!s.data) return;
+        const d = new Date(s.data);
+        const y = d.getFullYear();
+        const m = d.getMonth() + 1;
+        const key = `${y}-${String(m).padStart(2, '0')}`;
+        if (!sessByMonth[key]) sessByMonth[key] = { ano: y, mes: m, total_sessoes: 0 };
+        sessByMonth[key].total_sessoes += 1;
+      });
+      const sessoes_mes = Object.values(sessByMonth).sort((a, b) => (a.ano * 100 + a.mes) - (b.ano * 100 + b.mes)).slice(-12);
+
+      // 3. Alunos ativos por mês (a partir dos pagamentos como proxy)
+      const alunosByMonth: Record<string, { ano: number; mes: number; total_alunos: number }> = {};
+      (fatData || []).forEach((p: any) => {
+        const key = `${p.ano}-${String(p.mes).padStart(2, '0')}`;
+        if (!alunosByMonth[key]) alunosByMonth[key] = { ano: p.ano, mes: p.mes, total_alunos: 0 };
+        alunosByMonth[key].total_alunos += 1;
+      });
+      const alunos_mes = Object.values(alunosByMonth).sort((a, b) => (a.ano * 100 + a.mes) - (b.ano * 100 + b.mes)).slice(-12);
+
+      // 4. Disciplinas (distribuição de alunos por disciplina/matéria)
+      const { data: alunosDisc } = await svc
+        .from("alunos")
+        .select("disciplina")
+        .eq("id_explicador", myExplId)
+        .eq("is_active", true);
+
+      const discCount: Record<string, number> = {};
+      (alunosDisc || []).forEach((a: any) => {
+        const disc = a.disciplina || 'Outra';
+        discCount[disc] = (discCount[disc] || 0) + 1;
+      });
+      const disciplinas = Object.entries(discCount).map(([disciplina, total]) => ({ disciplina, total }));
+
+      return new Response(JSON.stringify({
+        faturacao,
+        sessoes_mes,
+        alunos_mes,
+        disciplinas
+      }), { status: 200, headers: cors(origin) });
     }
 
     // ação desconhecida

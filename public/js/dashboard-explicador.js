@@ -182,7 +182,7 @@ function renderAlunos(lista, mes, ano) {
         </div>
         <div style="min-width: 0; padding-right: 24px;">
           <h3 style="margin: 0; font-size: 1rem; font-weight: 600; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${aluno.nome}</h3>
-          <p style="margin: 2px 0 0; font-size: 0.875rem; color: #64748b;">${aluno.ano_escolaridade || '?'}º Ano</p>
+          <p style="margin: 2px 0 0; font-size: 0.875rem; color: #64748b;">${aluno.ano || '?'}º Ano</p>
         </div>
       </div>
 
