@@ -141,34 +141,42 @@
 
         return `
           <tr data-id="${e.id_explicador}">
-            <td>${e.nome ?? "-"}</td>
-            <td>${e.apelido ?? "-"}</td>
-            <td>${e.email ?? "-"}</td>
-            <td>${e.contacto ?? "-"}</td>
-            <td>${Number(e.max ?? 0)}</td>
-            <td>${permissaoLabel}</td>
-            <td>${estadoLabel}</td>
-            <td class="expl-actions">
-              <button class="btn-admin btn-admin--secondary btn-edit" data-id="${
-                e.id_explicador
-              }">
-                Editar
-              </button>
-              <button class="btn-admin btn-admin--secondary btn-reset" data-id="${
-                e.id_explicador
-              }" ${dis}>
-                Reset PW
-              </button>
-              <button class="btn-admin btn-admin--warning btn-block" data-id="${
-                e.id_explicador
-              }" ${dis}>
-                ${e.is_blocked ? "Desbloquear" : "Bloquear"}
-              </button>
-              <button class="btn-admin btn-admin--danger btn-del" data-id="${
-                e.id_explicador
-              }" ${dis}>
-                Eliminar
-              </button>
+            <td>
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <div class="admin-avatar">${(e.nome || "?").charAt(0).toUpperCase()}</div>
+                <div>
+                  <div style="font-weight: 600;">${e.nome ?? ""} ${e.apelido ?? ""}</div>
+                  <div style="font-size: 0.75rem; color: var(--text-soft);">${e.contacto || "Sem contacto"}</div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <div style="font-weight: 500;">${e.email ?? "-"}</div>
+            </td>
+            <td>
+              <span style="font-weight: 600;">${Number(e.max ?? 0)}</span>
+              <span style="font-size: 0.75rem; color: var(--text-soft);"> alunos</span>
+            </td>
+            <td>
+              <span class="badge ${e.is_blocked ? "badge--danger" : "badge--success"}">
+                ${e.is_blocked ? "Bloqueado" : "Ativo"}
+              </span>
+            </td>
+            <td>
+              <div class="admin-actions">
+                <button class="action-btn btn-edit" title="Editar" data-id="${e.id_explicador}">
+                  <span class="material-symbols-outlined">edit</span>
+                </button>
+                <button class="action-btn btn-reset" title="Reset Password" data-id="${e.id_explicador}" ${dis}>
+                  <span class="material-symbols-outlined">lock_reset</span>
+                </button>
+                <button class="action-btn action-btn--warning btn-block" title="${e.is_blocked ? "Desbloquear" : "Bloquear"}" data-id="${e.id_explicador}" ${dis}>
+                  <span class="material-symbols-outlined">${e.is_blocked ? "check_circle" : "block"}</span>
+                </button>
+                <button class="action-btn action-btn--danger btn-del" title="Eliminar" data-id="${e.id_explicador}" ${dis}>
+                  <span class="material-symbols-outlined">delete</span>
+                </button>
+              </div>
             </td>
           </tr>
         `;

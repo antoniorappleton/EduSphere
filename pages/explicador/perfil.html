@@ -189,6 +189,24 @@
               </button>
               <div id="pwMsg" class="auth__msg"></div>
             </form>
+
+            <hr
+              style="
+                margin: 24px 0;
+                border: 0;
+                border-top: 1px solid var(--border);
+              "
+            />
+
+            <div style="text-align: center">
+              <button
+                id="btnProfileLogout"
+                class="button"
+                style="background-color: #ef4444; width: 100%"
+              >
+                Sair da Conta
+              </button>
+            </div>
           </section>
         </div>
       </div>
@@ -251,6 +269,12 @@
 
       document.addEventListener("DOMContentLoaded", async () => {
         initPasswordToggles();
+
+        document
+          .getElementById("btnProfileLogout")
+          ?.addEventListener("click", () => {
+            Auth.signOut("../../index.html");
+          });
 
         // Proteger a página
         const user = await Auth.requireRole("explicador", "../../index.html");
