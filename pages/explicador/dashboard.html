@@ -101,37 +101,65 @@
       </header>
 
       <div class="expl-body">
-        <!-- KPI CARDS -->
-        <h2 class="expl-section-title">Resumo financeiro</h2>
-        <div class="expl-kpi-grid">
-          <article class="expl-card expl-kpi-card">
-            <p class="expl-kpi-label">Faturação prevista (mês atual)</p>
-            <p class="expl-kpi-value" id="card-total-previsto">—</p>
+
+        <!-- FINANCIAL SUMMARY -->
+        <section class="dash-section">
+          <h2 class="expl-section-title" style="color: #0f172a;">Resumo Financeiro</h2>
+          <div class="expl-kpi-grid">
+            <article class="expl-card expl-kpi-card">
+              <p class="expl-kpi-label">Faturação Prevista</p>
+              <p class="expl-kpi-value" id="card-total-previsto">€0,00</p>
+            </article>
+
+            <article class="expl-card expl-kpi-card">
+              <p class="expl-kpi-label">Faturação Realizada</p>
+              <p class="expl-kpi-value expl-kpi-value--green" id="card-total-mes">€0,00</p>
+            </article>
+
+            <article class="expl-card expl-kpi-card">
+              <p class="expl-kpi-label">Pagamentos Pendentes</p>
+              <p class="expl-kpi-value expl-kpi-value--red" id="card-pendentes">€0,00</p>
+            </article>
+          </div>
+        </section>
+
+        <!-- STUDENTS LIST -->
+        <section class="dash-section" style="margin-top: 2rem;">
+          <div class="expl-section-header" style="margin-bottom: 1rem;">
+            <h2 class="expl-section-title" style="color: #0f172a;">
+              Alunos <span id="dash-alunos-contador" style="color: #64748b; font-weight: 400; font-size: 0.95rem;">(0
+                ativos)</span>
+            </h2>
+            <button class="expl-link-button" type="button" onclick="location.href='alunos.html'"
+              style="color: #3b82f6; background: none; border: none; cursor: pointer; font-weight: 500;">
+              Ver todos &rarr;
+            </button>
+          </div>
+
+          <div class="dash-alunos-grid" id="dash-alunos-grid">
+            <p style="color:#64748b">A carregar alunos...</p>
+          </div>
+        </section>
+
+        <!-- CALENDAR & REPORTS -->
+        <div class="dash-grid-split" style="display: grid; gap: 1rem; margin-top: 2rem;">
+          <article class="expl-card dash-quick-card" onclick="location.href='calendario.html'" style="cursor: pointer;">
+            <h3 class="expl-subsection-title">Calendário</h3>
+            <p style="color: #64748b; font-size: 0.85rem; margin-bottom: 2rem;">Próximas explicações agendadas</p>
+            <div style="display: flex; align-items: center; justify-content: center; color: #94a3b8; gap: 8px;">
+              <span class="material-symbols-outlined">calendar_month</span>
+              <span>Calendário de explicações</span>
+            </div>
           </article>
 
-          <article class="expl-card expl-kpi-card">
-            <p class="expl-kpi-label">Faturação realizada (mês atual)</p>
-            <p class="expl-kpi-value expl-kpi-value--green" id="card-total-mes">—</p>
+          <article class="expl-card dash-quick-card" onclick="location.href='relatorios.html'" style="cursor: pointer;">
+            <h3 class="expl-subsection-title">Relatórios</h3>
+            <p style="color: #64748b; font-size: 0.85rem; margin-bottom: 2rem;">Estatísticas e análises</p>
+            <div style="display: flex; align-items: center; justify-content: center; color: #94a3b8; gap: 8px;">
+              <span class="material-symbols-outlined">trending_up</span>
+              <span>Gráficos e estatísticas</span>
+            </div>
           </article>
-
-          <article class="expl-card expl-kpi-card">
-            <p class="expl-kpi-label">Pagamentos pendentes</p>
-            <p class="expl-kpi-value expl-kpi-value--red" id="card-pendentes">—</p>
-          </article>
-        </div>
-
-        <!-- STUDENTS PREVIEW -->
-        <div class="expl-section-header" style="margin-top:2rem;">
-          <h2 class="expl-section-title">
-            Alunos <span class="expl-section-sub" id="dash-alunos-contador">(0 ativos)</span>
-          </h2>
-          <button class="expl-link-button" type="button" onclick="location.href='alunos.html'">
-            Ver todos &rarr;
-          </button>
-        </div>
-
-        <div class="dash-alunos-grid" id="dash-alunos-grid">
-          <p style="color:#666">A carregar alunos...</p>
         </div>
       </div>
     </div>
