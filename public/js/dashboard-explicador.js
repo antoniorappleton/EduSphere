@@ -85,22 +85,36 @@ async function loadDashboard() {
     .limit(4);
 
   // 5. Compute 3-state status per student:
-  //    PAGO (green)    — current month paid
-  //    PENDENTE (orange) — current month not yet paid, no gap
-  //    ATRASADO (red)  — missed month(s) between last payment and current month
+  //    PAGO (green)     — current month paid (estado=PAGO or valor_pago >= valor_previsto)
+  //    PENDENTE (orange) — current month not yet paid, no gap months
+  //    ATRASADO (red)   — missed month(s) between last payment and current month
   const alunosWithStatus = (alunos || []).map(aluno => {
     const pagCurr = pags ? pags.find(p => p.id_aluno === aluno.id_aluno) : null;
 
-    if (pagCurr && pagCurr.estado === 'PAGO') {
-      return { ...aluno, estado_pagamento: 'PAGO', pagamento_mes: pagCurr };
+    // Check if current month is paid
+    if (pagCurr) {
+      const estado = (pagCurr.estado || '').toUpperCase();
+      const vPago = Number(pagCurr.valor_pago || 0);
+      const vPrev = Number(pagCurr.valor_previsto || 0);
+      const isPaid = estado === 'PAGO' || (vPrev > 0 && vPago >= vPrev);
+
+      if (isPaid) {
+        return { ...aluno, estado_pagamento: 'PAGO', pagamento_mes: pagCurr };
+      }
     }
 
-    // Check for gaps: find the last PAGO payment for this student
+    // Check for gaps: find the most recent payment for this student
     const studentPags = (allPagsExpl || [])
-      .filter(p => p.id_aluno === aluno.id_aluno && p.estado === 'PAGO')
+      .filter(p => p.id_aluno === aluno.id_aluno)
       .sort((a, b) => (Number(b.ano) * 100 + Number(b.mes)) - (Number(a.ano) * 100 + Number(a.mes)));
 
-    const lastPaid = studentPags.length > 0 ? studentPags[0] : null;
+    // Find the last fully paid month
+    const lastPaid = studentPags.find(p => {
+      const est = (p.estado || '').toUpperCase();
+      const vP = Number(p.valor_pago || 0);
+      const vPr = Number(p.valor_previsto || 0);
+      return est === 'PAGO' || (vPr > 0 && vP >= vPr);
+    });
 
     if (lastPaid) {
       const lastPaidYM = Number(lastPaid.ano) * 12 + Number(lastPaid.mes);
@@ -108,7 +122,6 @@ async function loadDashboard() {
       const gap = currentYM - lastPaidYM;
 
       if (gap > 1) {
-        // More than 1 month since last payment → Atrasado
         return { ...aluno, estado_pagamento: 'ATRASADO', pagamento_mes: pagCurr };
       }
     }
