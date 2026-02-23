@@ -63,7 +63,8 @@
 <body class="text-gray-900 overflow-hidden">
 
   <!-- Mobile Container -->
-  <div class="fixed inset-0 w-full h-full bg-gray-50 flex flex-col max-w-md mx-auto shadow-2xl relative">
+  <div
+    class="fixed inset-0 w-full h-full bg-gray-50 flex flex-col max-w-md mx-auto shadow-2xl relative overflow-hidden">
 
     <!-- Header -->
     <header
@@ -311,7 +312,7 @@
 
     <!-- Bottom Navigation -->
     <nav class="app-footer-nav shadow-[0_-4px_10px_rgba(0,0,0,0.05)]"
-      style="position: relative; bottom: auto; left: auto; right: auto; flex-shrink: 0;">
+      style="display: flex !important; position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 448px; height: 70px; z-index: 50;">
       <button class="app-nav-item active" data-target="inicio">
         <span class="material-symbols-outlined">dashboard</span>
         <span>Início</span>
@@ -564,35 +565,43 @@
       // Update Totals
       if (totalPagoEl) totalPagoEl.textContent = "€ " + totalPago.toLocaleString('pt-PT', { minimumFractionDigits: 2 });
 
-      // Logic for Pending Info
-      // Simplification: Find last paid month, assume next is pending
-      const pagos = pag.filter(p => (p.estado || '').toLowerCase() === 'pago').sort((a, b) => {
-        if (a.ano !== b.ano) return b.ano - a.ano;
-        return b.mes - a.mes;
-      });
-      const ultimoPago = pagos[0];
+      // Logic for Pending Info: Find the first record that is NOT 'PAGO'
+      const pendentes = pag.filter(p => (p.estado || '').toUpperCase() !== 'PAGO')
+        .sort((a, b) => (a.ano * 100 + a.mes) - (b.ano * 100 + b.mes));
 
       let pendingVal = 0;
       let pendingLabel = "Em dia";
       let pendingDetailHtml = "<p class='text-gray-500 italic text-center text-xs py-2'>Sem pagamentos pendentes.</p>";
       let hasPending = false;
+      let pendingTarget = null;
 
-      if (ultimoPago) {
-        let anoPend = ultimoPago.ano;
-        let mesPend = ultimoPago.mes + 1;
-        if (mesPend > 12) { mesPend = 1; anoPend++; }
+      if (pendentes.length > 0) {
+        pendingTarget = pendentes[0];
+        hasPending = true;
+      } else {
+        // Predictive: Check current month if not in pag list
+        const hoje = new Date();
+        const anoA = hoje.getFullYear();
+        const mesA = hoje.getMonth() + 1;
+        const hasRec = pag.some(p => p.ano === anoA && p.mes === mesA);
+        if (!hasRec) {
+          const start = `${anoA}-${String(mesA).padStart(2, '0')}-01`;
+          const end = new Date(anoA, mesA, 0).toISOString().slice(0, 10);
+          const { data: expMes } = await supabase.from('sessoes_explicacao').select('id_sessao').eq('id_aluno', ALUNO.id_aluno).gte('data', start).lte('data', end);
+          if (expMes && expMes.length > 0) {
+            hasPending = true;
+            pendingTarget = { ano: anoA, mes: mesA, valor_previsto: expMes.length * 25, valor_pago: 0, estado: 'PREVISTO' };
+          }
+        }
+      }
 
-        // Check if we have sessions in that month
-        const start = `${anoPend}-${String(mesPend).padStart(2, '0')}-01`;
-        const end = new Date(anoPend, mesPend, 0).toISOString().slice(0, 10);
+      if (hasPending && pendingTarget) {
+        const p = pendingTarget;
+        pendingVal = Number(p.valor_previsto || 0) - Number(p.valor_pago || 0);
 
-        const { data: expMes } = await supabase.from('sessoes_explicacao').select('id_sessao').eq('id_aluno', ALUNO.id_aluno).gte('data', start).lte('data', end);
-        if (expMes && expMes.length > 0) {
-          const valorExp = 25; // Default assumption or fetch config
-          pendingVal = expMes.length * valorExp;
+        if (pendingVal > 0) {
           hasPending = true;
-
-          const dateObj = new Date(anoPend, mesPend - 1, 1);
+          const dateObj = new Date(p.ano, p.mes - 1, 1);
           pendingLabel = dateObj.toLocaleDateString("pt-PT", { month: 'long' });
 
           pendingDetailHtml = `
@@ -601,18 +610,18 @@
                     <span class="font-bold text-gray-900 capitalize">${pendingLabel}</span>
                 </div>
                 <div class="flex justify-between py-2 border-b border-gray-50 last:border-0 hover:bg-gray-50 px-2 rounded -mx-2">
-                    <span class="text-gray-500">Explicações</span>
-                    <span class="font-bold text-gray-900">${expMes.length}</span>
+                    <span class="text-gray-500">Estado</span>
+                    <span class="font-bold text-amber-600">${p.estado}</span>
                 </div>
                 <div class="flex justify-between py-2 border-b border-gray-50 last:border-0 hover:bg-gray-50 px-2 rounded -mx-2">
-                    <span class="text-gray-500">Valor Estimado</span>
+                    <span class="text-gray-500">Valor em Falta</span>
                     <span class="font-bold text-primary">€ ${pendingVal.toFixed(2)}</span>
                 </div>
                 <div class="bg-gray-50 p-3 rounded-lg mt-2">
                     <p class="text-[10px] text-gray-500 uppercase font-bold mb-1">IBAN para Transferência</p>
                     <p class="font-mono text-xs text-gray-800 tracking-wide select-all">PT50 0023 0000 4571 5712 9719 4</p>
                 </div>
-              `;
+            `;
         }
       }
 
@@ -634,7 +643,8 @@
       if (alertEl) {
         if (hasPending) {
           alertEl.classList.remove('hidden');
-          document.querySelector('.text-alert-content').textContent = `Pagamento de ${pendingLabel} em falta (€${pendingVal}).`;
+          const alertContent = alertEl.querySelector('.text-alert-content');
+          if (alertContent) alertContent.textContent = `Pagamento de ${pendingLabel} em falta (€${pendingVal}).`;
           // Also show nav dot
           document.getElementById('nav-dot-pag')?.classList.remove('hidden');
         } else {
@@ -649,17 +659,18 @@
       const historyPagos = pag.filter(p => (p.estado || '').toLowerCase() === 'pago').sort((a, b) => (b.ano * 100 + b.mes) - (a.ano * 100 + a.mes));
 
       if (tbody) {
-        if (!historyPagos.length) tbody.innerHTML = "<tr><td colspan='3' class='p-4 text-center text-xs text-gray-400'>Histórico vazio.</td></tr>";
-        else {
+        if (!historyPagos.length) {
+          tbody.innerHTML = "<tr><td colspan='3' class='p-4 text-center text-xs text-gray-400'>Histórico vazio.</td></tr>";
+        } else {
           tbody.innerHTML = historyPagos.map(p => {
             const mLabel = new Date(p.ano, p.mes - 1, 1).toLocaleDateString("pt-PT", { month: 'short' });
             return `
-                    <tr class="hover:bg-gray-50 border-b border-gray-50 last:border-0 text-gray-700">
-                       <td class="px-4 py-3 font-medium capitalize text-gray-900">${mLabel} ${p.ano}</td>
-                       <td class="px-4 py-3">€ ${Number(p.valor_pago).toFixed(2)}</td>
-                       <td class="px-4 py-3 text-right"><span class="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded uppercase">Pago</span></td>
-                    </tr>
-                  `;
+              <tr class="hover:bg-gray-50 border-b border-gray-50 last:border-0 text-gray-700">
+                <td class="px-4 py-3 font-medium capitalize text-gray-900">${mLabel} ${p.ano}</td>
+                <td class="px-4 py-3">€ ${Number(p.valor_pago).toFixed(2)}</td>
+                <td class="px-4 py-3 text-right"><span class="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded uppercase">Pago</span></td>
+              </tr>
+            `;
           }).join("");
         }
       }
