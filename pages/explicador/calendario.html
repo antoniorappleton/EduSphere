@@ -179,16 +179,8 @@
   <script src="../../public/js/nav.js"></script>
 
   <script>
-    document.getElementById('btnLogoutNav')?.addEventListener('click', async () => {
-      await supabase.auth.signOut();
-      location.href = '../../login.html';
-    });
-
-    // Auth Check
-    (async function () {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) location.href = '../../index.html';
-    })();
+    // Auth Check (Opcional se o service já o fizer, mas mantemos centralizado se base.css/nav.js não o fizerem)
+    // No entanto, para consistência com o plano de limpeza:
   </script>
   <!-- MODAL AGENDAR -->
   <div class="modal" id="modal-sessao">

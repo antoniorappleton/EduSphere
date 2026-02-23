@@ -338,10 +338,6 @@
       document.getElementById('view-perfil-aluno').style.display = 'none';
       document.getElementById('view-lista-alunos').style.display = 'block';
     }
-    document.getElementById('btnLogoutNav')?.addEventListener('click', async () => {
-      await supabase.auth.signOut();
-      location.href = '../../index.html';
-    });
     // Toggle Tabs
     function showPerfilTab(tabId) {
       document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
@@ -349,12 +345,6 @@
       document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
       document.querySelector(`.tab[data-tab="${tabId}"]`).classList.add('active');
     }
-
-    // Auth Check
-    (async function () {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) location.href = '../../index.html';
-    })();
   </script>
   <script src="../../public/js/explicador-service.js"></script>
   <script src="../../public/js/alunos-explicador.js"></script>

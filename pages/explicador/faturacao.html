@@ -213,16 +213,7 @@
   <script src="../../public/js/nav.js"></script>
 
   <script>
-    document.getElementById('btnLogoutNav')?.addEventListener('click', async () => {
-      await supabase.auth.signOut();
-      location.href = '../../login.html';
-    });
-
-    // Auth Check
-    (async function () {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) location.href = '../../index.html';
-    })();
+    // Auth Check (Opcional se o service já o fizer, mas mantemos centralizado se base.css/nav.js não o fizerem)
   </script>
   <script src="../../public/js/explicador-service.js"></script>
   <script src="../../public/js/faturacao-explicador.js"></script>

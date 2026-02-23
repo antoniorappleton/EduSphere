@@ -23,4 +23,22 @@ document.addEventListener('DOMContentLoaded', () => {
     if (document.querySelector('.app-footer-nav')) {
         document.body.classList.add('has-footer-nav');
     }
+
+    // 3. Lógica de Logout Centralizada
+    async function handleLogout() {
+        if (typeof supabase !== 'undefined') {
+            await supabase.auth.signOut();
+        }
+        // Redirecionar para a index (raiz)
+        const pathParts = window.location.pathname.split('/');
+        // Se estivermos em pages/explicador/, precisamos subir dois níveis
+        if (window.location.pathname.includes('/pages/explicador/')) {
+            window.location.href = '../../index.html';
+        } else {
+            window.location.href = 'index.html';
+        }
+    }
+
+    document.getElementById('btnLogoutNav')?.addEventListener('click', handleLogout);
+    document.getElementById('btnLogoutHeader')?.addEventListener('click', handleLogout);
 });

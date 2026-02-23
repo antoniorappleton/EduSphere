@@ -148,7 +148,17 @@ window.ExplicadorService = {
     const { data, error } = await supabase.functions.invoke('expl-alunos', {
       body: { action: 'generate_monthly_billing', payload: { ano, mes } }
     });
+    
+    // Se houver erro de rede/invocação
     if (error) throw error;
+    
+    // Se a função devolveu um erro no body (status 400+)
+    if (data && data.error) {
+      const err = new Error(data.error);
+      if (data.details) err.details = data.details;
+      throw err;
+    }
+    
     return data;
   },
 

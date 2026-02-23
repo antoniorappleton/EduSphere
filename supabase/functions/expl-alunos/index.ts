@@ -107,17 +107,15 @@ serve(async (req) => {
     // 5) Ler ação/payload do body
     const { action, payload } = await req.json().catch((e) => {
       console.error("Body JSON inválido", e);
-      return {
-        action: null,
-        payload: null
-      };
+      return { action: null, payload: null };
     });
+
+    console.log(`Action: ${action}`, payload);
+
     if (!action) {
-      return new Response(JSON.stringify({
-        error: "Campo 'action' em falta"
-      }), {
+      return new Response(JSON.stringify({ error: "Campo 'action' em falta" }), {
         status: 400,
-        headers: cors(origin)
+        headers: cors(origin),
       });
     }
     // ---------- Helpers de datas para gerar sessões recorrentes ----------
@@ -932,6 +930,8 @@ serve(async (req) => {
       const ano = Number(p.ano) || new Date().getFullYear();
       const mes = Number(p.mes) || (new Date().getMonth() + 1);
 
+      console.log(`Generating billing for ${mes}/${ano} (myExplId: ${myExplId})`);
+
       // 1. Obter todos os alunos ativos deste explicador
       const { data: alunos, error: alErr } = await svc
         .from("alunos")
@@ -940,37 +940,76 @@ serve(async (req) => {
         .eq("is_active", true);
 
       if (alErr) {
-        return new Response(JSON.stringify({ error: alErr.message }), { status: 400, headers: cors(origin) });
+        console.error("Erro ao buscar alunos para faturação:", alErr);
+        return new Response(JSON.stringify({ error: alErr.message, details: alErr }), {
+          status: 400,
+          headers: cors(origin)
+        });
       }
 
       // 2. Para cada aluno, verificar se já existe pagamento para esse mês
       const results = [];
-      for (const al of (alunos || [])) {
-        const { data: existing } = await svc
-          .from("pagamentos")
-          .select("id_pagamento")
-          .eq("id_aluno", al.id_aluno)
-          .eq("id_explicador", myExplId)
-          .eq("ano", ano)
-          .eq("mes", mes)
-          .maybeSingle();
+      const errors = [];
 
-        if (!existing) {
-          const valorPrev = (Number(al.valor_explicacao) || 0) * (Number(al.sessoes_mes) || 0);
-          const { error: insErr } = await svc.from("pagamentos").insert({
-            id_aluno: al.id_aluno,
-            id_explicador: myExplId,
-            ano: ano,
-            mes: mes,
-            valor_previsto: valorPrev,
-            valor_pago: 0,
-            estado: "PENDENTE"
-          });
-          if (!insErr) results.push(al.id_aluno);
+      for (const al of (alunos || [])) {
+        try {
+          const { data: existing, error: checkErr } = await svc
+            .from("pagamentos")
+            .select("id_pagamento")
+            .eq("id_aluno", al.id_aluno)
+            .eq("id_explicador", myExplId)
+            .eq("ano", ano)
+            .eq("mes", mes)
+            .maybeSingle();
+
+          if (checkErr) {
+            console.error(`Erro ao verificar pagamento para aluno ${al.id_aluno}:`, checkErr);
+            errors.push({ aluno: al.id_aluno, error: checkErr.message });
+            continue;
+          }
+
+          if (!existing) {
+            let valorPrev = (Number(al.valor_explicacao) || 0) * (Number(al.sessoes_mes) || 0);
+
+            // Garantir que não enviamos NaN para a BD (causa 400)
+            if (isNaN(valorPrev) || !isFinite(valorPrev)) {
+              console.warn(`Valor previsto inválido para aluno ${al.id_aluno}: ${valorPrev}`);
+              valorPrev = 0;
+            }
+
+            const { error: insErr } = await svc.from("pagamentos").insert({
+              id_aluno: al.id_aluno,
+              id_explicador: myExplId,
+              ano: ano,
+              mes: mes,
+              valor_previsto: valorPrev,
+              valor_pago: 0,
+              estado: "PENDENTE"
+            });
+
+            if (insErr) {
+              console.error(`Erro ao inserir pagamento para aluno ${al.id_aluno}:`, insErr);
+              errors.push({ aluno: al.id_aluno, error: insErr.message });
+            } else {
+              results.push(al.id_aluno);
+            }
+          }
+        } catch (innerErr) {
+          console.error(`Exceção ao processar aluno ${al.id_aluno}:`, innerErr);
+          errors.push({ aluno: al.id_aluno, error: innerErr.message });
         }
       }
 
-      return new Response(JSON.stringify({ ok: true, generated_count: results.length }), { status: 200, headers: cors(origin) });
+      console.log(`Geradas ${results.length} mensalidades. Erros: ${errors.length}`);
+
+      return new Response(JSON.stringify({
+        ok: true,
+        generated_count: results.length,
+        errors: errors.length > 0 ? errors : undefined
+      }), {
+        status: 200,
+        headers: cors(origin)
+      });
     }
     /* =======================
        LISTAR TODAS AS SESSÕES DO EXPLICADOR

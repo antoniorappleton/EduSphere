@@ -202,13 +202,5 @@ async function toggleAviso(alunoId, currentStatus) {
   }
 }
 
-async function handleLogout() {
-  await supabase.auth.signOut();
-  location.href = '../../index.html';
-}
-
-document.getElementById('btnLogoutNav')?.addEventListener('click', handleLogout);
-document.getElementById('btnLogoutHeader')?.addEventListener('click', handleLogout);
-
 // Iniciar
 loadDashboard();

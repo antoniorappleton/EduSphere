@@ -192,16 +192,6 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
   <script src="../../public/js/nav.js"></script>
 
-  <!-- IMPORTANT: Extract the relevant JS logic later or link a shared script -->
-  <script>
-    // Simple Logout Logic
-    const handleLogout = async () => {
-      await supabase.auth.signOut();
-      location.href = '../../index.html';
-    };
-    document.getElementById('btnLogoutNav')?.addEventListener('click', handleLogout);
-    document.getElementById('btnLogoutHeader')?.addEventListener('click', handleLogout);
-  </script>
   <script src="../../public/js/explicador-service.js"></script>
   <script src="../../public/js/dashboard-explicador.js"></script>
 </body>
