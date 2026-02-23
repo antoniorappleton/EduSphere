@@ -14,6 +14,7 @@ function fmtCurrency(v) {
 
 let _cachedPagamentos = [];
 let _cachedSessoes = [];
+let _cachedAlunos = [];
 
 document.addEventListener('DOMContentLoaded', () => { initReports(); });
 
@@ -48,12 +49,15 @@ async function initReports() {
     }
     _cachedSessoes = sessoes || [];
 
-    // 3. Fetch active student count
-    const { count: activeCount } = await supabase
+    // 3. Fetch active students (for billing projections)
+    const { data: alunosAtivos } = await supabase
       .from('alunos')
-      .select('*', { count: 'exact', head: true })
+      .select('id_aluno, valor_explicacao, sessoes_mes, is_active')
       .eq('id_explicador', explId)
       .eq('is_active', true);
+
+    _cachedAlunos = alunosAtivos || [];
+    const activeCount = _cachedAlunos.length;
 
     // 4. KPIs (mês corrente)
     const curMonthPags = _cachedPagamentos.filter(p => Number(p.ano) === curYear && Number(p.mes) === curMonth);
@@ -106,33 +110,73 @@ function renderFatChart() {
   const ctx = document.getElementById('chartFatMensal');
   if (!ctx) return;
 
-  // Group pagamentos by month
-  const groups = {};
-  _cachedPagamentos.forEach(p => {
-    const key = `${p.ano}-${String(p.mes).padStart(2, '0')}`;
-    if (!groups[key]) groups[key] = { ano: Number(p.ano), mes: Number(p.mes), previsto: 0, pago: 0 };
-    groups[key].previsto += Number(p.valor_previsto || 0);
-    groups[key].pago += Number(p.valor_pago || 0);
-  });
+  const today = new Date();
+  const curYear = today.getFullYear();
+  const curMonth = today.getMonth() + 1;
 
-  const sorted = Object.values(groups)
-    .sort((a, b) => (a.ano * 100 + a.mes) - (b.ano * 100 + b.mes))
-    .slice(-12);
-
-  if (!sorted.length) {
-    ctx.parentElement.innerHTML = '<p style="color:#94a3b8; text-align:center; padding:2rem 0;">Sem dados de faturação</p>';
-    return;
+  // Build 9-month window: 2 months back + current + 6 months forward
+  const months = [];
+  for (let offset = -2; offset <= 6; offset++) {
+    let m = curMonth + offset;
+    let y = curYear;
+    while (m < 1)  { m += 12; y--; }
+    while (m > 12) { m -= 12; y++; }
+    months.push({ ano: y, mes: m, offset });
   }
 
-  const labels = sorted.map(d => MESES_CURTO[d.mes - 1] + ' ' + String(d.ano).slice(-2));
+  // Group existing pagamentos by year-month
+  const pagGroups = {};
+  _cachedPagamentos.forEach(p => {
+    const key = `${p.ano}-${p.mes}`;
+    if (!pagGroups[key]) pagGroups[key] = { previsto: 0, pago: 0 };
+    pagGroups[key].previsto += Number(p.valor_previsto || 0);
+    pagGroups[key].pago += Number(p.valor_pago || 0);
+  });
+
+  // Projected monthly billing from active students: valor/sessão × sessões/mês
+  const previstoProjecao = _cachedAlunos.reduce((sum, a) => {
+    return sum + (Number(a.valor_explicacao || 0) * Number(a.sessoes_mes || 1));
+  }, 0);
+
+  // Build data arrays
+  const labels = [];
+  const dataPrevisto = [];
+  const dataRecebido = [];
+  const bgPrevisto = [];
+  const bgRecebido = [];
+
+  months.forEach(m => {
+    const key = `${m.ano}-${m.mes}`;
+    const existing = pagGroups[key];
+    const isFuture = m.offset > 0;
+    const isCurrent = m.offset === 0;
+
+    labels.push(MESES_CURTO[m.mes - 1] + ' ' + String(m.ano).slice(-2));
+
+    if (existing) {
+      dataPrevisto.push(existing.previsto);
+      dataRecebido.push(existing.pago);
+    } else if (isFuture || isCurrent) {
+      // Projected — use active students billing
+      dataPrevisto.push(Math.round(previstoProjecao * 100) / 100);
+      dataRecebido.push(0);
+    } else {
+      dataPrevisto.push(0);
+      dataRecebido.push(0);
+    }
+
+    // Future months get lighter colors
+    bgRecebido.push(isFuture ? 'rgba(22, 163, 74, 0.35)' : '#16a34a');
+    bgPrevisto.push(isFuture ? 'rgba(226, 232, 240, 0.6)' : '#e2e8f0');
+  });
 
   new Chart(ctx, {
     type: 'bar',
     data: {
       labels,
       datasets: [
-        { label: 'Recebido (€)', data: sorted.map(d => d.pago), backgroundColor: '#16a34a', borderRadius: 6, barPercentage: 0.6 },
-        { label: 'Previsto (€)', data: sorted.map(d => d.previsto), backgroundColor: '#e2e8f0', borderRadius: 6, barPercentage: 0.6 }
+        { label: 'Recebido (€)', data: dataRecebido, backgroundColor: bgRecebido, borderRadius: 6, barPercentage: 0.6 },
+        { label: 'Previsto (€)', data: dataPrevisto, backgroundColor: bgPrevisto, borderRadius: 6, barPercentage: 0.6 }
       ]
     },
     options: {

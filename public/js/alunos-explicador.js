@@ -42,10 +42,10 @@ function renderAlunoCard(aluno) {
      ? new Date(aluno.proxima_sessao_data).toLocaleDateString('pt-PT', {day:'numeric', month:'short'}) + (aluno.proxima_sessao_hora ? ' às ' + aluno.proxima_sessao_hora.slice(0,5) : '')
      : 'Sem aulas';
 
-  // Billing: valor/sessão × sessões/semana × 4.33
+  // Billing: valor/sessão × sessões/mês
   const valorSessao = Number(aluno.valor_explicacao || 0);
-  const sessSemana = Number(aluno.sessoes_mes || 1);
-  const previstoMensal = valorSessao * sessSemana * 4.33;
+  const sessMes = Number(aluno.sessoes_mes || 1);
+  const previstoMensal = valorSessao * sessMes;
 
   div.innerHTML = `
     <div class="dash-aluno-card__top">
@@ -62,8 +62,8 @@ function renderAlunoCard(aluno) {
          <span class="dash-aluno-card__date" style="font-weight:600; color:#16a34a;">${formatCurrency(previstoMensal)}</span>
        </div>
        <div class="dash-aluno-card__row">
-         <span class="dash-aluno-card__label">Sessões/semana</span>
-         <span class="dash-aluno-card__date">${sessSemana} × ${formatCurrency(valorSessao)}</span>
+         <span class="dash-aluno-card__label">Sessões/mês</span>
+         <span class="dash-aluno-card__date">${sessMes} × ${formatCurrency(valorSessao)}</span>
        </div>
        <div class="dash-aluno-card__row">
          <span class="dash-aluno-card__label">Próxima aula</span>
@@ -559,7 +559,7 @@ async function openEditAluno(id) {
 function calcPrevistoAdd() {
   const v = Number(document.getElementById('in-add-valor')?.value || 0);
   const s = Number(document.getElementById('in-add-sessoes')?.value || 1);
-  const total = v * s * 4.33;
+  const total = v * s;
   const el = document.getElementById('add-previsto-mensal');
   if (el) el.textContent = formatCurrency(total);
 }
@@ -567,7 +567,7 @@ function calcPrevistoAdd() {
 function calcPrevistoEdit() {
   const v = Number(document.getElementById('edit-valor')?.value || 0);
   const s = Number(document.getElementById('edit-sessoes')?.value || 1);
-  const total = v * s * 4.33;
+  const total = v * s;
   const el = document.getElementById('edit-previsto-mensal');
   if (el) el.textContent = formatCurrency(total);
 }
