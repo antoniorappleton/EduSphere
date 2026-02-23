@@ -396,6 +396,8 @@ document.addEventListener('DOMContentLoaded', () => {
     } finally {
       if (btn) btn.disabled = false;
     }
+  });
+
   // Abrir Modal Novo Pagamento
   document.getElementById('btn-registar-pagamento')?.addEventListener('click', () => {
     openModalPagamento();
