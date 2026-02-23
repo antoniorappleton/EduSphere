@@ -52,6 +52,26 @@ window.ExplicadorService = {
     }
     return data;
   },
+
+  // 2b. ATUALIZAR ALUNO
+  async updateAluno(payload) {
+    const { data, error } = await supabase.functions.invoke('expl-alunos', {
+      body: { action: 'update_aluno', payload }
+    });
+    if (error) throw error;
+    if (data && data.error) throw new Error(data.error);
+    return data;
+  },
+
+  // 2c. ELIMINAR ALUNO
+  async deleteAluno(id_aluno) {
+    const { data, error } = await supabase.functions.invoke('expl-alunos', {
+      body: { action: 'delete_aluno', payload: { id_aluno } }
+    });
+    if (error) throw error;
+    if (data && data.error) throw new Error(data.error);
+    return data;
+  },
   
   // 3. GET ALUNO DETAILS
   async getAluno(id) {

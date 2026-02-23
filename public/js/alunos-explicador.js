@@ -35,26 +35,35 @@ function renderAlunoCard(aluno) {
   div.className = 'dash-aluno-card';
   
   const statusBadge = aluno.is_active 
-     ? '<span class="dash-aluno-card__badge dash-aluno-card__badge--pago" style="background:#dcfce7;color:#166534">Ativo</span>'
-     : '<span class="dash-aluno-card__badge dash-aluno-card__badge--nao-pago" style="background:#fef2f2;color:#991b1b">Inativo</span>';
+     ? '<span class="dash-aluno-card__badge" style="background:#dcfce7;color:#166534">Ativo</span>'
+     : '<span class="dash-aluno-card__badge" style="background:#fef2f2;color:#991b1b">Inativo</span>';
 
-  const prox = aluno.proxima_sessao 
-     ? new Date(aluno.proxima_sessao).toLocaleDateString('pt-PT', {day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'})
-     : 'Agendar';
+  const prox = aluno.proxima_sessao_data 
+     ? new Date(aluno.proxima_sessao_data).toLocaleDateString('pt-PT', {day:'numeric', month:'short'}) + (aluno.proxima_sessao_hora ? ' às ' + aluno.proxima_sessao_hora.slice(0,5) : '')
+     : 'Sem aulas';
+
+  // Billing: valor/sessão × sessões/semana × 4.33
+  const valorSessao = Number(aluno.valor_explicacao || 0);
+  const sessSemana = Number(aluno.sessoes_mes || 1);
+  const previstoMensal = valorSessao * sessSemana * 4.33;
 
   div.innerHTML = `
     <div class="dash-aluno-card__top">
       <div class="dash-aluno-card__avatar">${(aluno.nome||'?')[0]}</div>
       <div class="dash-aluno-card__info">
         <h3 class="dash-aluno-card__name">${aluno.nome} ${aluno.apelido||''}</h3>
-        <p class="dash-aluno-card__year">${aluno.ano_escolaridade || '?'}º Ano</p>
+        <p class="dash-aluno-card__year">${aluno.ano || '?'}º Ano</p>
       </div>
       <div>${statusBadge}</div>
     </div>
     <div class="dash-aluno-card__content">
        <div class="dash-aluno-card__row">
-         <span class="dash-aluno-card__label">Mensalidade</span>
-         <span class="dash-aluno-card__date">${formatCurrency(aluno.valor_explicacao || 0)}</span>
+         <span class="dash-aluno-card__label">Previsão mensal</span>
+         <span class="dash-aluno-card__date" style="font-weight:600; color:#16a34a;">${formatCurrency(previstoMensal)}</span>
+       </div>
+       <div class="dash-aluno-card__row">
+         <span class="dash-aluno-card__label">Sessões/semana</span>
+         <span class="dash-aluno-card__date">${sessSemana} × ${formatCurrency(valorSessao)}</span>
        </div>
        <div class="dash-aluno-card__row">
          <span class="dash-aluno-card__label">Próxima aula</span>
@@ -85,7 +94,7 @@ async function openPerfil(id) {
     const aluno = await ExplicadorService.getAluno(id);
     document.getElementById('alunoNome').textContent = `${aluno.nome} ${aluno.apelido || ''}`;
     document.getElementById('alunoAvatar').textContent = (aluno.nome || '?')[0];
-    document.getElementById('alunoAno').textContent = `${aluno.ano_escolaridade || '?'}º Ano`;
+    document.getElementById('alunoAno').textContent = `${aluno.ano || '?'}º Ano`;
     document.getElementById('alunoEmail').textContent = aluno.email || '—';
     document.getElementById('alunoTele').textContent = aluno.telemovel || '—';
     document.getElementById('alunoDataInscricao').textContent = aluno.created_at ? new Date(aluno.created_at).toLocaleDateString('pt-PT') : '—';
@@ -284,14 +293,19 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btn) btn.disabled = true;
 
     const fd = new FormData(formNew);
+    const sessSemana = Number(fd.get('sessoes_semana') || 1);
     const payload = {
       nome: fd.get('nome'),
       apelido: fd.get('apelido'),
       email: fd.get('email'),
-      password: "mudar123", // Password temporária padrão conforme o plano (ou promptaria o user)
+      password: "mudar123",
       telemovel: fd.get('telemovel'),
       ano: fd.get('ano'),
-      valor_explicacao: fd.get('valor_hora')
+      valor_explicacao: fd.get('valor_explicacao'),
+      sessoes_mes: sessSemana,
+      dia_semana_preferido: fd.get('dia_semana_preferido'),
+      nome_pai_cache: fd.get('nome_pai_cache'),
+      contacto_pai_cache: fd.get('contacto_pai_cache')
     };
 
     try {
@@ -452,4 +466,108 @@ document.addEventListener('DOMContentLoaded', () => {
       if (btn) btn.disabled = false;
     }
   });
+
+  // ================== EDITAR ALUNO ==================
+
+  // Botão "Editar Perfil" na vista de perfil
+  document.getElementById('btnPerfilEditar')?.addEventListener('click', () => {
+    const perfilView = document.getElementById('view-perfil-aluno');
+    const alunoId = perfilView?.dataset.currentAlunoId;
+    if (alunoId) openEditAluno(alunoId);
+  });
+
+  // Submit do Form Editar Aluno
+  const formEdit = document.getElementById('fEditAluno');
+  const msgEdit = document.getElementById('msgEditAluno');
+
+  formEdit?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('btnSaveEditAluno');
+    if (btn) btn.disabled = true;
+    if (msgEdit) { msgEdit.style.color = '#64748b'; msgEdit.textContent = 'A guardar...'; }
+
+    const fd = new FormData(formEdit);
+    const sessSemana = Number(fd.get('sessoes_semana') || 1);
+
+    const payload = {
+      id_aluno: fd.get('id_aluno'),
+      nome: fd.get('nome'),
+      apelido: fd.get('apelido'),
+      telemovel: fd.get('telemovel'),
+      ano: fd.get('ano'),
+      valor_explicacao: fd.get('valor_explicacao'),
+      sessoes_mes: sessSemana,
+      dia_semana_preferido: fd.get('dia_semana_preferido'),
+      nome_pai_cache: fd.get('nome_pai_cache'),
+      contacto_pai_cache: fd.get('contacto_pai_cache'),
+      is_active: document.getElementById('edit-active').checked
+    };
+
+    try {
+      const res = await ExplicadorService.updateAluno(payload);
+      if (res.error) throw new Error(res.error);
+
+      if (msgEdit) { msgEdit.style.color = 'green'; msgEdit.textContent = 'Guardado!'; }
+      setTimeout(() => {
+        closeModal('modal-edit-aluno');
+        if (msgEdit) msgEdit.textContent = '';
+        // Refresh perfil and list
+        openPerfil(payload.id_aluno);
+        initAlunosPage();
+      }, 1000);
+    } catch (err) {
+      console.error(err);
+      if (msgEdit) { msgEdit.style.color = 'red'; msgEdit.textContent = 'Erro: ' + (err.message || 'Falha técnica'); }
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  });
 });
+
+// ================== OPEN EDIT ALUNO ==================
+
+async function openEditAluno(id) {
+  try {
+    const aluno = await ExplicadorService.getAluno(id);
+    if (!aluno) return;
+
+    document.getElementById('edit-id-aluno').value = aluno.id_aluno;
+    document.getElementById('edit-nome').value = aluno.nome || '';
+    document.getElementById('edit-apelido').value = aluno.apelido || '';
+    document.getElementById('edit-telemovel').value = aluno.telemovel || '';
+    document.getElementById('edit-ano').value = aluno.ano || '';
+    document.getElementById('edit-valor').value = aluno.valor_explicacao || '';
+    document.getElementById('edit-sessoes').value = aluno.sessoes_mes || 1;
+    document.getElementById('edit-dia').value = aluno.dia_semana_preferido || '';
+    document.getElementById('edit-hora').value = '16:00';
+    document.getElementById('edit-nome-pai').value = aluno.nome_pai_cache || '';
+    document.getElementById('edit-contacto-pai').value = aluno.contacto_pai_cache || '';
+    document.getElementById('edit-active').checked = aluno.is_active !== false;
+
+    calcPrevistoEdit();
+
+    const m = document.getElementById('modal-edit-aluno');
+    if (m) { m.classList.add('open'); m.setAttribute('aria-hidden', 'false'); }
+  } catch (err) {
+    console.error('Erro ao abrir modal de edição:', err);
+    alert('Erro ao carregar dados do aluno.');
+  }
+}
+
+// ================== BILLING CALC ==================
+
+function calcPrevistoAdd() {
+  const v = Number(document.getElementById('in-add-valor')?.value || 0);
+  const s = Number(document.getElementById('in-add-sessoes')?.value || 1);
+  const total = v * s * 4.33;
+  const el = document.getElementById('add-previsto-mensal');
+  if (el) el.textContent = formatCurrency(total);
+}
+
+function calcPrevistoEdit() {
+  const v = Number(document.getElementById('edit-valor')?.value || 0);
+  const s = Number(document.getElementById('edit-sessoes')?.value || 1);
+  const total = v * s * 4.33;
+  const el = document.getElementById('edit-previsto-mensal');
+  if (el) el.textContent = formatCurrency(total);
+}

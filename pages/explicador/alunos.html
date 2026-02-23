@@ -274,26 +274,156 @@
   <!-- MODAL ADD ALUNO -->
   <div class="modal" id="modal-add-aluno">
     <div class="modal__backdrop" onclick="closeModal('modal-add-aluno')"></div>
-    <div class="modal__dialog">
+    <div class="modal__dialog" style="max-width:560px;">
       <div class="modal__header">
         <h2>Adicionar Aluno</h2>
         <button class="modal__close" onclick="closeModal('modal-add-aluno')">&times;</button>
       </div>
       <form id="fNewAluno">
+        <!-- Dados pessoais -->
+        <p
+          style="font-weight:600; margin:0 0 0.5rem; color:#64748b; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.05em;">
+          Dados Pessoais</p>
         <div class="expl-grid-2">
           <label>Nome <input type="text" class="input" name="nome" required /></label>
           <label>Apelido <input type="text" class="input" name="apelido" /></label>
         </div>
         <label>Email (para login) <input type="email" class="input" name="email" required /></label>
-        <label>Telemóvel <input type="tel" class="input" name="telemovel" /></label>
         <div class="expl-grid-2">
+          <label>Telemóvel <input type="tel" class="input" name="telemovel" /></label>
           <label>Ano Escolar <input type="number" class="input" name="ano" min="1" max="12" /></label>
-          <label>Valor/Hora (€) <input type="number" class="input" name="valor_hora" step="0.5" /></label>
         </div>
-        <div style="margin-top:1rem; text-align:right;">
+
+        <hr style="border:none; border-top:1px solid #e2e8f0; margin:1rem 0;">
+
+        <!-- Faturação -->
+        <p
+          style="font-weight:600; margin:0 0 0.5rem; color:#64748b; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.05em;">
+          Faturação & Horário</p>
+        <div class="expl-grid-2">
+          <label>Valor / Sessão (€) <input type="number" class="input" name="valor_explicacao" step="0.50" min="0"
+              id="in-add-valor" oninput="calcPrevistoAdd()" /></label>
+          <label>Sessões / Semana <input type="number" class="input" name="sessoes_semana" min="1" max="7" value="1"
+              id="in-add-sessoes" oninput="calcPrevistoAdd()" /></label>
+        </div>
+        <div class="expl-grid-2">
+          <label>Dia preferido
+            <select class="input" name="dia_semana_preferido">
+              <option value="">—</option>
+              <option value="Segunda">Segunda</option>
+              <option value="Terça">Terça</option>
+              <option value="Quarta">Quarta</option>
+              <option value="Quinta">Quinta</option>
+              <option value="Sexta">Sexta</option>
+              <option value="Sábado">Sábado</option>
+            </select>
+          </label>
+          <label>Hora preferida <input type="time" class="input" name="hora_preferida" value="16:00" /></label>
+        </div>
+
+        <!-- Valor previsto -->
+        <div
+          style="background:#f0fdf4; border-radius:10px; padding:0.75rem 1rem; margin-top:0.75rem; display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:0.85rem; color:#64748b;">Valor Previsto Mensal</span>
+          <span id="add-previsto-mensal" style="font-size:1.1rem; font-weight:700; color:#16a34a;">€0,00</span>
+        </div>
+
+        <hr style="border:none; border-top:1px solid #e2e8f0; margin:1rem 0;">
+
+        <!-- Encarregado -->
+        <p
+          style="font-weight:600; margin:0 0 0.5rem; color:#64748b; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.05em;">
+          Encarregado de Educação (opcional)</p>
+        <div class="expl-grid-2">
+          <label>Nome <input type="text" class="input" name="nome_pai_cache" /></label>
+          <label>Contacto <input type="tel" class="input" name="contacto_pai_cache" /></label>
+        </div>
+
+        <div style="margin-top:1.25rem; text-align:right;">
           <button type="submit" class="button primary" id="btnCreateAluno">Criar Aluno</button>
         </div>
         <div id="msgNewAluno" style="color:red; margin-top:10px;"></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL EDIT ALUNO -->
+  <div class="modal" id="modal-edit-aluno">
+    <div class="modal__backdrop" onclick="closeModal('modal-edit-aluno')"></div>
+    <div class="modal__dialog" style="max-width:560px;">
+      <div class="modal__header">
+        <h2>Editar Aluno</h2>
+        <button class="modal__close" onclick="closeModal('modal-edit-aluno')">&times;</button>
+      </div>
+      <form id="fEditAluno">
+        <input type="hidden" name="id_aluno" id="edit-id-aluno" />
+
+        <p
+          style="font-weight:600; margin:0 0 0.5rem; color:#64748b; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.05em;">
+          Dados Pessoais</p>
+        <div class="expl-grid-2">
+          <label>Nome <input type="text" class="input" name="nome" id="edit-nome" required /></label>
+          <label>Apelido <input type="text" class="input" name="apelido" id="edit-apelido" /></label>
+        </div>
+        <div class="expl-grid-2">
+          <label>Telemóvel <input type="tel" class="input" name="telemovel" id="edit-telemovel" /></label>
+          <label>Ano Escolar <input type="number" class="input" name="ano" id="edit-ano" min="1" max="12" /></label>
+        </div>
+
+        <hr style="border:none; border-top:1px solid #e2e8f0; margin:1rem 0;">
+
+        <p
+          style="font-weight:600; margin:0 0 0.5rem; color:#64748b; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.05em;">
+          Faturação & Horário</p>
+        <div class="expl-grid-2">
+          <label>Valor / Sessão (€) <input type="number" class="input" name="valor_explicacao" id="edit-valor"
+              step="0.50" min="0" oninput="calcPrevistoEdit()" /></label>
+          <label>Sessões / Semana <input type="number" class="input" name="sessoes_semana" id="edit-sessoes" min="1"
+              max="7" oninput="calcPrevistoEdit()" /></label>
+        </div>
+        <div class="expl-grid-2">
+          <label>Dia preferido
+            <select class="input" name="dia_semana_preferido" id="edit-dia">
+              <option value="">—</option>
+              <option value="Segunda">Segunda</option>
+              <option value="Terça">Terça</option>
+              <option value="Quarta">Quarta</option>
+              <option value="Quinta">Quinta</option>
+              <option value="Sexta">Sexta</option>
+              <option value="Sábado">Sábado</option>
+            </select>
+          </label>
+          <label>Hora preferida <input type="time" class="input" name="hora_preferida" id="edit-hora" /></label>
+        </div>
+
+        <div
+          style="background:#f0fdf4; border-radius:10px; padding:0.75rem 1rem; margin-top:0.75rem; display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:0.85rem; color:#64748b;">Valor Previsto Mensal</span>
+          <span id="edit-previsto-mensal" style="font-size:1.1rem; font-weight:700; color:#16a34a;">€0,00</span>
+        </div>
+
+        <hr style="border:none; border-top:1px solid #e2e8f0; margin:1rem 0;">
+
+        <p
+          style="font-weight:600; margin:0 0 0.5rem; color:#64748b; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.05em;">
+          Encarregado de Educação</p>
+        <div class="expl-grid-2">
+          <label>Nome <input type="text" class="input" name="nome_pai_cache" id="edit-nome-pai" /></label>
+          <label>Contacto <input type="tel" class="input" name="contacto_pai_cache" id="edit-contacto-pai" /></label>
+        </div>
+
+        <div class="expl-grid-2" style="margin-top:1rem;">
+          <label style="display:flex; align-items:center; gap:8px;">
+            <input type="checkbox" name="is_active" id="edit-active" checked />
+            Aluno ativo
+          </label>
+        </div>
+
+        <div style="margin-top:1.25rem; text-align:right; display:flex; gap:10px; justify-content:flex-end;">
+          <button type="button" class="button secondary" onclick="closeModal('modal-edit-aluno')">Cancelar</button>
+          <button type="submit" class="button primary" id="btnSaveEditAluno">Guardar Alterações</button>
+        </div>
+        <div id="msgEditAluno" style="margin-top:10px; font-size:12px; text-align:center;"></div>
       </form>
     </div>
   </div>

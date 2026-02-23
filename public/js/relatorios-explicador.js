@@ -1,43 +1,52 @@
 /**
  * EduSphere — Relatórios do Explicador
- * KPIs, gráficos, e lista de relatórios mensais com modal.
+ * KPIs, gráficos, lista de relatórios mensais com modal detalhado.
+ * Funciona inteiramente a partir de dados locais (pagamentos + sessões),
+ * com fallback se a Edge Function get_relatorios não estiver deployed.
  */
 
 const MESES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+const MESES_CURTO = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
 
 function fmtCurrency(v) {
   return new Intl.NumberFormat('pt-PT', { style:'currency', currency:'EUR' }).format(v);
 }
 
-// cached data for modal
 let _cachedPagamentos = [];
+let _cachedSessoes = [];
 
 document.addEventListener('DOMContentLoaded', () => { initReports(); });
 
 async function initReports() {
   try {
     const explId = await ExplicadorService.getMyExplId();
+    if (!explId) { 
+      console.warn("Sem perfil de explicador");
+      return;
+    }
+
     const today = new Date();
     const curYear = today.getFullYear();
     const curMonth = today.getMonth() + 1;
 
-    // 1. Fetch report data from Edge Function (may fail if not deployed)
-    let data = { faturacao: [], sessoes_mes: [], alunos_mes: [], disciplinas: [] };
-    try {
-      data = await ExplicadorService.getDetailedReports();
-    } catch(e) {
-      console.warn("getDetailedReports falhou (Edge Function não deployed?):", e);
-    }
-
-    // 2. Fetch raw pagamentos for monthly list + KPIs
+    // 1. Fetch ALL pagamentos (principal data source)
     const { data: allPags } = await supabase
       .from('pagamentos')
       .select('*, alunos!inner(nome, apelido)')
       .eq('id_explicador', explId)
-      .order('ano', { ascending: false })
-      .order('mes', { ascending: false });
+      .order('ano', { ascending: true })
+      .order('mes', { ascending: true });
 
     _cachedPagamentos = allPags || [];
+
+    // 2. Fetch ALL sessões
+    let sessoes = [];
+    try {
+      sessoes = await ExplicadorService.listSessoes();
+    } catch(e) {
+      console.warn("Erro a carregar sessões:", e);
+    }
+    _cachedSessoes = sessoes || [];
 
     // 3. Fetch active student count
     const { count: activeCount } = await supabase
@@ -46,7 +55,7 @@ async function initReports() {
       .eq('id_explicador', explId)
       .eq('is_active', true);
 
-    // 4. Calculate KPIs from current month pagamentos
+    // 4. KPIs (mês corrente)
     const curMonthPags = _cachedPagamentos.filter(p => Number(p.ano) === curYear && Number(p.mes) === curMonth);
     let totalPago = 0, totalPrev = 0;
     curMonthPags.forEach(p => {
@@ -54,16 +63,19 @@ async function initReports() {
       totalPrev += Number(p.valor_previsto || 0);
     });
 
-    // Sessions this month from report data
-    const sessoesMes = (data.sessoes_mes || []).find(s => Number(s.ano) === curYear && Number(s.mes) === curMonth);
-    const totalSessoes = sessoesMes ? Number(sessoesMes.total_sessoes || 0) : 0;
+    const sessoesEsteMes = _cachedSessoes.filter(s => {
+      if (!s.data) return false;
+      const d = new Date(s.data);
+      return d.getFullYear() === curYear && (d.getMonth() + 1) === curMonth;
+    });
 
-    renderKpis(activeCount || 0, totalPago, totalSessoes, totalPrev > 0 ? Math.round((totalPago / totalPrev) * 100) : 0);
+    const taxa = totalPrev > 0 ? Math.round((totalPago / totalPrev) * 100) : 0;
+    renderKpis(activeCount || 0, totalPago, sessoesEsteMes.length, taxa);
 
-    // 5. Render charts
-    renderCharts(data);
+    // 5. Charts (built from local data)
+    renderCharts();
 
-    // 6. Render monthly reports list
+    // 6. Monthly reports list
     renderMonthlyList(_cachedPagamentos);
 
   } catch (err) {
@@ -71,108 +83,215 @@ async function initReports() {
   }
 }
 
+// ========== KPIs ==========
+
 function renderKpis(alunos, faturacao, sessoes, taxa) {
-  document.getElementById('kpi-alunos').textContent = alunos;
-  document.getElementById('kpi-faturacao').textContent = fmtCurrency(faturacao);
-  document.getElementById('kpi-sessoes').textContent = sessoes;
-  document.getElementById('kpi-taxa').textContent = taxa + '%';
+  const el = (id) => document.getElementById(id);
+  if (el('kpi-alunos')) el('kpi-alunos').textContent = alunos;
+  if (el('kpi-faturacao')) el('kpi-faturacao').textContent = fmtCurrency(faturacao);
+  if (el('kpi-sessoes')) el('kpi-sessoes').textContent = sessoes;
+  if (el('kpi-taxa')) el('kpi-taxa').textContent = taxa + '%';
 }
 
-function renderCharts(data) {
-  renderFatChart(data.faturacao || []);
-  renderSessionsChart(data.sessoes_mes || []);
-  renderStudentsChart(data.alunos_mes || []);
-  renderDisciplinasChart(data.disciplinas || []);
+// ========== CHARTS ==========
+
+function renderCharts() {
+  renderFatChart();
+  renderSessionsChart();
+  renderStudentsChart();
+  renderDisciplinasChart();
 }
 
-function renderFatChart(fatData) {
+function renderFatChart() {
   const ctx = document.getElementById('chartFatMensal');
   if (!ctx) return;
-  const labels = fatData.map(d => MESES[(d.mes || 1) - 1]?.slice(0, 3) || d.mes);
+
+  // Group pagamentos by month
+  const groups = {};
+  _cachedPagamentos.forEach(p => {
+    const key = `${p.ano}-${String(p.mes).padStart(2, '0')}`;
+    if (!groups[key]) groups[key] = { ano: Number(p.ano), mes: Number(p.mes), previsto: 0, pago: 0 };
+    groups[key].previsto += Number(p.valor_previsto || 0);
+    groups[key].pago += Number(p.valor_pago || 0);
+  });
+
+  const sorted = Object.values(groups)
+    .sort((a, b) => (a.ano * 100 + a.mes) - (b.ano * 100 + b.mes))
+    .slice(-12);
+
+  if (!sorted.length) {
+    ctx.parentElement.innerHTML = '<p style="color:#94a3b8; text-align:center; padding:2rem 0;">Sem dados de faturação</p>';
+    return;
+  }
+
+  const labels = sorted.map(d => MESES_CURTO[d.mes - 1] + ' ' + String(d.ano).slice(-2));
+
   new Chart(ctx, {
     type: 'bar',
     data: {
       labels,
       datasets: [
-        { label: 'Recebido (€)', data: fatData.map(d => Number(d.total_pago || 0)), backgroundColor: '#16a34a', borderRadius: 6 },
-        { label: 'Previsto (€)', data: fatData.map(d => Number(d.total_previsto || 0)), backgroundColor: '#e5e7eb', borderRadius: 6 }
+        { label: 'Recebido (€)', data: sorted.map(d => d.pago), backgroundColor: '#16a34a', borderRadius: 6, barPercentage: 0.6 },
+        { label: 'Previsto (€)', data: sorted.map(d => d.previsto), backgroundColor: '#e2e8f0', borderRadius: 6, barPercentage: 0.6 }
       ]
     },
     options: {
       responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { position: 'bottom' } },
-      scales: { y: { beginAtZero: true } }
+      plugins: {
+        legend: { position: 'bottom', labels: { usePointStyle: true, padding: 16 } },
+        tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${fmtCurrency(c.raw)}` } }
+      },
+      scales: {
+        y: { beginAtZero: true, ticks: { callback: v => fmtCurrency(v) } },
+        x: { grid: { display: false } }
+      }
     }
   });
 }
 
-function renderSessionsChart(sessData) {
+function renderSessionsChart() {
   const ctx = document.getElementById('chartSessoes');
   if (!ctx) return;
-  const labels = sessData.map(d => MESES[(d.mes || 1) - 1]?.slice(0, 3) || d.mes);
+
+  // Group sessions by month
+  const groups = {};
+  _cachedSessoes.forEach(s => {
+    if (!s.data) return;
+    const d = new Date(s.data);
+    const y = d.getFullYear();
+    const m = d.getMonth() + 1;
+    const key = `${y}-${String(m).padStart(2, '0')}`;
+    if (!groups[key]) groups[key] = { ano: y, mes: m, total: 0, realizadas: 0 };
+    groups[key].total += 1;
+    if ((s.estado || '').toUpperCase() === 'REALIZADA') groups[key].realizadas += 1;
+  });
+
+  const sorted = Object.values(groups)
+    .sort((a, b) => (a.ano * 100 + a.mes) - (b.ano * 100 + b.mes))
+    .slice(-12);
+
+  if (!sorted.length) {
+    ctx.parentElement.innerHTML = '<p style="color:#94a3b8; text-align:center; padding:2rem 0;">Sem dados de sessões</p>';
+    return;
+  }
+
+  const labels = sorted.map(d => MESES_CURTO[d.mes - 1] + ' ' + String(d.ano).slice(-2));
+
   new Chart(ctx, {
     type: 'line',
     data: {
       labels,
-      datasets: [{
-        label: 'Sessões',
-        data: sessData.map(d => Number(d.total_sessoes || 0)),
-        borderColor: '#b91c1c',
-        backgroundColor: 'rgba(185, 28, 28, 0.08)',
-        fill: true, tension: 0.4, pointRadius: 4
-      }]
+      datasets: [
+        {
+          label: 'Total Sessões',
+          data: sorted.map(d => d.total),
+          borderColor: '#2563eb',
+          backgroundColor: 'rgba(37, 99, 235, 0.08)',
+          fill: true, tension: 0.4, pointRadius: 5, pointBackgroundColor: '#2563eb'
+        },
+        {
+          label: 'Realizadas',
+          data: sorted.map(d => d.realizadas),
+          borderColor: '#16a34a',
+          backgroundColor: 'rgba(22, 163, 74, 0.06)',
+          fill: true, tension: 0.4, pointRadius: 4, borderDash: [5, 3], pointBackgroundColor: '#16a34a'
+        }
+      ]
     },
     options: {
       responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+      plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, padding: 16 } } },
+      scales: {
+        y: { beginAtZero: true, ticks: { stepSize: 1 } },
+        x: { grid: { display: false } }
+      }
     }
   });
 }
 
-function renderStudentsChart(alData) {
+function renderStudentsChart() {
   const ctx = document.getElementById('chartAlunos');
   if (!ctx) return;
-  const labels = alData.map(d => MESES[(d.mes || 1) - 1]?.slice(0, 3) || d.mes);
+
+  // Use pagamentos as proxy: count distinct id_aluno per month
+  const groups = {};
+  _cachedPagamentos.forEach(p => {
+    const key = `${p.ano}-${String(p.mes).padStart(2, '0')}`;
+    if (!groups[key]) groups[key] = { ano: Number(p.ano), mes: Number(p.mes), alunos: new Set() };
+    groups[key].alunos.add(p.id_aluno);
+  });
+
+  const sorted = Object.values(groups)
+    .sort((a, b) => (a.ano * 100 + a.mes) - (b.ano * 100 + b.mes))
+    .slice(-12);
+
+  if (!sorted.length) {
+    ctx.parentElement.innerHTML = '<p style="color:#94a3b8; text-align:center; padding:2rem 0;">Sem dados de alunos</p>';
+    return;
+  }
+
+  const labels = sorted.map(d => MESES_CURTO[d.mes - 1] + ' ' + String(d.ano).slice(-2));
+
   new Chart(ctx, {
     type: 'line',
     data: {
       labels,
       datasets: [{
         label: 'Alunos Ativos',
-        data: alData.map(d => Number(d.total_alunos || 0)),
-        borderColor: '#2563eb',
-        backgroundColor: 'rgba(37, 99, 235, 0.08)',
-        fill: true, tension: 0.4, pointRadius: 4
+        data: sorted.map(d => d.alunos.size),
+        borderColor: '#8b5cf6',
+        backgroundColor: 'rgba(139, 92, 246, 0.08)',
+        fill: true, tension: 0.4, pointRadius: 5, pointBackgroundColor: '#8b5cf6'
       }]
     },
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: false } },
-      scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+      scales: {
+        y: { beginAtZero: true, ticks: { stepSize: 1 } },
+        x: { grid: { display: false } }
+      }
     }
   });
 }
 
-function renderDisciplinasChart(discData) {
+function renderDisciplinasChart() {
   const ctx = document.getElementById('chartDisciplinas');
   if (!ctx) return;
-  if (!discData.length) {
+
+  // Extract disciplines from pagamentos alunos join
+  const discCount = {};
+  const seen = new Set();
+  _cachedPagamentos.forEach(p => {
+    if (!p.alunos || seen.has(p.id_aluno)) return;
+    seen.add(p.id_aluno);
+    const disc = p.alunos.disciplina || 'Outra';
+    discCount[disc] = (discCount[disc] || 0) + 1;
+  });
+
+  const entries = Object.entries(discCount);
+  if (!entries.length) {
     ctx.parentElement.innerHTML = '<p style="color:#94a3b8; text-align:center; padding:2rem 0;">Sem dados de disciplinas</p>';
     return;
   }
-  const labels = discData.map(d => d.disciplina || 'Outro');
-  const values = discData.map(d => Number(d.total || 0));
-  const colors = ['#b91c1c','#2563eb','#16a34a','#f59e0b','#8b5cf6','#ec4899','#14b8a6','#f97316'];
+
+  const labels = entries.map(e => e[0]);
+  const values = entries.map(e => e[1]);
+  const colors = ['#8b5cf6','#2563eb','#16a34a','#f59e0b','#b91c1c','#ec4899','#14b8a6','#f97316'];
+
   new Chart(ctx, {
     type: 'doughnut',
     data: {
       labels,
-      datasets: [{ data: values, backgroundColor: colors.slice(0, values.length), borderWidth: 0 }]
+      datasets: [{ data: values, backgroundColor: colors.slice(0, values.length), borderWidth: 2, borderColor: '#fff' }]
     },
     options: {
       responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { position: 'bottom', labels: { padding: 16 } } }
+      cutout: '60%',
+      plugins: {
+        legend: { position: 'bottom', labels: { usePointStyle: true, padding: 16 } },
+        tooltip: { callbacks: { label: (c) => ` ${c.label}: ${c.raw} aluno${c.raw !== 1 ? 's' : ''}` } }
+      }
     }
   });
 }
@@ -183,11 +302,10 @@ function renderMonthlyList(pags) {
   const container = document.getElementById('monthly-reports-list');
   if (!container) return;
 
-  // Group by ano/mes
   const groups = {};
   pags.forEach(p => {
     const key = `${p.ano}-${String(p.mes).padStart(2, '0')}`;
-    if (!groups[key]) groups[key] = { ano: p.ano, mes: p.mes, items: [] };
+    if (!groups[key]) groups[key] = { ano: Number(p.ano), mes: Number(p.mes), items: [] };
     groups[key].items.push(p);
   });
 
@@ -202,17 +320,26 @@ function renderMonthlyList(pags) {
     const totalPago = g.items.reduce((s, p) => s + Number(p.valor_pago || 0), 0);
     const totalPrev = g.items.reduce((s, p) => s + Number(p.valor_previsto || 0), 0);
     const nAlunos = g.items.length;
-    const allPaid = g.items.every(p => p.estado === 'PAGO');
-    const badgeClass = allPaid ? 'sessao-badge--realizada' : 'sessao-badge--agendada';
-    const badgeText = allPaid ? 'Tudo pago' : 'Pendente';
+    const taxa = totalPrev > 0 ? Math.round((totalPago / totalPrev) * 100) : 0;
+
+    // Robust paid check
+    const allPaid = g.items.every(p => {
+      const est = (p.estado || '').toUpperCase();
+      const vPago = Number(p.valor_pago || 0);
+      const vPrev = Number(p.valor_previsto || 0);
+      return est === 'PAGO' || (vPrev > 0 && vPago >= vPrev);
+    });
+
+    const badgeClass = allPaid ? 'sessao-badge--realizada' : taxa >= 50 ? 'sessao-badge--agendada' : 'sessao-badge--cancelada';
+    const badgeText = allPaid ? 'Tudo pago' : `${taxa}% cobrado`;
 
     return `
       <div class="month-row" onclick="openMonthReport(${g.ano}, ${g.mes})">
         <div class="month-row__period">
           <strong>${MESES[g.mes - 1]} ${g.ano}</strong>
+          <span style="color:#94a3b8; font-size:0.8rem;">${nAlunos} aluno${nAlunos !== 1 ? 's' : ''}</span>
         </div>
         <div class="month-row__stats">
-          <span>${nAlunos} aluno${nAlunos !== 1 ? 's' : ''}</span>
           <span style="color:#16a34a; font-weight:600;">${fmtCurrency(totalPago)}</span>
           <span style="color:#94a3b8">/ ${fmtCurrency(totalPrev)}</span>
         </div>
@@ -232,64 +359,97 @@ function openMonthReport(ano, mes) {
 
   titulo.textContent = `Relatório — ${MESES[mes - 1]} ${ano}`;
 
-  // Filter cached pagamentos
   const items = _cachedPagamentos.filter(p => Number(p.ano) === Number(ano) && Number(p.mes) === Number(mes));
-  
+
+  // Sessions for this month
+  const monthSessoes = _cachedSessoes.filter(s => {
+    if (!s.data) return false;
+    const d = new Date(s.data);
+    return d.getFullYear() === Number(ano) && (d.getMonth() + 1) === Number(mes);
+  });
+
   if (!items.length) {
     body.innerHTML = '<p style="color:#94a3b8">Sem dados para este mês.</p>';
   } else {
     const totalPago = items.reduce((s, p) => s + Number(p.valor_pago || 0), 0);
     const totalPrev = items.reduce((s, p) => s + Number(p.valor_previsto || 0), 0);
+    const emFalta = totalPrev - totalPago;
+    const taxa = totalPrev > 0 ? Math.round((totalPago / totalPrev) * 100) : 0;
 
     body.innerHTML = `
-      <div style="display:flex; gap:1rem; margin-bottom:1rem; flex-wrap:wrap;">
-        <div class="rel-kpi-card" style="flex:1; min-width:120px; min-height:auto; padding:1rem;">
-          <p class="rel-kpi-label">Previsto</p>
-          <p class="rel-kpi-value" style="font-size:1.2rem">${fmtCurrency(totalPrev)}</p>
+      <!-- Mini KPIs -->
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap:0.75rem; margin-bottom:1.25rem;">
+        <div style="padding:0.75rem 1rem; background:#f8fafc; border-radius:10px; text-align:center;">
+          <p style="margin:0; font-size:0.75rem; color:#64748b;">Previsto</p>
+          <p style="margin:4px 0 0; font-size:1.1rem; font-weight:700;">${fmtCurrency(totalPrev)}</p>
         </div>
-        <div class="rel-kpi-card" style="flex:1; min-width:120px; min-height:auto; padding:1rem;">
-          <p class="rel-kpi-label">Recebido</p>
-          <p class="rel-kpi-value" style="font-size:1.2rem; color:#16a34a">${fmtCurrency(totalPago)}</p>
+        <div style="padding:0.75rem 1rem; background:#f0fdf4; border-radius:10px; text-align:center;">
+          <p style="margin:0; font-size:0.75rem; color:#64748b;">Recebido</p>
+          <p style="margin:4px 0 0; font-size:1.1rem; font-weight:700; color:#16a34a;">${fmtCurrency(totalPago)}</p>
         </div>
-        <div class="rel-kpi-card" style="flex:1; min-width:120px; min-height:auto; padding:1rem;">
-          <p class="rel-kpi-label">Em falta</p>
-          <p class="rel-kpi-value" style="font-size:1.2rem; color:#b91c1c">${fmtCurrency(totalPrev - totalPago)}</p>
+        <div style="padding:0.75rem 1rem; background:${emFalta > 0 ? '#fef2f2' : '#f0fdf4'}; border-radius:10px; text-align:center;">
+          <p style="margin:0; font-size:0.75rem; color:#64748b;">Em falta</p>
+          <p style="margin:4px 0 0; font-size:1.1rem; font-weight:700; color:${emFalta > 0 ? '#b91c1c' : '#16a34a'};">${fmtCurrency(emFalta)}</p>
+        </div>
+        <div style="padding:0.75rem 1rem; background:#eff6ff; border-radius:10px; text-align:center;">
+          <p style="margin:0; font-size:0.75rem; color:#64748b;">Sessões</p>
+          <p style="margin:4px 0 0; font-size:1.1rem; font-weight:700; color:#2563eb;">${monthSessoes.length}</p>
         </div>
       </div>
-      <table class="tabela" style="width:100%">
-        <thead>
-          <tr>
-            <th style="text-align:left">Aluno</th>
-            <th>Previsto</th>
-            <th>Pago</th>
-            <th>Estado</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${items.map(p => {
-            const nome = p.alunos ? `${p.alunos.nome} ${p.alunos.apelido || ''}`.trim() : '—';
-            const estadoClass = p.estado === 'PAGO' ? 'sessao-badge--realizada' : p.estado === 'PARCIAL' ? 'sessao-badge--agendada' : 'sessao-badge--agendada';
-            return `
-              <tr>
-                <td style="text-align:left">${nome}</td>
-                <td>${fmtCurrency(p.valor_previsto)}</td>
-                <td>${fmtCurrency(p.valor_pago)}</td>
-                <td><span class="sessao-badge ${estadoClass}">${p.estado}</span></td>
-              </tr>`;
-          }).join('')}
-        </tbody>
-      </table>
+
+      <!-- Progress bar -->
+      <div style="margin-bottom:1.25rem;">
+        <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:#64748b; margin-bottom:4px;">
+          <span>Taxa de cobrança</span>
+          <span style="font-weight:600; color:${taxa >= 100 ? '#16a34a' : taxa >= 50 ? '#f59e0b' : '#b91c1c'}">${taxa}%</span>
+        </div>
+        <div style="width:100%; height:8px; background:#e2e8f0; border-radius:99px; overflow:hidden;">
+          <div style="width:${Math.min(taxa, 100)}%; height:100%; background:${taxa >= 100 ? '#16a34a' : taxa >= 50 ? '#f59e0b' : '#b91c1c'}; border-radius:99px; transition:width 0.5s;"></div>
+        </div>
+      </div>
+
+      <!-- Tabela alunos -->
+      <div style="max-height:300px; overflow-y:auto;">
+        <table style="width:100%; border-collapse:collapse; font-size:0.9rem;">
+          <thead>
+            <tr style="border-bottom:2px solid #e2e8f0;">
+              <th style="text-align:left; padding:8px 6px; color:#64748b; font-weight:600;">Aluno</th>
+              <th style="text-align:right; padding:8px 6px; color:#64748b; font-weight:600;">Previsto</th>
+              <th style="text-align:right; padding:8px 6px; color:#64748b; font-weight:600;">Pago</th>
+              <th style="text-align:center; padding:8px 6px; color:#64748b; font-weight:600;">Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${items.map(p => {
+              const nome = p.alunos ? `${p.alunos.nome} ${p.alunos.apelido || ''}`.trim() : '—';
+              const est = (p.estado || '').toUpperCase();
+              const vPago = Number(p.valor_pago || 0);
+              const vPrev = Number(p.valor_previsto || 0);
+              const isPaid = est === 'PAGO' || (vPrev > 0 && vPago >= vPrev);
+
+              const badgeCls = isPaid ? 'sessao-badge--realizada' : est === 'PARCIAL' ? 'sessao-badge--agendada' : 'sessao-badge--cancelada';
+              const badgeTxt = isPaid ? 'Pago' : est === 'PARCIAL' ? 'Parcial' : 'Pendente';
+
+              return `
+                <tr style="border-bottom:1px solid #f1f5f9;">
+                  <td style="text-align:left; padding:10px 6px; font-weight:500;">${nome}</td>
+                  <td style="text-align:right; padding:10px 6px;">${fmtCurrency(vPrev)}</td>
+                  <td style="text-align:right; padding:10px 6px; color:${isPaid ? '#16a34a' : '#0f172a'}; font-weight:${isPaid ? '600' : '400'};">${fmtCurrency(vPago)}</td>
+                  <td style="text-align:center; padding:10px 6px;"><span class="sessao-badge ${badgeCls}">${badgeTxt}</span></td>
+                </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
     `;
   }
 
   modal.classList.add('open');
-  modal.setAttribute('aria-hidden', 'false');
 }
 
 function closeRelModal() {
   const modal = document.getElementById('modal-relatorio-mes');
   if (modal) {
     modal.classList.remove('open');
-    modal.setAttribute('aria-hidden', 'true');
   }
 }
