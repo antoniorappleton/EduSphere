@@ -1,7 +1,7 @@
 // service-worker.js
 
-const CACHE_STATIC = "edusphere-static-v7";
-const CACHE_DYNAMIC = "edusphere-dynamic-v7";
+const CACHE_STATIC = "edusphere-static-v8";
+const CACHE_DYNAMIC = "edusphere-dynamic-v8";
 
 const ASSETS = [
   "./", // raiz do projeto
@@ -16,19 +16,15 @@ const ASSETS = [
   "./public/img/imagens/logo-icon192.png",
   "./public/img/imagens/logo-icon512.png",
 
-  // logo usado dentro da app
-  "./public/img/imagens/logo-icon512.png",
-
   // JS principal
   "./public/js/supabaseClient.js",
   "./public/js/router.js",
 ];
 
-
 // INSTALL – pré-cache estático
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_STATIC).then((cache) => cache.addAll(ASSETS))
+    caches.open(CACHE_STATIC).then((cache) => cache.addAll(ASSETS)),
   );
   self.skipWaiting();
 });
@@ -36,13 +32,15 @@ self.addEventListener("install", (event) => {
 // ACTIVATE – limpar caches antigos
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys
-          .filter((key) => key !== CACHE_STATIC && key !== CACHE_DYNAMIC)
-          .map((key) => caches.delete(key))
-      )
-    )
+    caches
+      .keys()
+      .then((keys) =>
+        Promise.all(
+          keys
+            .filter((key) => key !== CACHE_STATIC && key !== CACHE_DYNAMIC)
+            .map((key) => caches.delete(key)),
+        ),
+      ),
   );
   self.clients.claim();
 });
@@ -78,10 +76,10 @@ self.addEventListener("fetch", (event) => {
           if (req.headers.get("accept")?.includes("text/html")) {
             return new Response(
               "<h2>Offline</h2><p>Sem ligação. Tenta novamente mais tarde.</p>",
-              { headers: { "Content-Type": "text/html" } }
+              { headers: { "Content-Type": "text/html" } },
             );
           }
         });
-    })
+    }),
   );
 });

@@ -1,382 +1,481 @@
 <!doctype html>
 <html lang="pt">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#b91c1c" />
 
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <meta name="theme-color" content="#b91c1c">
+    <!-- Manifest da PWA -->
+    <link rel="manifest" href="./manifest.json" />
 
-  <!-- Manifest da PWA -->
-  <link rel="manifest" href="./manifest.json" />
+    <!-- CSS principal -->
+    <link rel="stylesheet" href="./styles.css" />
 
-  <!-- CSS principal -->
-  <link rel="stylesheet" href="./styles.css" />
+    <title>EduSphere — Aprender juntos</title>
 
-  <title>EduSphere — Aprender juntos</title>
+    <!-- Ícone para browser (favicon) -->
+    <link
+      rel="icon"
+      type="image/png"
+      href="./public/img/imagens/logo-icon192.png"
+    />
 
-  <!-- Ícone para browser (favicon) -->
-  <link rel="icon" type="image/png" href="./public/img/imagens/logo-icon192.png" />
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="./public/js/supabaseClient.js"></script>
+  </head>
 
-  <!-- Supabase -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-  <script src="./public/js/supabaseClient.js"></script>
-</head>
+  <body class="home">
+    <header>
+      <div class="header-inner">
+        <a class="logo" href="./index.html">
+          <img src="./public/img/imagens/logo-icon512.png" alt="EduSphere" />
+          <span>EduSphere</span>
+        </a>
+        <nav>
+          <a href="./login.html" id="navAluno">Aluno</a>
+          <a href="./explicador.html" id="navExplicador">Explicador</a>
+          <a href="./public/admin.html" id="navAdmin">Admin</a>
+        </nav>
+      </div>
+    </header>
 
+    <main class="hero">
+      <section class="hero__card">
+        <div class="hero__text">
+          <h1>Aprender juntos, de forma organizada.</h1>
+          <p>
+            A EduSphere liga alunos, explicadores e administração numa só
+            plataforma: horários, feedback, progresso e tudo o que interessa num
+            único espaço.
+          </p>
 
-<body class="home">
-  <header>
-    <div class="header-inner">
-      <a class="logo" href="./index.html">
-        <img src="./public/img/imagens/logo-icon512.png" alt="EduSphere" />
-        <span>EduSphere</span>
-      </a>
-      <nav>
-        <a href="./login.html" id="navAluno">Aluno</a>
-        <a href="./explicador.html" id="navExplicador">Explicador</a>
-        <a href="./public/admin.html" id="navAdmin">Admin</a>
-      </nav>
-    </div>
-  </header>
-
-  <main class="hero">
-    <section class="hero__card">
-      <div class="hero__text">
-        <h1>Aprender juntos, de forma organizada.</h1>
-        <p>
-          A EduSphere liga alunos, explicadores e administração numa só
-          plataforma: horários, feedback, progresso e tudo o que interessa
-          num único espaço.
-        </p>
-
-        <div class="hero__cta">
-          <button type="button" class="hero__btn hero__btn--aluno"
-            onclick="document.getElementById('navAluno').click()">
-            Sou Aluno
-          </button>
-          <button type="button" class="hero__btn" onclick="document.getElementById('navExplicador').click()">
-            Sou Explicador
-          </button>
-          <button type="button" class="hero__btn hero__btn--ghost"
-            onclick="document.getElementById('navAdmin').click()">
-            Sou Admin
-          </button>
+          <div class="hero__cta">
+            <button
+              type="button"
+              class="hero__btn hero__btn--aluno"
+              onclick="document.getElementById('navAluno').click()"
+            >
+              Sou Aluno
+            </button>
+            <button
+              type="button"
+              class="hero__btn"
+              onclick="document.getElementById('navExplicador').click()"
+            >
+              Sou Explicador
+            </button>
+            <button
+              type="button"
+              class="hero__btn hero__btn--ghost"
+              onclick="document.getElementById('navAdmin').click()"
+            >
+              Sou Admin
+            </button>
+          </div>
         </div>
-      </div>
 
-      <div class="hero__side">
-        <div class="hero__pill">Gestão de explicações</div>
-        <div class="hero__pill">Acompanhamento da evolução</div>
-        <div class="hero__pill">Comunicação simplificada</div>
-      </div>
-    </section>
-  </main>
+        <div class="hero__side">
+          <div class="hero__pill">Gestão de explicações</div>
+          <div class="hero__pill">Acompanhamento da evolução</div>
+          <div class="hero__pill">Comunicação simplificada</div>
+        </div>
+      </section>
+    </main>
 
+    <!-- Modal Explicador (APENAS LOGIN) -->
+    <div class="modal" id="explModal" aria-hidden="true">
+      <div class="modal__backdrop"></div>
+      <section
+        class="modal__dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="explTitle"
+      >
+        <header class="modal__header">
+          <h2 id="explTitle">Explicador</h2>
+          <button class="modal__close" id="explClose" aria-label="Fechar">
+            ×
+          </button>
+        </header>
 
-  <!-- Modal Explicador (APENAS LOGIN) -->
-  <div class="modal" id="explModal" aria-hidden="true">
-    <div class="modal__backdrop"></div>
-    <section class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="explTitle">
-      <header class="modal__header">
-        <h2 id="explTitle">Explicador</h2>
-        <button class="modal__close" id="explClose" aria-label="Fechar">×</button>
-      </header>
+        <form id="fExplLogin" class="auth__form" autocomplete="on">
+          <input type="email" name="email" placeholder="Email" required />
+          <input
+            type="password"
+            name="password"
+            placeholder="Password"
+            required
+          />
+          <button class="button" type="submit">Entrar</button>
+          <div id="explLoginMsg" class="auth__msg"></div>
+        </form>
+        <p class="auth__hint" style="margin-top: 8px">
+          As credenciais são criadas pelo <strong>Admin</strong>.
+        </p>
+      </section>
+    </div>
 
-      <form id="fExplLogin" class="auth__form" autocomplete="on">
-        <input type="email" name="email" placeholder="Email" required />
-        <input type="password" name="password" placeholder="Password" required />
-        <button class="button" type="submit">Entrar</button>
-        <div id="explLoginMsg" class="auth__msg"></div>
-      </form>
-      <p class="auth__hint" style="margin-top:8px">
-        As credenciais são criadas pelo <strong>Admin</strong>.
-      </p>
-    </section>
-  </div>
+    <!-- Modal Aluno (LOGIN) -->
+    <div class="modal" id="alunoModal" aria-hidden="true">
+      <div class="modal__backdrop"></div>
+      <section
+        class="modal__dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="alunoTitle"
+      >
+        <header class="modal__header">
+          <h2 id="alunoTitle">Aluno</h2>
+          <button class="modal__close" id="alunoClose" aria-label="Fechar">
+            ×
+          </button>
+        </header>
 
-  <!-- Modal Aluno (LOGIN) -->
-  <div class="modal" id="alunoModal" aria-hidden="true">
-    <div class="modal__backdrop"></div>
-    <section class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="alunoTitle">
-      <header class="modal__header">
-        <h2 id="alunoTitle">Aluno</h2>
-        <button class="modal__close" id="alunoClose" aria-label="Fechar">×</button>
-      </header>
+        <form id="fAlunoLogin" class="auth__form" autocomplete="on">
+          <input
+            type="email"
+            name="email"
+            placeholder="Email do aluno"
+            required
+          />
+          <input
+            type="password"
+            name="password"
+            placeholder="Password"
+            required
+          />
+          <button class="button" type="submit">Entrar</button>
+          <div id="alunoLoginMsg" class="auth__msg"></div>
+        </form>
+        <p class="auth__hint" style="margin-top: 8px">
+          As credenciais são criadas pelo teu <strong>explicador</strong>.
+        </p>
+      </section>
+    </div>
 
-      <form id="fAlunoLogin" class="auth__form" autocomplete="on">
-        <input type="email" name="email" placeholder="Email do aluno" required />
-        <input type="password" name="password" placeholder="Password" required />
-        <button class="button" type="submit">Entrar</button>
-        <div id="alunoLoginMsg" class="auth__msg"></div>
-      </form>
-      <p class="auth__hint" style="margin-top:8px">
-        As credenciais são criadas pelo teu <strong>explicador</strong>.
-      </p>
-    </section>
-  </div>
+    <!-- Modal Admin (LOGIN) -->
+    <div class="modal" id="adminModal" aria-hidden="true">
+      <div class="modal__backdrop"></div>
+      <section
+        class="modal__dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="adminTitle"
+      >
+        <header class="modal__header">
+          <h2 id="adminTitle">Admin</h2>
+          <button class="modal__close" id="adminClose" aria-label="Fechar">
+            ×
+          </button>
+        </header>
 
-  <!-- Modal Admin (LOGIN) -->
-  <div class="modal" id="adminModal" aria-hidden="true">
-    <div class="modal__backdrop"></div>
-    <section class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="adminTitle">
-      <header class="modal__header">
-        <h2 id="adminTitle">Admin</h2>
-        <button class="modal__close" id="adminClose" aria-label="Fechar">×</button>
-      </header>
+        <form id="fAdminLoginModal" class="auth__form" autocomplete="on">
+          <input type="email" name="email" placeholder="Email" required />
+          <input
+            type="password"
+            name="password"
+            placeholder="Password"
+            required
+          />
+          <button class="button" type="submit">Entrar</button>
+          <div id="adminLoginMsg" class="auth__msg"></div>
+        </form>
+        <p class="auth__hint" style="margin-top: 8px">
+          Acesso reservado à equipa de <strong>administração</strong>.
+        </p>
+      </section>
+    </div>
 
-      <form id="fAdminLoginModal" class="auth__form" autocomplete="on">
-        <input type="email" name="email" placeholder="Email" required />
-        <input type="password" name="password" placeholder="Password" required />
-        <button class="button" type="submit">Entrar</button>
-        <div id="adminLoginMsg" class="auth__msg"></div>
-      </form>
-      <p class="auth__hint" style="margin-top:8px">
-        Acesso reservado à equipa de <strong>administração</strong>.
-      </p>
-    </section>
-  </div>
+    <footer>© <span id="y"></span> EduSphere | by antonioappleton</footer>
 
-  <footer>© <span id="y"></span> EduSphere | by antonioappleton</footer>
+    <script>
+      // ===== Service Worker (PWA) =====
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker
+            .register("./service-worker.js") // <-- ou simplesmente "service-worker.js"
+            .then((reg) => {
+              if (reg.waiting) {
+                reg.waiting.postMessage({ type: "SKIP_WAITING" });
+              }
 
-  <script>
-    // ===== Service Worker (PWA) =====
-    if ("serviceWorker" in navigator) {
-      window.addEventListener("load", () => {
-        navigator.serviceWorker
-          .register("./service-worker.js")   // <-- ou simplesmente "service-worker.js"
-          .then((reg) => {
-            if (reg.waiting) {
-              reg.waiting.postMessage({ type: "SKIP_WAITING" });
-            }
-
-            reg.addEventListener("updatefound", () => {
-              const newSW = reg.installing;
-              newSW?.addEventListener("statechange", () => {
-                if (
-                  newSW.state === "installed" &&
-                  navigator.serviceWorker.controller
-                ) {
-                  console.log("Nova versão disponível. Atualiza a página.");
-                }
+              reg.addEventListener("updatefound", () => {
+                const newSW = reg.installing;
+                newSW?.addEventListener("statechange", () => {
+                  if (
+                    newSW.state === "installed" &&
+                    navigator.serviceWorker.controller
+                  ) {
+                    console.log("Nova versão disponível. Atualiza a página.");
+                  }
+                });
               });
-            });
-          })
-          .catch((err) => console.error("SW erro:", err));
+            })
+            .catch((err) => console.error("SW erro:", err));
+        });
+      }
+
+      // ===== Helpers básicos =====
+      const $ = (s) => document.querySelector(s);
+      // ano no footer
+      document.getElementById("y").textContent = new Date().getFullYear();
+
+      // Helper: verificar papel (admin tem acesso a tudo)
+      // Helper: verificar papel (admin tem acesso a tudo)
+      // Helper: verificar papel (admin tem acesso a tudo)
+      async function hasRole(uid, roleName) {
+        const { data, error } = await supabase
+          .from("app_users")
+          .select("role")
+          .eq("user_id", uid);
+
+        if (error || !data || data.length === 0) return false;
+
+        const roles = data.map((r) => r.role);
+        if (roles.includes("admin")) return true;
+        return roles.includes(roleName);
+      }
+
+      // Helper: obter o papel exato para mensagens de erro
+      async function getUserRole(uid) {
+        try {
+          const { data, error } = await supabase
+            .from("app_users")
+            .select("role")
+            .eq("user_id", uid);
+
+          if (error) {
+            console.error("getUserRole error:", error);
+            return `erro: ${error.message} (UID: ${uid})`;
+          }
+
+          if (!data || data.length === 0) return `não encontrado (UID: ${uid})`;
+
+          if (data.length > 1) {
+            const roles = data.map((r) => r.role).join(", ");
+            return `DUPLICADOS [${roles}] (UID: ${uid})`;
+          }
+
+          return data[0].role;
+        } catch (e) {
+          console.error("getUserRole exception:", e);
+          return `exceção: ${e.message}`;
+        }
+      }
+
+      /* ========== MODAL GENERIC HELPERS ========== */
+      function openModal(el) {
+        el.classList.add("open");
+        el.setAttribute("aria-hidden", "false");
+      }
+      function closeModal(el) {
+        el.classList.remove("open");
+        el.setAttribute("aria-hidden", "true");
+      }
+
+      /* ========== AUTH AUTO-REDIRECT ========== */
+      (async () => {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (!session?.user) return;
+
+        const { data } = await supabase
+          .from("app_users")
+          .select("role")
+          .eq("user_id", session.user.id)
+          .maybeSingle();
+        const role = data?.role;
+
+        // Se for admin, não redirecionamos automaticamente para o admin.html aqui
+        // para permitir que ele escolha Sou Explicador se quiser.
+        if (role === "admin") {
+          // Fica no index
+        } else if (role === "explicador") {
+          window.location.href = "./pages/explicador/dashboard.html";
+        } else if (role === "aluno") {
+          window.location.href = "./aluno.html";
+        }
+      })();
+
+      /* ========== LOGIN EXPLICADOR (MODAL) ========== */
+      const navExpl = $("#navExplicador");
+      const explModal = $("#explModal");
+      const explClose = $("#explClose");
+
+      navExpl?.addEventListener("click", async (e) => {
+        e.preventDefault();
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        const isExpl =
+          session?.user && (await hasRole(session.user.id, "explicador"));
+
+        if (isExpl) {
+          window.location.href = "./pages/explicador/dashboard.html";
+          return;
+        }
+        openModal(explModal);
       });
-    }
 
-    // ===== Helpers básicos =====
-    const $ = (s) => document.querySelector(s);
-    // ano no footer
-    document.getElementById('y').textContent = new Date().getFullYear();
+      explClose?.addEventListener("click", () => closeModal(explModal));
+      explModal?.addEventListener("click", (e) => {
+        if (e.target.classList.contains("modal__backdrop"))
+          closeModal(explModal);
+      });
 
-    // Helper: verificar papel
-    async function hasRole(uid, roleName) {
-      // 1. Check direct match
-      const { data } = await supabase
-        .from('app_users')
-        .select('role')
-        .eq('user_id', uid)
-        .eq('role', roleName)
-        .maybeSingle();
+      const fExpl = document.getElementById("fExplLogin");
+      fExpl?.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const msg = document.getElementById("explLoginMsg");
+        msg.textContent = "A entrar...";
 
-      if (data) return true;
+        const email = fExpl.email.value.trim();
+        const password = fExpl.password.value;
 
-      // 2. If requesting 'explicador' access, allow 'admin' too
-      if (roleName === 'explicador') {
-        const { data: admin } = await supabase
-          .from('app_users')
-          .select('role')
-          .eq('user_id', uid)
-          .eq('role', 'admin')
-          .maybeSingle();
-        if (admin) return true;
-      }
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        if (error) {
+          msg.textContent = "Credenciais inválidas.";
+          return;
+        }
 
-      return false;
-    }
+        if (!(await hasRole(data.user.id, "explicador"))) {
+          await supabase.auth.signOut().catch(() => {});
+          msg.textContent = "Esta conta não é de explicador.";
+          return;
+        }
+        msg.textContent = "Login efetuado! A redirecionar...";
+        await new Promise((r) => setTimeout(r, 500));
+        window.location.href = "./pages/explicador/dashboard.html";
+      });
 
-    /* ========== MODAL GENERIC HELPERS ========== */
-    function openModal(el) {
-      el.classList.add('open');
-      el.setAttribute('aria-hidden', 'false');
-    }
-    function closeModal(el) {
-      el.classList.remove('open');
-      el.setAttribute('aria-hidden', 'true');
-    }
+      /* ========== LOGIN ALUNO (MODAL) ========== */
+      const navAluno = $("#navAluno");
+      const alunoModal = $("#alunoModal");
+      const alunoClose = $("#alunoClose");
 
-    /* ========== AUTH AUTO-REDIRECT ========== */
-    (async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        const { data: profile } = await supabase
-          .from('app_users')
-          .select('role')
-          .eq('user_id', session.user.id)
-          .maybeSingle();
+      navAluno?.addEventListener("click", async (e) => {
+        e.preventDefault();
 
-        if (profile?.role === 'admin') window.location.href = './public/admin.html';
-        else if (profile?.role === 'explicador') window.location.href = './pages/explicador/dashboard.html';
-        else if (profile?.role === 'aluno') window.location.href = './aluno.html';
-      }
-    })();
+        const href = navAluno.getAttribute("href") || "./aluno.html";
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        const isAluno =
+          session?.user && (await hasRole(session.user.id, "aluno"));
 
-    /* ========== LOGIN EXPLICADOR (MODAL) ========== */
-    const navExpl = $('#navExplicador');
-    const explModal = $('#explModal');
-    const explClose = $('#explClose');
+        if (isAluno) {
+          window.location.href = href;
+          return;
+        }
+        openModal(alunoModal);
+      });
 
-    navExpl?.addEventListener('click', async (e) => {
-      e.preventDefault();
-      const { data: { session } } = await supabase.auth.getSession();
-      const isExpl = session?.user && await hasRole(session.user.id, 'explicador');
+      alunoClose?.addEventListener("click", () => closeModal(alunoModal));
+      alunoModal?.addEventListener("click", (e) => {
+        if (e.target.classList.contains("modal__backdrop"))
+          closeModal(alunoModal);
+      });
 
-      if (isExpl) {
-        window.location.href = './pages/explicador/dashboard.html';
-        return;
-      }
-      openModal(explModal);
-    });
+      const fAluno = document.getElementById("fAlunoLogin");
+      fAluno?.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const msg = document.getElementById("alunoLoginMsg");
+        msg.textContent = "A entrar...";
 
-    explClose?.addEventListener('click', () => closeModal(explModal));
-    explModal?.addEventListener('click', (e) => {
-      if (e.target.classList.contains('modal__backdrop')) closeModal(explModal);
-    });
+        const email = fAluno.email.value.trim();
+        const password = fAluno.password.value;
 
-    const fExpl = document.getElementById('fExplLogin');
-    fExpl?.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const msg = document.getElementById('explLoginMsg');
-      msg.textContent = 'A entrar...';
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        if (error) {
+          msg.textContent = "Credenciais inválidas.";
+          return;
+        }
 
-      const email = fExpl.email.value.trim();
-      const password = fExpl.password.value;
+        if (!(await hasRole(data.user.id, "aluno"))) {
+          await supabase.auth.signOut().catch(() => {});
+          msg.textContent = "Esta conta não é de aluno.";
+          return;
+        }
+        msg.textContent = "Login efetuado! A redirecionar...";
+        await new Promise((r) => setTimeout(r, 500));
+        window.location.href = "./aluno.html";
+      });
 
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) {
-        msg.textContent = 'Credenciais inválidas.';
-        return;
-      }
+      /* ========== LOGIN ADMIN (MODAL) ========== */
+      const navAdmin = $("#navAdmin");
+      const adminModal = $("#adminModal");
+      const adminClose = $("#adminClose");
 
-      if (!(await hasRole(data.user.id, 'explicador'))) {
-        await supabase.auth.signOut().catch(() => { });
-        msg.textContent = 'Esta conta não é de explicador.';
-        return;
-      }
-      msg.textContent = 'Login efetuado! A redirecionar...';
-      await new Promise(r => setTimeout(r, 500));
-      window.location.href = './pages/explicador/dashboard.html';
-    });
+      navAdmin?.addEventListener("click", async (e) => {
+        e.preventDefault();
 
-    /* ========== LOGIN ALUNO (MODAL) ========== */
-    const navAluno = $('#navAluno');
-    const alunoModal = $('#alunoModal');
-    const alunoClose = $('#alunoClose');
+        const href = navAdmin.getAttribute("href") || "./public/admin.html";
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        const isAdmin =
+          session?.user && (await hasRole(session.user.id, "admin"));
 
-    navAluno?.addEventListener('click', async (e) => {
-      e.preventDefault();
+        if (isAdmin) {
+          window.location.href = href;
+          return;
+        }
+        openModal(adminModal);
+      });
 
-      const href = navAluno.getAttribute('href') || './aluno.html';
-      const { data: { session } } = await supabase.auth.getSession();
-      const isAluno = session?.user && await hasRole(session.user.id, 'aluno');
+      adminClose?.addEventListener("click", () => closeModal(adminModal));
+      adminModal?.addEventListener("click", (e) => {
+        if (e.target.classList.contains("modal__backdrop"))
+          closeModal(adminModal);
+      });
 
-      if (isAluno) {
-        window.location.href = href;
-        return;
-      }
-      openModal(alunoModal);
-    });
+      const fAdminModal = document.getElementById("fAdminLoginModal");
+      fAdminModal?.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const msg = document.getElementById("adminLoginMsg");
+        msg.textContent = "A entrar...";
 
-    alunoClose?.addEventListener('click', () => closeModal(alunoModal));
-    alunoModal?.addEventListener('click', (e) => {
-      if (e.target.classList.contains('modal__backdrop')) closeModal(alunoModal);
-    });
+        const email = fAdminModal.email.value.trim();
+        const password = fAdminModal.password.value;
 
-    const fAluno = document.getElementById('fAlunoLogin');
-    fAluno?.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const msg = document.getElementById('alunoLoginMsg');
-      msg.textContent = 'A entrar...';
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        if (error) {
+          msg.textContent = "Credenciais inválidas.";
+          return;
+        }
 
-      const email = fAluno.email.value.trim();
-      const password = fAluno.password.value;
+        if (!(await hasRole(data.user.id, "admin"))) {
+          const userRole = await getUserRole(data.user.id);
+          await supabase.auth.signOut().catch(() => {});
+          msg.textContent = `Esta conta tem perfil de "${userRole}". Acesso Admin negado.`;
+          return;
+        }
+        window.location.href = "./public/admin.html";
+      });
 
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) {
-        msg.textContent = 'Credenciais inválidas.';
-        return;
-      }
+      /* ========== REDIREÇÕES SE JÁ ESTIVER LOGADO ========== */
+      (async () => {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (!session?.user) return;
 
-      if (!(await hasRole(data.user.id, 'aluno'))) {
-        await supabase.auth.signOut().catch(() => { });
-        msg.textContent = 'Esta conta não é de aluno.';
-        return;
-      }
-      msg.textContent = 'Login efetuado! A redirecionar...';
-      await new Promise(r => setTimeout(r, 500));
-      window.location.href = './aluno.html';
-    });
-
-    /* ========== LOGIN ADMIN (MODAL) ========== */
-    const navAdmin = $('#navAdmin');
-    const adminModal = $('#adminModal');
-    const adminClose = $('#adminClose');
-
-    navAdmin?.addEventListener('click', async (e) => {
-      e.preventDefault();
-
-      const href = navAdmin.getAttribute('href') || './public/admin.html';
-      const { data: { session } } = await supabase.auth.getSession();
-      const isAdmin = session?.user && await hasRole(session.user.id, 'admin');
-
-      if (isAdmin) {
-        window.location.href = href;
-        return;
-      }
-      openModal(adminModal);
-    });
-
-    adminClose?.addEventListener('click', () => closeModal(adminModal));
-    adminModal?.addEventListener('click', (e) => {
-      if (e.target.classList.contains('modal__backdrop')) closeModal(adminModal);
-    });
-
-    const fAdminModal = document.getElementById('fAdminLoginModal');
-    fAdminModal?.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const msg = document.getElementById('adminLoginMsg');
-      msg.textContent = 'A entrar...';
-
-      const email = fAdminModal.email.value.trim();
-      const password = fAdminModal.password.value;
-
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) {
-        msg.textContent = 'Credenciais inválidas.';
-        return;
-      }
-
-      if (!(await hasRole(data.user.id, 'admin'))) {
-        await supabase.auth.signOut().catch(() => { });
-        msg.textContent = 'Esta conta não é de admin.';
-        return;
-      }
-      window.location.href = './public/admin.html';
-    });
-
-    /* ========== REDIREÇÕES SE JÁ ESTIVER LOGADO ========== */
-    (async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) return;
-
-      if (await hasRole(session.user.id, 'explicador')) {
-        // se quiseres redirecionar logo explicadores:
-        // window.location.href = './explicador.html';
-      }
-    })();
-  </script>
-
-
-</body>
-
+        if (await hasRole(session.user.id, "explicador")) {
+          // se quiseres redirecionar logo explicadores:
+          // window.location.href = './explicador.html';
+        }
+      })();
+    </script>
+  </body>
 </html>
