@@ -61,7 +61,7 @@ function renderAlunoCard(aluno) {
          <span class="dash-aluno-card__date">${prox}</span>
        </div>
     </div>
-    <button class="dash-aluno-card__btn" onclick="openPerfil(${aluno.id})">Ver Perfil</button>
+    <button class="dash-aluno-card__btn" onclick="openPerfil('${aluno.id_aluno}')">Ver Perfil</button>
   `;
   container.appendChild(div);
 }
