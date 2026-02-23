@@ -1499,3 +1499,164 @@ body.home main.auth {
     padding: 1rem;
     font-style: italic;
 }
+/* ---------- MODERN CALENDAR UI ---------- */
+
+.calendar-day-col {
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 12px;
+    padding: 10px;
+    min-height: 140px;
+    border: 1px solid rgba(0,0,0,0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: background 0.2s ease;
+}
+
+.calendar-day-col.is-today {
+    background: #fff;
+    border-color: #b91c1c;
+    box-shadow: 0 4px 12px rgba(185, 28, 28, 0.1);
+}
+
+.calendar-day-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(0,0,0,0.03);
+}
+
+.day-name {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #6b7280;
+}
+
+.day-num {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #111827;
+}
+
+.day-events {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.event-mini {
+    font-size: 0.7rem;
+    padding: 4px 6px;
+    border-radius: 6px;
+    background: #f3f4f6;
+    border-left: 3px solid #9ca3af;
+    cursor: pointer;
+    transition: transform 0.1s ease;
+}
+
+.event-mini:hover {
+    transform: translateX(2px);
+}
+
+.event-mini.agendada {
+    background: #eff6ff;
+    border-left-color: #3b82f6;
+    color: #1e40af;
+}
+
+.event-mini.realizada {
+    background: #f0fdf4;
+    border-left-color: #22c55e;
+    color: #166534;
+}
+
+.event-mini.cancelada {
+    background: #fef2f2;
+    border-left-color: #ef4444;
+    color: #991b1b;
+    text-decoration: line-through;
+    opacity: 0.7;
+}
+
+.event-time {
+    font-weight: 700;
+    margin-right: 4px;
+}
+
+/* Próximas sessões list */
+.calendar-proximas {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.cal-event-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #f1f5f9;
+    cursor: pointer;
+    transition: box-shadow 0.2s ease;
+}
+
+.cal-event-item:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.cal-event-date {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    background: #f8fafc;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+}
+
+.cal-event-date .day { font-weight: 800; font-size: 1.1rem; line-height: 1; color: #1e293b; }
+.cal-event-date .month { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; color: #64748b; }
+
+.cal-event-info { flex: 1; min-width: 0; }
+.cal-event-info .name { font-weight: 700; font-size: 0.9rem; margin: 0; color: #1e293b; }
+.cal-event-info .time { font-size: 0.75rem; color: #64748b; margin: 2px 0 0; }
+
+.cal-event-status { 
+    font-size: 0.65rem; 
+    font-weight: 800; 
+    padding: 4px 8px; 
+    border-radius: 999px;
+    text-transform: uppercase;
+}
+
+.cal-event-status.agendada { background: #dbeafe; color: #1e40af; }
+.cal-event-status.realizada { background: #dcfce7; color: #15803d; }
+.cal-event-status.cancelada { background: #fee2e2; color: #b91c1c; }
+
+/* List View */
+.cal-list-row {
+    display: grid;
+    grid-template-columns: 140px 1fr 80px 100px;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid #f1f5f9;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.cal-list-row:hover { background: #f8fafc; }
+.cal-list-row:last-child { border-bottom: none; }
+
+.empty-state {
+    text-align: center;
+    padding: 2rem;
+    color: #94a3b8;
+    font-style: italic;
+    font-size: 0.9rem;
+}

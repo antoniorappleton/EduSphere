@@ -189,6 +189,54 @@
       if (!session) location.href = '../../index.html';
     })();
   </script>
+  <!-- MODAL AGENDAR -->
+  <div class="modal" id="modal-sessao">
+    <div class="modal__backdrop" onclick="closeModalSessao()"></div>
+    <div class="modal__dialog">
+      <div class="modal__header">
+        <h2 id="modal-sessao-titulo">Agendar Explicação</h2>
+        <button class="modal__close" onclick="closeModalSessao()">&times;</button>
+      </div>
+      <form id="fSessao">
+        <input type="hidden" name="id_sessao" id="in-sessao-id" />
+        
+        <label>Aluno
+          <select class="input" name="id_aluno" id="sel-aluno" required>
+            <option value="">A carregar alunos...</option>
+          </select>
+        </label>
+
+        <div class="expl-grid-2">
+          <label>Data <input type="date" class="input" name="data" id="in-sessao-data" required /></label>
+          <label>Hora <input type="time" class="input" name="hora" id="in-sessao-hora" required /></label>
+        </div>
+
+        <div class="expl-grid-2">
+          <label>Duração (min) <input type="number" class="input" name="duracao" id="in-sessao-dur" value="60" step="15" /></label>
+          <label>Estado 
+            <select class="input" name="estado" id="sel-sessao-estado">
+              <option value="AGENDADA">Agendada</option>
+              <option value="REALIZADA">Realizada</option>
+              <option value="CANCELADA">Cancelada</option>
+            </select>
+          </label>
+        </div>
+
+        <label>Notas 
+          <textarea class="input" name="notas" id="in-sessao-notas" rows="2"></textarea>
+        </label>
+
+        <div style="margin-top:1rem; text-align:right; display:flex; gap:10px; justify-content:flex-end;">
+          <button type="button" class="button secondary" id="btn-delete-sessao" style="display:none; background:#fee2e2; color:#ef4444; border:none;">Eliminar</button>
+          <button type="submit" class="button primary" id="btn-save-sessao">Gravar</button>
+        </div>
+        <div id="msgSessao" style="margin-top:10px; font-size:12px;"></div>
+      </form>
+    </div>
+  </div>
+
+  <script src="../../public/js/explicador-service.js"></script>
+  <script src="../../public/js/calendario-explicador.js"></script>
 </body>
 
 </html>

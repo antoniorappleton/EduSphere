@@ -16,6 +16,13 @@ EXCEPTION
     WHEN duplicate_object THEN null;
 END $$;
 
+-- exercicio_tipo: tipos de exercícios
+DO $$ BEGIN
+    CREATE TYPE exercicio_tipo AS ENUM ('FICHEIRO', 'LINK', 'OUTRO');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
 -- =============================================================================
 -- 2. TABELA app_users
 -- Relaciona o user do Auth com o papel na aplicação e referência à tabela específica
@@ -171,7 +178,41 @@ CREATE POLICY "Aluno read pagamentos" ON public.pagamentos
   );
 
 -- =============================================================================
--- 7. VIEWS
+-- 7. TABELA exercicios
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS public.exercicios (
+  id_exercicio UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  id_aluno UUID NOT NULL REFERENCES public.alunos(id_aluno) ON DELETE CASCADE,
+  id_explicador UUID NOT NULL REFERENCES public.explicadores(id_explicador) ON DELETE CASCADE,
+  nome TEXT NOT NULL,
+  tipo exercicio_tipo NOT NULL DEFAULT 'OUTRO',
+  url TEXT,
+  data_envio TIMESTAMPTZ DEFAULT NOW(),
+  data_entrega_prevista DATE,
+  data_conclusao DATE,
+  is_concluido BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.exercicios ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Explicador manage own exercicios" ON public.exercicios
+  FOR ALL USING (
+    id_explicador IN (
+      SELECT id_explicador FROM public.explicadores WHERE user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Aluno read own exercicios" ON public.exercicios
+  FOR SELECT USING (
+    id_aluno IN (
+      SELECT id_aluno FROM public.alunos WHERE user_id = auth.uid()
+    )
+  );
+
+-- =============================================================================
+-- 8. VIEWS
 -- =============================================================================
 
 CREATE OR REPLACE VIEW public.v_pagamentos_detalhe AS
@@ -185,7 +226,7 @@ FROM public.sessoes_explicacao s
 JOIN public.alunos a ON s.id_aluno = a.id_aluno;
 
 -- =============================================================================
--- 8. FUNCTIONS & TRIGGERS
+-- 9. FUNCTIONS & TRIGGERS
 -- =============================================================================
 
 -- Cria automaticamente um app_user quando um user se regista no Auth

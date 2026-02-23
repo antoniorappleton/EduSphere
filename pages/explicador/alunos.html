@@ -292,6 +292,45 @@
     </div>
   </div>
 
+  <!-- MODAL NOVO EXERCÍCIO -->
+  <div class="modal" id="modal-novo-exercicio">
+    <div class="modal__backdrop" onclick="closeModal('modal-novo-exercicio')"></div>
+    <div class="modal__dialog">
+      <div class="modal__header">
+        <h2>Enviar Exercício</h2>
+        <button class="modal__close" onclick="closeModal('modal-novo-exercicio')">&times;</button>
+      </div>
+      <form id="fNewExercicio">
+        <label>Título / Descrição <input type="text" class="input" name="titulo" required
+            placeholder="Ex: Ficha de Equações 2" /></label>
+
+        <div class="expl-grid-2">
+          <label>Data de Entrega <input type="date" class="input" name="data_entrega" /></label>
+          <label>Tipo
+            <select class="input" name="tipo">
+              <option value="FICHEIRO">Ficheiro (PDF/Imagem)</option>
+              <option value="LINK">Link Externo</option>
+              <option value="OUTRO">Apenas Texto/Outro</option>
+            </select>
+          </label>
+        </div>
+
+        <div id="wrapper-input-file">
+          <label>Ficheiro <input type="file" class="input" name="ficheiro" id="inExercicioFile" /></label>
+        </div>
+
+        <div id="wrapper-input-link" style="display:none">
+          <label>URL / Link <input type="url" class="input" name="url" placeholder="https://..." /></label>
+        </div>
+
+        <div style="margin-top:1rem; text-align:right;">
+          <button type="submit" class="button primary" id="btnSendExercicio">Enviar</button>
+        </div>
+        <div id="msgNewExercicio" style="margin-top:10px; font-size:12px;"></div>
+      </form>
+    </div>
+  </div>
+
   <script>
     // Navigation Logic
     function fecharPerfilAluno() {
