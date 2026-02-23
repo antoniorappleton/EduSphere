@@ -13,11 +13,11 @@ const ASSETS = [
   "./manifest.json",
 
   // ícones PWA
-  "./public/img/icon-192.png",
-  "./public/img/icon-512.png",
+  "./public/img/imagens/logo-icon192.png",
+  "./public/img/imagens/logo-icon512.png",
 
   // logo usado dentro da app
-  "./public/img/imagens/logo-icon.svg",
+  "./public/img/imagens/logo-icon512.png",
 
   // JS principal
   "./public/js/supabaseClient.js",
