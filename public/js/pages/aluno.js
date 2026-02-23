@@ -57,10 +57,10 @@ const alunoId = map?.ref_id;
   //    Fonte: view v_explicacoes_detalhe (RLS filtra por aluno)
   // -------------------------------------------------------------
   const { data: agenda, error: agendaErr } = await supabase
-    .from("v_explicacoes_detalhe")
+    .from("v_sessoes_detalhe")
     .select("*")
     .order("data", { ascending: true })
-    .order("hora", { ascending: true });
+    .order("hora_inicio", { ascending: true });
 
   const ag = document.getElementById("agenda");
   const agendaData = agenda || [];
@@ -76,7 +76,7 @@ const alunoId = map?.ref_id;
             (x) => `
           <article class="card">
             <div><strong>${x.aluno_nome ?? ""}</strong></div>
-            <div>${x.data} • ${x.hora} • ${x.local ?? ""}</div>
+            <div>${x.data} • ${x.hora_inicio} • ${x.local ?? ""}</div>
             <p>${x.detalhes ?? ""}</p>
             <span class="badge">${Number(x.preco).toFixed(2)} €</span>
           </article>
@@ -136,19 +136,19 @@ const alunoId = map?.ref_id;
 
     calList.innerHTML = items
       .map((x) => {
-        const dataISO = `${x.data}T${x.hora}`;
+        const dataISO = `${x.data}T${x.hora_inicio}`;
         const dataSessao = new Date(dataISO);
         const passada = dataSessao < new Date();
 
         return `
         <li class="cal-item">
           <div class="cal-item-main">
-            <strong>${x.data}</strong> • ${x.hora} • ${x.local ?? ""}
+            <strong>${x.data}</strong> • ${x.hora_inicio} • ${x.local ?? ""}
           </div>
           <div class="cal-item-actions">
             <button
               class="button small btn-presenca"
-              data-id="${x.id}"
+              data-id="${x.id_sessao}"
               ${passada ? "disabled" : ""}
             >
               ${passada ? "Sessão passada" : "✅ Confirmar presença"}
@@ -169,9 +169,9 @@ const alunoId = map?.ref_id;
           // Atualiza a explicação para indicar confirmação de presença
           // NOTA: RLS deve garantir que o aluno só atualiza as suas explicações
           const { error } = await supabase
-            .from("explicacoes")
+            .from("sessoes_explicacao")
             .update({ presenca_confirmada: true })
-            .eq("id", idExplicacao);
+            .eq("id_sessao", idExplicacao);
 
           if (error) throw error;
 

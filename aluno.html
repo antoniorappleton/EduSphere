@@ -17,6 +17,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="./public/js/supabaseClient.js"></script>
   <script src="./public/js/auth.js"></script>
+  <link rel="stylesheet" href="./css/nav.css" />
 
   <script>
     tailwind.config = {
@@ -335,34 +336,27 @@
     </main>
 
     <!-- Bottom Navigation -->
-    <nav
-      class="bg-white border-t border-gray-100 flex justify-between items-center px-6 py-3 pb-8 z-30 sticky bottom-0">
-      <button class="nav-btn group flex flex-col items-center gap-1 active" data-target="inicio">
-        <span
-          class="material-symbols-outlined text-2xl text-gray-400 group-[.active]:text-primary transition-colors">dashboard</span>
-        <span class="text-[10px] font-medium text-gray-400 group-[.active]:text-primary transition-colors">Início</span>
+    <nav class="app-footer-nav">
+      <button class="app-nav-item active" data-target="inicio">
+        <span class="material-symbols-outlined">dashboard</span>
+        <span>Início</span>
       </button>
-      <button class="nav-btn group flex flex-col items-center gap-1" data-target="calendario">
-        <span
-          class="material-symbols-outlined text-2xl text-gray-400 group-[.active]:text-primary transition-colors">calendar_month</span>
-        <span class="text-[10px] font-medium text-gray-400 group-[.active]:text-primary transition-colors">Aulas</span>
+      <button class="app-nav-item" data-target="calendario">
+        <span class="material-symbols-outlined">calendar_month</span>
+        <span>Aulas</span>
       </button>
-      <button class="nav-btn group flex flex-col items-center gap-1 relative" data-target="pagamentos">
-        <span
-          class="material-symbols-outlined text-2xl text-gray-400 group-[.active]:text-primary transition-colors">payments</span>
-        <span class="text-[10px] font-medium text-gray-400 group-[.active]:text-primary transition-colors">Contas</span>
-        <!-- Dot Indicator -->
-        <span id="nav-dot-pag" class="absolute top-0 right-1 h-2 w-2 rounded-full bg-red-500 hidden"></span>
+      <button class="app-nav-item relative" data-target="pagamentos">
+        <span class="material-symbols-outlined">payments</span>
+        <span>Contas</span>
+        <span id="nav-dot-pag" class="absolute top-2 right-4 h-2 w-2 rounded-full bg-red-500 hidden"></span>
       </button>
-      <button class="nav-btn group flex flex-col items-center gap-1" data-target="exercicios">
-        <span
-          class="material-symbols-outlined text-2xl text-gray-400 group-[.active]:text-primary transition-colors">assignment</span>
-        <span class="text-[10px] font-medium text-gray-400 group-[.active]:text-primary transition-colors">TPC</span>
+      <button class="app-nav-item" data-target="exercicios">
+        <span class="material-symbols-outlined">assignment</span>
+        <span>TPC</span>
       </button>
-      <button class="nav-btn group flex flex-col items-center gap-1" data-target="perfil">
-        <span
-          class="material-symbols-outlined text-2xl text-gray-400 group-[.active]:text-primary transition-colors">person</span>
-        <span class="text-[10px] font-medium text-gray-400 group-[.active]:text-primary transition-colors">Eu</span>
+      <button class="app-nav-item" data-target="perfil">
+        <span class="material-symbols-outlined">person</span>
+        <span>Eu</span>
       </button>
     </nav>
 
@@ -370,7 +364,7 @@
 
   <script>
     // --- Navigation Logic ---
-    const navBtns = document.querySelectorAll('.nav-btn');
+    const navBtns = document.querySelectorAll('.app-nav-item');
     const sections = document.querySelectorAll('.view-section');
 
     function switchTab(targetId) {

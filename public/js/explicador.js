@@ -38,28 +38,7 @@ try {
   return { data: null, error: err };
 }
 }
-async function hasRole(uid, roleName) {
-  // 1. Direct role check
-  const { data } = await supabase
-    .from('app_users')
-    .select('role')
-    .eq('user_id', uid)
-    .eq('role', roleName)
-    .maybeSingle(); 
-  if (data) return true;
-
-  // 2. Allow Admin to access Explicador area
-  if (roleName === 'explicador') {
-     const { data: admin } = await supabase
-       .from('app_users')
-       .select('role')
-       .eq('user_id', uid)
-       .eq('role', 'admin')
-       .maybeSingle();
-     if (admin) return true;
-  }
-  return false;
-}
+// hasRole definition moved to helpers section
 
 let chartEvolucaoAnual = null;   // <-- novo
 let chartPrevistoPago = null;
@@ -198,17 +177,24 @@ const NOMES_DIAS_CURTOS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'SÃ¡b', 'Dom'];
 
 // ---------- helpers supabase ----------
 async function hasRole(uid, roleName) {
-  const { data, error } = await supabase
+  const { data } = await supabase
     .from('app_users')
     .select('role')
     .eq('user_id', uid)
     .eq('role', roleName)
     .maybeSingle();
-  if (error) {
-    console.error('hasRole error', error);
-    return false;
+  if (data) return true;
+
+  if (roleName === 'explicador') {
+    const { data: admin } = await supabase
+      .from('app_users')
+      .select('role')
+      .eq('user_id', uid)
+      .eq('role', 'admin')
+      .maybeSingle();
+    if (admin) return true;
   }
-  return !!data;
+  return false;
 }
 
 async function getExplRow(uid) {

@@ -66,9 +66,19 @@
   <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="./public/js/supabaseClient.js"></script>
+  <script src="./public/js/auth.js"></script>
 </head>
 
 <body class="bg-background-light dark:bg-background-dark text-gray-900 dark:text-gray-100 min-h-screen">
+
+  <script>
+      // Standardized Auth Check
+      (async () => {
+        const user = await Auth.requireRole('explicador', './index.html');
+        if (!user) return;
+        // If authorized, the rest of the page logic (explicador.js) will handle the initialization
+      })();
+  </script>
 
   <div class="capa__overlay"></div>
 

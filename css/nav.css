@@ -1,0 +1,62 @@
+/* =========================================================
+   NAV.CSS — NAVEGAÇÃO FOOTER (MOBILE)
+   ========================================================= */
+
+.app-footer-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 70px;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding-bottom: env(safe-area-inset-bottom);
+    z-index: 1000;
+}
+
+/* Esconder em desktop por defeito, se necessário */
+@media (min-width: 768px) {
+    .app-footer-nav {
+        display: none;
+    }
+}
+
+.app-nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    color: var(--text-soft);
+    gap: 4px;
+    transition: color 0.2s ease;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-family: inherit;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.app-nav-item .material-symbols-outlined {
+    font-size: 24px;
+}
+
+.app-nav-item span:not(.material-symbols-outlined) {
+    font-size: 10px;
+    font-weight: 500;
+}
+
+.app-nav-item.active {
+    color: var(--primary);
+}
+
+/* Compensa o espaço do footer no body */
+.has-footer-nav {
+    padding-bottom: 80px !important;
+}

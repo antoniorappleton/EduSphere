@@ -58,7 +58,7 @@ async function carregarAluno() {
 
 async function carregarSessoes(alunoId) {
   const { data: sessoes } = await callExplFn("list_sessoes_aluno", {
-    aluno_id: alunoId
+    id_aluno: alunoId
   });
 
   let realizadas = sessoes.filter(s => s.estado === "REALIZADA").length;

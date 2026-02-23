@@ -1,53 +1,75 @@
 <!doctype html>
 <html lang="pt">
+
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <link rel="stylesheet" href="../../styles.css" />
   <link rel="stylesheet" href="../../css/explicador.css" />
   <link rel="stylesheet" href="../../css/aluno-perfil.css" />
-  
+
   <title>EduSphere — Alunos</title>
-  
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="../../public/js/supabaseClient.js"></script>
 </head>
+
 <body class="home">
 
   <section id="explPanel" class="expl-shell">
-    
+
     <!-- NAVIGATION -->
     <nav id="explSidebarNav" class="expl-sidebar-nav">
       <button class="expl-nav-btn" onclick="location.href='dashboard.html'">
-        <span class="expl-nav-icon"><svg class="expl-nav-svg" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg></span>
+        <span class="expl-nav-icon"><svg class="expl-nav-svg" viewBox="0 0 24 24">
+            <rect x="4" y="4" width="7" height="7" rx="1.5" />
+            <rect x="13" y="4" width="7" height="7" rx="1.5" />
+            <rect x="4" y="13" width="7" height="7" rx="1.5" />
+            <rect x="13" y="13" width="7" height="7" rx="1.5" />
+          </svg></span>
         <span class="expl-nav-label">Dashboard</span>
       </button>
 
       <button class="expl-nav-btn expl-nav-btn--active" onclick="location.href='alunos.html'">
-        <span class="expl-nav-icon"><svg class="expl-nav-svg" viewBox="0 0 24 24"><circle cx="12" cy="9" r="3.2"/><path d="M6.5 19.5c1.2-2.3 3-3.6 5.5-3.6s4.3 1.3 5.5 3.6"/></svg></span>
+        <span class="expl-nav-icon"><svg class="expl-nav-svg" viewBox="0 0 24 24">
+            <circle cx="12" cy="9" r="3.2" />
+            <path d="M6.5 19.5c1.2-2.3 3-3.6 5.5-3.6s4.3 1.3 5.5 3.6" />
+          </svg></span>
         <span class="expl-nav-label">Alunos</span>
       </button>
 
       <button class="expl-nav-btn" onclick="location.href='calendario.html'">
-        <span class="expl-nav-icon"><svg class="expl-nav-svg" viewBox="0 0 24 24"><rect x="4" y="5.5" width="16" height="14" rx="2"/><path d="M4 10h16"/><path d="M9 4v3"/><path d="M15 4v3"/></svg></span>
+        <span class="expl-nav-icon"><svg class="expl-nav-svg" viewBox="0 0 24 24">
+            <rect x="4" y="5.5" width="16" height="14" rx="2" />
+            <path d="M4 10h16" />
+            <path d="M9 4v3" />
+            <path d="M15 4v3" />
+          </svg></span>
         <span class="expl-nav-label">Calendário</span>
       </button>
 
       <button class="expl-nav-btn" onclick="location.href='faturacao.html'">
-        <span class="expl-nav-icon"><svg class="expl-nav-svg" viewBox="0 0 24 24"><path d="M15.5 7.5c-1-.7-2.1-1.1-3.4-1.1-2.6 0-4.6 1.8-4.6 4.6s2 4.6 4.6 4.6c1.3 0 2.4-.4 3.4-1.1"/><path d="M11 5v14"/></svg></span>
+        <span class="expl-nav-icon"><svg class="expl-nav-svg" viewBox="0 0 24 24">
+            <path d="M15.5 7.5c-1-.7-2.1-1.1-3.4-1.1-2.6 0-4.6 1.8-4.6 4.6s2 4.6 4.6 4.6c1.3 0 2.4-.4 3.4-1.1" />
+            <path d="M11 5v14" />
+          </svg></span>
         <span class="expl-nav-label">Faturação</span>
       </button>
 
       <button class="expl-nav-btn" onclick="location.href='relatorios.html'">
-        <span class="expl-nav-icon"><svg class="expl-nav-svg" viewBox="0 0 24 24"><path d="M4 18.5h16"/><path d="M6.5 15l3.2-4 3.2 2.7 4.1-5.2"/><path d="M16.8 8.5h3v3"/></svg></span>
+        <span class="expl-nav-icon"><svg class="expl-nav-svg" viewBox="0 0 24 24">
+            <path d="M4 18.5h16" />
+            <path d="M6.5 15l3.2-4 3.2 2.7 4.1-5.2" />
+            <path d="M16.8 8.5h3v3" />
+          </svg></span>
         <span class="expl-nav-label">Relatórios</span>
       </button>
-      
+
       <div style="margin-top:auto">
-         <button class="expl-nav-btn" id="btnLogoutNav" style="color:#ef4444">
-           <span class="expl-nav-label">Sair</span>
-         </button>
+        <button class="expl-nav-btn" id="btnLogoutNav" style="color:#ef4444">
+          <span class="expl-nav-label">Sair</span>
+        </button>
       </div>
     </nav>
 
@@ -61,164 +83,220 @@
       </header>
 
       <div class="expl-body">
-         
-         <!-- LISTA DE ALUNOS -->
-         <section id="view-lista-alunos">
-            <!-- CARTÃO PEQUENO: QUOTA + AÇÕES RÁPIDAS -->
-            <div class="expl-card expl-card--quota">
-              <h3 class="expl-subsection-title">Quota de alunos</h3>
-              <div class="expl-quota">
-                <p><strong>Limite:</strong> <span id="limite">Sem limite</span></p>
-                <p><strong>Ativos:</strong> <span id="contagem">0</span></p>
-                <p><strong>Restantes:</strong> <span id="restantes">—</span></p>
-              </div>
-              <h3 class="expl-subsection-title" style="margin-top:1rem;">Ações rápidas</h3>
-              <div class="expl-actions-row">
-                <button class="button secondary" id="btn-open-add-aluno">
-                  + Adicionar aluno
-                </button>
-              </div>
+
+        <!-- LISTA DE ALUNOS -->
+        <section id="view-lista-alunos">
+          <!-- CARTÃO PEQUENO: QUOTA + AÇÕES RÁPIDAS -->
+          <div class="expl-card expl-card--quota">
+            <h3 class="expl-subsection-title">Quota de alunos</h3>
+            <div class="expl-quota">
+              <p><strong>Limite:</strong> <span id="limite">Sem limite</span></p>
+              <p><strong>Ativos:</strong> <span id="contagem">0</span></p>
+              <p><strong>Restantes:</strong> <span id="restantes">—</span></p>
+            </div>
+            <h3 class="expl-subsection-title" style="margin-top:1rem;">Ações rápidas</h3>
+            <div class="expl-actions-row">
+              <button class="button secondary" id="btn-open-add-aluno">
+                + Adicionar aluno
+              </button>
+            </div>
+          </div>
+
+          <!-- CARTÃO GRANDE: LISTA DE ALUNOS -->
+          <div class="expl-card" style="margin-top:1.5rem;">
+            <h3 class="expl-subsection-title">Lista de alunos</h3>
+            <div class="dash-alunos-grid" id="alunos-cards-grid">
+              <!-- JS Fill -->
+              <p style="color:#999">A carregar lista de alunos...</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- PERFIL DO ALUNO (OCULTO INICIALMENTE) -->
+        <section id="view-perfil-aluno" style="display:none">
+
+          <div class="perfil-wrapper">
+            <!-- HEADER -->
+            <div class="perfil-header">
+              <button class="back-btn" onclick="fecharPerfilAluno()">
+                ← Voltar
+              </button>
+              <h2>Perfil do Aluno</h2>
+              <p class="subtitle">Informação detalhada e histórico</p>
             </div>
 
-            <!-- CARTÃO GRANDE: LISTA DE ALUNOS -->
-            <div class="expl-card" style="margin-top:1.5rem;">
-              <h3 class="expl-subsection-title">Lista de alunos</h3>
-              <div class="dash-alunos-grid" id="alunos-cards-grid">
-                 <!-- JS Fill -->
-                 <p style="color:#999">A carregar lista de alunos...</p>
-              </div>
-            </div>
-         </section>
-
-         <!-- PERFIL DO ALUNO (OCULTO INICIALMENTE) -->
-         <section id="view-perfil-aluno" style="display:none">
-            
-            <div class="perfil-wrapper">
-              <!-- HEADER -->
-              <div class="perfil-header">
-                <button class="back-btn" onclick="fecharPerfilAluno()">
-                  ← Voltar
-                </button>
-                <h2>Perfil do Aluno</h2>
-                <p class="subtitle">Informação detalhada e histórico</p>
+            <!-- INFO CARD -->
+            <section class="perfil-card perfil-card--main" id="aluno-info-card">
+              <div class="perfil-left">
+                <div class="avatar" id="alunoAvatar">??</div>
+                <div>
+                  <h3 id="alunoNome">—</h3>
+                  <p class="ano" id="alunoAno">—</p>
+                  <div class="badge-row">
+                    <span class="badge status active" id="alunoStatus">Ativo</span>
+                  </div>
+                  <div class="contact-row">
+                    <p><strong>Email:</strong> <span id="alunoEmail">—</span></p>
+                    <p><strong>Telemóvel:</strong> <span id="alunoTele">—</span></p>
+                    <p><strong>Inscrito desde:</strong> <span id="alunoDataInscricao">—</span></p>
+                  </div>
+                </div>
               </div>
 
-              <!-- INFO CARD -->
-              <section class="perfil-card perfil-card--main" id="aluno-info-card">
-                <div class="perfil-left">
-                  <div class="avatar" id="alunoAvatar">??</div>
-                  <div>
-                    <h3 id="alunoNome">—</h3>
-                    <p class="ano" id="alunoAno">—</p>
-                    <div class="badge-row">
-                      <span class="badge status active" id="alunoStatus">Ativo</span>
-                    </div>
-                    <div class="contact-row">
-                      <p><strong>Email:</strong> <span id="alunoEmail">—</span></p>
-                      <p><strong>Telemóvel:</strong> <span id="alunoTele">—</span></p>
-                      <p><strong>Inscrito desde:</strong> <span id="alunoDataInscricao">—</span></p>
-                    </div>
+              <div class="perfil-right">
+                <button id="btnPerfilEditar" class="edit-btn">Editar Perfil</button>
+              </div>
+            </section>
+
+            <!-- PRÓXIMA AULA -->
+            <section class="perfil-card perfil-card--next">
+              <div class="proxima-aula">
+                <span class="icon">🕒</span>
+                <span><strong>Próxima Aula:</strong> <span id="proximaAulaTxt">A carregar.</span></span>
+              </div>
+            </section>
+
+            <!-- TABS -->
+            <section class="perfil-card perfil-card--tabs">
+              <div class="tabs">
+                <button class="tab active" data-tab="explicacoes"
+                  onclick="showPerfilTab('explicacoes')">Explicações</button>
+                <button class="tab" data-tab="pagamentos" onclick="showPerfilTab('pagamentos')">Pagamentos</button>
+                <button class="tab" data-tab="exercicios" onclick="showPerfilTab('exercicios')">Exercícios</button>
+              </div>
+
+              <div class="tabs-content-wrapper">
+                <!-- EXPLICAÇÕES -->
+                <div id="tab-explicacoes" class="tab-content active">
+                  <h3>Histórico de Explicações</h3>
+                  <div class="table-wrapper perfil-table-wrapper">
+                    <table class="tabela perfil-tabela">
+                      <thead>
+                        <tr>
+                          <th>Data</th>
+                          <th>Início</th>
+                          <th>Fim</th>
+                          <th>Duração</th>
+                          <th>Estado</th>
+                        </tr>
+                      </thead>
+                      <tbody id="listaExplicacoes"></tbody>
+                    </table>
                   </div>
                 </div>
-
-                <div class="perfil-right">
-                  <button id="btnPerfilEditar" class="edit-btn">Editar Perfil</button>
-                </div>
-              </section>
-
-              <!-- PRÓXIMA AULA -->
-              <section class="perfil-card perfil-card--next">
-                <div class="proxima-aula">
-                  <span class="icon">🕒</span>
-                  <span><strong>Próxima Aula:</strong> <span id="proximaAulaTxt">A carregar.</span></span>
-                </div>
-              </section>
-
-              <!-- TABS -->
-              <section class="perfil-card perfil-card--tabs">
-                <div class="tabs">
-                  <button class="tab active" data-tab="explicacoes" onclick="showPerfilTab('explicacoes')">Explicações</button>
-                  <button class="tab" data-tab="pagamentos" onclick="showPerfilTab('pagamentos')">Pagamentos</button>
-                  <button class="tab" data-tab="exercicios" onclick="showPerfilTab('exercicios')">Exercícios</button>
-                </div>
-
-                <div class="tabs-content-wrapper">
-                  <!-- EXPLICAÇÕES -->
-                  <div id="tab-explicacoes" class="tab-content active">
-                    <h3>Histórico de Explicações</h3>
-                    <div class="table-wrapper perfil-table-wrapper">
-                      <table class="tabela perfil-tabela">
-                        <thead><tr><th>Data</th><th>Início</th><th>Fim</th><th>Duração</th><th>Estado</th></tr></thead>
-                        <tbody id="listaExplicacoes"></tbody>
-                      </table>
-                    </div>
+                <!-- PAGAMENTOS -->
+                <div id="tab-pagamentos" class="tab-content">
+                  <div class="pag-header">
+                    <h3>Histórico de Pagamentos</h3>
+                    <div class="total">€<span id="pagTotal">0.00</span> <small>Total Recebido</small></div>
                   </div>
-                  <!-- PAGAMENTOS -->
-                  <div id="tab-pagamentos" class="tab-content">
-                    <div class="pag-header">
-                      <h3>Histórico de Pagamentos</h3>
-                      <div class="total">€<span id="pagTotal">0.00</span> <small>Total Recebido</small></div>
-                    </div>
-                    <div class="table-wrapper perfil-table-wrapper">
-                      <table class="tabela perfil-tabela">
-                         <thead><tr><th>Data</th><th>Período</th><th>Valor</th><th>Método</th><th>Estado</th></tr></thead>
-                         <tbody id="listaPagamentos"></tbody>
-                      </table>
-                    </div>
-                  </div>
-                  <!-- EXERCÍCIOS -->
-                  <div id="tab-exercicios" class="tab-content">
-                     <div class="pag-header">
-                       <h3>Exercícios e TPC</h3>
-                       <button class="button secondary button--sm" id="btn-novo-exercicio">+ Enviar exercício</button>
-                     </div>
-                     <div class="table-wrapper perfil-table-wrapper">
-                       <table class="tabela perfil-tabela">
-                          <thead><tr><th>Data</th><th>Título</th><th>Entrega</th><th>Estado</th><th>Ações</th></tr></thead>
-                          <tbody id="listaExercicios"><tr><td colspan="5">A carregar...</td></tr></tbody>
-                       </table>
-                     </div>
+                  <div class="table-wrapper perfil-table-wrapper">
+                    <table class="tabela perfil-tabela">
+                      <thead>
+                        <tr>
+                          <th>Data</th>
+                          <th>Período</th>
+                          <th>Valor</th>
+                          <th>Método</th>
+                          <th>Estado</th>
+                        </tr>
+                      </thead>
+                      <tbody id="listaPagamentos"></tbody>
+                    </table>
                   </div>
                 </div>
-              </section>
-            </div>
-         </section>
+                <!-- EXERCÍCIOS -->
+                <div id="tab-exercicios" class="tab-content">
+                  <div class="pag-header">
+                    <h3>Exercícios e TPC</h3>
+                    <button class="button secondary button--sm" id="btn-novo-exercicio">+ Enviar exercício</button>
+                  </div>
+                  <div class="table-wrapper perfil-table-wrapper">
+                    <table class="tabela perfil-tabela">
+                      <thead>
+                        <tr>
+                          <th>Data</th>
+                          <th>Título</th>
+                          <th>Entrega</th>
+                          <th>Estado</th>
+                          <th>Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody id="listaExercicios">
+                        <tr>
+                          <td colspan="5">A carregar...</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+        </section>
       </div>
     </div>
+    <!-- BOTTOM NAVIGATION (MOBILE) -->
+    <nav class="app-footer-nav">
+      <a href="dashboard.html" class="app-nav-item">
+        <span class="material-symbols-outlined">grid_view</span>
+        <span>Dashboard</span>
+      </a>
+      <a href="alunos.html" class="app-nav-item">
+        <span class="material-symbols-outlined">group</span>
+        <span>Alunos</span>
+      </a>
+      <a href="calendario.html" class="app-nav-item">
+        <span class="material-symbols-outlined">calendar_month</span>
+        <span>Calendário</span>
+      </a>
+      <a href="faturacao.html" class="app-nav-item">
+        <span class="material-symbols-outlined">payments</span>
+        <span>Faturação</span>
+      </a>
+      <a href="relatorios.html" class="app-nav-item">
+        <span class="material-symbols-outlined">trending_up</span>
+        <span>Relatórios</span>
+      </a>
+    </nav>
   </section>
+
+  <!-- Navigation Logic -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
+  <script src="../../public/js/nav.js"></script>
 
   <!-- MODAL ADD ALUNO -->
   <div class="modal" id="modal-add-aluno">
-     <div class="modal__backdrop" onclick="closeModal('modal-add-aluno')"></div>
-     <div class="modal__dialog">
-        <div class="modal__header">
-           <h2>Adicionar Aluno</h2>
-           <button class="modal__close" onclick="closeModal('modal-add-aluno')">&times;</button>
+    <div class="modal__backdrop" onclick="closeModal('modal-add-aluno')"></div>
+    <div class="modal__dialog">
+      <div class="modal__header">
+        <h2>Adicionar Aluno</h2>
+        <button class="modal__close" onclick="closeModal('modal-add-aluno')">&times;</button>
+      </div>
+      <form id="fNewAluno">
+        <div class="expl-grid-2">
+          <label>Nome <input type="text" class="input" name="nome" required /></label>
+          <label>Apelido <input type="text" class="input" name="apelido" /></label>
         </div>
-        <form id="fNewAluno">
-           <div class="expl-grid-2">
-              <label>Nome <input type="text" class="input" name="nome" required /></label>
-              <label>Apelido <input type="text" class="input" name="apelido" /></label>
-           </div>
-           <label>Email (para login) <input type="email" class="input" name="email" required /></label>
-           <label>Telemóvel <input type="tel" class="input" name="telemovel" /></label>
-           <div class="expl-grid-2">
-              <label>Ano Escolar <input type="number" class="input" name="ano" min="1" max="12" /></label>
-              <label>Valor/Hora (€) <input type="number" class="input" name="valor_hora" step="0.5" /></label>
-           </div>
-           <div style="margin-top:1rem; text-align:right;">
-              <button type="submit" class="button primary" id="btnCreateAluno">Criar Aluno</button>
-           </div>
-           <div id="msgNewAluno" style="color:red; margin-top:10px;"></div>
-        </form>
-     </div>
+        <label>Email (para login) <input type="email" class="input" name="email" required /></label>
+        <label>Telemóvel <input type="tel" class="input" name="telemovel" /></label>
+        <div class="expl-grid-2">
+          <label>Ano Escolar <input type="number" class="input" name="ano" min="1" max="12" /></label>
+          <label>Valor/Hora (€) <input type="number" class="input" name="valor_hora" step="0.5" /></label>
+        </div>
+        <div style="margin-top:1rem; text-align:right;">
+          <button type="submit" class="button primary" id="btnCreateAluno">Criar Aluno</button>
+        </div>
+        <div id="msgNewAluno" style="color:red; margin-top:10px;"></div>
+      </form>
+    </div>
   </div>
 
   <script>
     // Navigation Logic
     function fecharPerfilAluno() {
-       document.getElementById('view-perfil-aluno').style.display = 'none';
-       document.getElementById('view-lista-alunos').style.display = 'block';
+      document.getElementById('view-perfil-aluno').style.display = 'none';
+      document.getElementById('view-lista-alunos').style.display = 'block';
     }
     document.getElementById('btnLogoutNav')?.addEventListener('click', async () => {
       await supabase.auth.signOut();
@@ -226,14 +304,14 @@
     });
     // Toggle Tabs
     function showPerfilTab(tabId) {
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        document.getElementById('tab-' + tabId).classList.add('active');
-        document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
-        document.querySelector(`.tab[data-tab="${tabId}"]`).classList.add('active');
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      document.getElementById('tab-' + tabId).classList.add('active');
+      document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+      document.querySelector(`.tab[data-tab="${tabId}"]`).classList.add('active');
     }
-    
+
     // Auth Check
-    (async function() {
+    (async function () {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) location.href = '../../index.html';
     })();
@@ -241,4 +319,5 @@
   <script src="../../public/js/explicador-service.js"></script>
   <script src="../../public/js/alunos-explicador.js"></script>
 </body>
+
 </html>

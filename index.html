@@ -205,20 +205,34 @@
       el.setAttribute('aria-hidden', 'true');
     }
 
+    /* ========== AUTH AUTO-REDIRECT ========== */
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const { data: profile } = await supabase
+          .from('app_users')
+          .select('role')
+          .eq('user_id', session.user.id)
+          .maybeSingle();
+
+        if (profile?.role === 'admin') window.location.href = './public/admin.html';
+        else if (profile?.role === 'explicador') window.location.href = './pages/explicador/dashboard.html';
+        else if (profile?.role === 'aluno') window.location.href = './aluno.html';
+      }
+    })();
+
     /* ========== LOGIN EXPLICADOR (MODAL) ========== */
     const navExpl = $('#navExplicador');
     const explModal = $('#explModal');
     const explClose = $('#explClose');
 
     navExpl?.addEventListener('click', async (e) => {
-      e.preventDefault(); // bloquear navegação normal
-
-      const href = navExpl.getAttribute('href') || './explicador.html';
+      e.preventDefault();
       const { data: { session } } = await supabase.auth.getSession();
       const isExpl = session?.user && await hasRole(session.user.id, 'explicador');
 
       if (isExpl) {
-        window.location.href = href;
+        window.location.href = './pages/explicador/dashboard.html';
         return;
       }
       openModal(explModal);
@@ -250,8 +264,8 @@
         return;
       }
       msg.textContent = 'Login efetuado! A redirecionar...';
-      await new Promise(r => setTimeout(r, 500)); // Pequeno delay para garantir persistência
-      window.location.href = './explicador.html';
+      await new Promise(r => setTimeout(r, 500));
+      window.location.href = './pages/explicador/dashboard.html';
     });
 
     /* ========== LOGIN ALUNO (MODAL) ========== */

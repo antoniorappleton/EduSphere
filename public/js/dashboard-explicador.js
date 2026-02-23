@@ -14,7 +14,7 @@ async function loadDashboard() {
   // Se for Admin a usar email de admin, pode não ter linha aqui.
   const { data: expl, error: errExpl } = await supabase
     .from('explicadores')
-    .select('id, nome')
+    .select('id_explicador, nome')
     .eq('user_id', session.user.id)
     .maybeSingle();
 
@@ -56,7 +56,7 @@ async function loadDashboard() {
   // Preencher nome
   if(expl.nome) document.getElementById('expl-nome-header').textContent = expl.nome;
 
-  const explId = expl.id;
+  const explId = expl.id_explicador;
   const today = new Date();
   const currentMonth = today.getMonth() + 1; // 1-12
   const currentYear = today.getFullYear();
@@ -66,7 +66,7 @@ async function loadDashboard() {
   const { data: pags, error: errPags } = await supabase
     .from('pagamentos')
     .select('valor_previsto, valor_pago, estado')
-    .eq('explicador_id', explId)
+    .eq('id_explicador', explId)
     .eq('ano', currentYear)
     .eq('mes', currentMonth);
 
@@ -92,7 +92,7 @@ async function loadDashboard() {
   const { data: alunos, error: errAlunos } = await supabase
     .from('alunos')
     .select('*')
-    .eq('explicador_id', explId)
+    .eq('id_explicador', explId)
     .eq('is_active', true)
     .order('created_at', { ascending: false })
     .limit(4);
@@ -103,7 +103,7 @@ async function loadDashboard() {
      const { count } = await supabase
         .from('alunos')
         .select('*', { count: 'exact', head: true })
-        .eq('explicador_id', explId)
+        .eq('id_explicador', explId)
         .eq('is_active', true);
      countEl.textContent = `(${count || 0} ativos)`;
   }
@@ -148,7 +148,7 @@ function renderAlunos(lista) {
       </div>
       <div>
         <div style="font-weight:500; color:#111827;">${aluno.nome} ${aluno.apelido||''}</div>
-        <div style="font-size:0.85rem; color:#6b7280;">${aluno.ano_escolaridade}º Ano</div>
+        <div style="font-size:0.85rem; color:#6b7280;">${aluno.ano}º Ano</div>
       </div>
     `;
     grid.appendChild(card);

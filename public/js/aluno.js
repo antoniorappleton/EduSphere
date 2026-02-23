@@ -93,20 +93,19 @@ async function loadDashboardData() {
     if (!State.aluno) return;
 
     // Próxima Aula
-    const now = new Date().toISOString();
+    const now = new Date().toISOString().slice(0, 10);
     const { data: nextClass } = await supabase
-        .from('explicacoes')
+        .from('sessoes_explicacao')
         .select('*')
-        .eq('aluno_id', State.aluno.id)
-        .gte('starts_at', now)
-        .order('starts_at', { ascending: true })
+        .eq('id_aluno', State.aluno.id_aluno)
+        .gte('data', now)
+        .order('data', { ascending: true })
         .limit(1)
         .single();
 
     if (nextClass) {
-        const date = new Date(nextClass.starts_at);
         document.getElementById('nextClassInfo').textContent = nextClass.detalhes || 'Explicação';
-        document.getElementById('nextClassDate').textContent = date.toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute:'2-digit' });
+        document.getElementById('nextClassDate').textContent = `${nextClass.data} ${nextClass.hora_inicio || ''}`;
     }
 
     // Mock KPI Data
@@ -120,25 +119,24 @@ async function loadCalendarData() {
     container.innerHTML = '<p>A carregar...</p>';
 
     const { data: classes } = await supabase
-        .from('explicacoes')
+        .from('sessoes_explicacao')
         .select('*')
-        .eq('aluno_id', State.aluno.id)
-        .order('starts_at', { ascending: false });
+        .eq('id_aluno', State.aluno.id_aluno)
+        .order('data', { ascending: false });
 
     container.innerHTML = '';
     if (classes && classes.length > 0) {
         classes.forEach(cls => {
-            const date = new Date(cls.starts_at);
             const card = document.createElement('div');
             card.className = 'card';
             card.innerHTML = `
                 <div class="flex-between">
-                    <strong>${date.toLocaleDateString('pt-PT')}</strong>
-                    <span class="badge-dot" style="background:${cls.status==='AGENDADA'?'var(--c-warning)':'var(--c-success)'};position:static;"></span>
+                    <strong>${cls.data}</strong>
+                    <span class="badge-dot" style="background:${cls.estado==='AGENDADA'?'var(--c-warning)':'var(--c-success)'};position:static;"></span>
                 </div>
-                <p class="mt-2 text-xl font-bold">${date.toLocaleTimeString('pt-PT', {hour:'2-digit', minute:'2-digit'})}</p>
-                <p class="text-muted text-sm">${cls.duration_minutes} min</p>
-                <p class="mt-2 text-sm">${cls.detalhes || 'Sem detalhes'}</p>
+                <p class="mt-2 text-xl font-bold">${cls.hora_inicio || '--:--'}</p>
+                <p class="text-muted text-sm">${cls.duracao_min} min</p>
+                <p class="mt-2 text-sm">${cls.notas || 'Sem notas'}</p>
             `;
             container.appendChild(card);
         });

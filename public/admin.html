@@ -1,21 +1,33 @@
 <!doctype html>
 <html lang="pt">
+
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>EduSphere — Administração</title>
 
-  <link rel="stylesheet" href="../styles.css"/>
+  <link rel="stylesheet" href="../styles.css" />
 
   <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="./js/supabaseClient.js"></script>
+  <script src="./js/auth.js"></script>
 </head>
+
 <body class="home">
+
+  <script>
+    // Standardized Auth Check
+    (async () => {
+      const user = await Auth.requireRole('admin', '../index.html');
+      if (!user) return;
+      // If authorized, the page logic below handles UI display
+    })();
+  </script>
   <header>
     <div class="header-inner">
       <a class="logo" href="../index.html">
-        <img src="/public/img/logo-icon.svg" alt="EduSphere"/>
+        <img src="/public/img/logo-icon.svg" alt="EduSphere" />
         <span>EduSphere</span>
       </a>
       <button id="btnLogout" class="button" style="margin-left:auto">Sair</button>
@@ -26,98 +38,98 @@
 
   <main class="admin-main">
 
-  <!-- LOGIN ADMIN (continua em cartão único) -->
-  <section class="auth__panel admin-login-card" id="adminLogin" style="display:none">
-    <h1>Entrar (Admin)</h1>
-    <form id="fAdminLogin" class="auth__form">
-      <input name="email" type="email" placeholder="Email" required/>
-      <input name="password" type="password" placeholder="Password" required/>
-      <button class="button" type="submit">Entrar</button>
-      <div id="msgAdmin" class="auth__msg"></div>
-    </form>
-  </section>
+    <!-- LOGIN ADMIN (continua em cartão único) -->
+    <section class="auth__panel admin-login-card" id="adminLogin" style="display:none">
+      <h1>Entrar (Admin)</h1>
+      <form id="fAdminLogin" class="auth__form">
+        <input name="email" type="email" placeholder="Email" required />
+        <input name="password" type="password" placeholder="Password" required />
+        <button class="button" type="submit">Entrar</button>
+        <div id="msgAdmin" class="auth__msg"></div>
+      </form>
+    </section>
 
-  <!-- PAINEL ADMIN EM CARTÕES -->
-  <section id="adminPanel" class="admin-panel" style="display:none">
+    <!-- PAINEL ADMIN EM CARTÕES -->
+    <section id="adminPanel" class="admin-panel" style="display:none">
 
-    <header class="admin-panel__header">
-      <div>
-        <h1>Painel de Administração</h1>
-        <p class="auth__hint">
-          Gerir contas de explicador, permissões de acesso e estado das contas (ativo/bloqueado).
-        </p>
+      <header class="admin-panel__header">
+        <div>
+          <h1>Painel de Administração</h1>
+          <p class="auth__hint">
+            Gerir contas de explicador, permissões de acesso e estado das contas (ativo/bloqueado).
+          </p>
+        </div>
+      </header>
+
+      <div class="admin-grid">
+
+        <!-- CARTÃO 1: CRIAR CONTA -->
+        <section class="admin-card">
+          <h2>Criar conta de Professor</h2>
+
+          <form id="fNewExpl" class="auth__form admin-form">
+            <div class="admin-form__grid">
+              <input name="nome" placeholder="Nome" required />
+              <input name="apelido" placeholder="Apelido" />
+              <input name="email" type="email" placeholder="Email" required />
+              <input name="password" type="password" placeholder="Password" minlength="6" required />
+              <input name="contacto" placeholder="Contacto (opcional)" />
+              <input name="max" type="number" min="0" placeholder="Limite de alunos (0 = sem limite)" />
+            </div>
+            <button class="button" type="submit">Criar Explicador</button>
+            <div id="signupExplMsg" class="auth__msg"></div>
+          </form>
+        </section>
+
+        <!-- CARTÃO 2: RESUMO + TABELA -->
+        <section class="admin-card">
+          <header class="admin-card__header">
+            <div>
+              <h2>Gerir conta do Professor</h2>
+              <p class="auth__hint">
+                Nesta tabela consegues ver o estado da conta, se tem login associado e aplicar ações
+                como bloquear, reset de password ou eliminação.
+              </p>
+            </div>
+          </header>
+
+          <!-- mini-cards de resumo -->
+          <div class="admin-stats-row">
+            <div class="admin-stat">
+              <p class="admin-stat__label">Total de explicadores</p>
+              <p class="admin-stat__value" id="stat-total">0</p>
+            </div>
+            <div class="admin-stat">
+              <p class="admin-stat__label">Ativos</p>
+              <p class="admin-stat__value" id="stat-ativos">0</p>
+            </div>
+            <div class="admin-stat admin-stat--warning">
+              <p class="admin-stat__label">Bloqueados</p>
+              <p class="admin-stat__value" id="stat-bloqueados">0</p>
+            </div>
+          </div>
+
+          <!-- tabela -->
+          <div class="admin-table-wrapper">
+            <table class="table" id="tblExpl">
+              <thead>
+                <tr>
+                  <th>Nome</th>
+                  <th>Apelido</th>
+                  <th>Email</th>
+                  <th>Contacto</th>
+                  <th>Limite</th>
+                  <th>Permissão / Login</th>
+                  <th>Estado</th>
+                  <th style="width:1%"></th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </section>
       </div>
-    </header>
-
-    <div class="admin-grid">
-
-      <!-- CARTÃO 1: CRIAR CONTA -->
-      <section class="admin-card">
-        <h2>Criar conta de Professor</h2>
-
-        <form id="fNewExpl" class="auth__form admin-form">
-          <div class="admin-form__grid">
-            <input name="nome"     placeholder="Nome" required />
-            <input name="apelido"  placeholder="Apelido" />
-            <input name="email"    type="email" placeholder="Email" required />
-            <input name="password" type="password" placeholder="Password" minlength="6" required />
-            <input name="contacto" placeholder="Contacto (opcional)" />
-            <input name="max"      type="number" min="0" placeholder="Limite de alunos (0 = sem limite)" />
-          </div>
-          <button class="button" type="submit">Criar Explicador</button>
-          <div id="signupExplMsg" class="auth__msg"></div>
-        </form>
-      </section>
-
-      <!-- CARTÃO 2: RESUMO + TABELA -->
-      <section class="admin-card">
-        <header class="admin-card__header">
-          <div>
-            <h2>Gerir conta do Professor</h2>
-            <p class="auth__hint">
-              Nesta tabela consegues ver o estado da conta, se tem login associado e aplicar ações
-              como bloquear, reset de password ou eliminação.
-            </p>
-          </div>
-        </header>
-
-        <!-- mini-cards de resumo -->
-        <div class="admin-stats-row">
-          <div class="admin-stat">
-            <p class="admin-stat__label">Total de explicadores</p>
-            <p class="admin-stat__value" id="stat-total">0</p>
-          </div>
-          <div class="admin-stat">
-            <p class="admin-stat__label">Ativos</p>
-            <p class="admin-stat__value" id="stat-ativos">0</p>
-          </div>
-          <div class="admin-stat admin-stat--warning">
-            <p class="admin-stat__label">Bloqueados</p>
-            <p class="admin-stat__value" id="stat-bloqueados">0</p>
-          </div>
-        </div>
-
-        <!-- tabela -->
-        <div class="admin-table-wrapper">
-          <table class="table" id="tblExpl">
-            <thead>
-            <tr>
-              <th>Nome</th>
-              <th>Apelido</th>
-              <th>Email</th>
-              <th>Contacto</th>
-              <th>Limite</th>
-              <th>Permissão / Login</th>
-              <th>Estado</th>
-              <th style="width:1%"></th>
-            </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </section>
-    </div>
-  </section>
+    </section>
   </main>
 
 
@@ -132,11 +144,11 @@
       <form id="fEditExpl" class="auth__form">
         <input type="hidden" name="id_explicador" />
         <div class="grid2">
-          <input name="nome"     placeholder="Nome" required />
-          <input name="apelido"  placeholder="Apelido" />
-          <input name="email"    type="email" placeholder="Email" required />
+          <input name="nome" placeholder="Nome" required />
+          <input name="apelido" placeholder="Apelido" />
+          <input name="email" type="email" placeholder="Email" required />
           <input name="contacto" placeholder="Contacto" />
-          <input name="max"      type="number" min="0" placeholder="Limite de alunos" />
+          <input name="max" type="number" min="0" placeholder="Limite de alunos" />
         </div>
         <button class="button" type="submit">Guardar</button>
         <div id="editMsg" class="auth__msg"></div>
@@ -148,7 +160,7 @@
 
   <script>
     // verificar se é admin e mostrar ecrã certo
-    async function isAdmin(uid){
+    async function isAdmin(uid) {
       const { data, error } = await supabase
         .from('app_users')
         .select('role')
@@ -156,40 +168,40 @@
         .eq('role', 'admin')
         .limit(1);
       if (error) return false;
-      return Array.isArray(data) && data.length>0;
+      return Array.isArray(data) && data.length > 0;
     }
 
-    async function ensureAdminUI(){
+    async function ensureAdminUI() {
       const login = document.getElementById('adminLogin');
       const panel = document.getElementById('adminPanel');
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user){ login.style.display='block'; panel.style.display='none'; return; }
-      if (await isAdmin(session.user.id)){ login.style.display='none'; panel.style.display='block'; }
-      else { await supabase.auth.signOut().catch(()=>{}); login.style.display='block'; panel.style.display='none'; }
+      if (!session?.user) { login.style.display = 'block'; panel.style.display = 'none'; return; }
+      if (await isAdmin(session.user.id)) { login.style.display = 'none'; panel.style.display = 'block'; }
+      else { await supabase.auth.signOut().catch(() => { }); login.style.display = 'block'; panel.style.display = 'none'; }
     }
     document.addEventListener('DOMContentLoaded', ensureAdminUI);
 
     // login inline
-    document.getElementById('fAdminLogin')?.addEventListener('submit', async (ev)=>{
+    document.getElementById('fAdminLogin')?.addEventListener('submit', async (ev) => {
       ev.preventDefault();
       const msg = document.getElementById('msgAdmin');
       msg.textContent = 'A entrar...';
       const email = ev.target.email.value.trim();
       const password = ev.target.password.value;
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error){ msg.textContent='Credenciais inválidas.'; return; }
-      if (await isAdmin(data.user.id)){
-        document.getElementById('adminLogin').style.display='none';
-        document.getElementById('adminPanel').style.display='block';
+      if (error) { msg.textContent = 'Credenciais inválidas.'; return; }
+      if (await isAdmin(data.user.id)) {
+        document.getElementById('adminLogin').style.display = 'none';
+        document.getElementById('adminPanel').style.display = 'block';
       } else {
-        await supabase.auth.signOut().catch(()=>{});
-        msg.textContent='Esta conta não tem permissões de administrador.';
+        await supabase.auth.signOut().catch(() => { });
+        msg.textContent = 'Esta conta não tem permissões de administrador.';
       }
     });
 
     // logout
-    document.getElementById('btnLogout')?.addEventListener('click', async ()=>{
-      await supabase.auth.signOut().catch(()=>{});
+    document.getElementById('btnLogout')?.addEventListener('click', async () => {
+      await supabase.auth.signOut().catch(() => { });
       window.location.href = '../index.html';
     });
 
@@ -200,4 +212,5 @@
   <!-- JS específico do admin -->
   <script defer src="./js/pages/admin.js"></script>
 </body>
+
 </html>
