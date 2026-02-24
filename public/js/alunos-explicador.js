@@ -259,7 +259,94 @@ async function deleteExercicio(id) {
   } catch(e) { alert("Erro ao apagar: " + e.message); }
 }
 
-// Helper: Fechar modais
+// ================== CHAT LOGIC ==================
+
+async function carregarMensagensTutor(idAluno) {
+  const container = document.getElementById('chat-container-expl');
+  if (!container) return;
+
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    // Precisamos do user_id do aluno
+    const { data: aluno } = await supabase.from('alunos').select('user_id').eq('id_aluno', idAluno).single();
+    if (!aluno?.user_id) {
+      container.innerHTML = '<p class="text-xs text-gray-500">Este aluno ainda não tem conta de utilizador associada.</p>';
+      return;
+    }
+
+    const { data: msgs, error } = await supabase
+      .from('mensagens')
+      .select('*')
+      .or(`and(de_user_id.eq.${user.id},para_user_id.eq.${aluno.user_id}),and(de_user_id.eq.${aluno.user_id},para_user_id.eq.${user.id})`)
+      .order('created_at', { ascending: true });
+
+    if (error) throw error;
+
+    if (!msgs || !msgs.length) {
+      container.innerHTML = '<div class="text-center py-4 text-gray-400 text-xs">Sem mensagens ainda.</div>';
+      return;
+    }
+
+    container.innerHTML = msgs.map(m => {
+      const isMine = m.de_user_id === user.id;
+      const time = new Date(m.created_at).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+      return `
+        <div class="chat-msg ${isMine ? 'chat-msg--mine' : 'chat-msg--theirs'}">
+          <div class="chat-msg__bubble">
+            <p>${m.texto}</p>
+            <span class="chat-msg__meta">${time}</span>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    container.scrollTop = container.scrollHeight;
+  } catch (err) {
+    console.error("Erro ao carregar mensagens:", err);
+    container.innerHTML = '<p class="text-red-500 text-xs">Erro ao carregar mensagens.</p>';
+  }
+}
+
+async function enviarMensagemTutor(e) {
+  e.preventDefault();
+  const form = e.target;
+  const input = form.texto;
+  const texto = input.value.trim();
+  if (!texto) return;
+
+  const perfilView = document.getElementById('view-perfil-aluno');
+  const alunoId = perfilView.dataset.currentAlunoId;
+  const btn = form.querySelector('button');
+
+  try {
+    btn.disabled = true;
+    const { data: { user } } = await supabase.auth.getUser();
+    const { data: aluno } = await supabase.from('alunos').select('user_id, id_aluno').eq('id_aluno', alunoId).single();
+
+    if (!aluno?.user_id) throw new Error("Aluno sem conta de utilizador.");
+
+    const { error } = await supabase.from('mensagens').insert({
+      de_user_id: user.id,
+      para_user_id: aluno.user_id,
+      texto: texto,
+      id_aluno: aluno.id_aluno
+    });
+
+    if (error) throw error;
+
+    input.value = '';
+    await carregarMensagensTutor(alunoId);
+  } catch (err) {
+    console.error("Erro ao enviar:", err);
+    alert("Erro ao enviar: " + err.message);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// ================== HELPER: Fechar modais ==================
 function closeModal(id) {
   const m = document.getElementById(id);
   if (m) {
@@ -528,7 +615,21 @@ document.addEventListener('DOMContentLoaded', () => {
       if (btn) btn.disabled = false;
     }
   });
+
+  // Listener para o form de chat no perfil
+  document.getElementById('fMsgExpl')?.addEventListener('submit', enviarMensagemTutor);
+
+  // Hook para carregar mensagens quando a tab é aberta
+  // Como showPerfilTab é global e definida em explicador.js, vamos adicionar um listener 
+  // manual nos botões de Tab para disparar o load se for mensagens.
+  document.querySelectorAll('.tab[data-tab="mensagens"]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const alunoId = document.getElementById('view-perfil-aluno').dataset.currentAlunoId;
+      if (alunoId) carregarMensagensTutor(alunoId);
+    });
+  });
 });
+
 
 // ================== OPEN EDIT ALUNO ==================
 

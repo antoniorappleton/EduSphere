@@ -160,7 +160,23 @@
             </div>
             <span class="material-symbols-outlined text-gray-300">chevron_right</span>
           </div>
+
+          <div
+            class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between cursor-pointer hover:bg-gray-50"
+            onclick="document.querySelector('[data-target=exercicios]').click()">
+            <div class="flex items-center gap-3">
+              <div class="h-8 w-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                <span class="material-symbols-outlined text-lg">description</span>
+              </div>
+              <div>
+                <p class="text-sm font-bold text-gray-900">Exercícios</p>
+                <p id="kpiExercicios" class="text-xs text-gray-500">Tarefas e materiais</p>
+              </div>
+            </div>
+            <span class="material-symbols-outlined text-gray-300">chevron_right</span>
+          </div>
         </div>
+
 
       </section>
 
@@ -283,6 +299,16 @@
         <p id="msgStatus" class="text-xs text-center text-gray-500 mt-1 flex-shrink-0"></p>
       </section>
 
+      <!-- VIEW: EXERCÍCIOS -->
+      <section id="view-exercicios" class="view-section hidden space-y-6">
+        <h2 class="text-xl font-bold text-gray-900">Exercícios</h2>
+        <div id="exerciseList" class="space-y-4">
+          <div class="p-8 text-center text-gray-400 text-sm bg-white rounded-xl border border-gray-100 border-dashed">
+            A carregar exercícios...</div>
+        </div>
+      </section>
+
+
       <!-- VIEW: PERFIL -->
       <section id="view-perfil" class="view-section hidden space-y-6">
         <h2 class="text-xl font-bold text-gray-900">O Meu Perfil</h2>
@@ -330,7 +356,12 @@
         <span class="material-symbols-outlined">chat</span>
         <span>Chat</span>
       </button>
+      <button class="app-nav-item" data-target="exercicios">
+        <span class="material-symbols-outlined">description</span>
+        <span>Tarefas</span>
+      </button>
       <button class="app-nav-item" data-target="perfil">
+
         <span class="material-symbols-outlined">person</span>
         <span>Eu</span>
       </button>
@@ -362,7 +393,9 @@
       // Logic hooks
       if (targetId === 'calendario') carregarCalendarioNovo();
       if (targetId === 'mensagens') carregarMensagens();
+      if (targetId === 'exercicios') carregarExercicios();
     }
+
 
     navBtns.forEach(btn => {
       btn.addEventListener('click', () => switchTab(btn.dataset.target));
@@ -786,7 +819,70 @@
     window.confirmarPresenca = confirmarPresenca;
 
 
+    // --- EXERCISES LOGIC ---
+    async function carregarExercicios() {
+      const container = document.getElementById('exerciseList');
+      if (!container || !ALUNO?.id_aluno) return;
+
+      try {
+        const { data, error } = await supabase
+          .from('exercicios')
+          .select('*')
+          .eq('id_aluno', ALUNO.id_aluno)
+          .order('data_envio', { ascending: false });
+
+        if (error) throw error;
+
+        const items = data || [];
+        if (!items.length) {
+          container.innerHTML = `
+            <div class="p-8 text-center text-gray-400 text-sm bg-white rounded-xl border border-gray-100 border-dashed">
+              Ainda não tens exercícios atribuídos.</div>`;
+          return;
+        }
+
+        const htmlItems = await Promise.all(items.map(async (ex) => {
+          let href = ex.url;
+          // Se não for URL completo, assume ficheiro no Storage "exercicios"
+          if (!href || /^https?:\/\//.test(href) === false) {
+            try {
+              const { data: s, error: sErr } = await supabase.storage
+                .from('exercicios')
+                .createSignedUrl(ex.url, 3600);
+              if (!sErr) href = s?.signedUrl;
+            } catch (e) { console.error(e); }
+          }
+
+          const dEnvio = new Date(ex.data_envio).toLocaleDateString('pt-PT');
+          const dEntrega = ex.data_entrega_prevista ? new Date(ex.data_entrega_prevista).toLocaleDateString('pt-PT') : 'Sem prazo';
+
+          return `
+            <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between group">
+              <div class="flex items-center gap-3">
+                <div class="h-10 w-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                  <span class="material-symbols-outlined">docs</span>
+                </div>
+                <div>
+                  <p class="text-sm font-bold text-gray-900">${ex.nome}</p>
+                  <p class="text-[10px] text-gray-500 uppercase font-bold tracking-tight">Prazo: ${dEntrega}</p>
+                </div>
+              </div>
+              <a href="${href || '#'}" target="_blank" class="h-8 w-8 rounded-full bg-gray-50 text-gray-400 flex items-center justify-center hover:bg-emerald-50 hover:text-emerald-600 transition-colors">
+                <span class="material-symbols-outlined text-lg">download</span>
+              </a>
+            </div>
+          `;
+        }));
+
+        container.innerHTML = htmlItems.join('');
+      } catch (err) {
+        console.error('Erro ao carregar exercícios:', err);
+        container.innerHTML = "<p class='text-xs text-red-500'>Erro ao carregar exercícios.</p>";
+      }
+    }
+
     // --- MESSAGING LOGIC ---
+
     async function carregarMensagens() {
       const container = document.getElementById('chatContainer');
       if (!container || !ALUNO?.id_explicador) return;
