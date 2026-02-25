@@ -310,3 +310,142 @@ BEGIN
           FOR SELECT USING (auth.uid() = user_id);
     END IF;
 END $$;
+
+-- Fix for sessoes_explicacao (Ensuring RLS is enabled as per dashboard)
+ALTER TABLE IF EXISTS public.sessoes_explicacao ENABLE ROW LEVEL SECURITY;
+
+-- Fix for profiles (Assuming it links to auth.uid() via 'id' or 'user_id')
+ALTER TABLE IF EXISTS public.profiles ENABLE ROW LEVEL SECURITY;
+
+DO $$ 
+BEGIN
+    -- Policy for profiles
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies 
+        WHERE tablename = 'profiles' AND policyname = 'Users can view own profile'
+    ) THEN
+        -- Try to detect column name: id or user_id
+        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'profiles' AND column_name = 'user_id') THEN
+            CREATE POLICY "Users can view own profile" ON public.profiles
+              FOR SELECT USING (auth.uid() = user_id);
+        ELSE
+            CREATE POLICY "Users can view own profile" ON public.profiles
+              FOR SELECT USING (auth.uid() = id);
+        END IF;
+        END IF;
+    END IF;
+END $$;
+
+-- =============================================================================
+-- 13. FIX SECURITY DEFINER VIEWS
+-- =============================================================================
+
+ALTER VIEW IF EXISTS public.v_realizado_explicador SET (security_invoker = true);
+ALTER VIEW IF EXISTS public.v_meus_alunos SET (security_invoker = true);
+ALTER VIEW IF EXISTS public.v_sessoes_detalhe SET (security_invoker = true);
+ALTER VIEW IF EXISTS public.v_explicacoes_detalhe SET (security_invoker = true);
+ALTER VIEW IF EXISTS public.v_mapa_mensal SET (security_invoker = true);
+ALTER VIEW IF EXISTS public.v_previsto_explicador SET (security_invoker = true);
+ALTER VIEW IF EXISTS public.v_current_user_role SET (security_invoker = true);
+ALTER VIEW IF EXISTS public.v_pagamentos_detalhe SET (security_invoker = true);
+
+-- =============================================================================
+-- 14. ADDITIONAL SECURITY FIXES (Search Path & Policies)
+-- =============================================================================
+
+-- 1. Correct Search Path for all identified functions (Dynamic Approach)
+DO $$
+DECLARE
+    func_record RECORD;
+    func_names text[] := ARRAY[
+        'my_explicador_id', 'my_aluno_id', 'expl_relatorio_alunos_mes', 
+        'expl_relatorio_sessoes_mes', 'fn_check_quota', 'fat_mes_corrente', 
+        'is_admin', 'promote_admin_by_email', 'set_updated_at', 'my_aluno_ids', 
+        'can_access_aluno', 'update_estado_pagamento', 'is_explicador', 
+        'my_taught_aluno_ids', 'my_all_visible_aluno_ids', 'can_access_aluno_any'
+    ];
+    fname text;
+BEGIN
+    FOREACH fname IN ARRAY func_names
+    LOOP
+        FOR func_record IN 
+            SELECT n.nspname, p.proname, pg_get_function_identity_arguments(p.oid) as args
+            FROM pg_proc p
+            JOIN pg_namespace n ON p.pronamespace = n.oid
+            WHERE n.nspname = 'public' AND p.proname = fname
+        LOOP
+            EXECUTE format('ALTER FUNCTION %I.%I(%s) SET search_path = public', 
+                           func_record.nspname, func_record.proname, func_record.args);
+        END LOOP;
+    END LOOP;
+END $$;
+
+-- 2. Remove permissive development policy and restore secure ones
+DROP POLICY IF EXISTS "dev_mensagens_all" ON public.mensagens;
+
+-- Enable RLS (Idempotent)
+ALTER TABLE IF EXISTS public.login_audit ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.sessoes_explicacao ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.mensagens ENABLE ROW LEVEL SECURITY;
+
+-- Apply Secure Policies (Dynamic & Robust)
+DO $$ 
+BEGIN
+    -- 1. login_audit
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'login_audit' AND policyname = 'Users can view own login audit') THEN
+        CREATE POLICY "Users can view own login audit" ON public.login_audit FOR SELECT USING (auth.uid() = user_id);
+    END IF;
+
+    -- 2. profiles
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'profiles' AND policyname = 'Users can view own profile') THEN
+        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'profiles' AND column_name = 'user_id') THEN
+            CREATE POLICY "Users can view own profile" ON public.profiles FOR SELECT USING (auth.uid() = user_id);
+        ELSE
+            CREATE POLICY "Users can view own profile" ON public.profiles FOR SELECT USING (auth.uid() = id);
+        END IF;
+    END IF;
+
+    -- 3. sessoes_explicacao
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'sessoes_explicacao' AND policyname = 'Explicador manage sessoes') THEN
+        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'sessoes_explicacao' AND column_name = 'id_explicador') THEN
+            CREATE POLICY "Explicador manage sessoes" ON public.sessoes_explicacao FOR ALL USING (
+                id_explicador IN (SELECT id_explicador FROM public.explicadores WHERE user_id = auth.uid())
+            );
+        END IF;
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'sessoes_explicacao' AND policyname = 'Aluno read sessoes') THEN
+        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'sessoes_explicacao' AND column_name = 'id_aluno') THEN
+            CREATE POLICY "Aluno read sessoes" ON public.sessoes_explicacao FOR SELECT USING (
+                id_aluno IN (SELECT id_aluno FROM public.alunos WHERE user_id = auth.uid())
+            );
+        END IF;
+    END IF;
+
+    -- 4. mensagens
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'mensagens' AND policyname = 'Users read own messages') THEN
+        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'mensagens' AND column_name = 'de_user_id') THEN
+            CREATE POLICY "Users read own messages" ON public.mensagens FOR SELECT USING (
+                auth.uid()::text = de_user_id::text OR auth.uid()::text = para_user_id::text
+            );
+        ELSIF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'mensagens' AND column_name = 'id_aluno') THEN
+            CREATE POLICY "Users read own messages" ON public.mensagens FOR SELECT USING (
+                id_aluno IN (SELECT id_aluno FROM public.alunos WHERE user_id = auth.uid()) OR
+                id_aluno IN (SELECT id_aluno FROM public.alunos WHERE id_explicador IN (SELECT id_explicador FROM public.explicadores WHERE user_id = auth.uid()))
+            );
+        END IF;
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'mensagens' AND policyname = 'Users insert own messages') THEN
+        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'mensagens' AND column_name = 'de_user_id') THEN
+            CREATE POLICY "Users insert own messages" ON public.mensagens FOR INSERT WITH CHECK (
+                auth.uid()::text = de_user_id::text
+            );
+        ELSIF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'mensagens' AND column_name = 'id_aluno') THEN
+            CREATE POLICY "Users insert own messages" ON public.mensagens FOR INSERT WITH CHECK (
+                 id_aluno IN (SELECT id_aluno FROM public.alunos WHERE user_id = auth.uid()) 
+            );
+        END IF;
+    END IF;
+END $$;
