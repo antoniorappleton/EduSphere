@@ -291,3 +291,22 @@ CREATE POLICY "Users insert own messages" ON public.mensagens
   FOR INSERT WITH CHECK (
     auth.uid()::text = de_user_id::text
   );
+
+-- =============================================================================
+-- 12. TABELA login_audit (Audit Log for Logins)
+-- =============================================================================
+
+-- Ensure RLS is enabled
+ALTER TABLE IF EXISTS public.login_audit ENABLE ROW LEVEL SECURITY;
+
+-- 1. Allow authenticated users to view their own login audit records
+DO $$ 
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies 
+        WHERE tablename = 'login_audit' AND policyname = 'Users can view own login audit'
+    ) THEN
+        CREATE POLICY "Users can view own login audit" ON public.login_audit
+          FOR SELECT USING (auth.uid() = user_id);
+    END IF;
+END $$;
