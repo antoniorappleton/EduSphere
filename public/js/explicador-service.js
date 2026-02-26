@@ -85,9 +85,9 @@ window.ExplicadorService = {
   },
 
   // 4. CALENDÁRIO / SESSÕES
-  async listSessoes(alunoId = null) {
+    async listSessoes(alunoId = null) {
       const action = alunoId ? 'list_sessoes_aluno' : 'list_sessoes_explicador';
-      const payload = alunoId ? { aluno_id: alunoId } : {};
+      const payload = alunoId ? { id_aluno: alunoId } : {};
 
       const { data, error } = await supabase.functions.invoke('expl-alunos', {
         body: { action, payload }
@@ -125,23 +125,20 @@ window.ExplicadorService = {
   },
 
   async createExercicio(payload) {
-    // payload: { id_aluno, id_explicador, nome, tipo, url, data_entrega_prevista }
-    const { data, error } = await supabase
-      .from('exercicios')
-      .insert(payload)
-      .select()
-      .single();
+    // payload: { id_aluno, nome, tipo, url, data_entrega_prevista }
+    const { data, error } = await supabase.functions.invoke('expl-alunos', {
+      body: { action: 'create_exercicio', payload }
+    });
     if (error) throw error;
     return data;
   },
 
-  async deleteExercicio(id) {
-    const { error } = await supabase
-      .from('exercicios')
-      .delete()
-      .eq('id_exercicio', id);
+  async deleteExercicio(id_exercicio) {
+    const { data, error } = await supabase.functions.invoke('expl-alunos', {
+      body: { action: 'delete_exercicio', payload: { id_exercicio } }
+    });
     if (error) throw error;
-    return true;
+    return data;
   },
 
   async uploadFile(file) {

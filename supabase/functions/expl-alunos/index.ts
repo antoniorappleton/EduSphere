@@ -1101,13 +1101,15 @@ serve(async (req) => {
        ======================= */ if (action === "upsert_sessao_aluno") {
       const p = payload || {};
       const idSessao = p.id_sessao || null;
-      const alunoId = String(p.aluno_id || "").trim();
+      // Suporta id_aluno ou aluno_id para evitar erro 400
+      const alunoId = String(p.aluno_id || p.id_aluno || "").trim();
       const dataStr = p.data;
       const horaIni = p.hora_inicio;
       const horaFim = p.hora_fim;
       const dur = p.duracao_min;
       const estado = p.estado || "AGENDADA";
-      const obs = p.observacoes || null;
+      // Suporta observacoes ou notas para consistência
+      const obs = p.observacoes || p.notas || null;
       if (!alunoId || !dataStr) {
         return new Response(JSON.stringify({
           error: "aluno_id e data são obrigatórios"
@@ -1280,7 +1282,7 @@ serve(async (req) => {
        ======================= */
     if (action === "upsert_pagamento_aluno") {
       const p = payload || {};
-      const idPagamento = p.id_pagamento || null;
+      const idPagamento = p.id_pagamento || p.id_pagamento || null;
       const idAluno = p.id_aluno;
       const ano = Number(p.ano);
       const mes = Number(p.mes);
@@ -1371,144 +1373,58 @@ serve(async (req) => {
     }
 
     /* =======================
-       LISTAR SESSÕES DO EXPLICADOR (todas)
+       CRIAR EXERCÍCIO
+       payload: { id_aluno, nome, tipo, url, data_entrega_prevista }
        ======================= */
-    if (action === "list_sessoes_explicador") {
-      // Buscar todas as sessões deste explicador, com nome do aluno
-      const { data: sessoes, error } = await svc
-        .from("sessoes")
-        .select("*, alunos!inner(nome, apelido)")
-        .eq("id_explicador", myExplId)
-        .order("data", { ascending: true });
+    if (action === "create_exercicio") {
+      const p = payload || {};
+      if (!p.id_aluno || !p.nome || !p.tipo || !p.url) {
+        return new Response(JSON.stringify({ error: "Dados incompletos" }), { status: 400, headers: cors(origin) });
+      }
+
+      const { data, error } = await svc
+        .from("exercicios")
+        .insert({
+          id_aluno: p.id_aluno,
+          id_explicador: myExplId,
+          nome: p.nome,
+          tipo: p.tipo,
+          url: p.url,
+          data_entrega_prevista: p.data_entrega_prevista || null
+        })
+        .select()
+        .single();
 
       if (error) {
-        console.error("Erro list_sessoes_explicador", error);
+        console.error("Erro create_exercicio", error);
         return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: cors(origin) });
       }
 
-      // Flatten aluno name into each session
-      const result = (sessoes || []).map(s => ({
-        ...s,
-        aluno_nome: s.alunos ? `${s.alunos.nome} ${s.alunos.apelido || ''}`.trim() : 'Aluno',
-        alunos: undefined
-      }));
-
-      return new Response(JSON.stringify(result), { status: 200, headers: cors(origin) });
+      return new Response(JSON.stringify(data), { status: 201, headers: cors(origin) });
     }
 
     /* =======================
-       SET MENSALIDADE AVISADA (sino)
-       payload: { aluno_id, avisado: boolean }
+       APAGAR EXERCÍCIO
+       payload: { id_exercicio }
        ======================= */
-    if (action === "set_mensalidade_avisada") {
+    if (action === "delete_exercicio") {
       const p = payload || {};
-      const alunoId = p.aluno_id;
-      const avisado = p.avisado;
-
-      if (!alunoId) {
-        return new Response(JSON.stringify({ error: "aluno_id é obrigatório" }), { status: 400, headers: cors(origin) });
+      if (!p.id_exercicio) {
+        return new Response(JSON.stringify({ error: "id_exercicio é obrigatório" }), { status: 400, headers: cors(origin) });
       }
 
       const { error } = await svc
-        .from("alunos")
-        .update({ mensalidade_avisada: !!avisado })
-        .eq("id_aluno", alunoId)
+        .from("exercicios")
+        .delete()
+        .eq("id_exercicio", p.id_exercicio)
         .eq("id_explicador", myExplId);
 
       if (error) {
-        console.error("Erro set_mensalidade_avisada", error);
+        console.error("Erro delete_exercicio", error);
         return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: cors(origin) });
       }
 
       return new Response(JSON.stringify({ ok: true }), { status: 200, headers: cors(origin) });
-    }
-
-    /* =======================
-       GET RELATÓRIOS
-       Dados agregados para gráficos e KPIs
-       ======================= */
-    if (action === "get_relatorios") {
-      const now = new Date();
-      const curYear = now.getFullYear();
-      const curMonth = now.getMonth() + 1;
-
-      // 1. Faturação por mês (últimos 12 meses)
-      const { data: fatData, error: fatErr } = await svc
-        .from("pagamentos")
-        .select("ano, mes, valor_previsto, valor_pago, estado")
-        .eq("id_explicador", myExplId)
-        .gte("ano", curYear - 1)
-        .order("ano", { ascending: true })
-        .order("mes", { ascending: true });
-
-      if (fatErr) {
-        console.error("Erro get_relatorios faturacao", fatErr);
-        return new Response(JSON.stringify({ error: fatErr.message }), { status: 400, headers: cors(origin) });
-      }
-
-      // Agrupar faturação por mês
-      const fatByMonth: Record<string, { ano: number; mes: number; total_previsto: number; total_pago: number }> = {};
-      (fatData || []).forEach((p: any) => {
-        const key = `${p.ano}-${String(p.mes).padStart(2, '0')}`;
-        if (!fatByMonth[key]) fatByMonth[key] = { ano: p.ano, mes: p.mes, total_previsto: 0, total_pago: 0 };
-        fatByMonth[key].total_previsto += Number(p.valor_previsto || 0);
-        fatByMonth[key].total_pago += Number(p.valor_pago || 0);
-      });
-      const faturacao = Object.values(fatByMonth).sort((a, b) => (a.ano * 100 + a.mes) - (b.ano * 100 + b.mes)).slice(-12);
-
-      // 2. Sessões por mês (últimos 12 meses)
-      const oneYearAgo = `${curYear - 1}-${String(curMonth).padStart(2, '0')}-01`;
-      const { data: sessoesData, error: sessErr } = await svc
-        .from("sessoes")
-        .select("data, estado")
-        .eq("id_explicador", myExplId)
-        .gte("data", oneYearAgo);
-
-      if (sessErr) {
-        console.error("Erro get_relatorios sessoes", sessErr);
-      }
-
-      const sessByMonth: Record<string, { ano: number; mes: number; total_sessoes: number }> = {};
-      (sessoesData || []).forEach((s: any) => {
-        if (!s.data) return;
-        const d = new Date(s.data);
-        const y = d.getFullYear();
-        const m = d.getMonth() + 1;
-        const key = `${y}-${String(m).padStart(2, '0')}`;
-        if (!sessByMonth[key]) sessByMonth[key] = { ano: y, mes: m, total_sessoes: 0 };
-        sessByMonth[key].total_sessoes += 1;
-      });
-      const sessoes_mes = Object.values(sessByMonth).sort((a, b) => (a.ano * 100 + a.mes) - (b.ano * 100 + b.mes)).slice(-12);
-
-      // 3. Alunos ativos por mês (a partir dos pagamentos como proxy)
-      const alunosByMonth: Record<string, { ano: number; mes: number; total_alunos: number }> = {};
-      (fatData || []).forEach((p: any) => {
-        const key = `${p.ano}-${String(p.mes).padStart(2, '0')}`;
-        if (!alunosByMonth[key]) alunosByMonth[key] = { ano: p.ano, mes: p.mes, total_alunos: 0 };
-        alunosByMonth[key].total_alunos += 1;
-      });
-      const alunos_mes = Object.values(alunosByMonth).sort((a, b) => (a.ano * 100 + a.mes) - (b.ano * 100 + b.mes)).slice(-12);
-
-      // 4. Disciplinas (distribuição de alunos por disciplina/matéria)
-      const { data: alunosDisc } = await svc
-        .from("alunos")
-        .select("disciplina")
-        .eq("id_explicador", myExplId)
-        .eq("is_active", true);
-
-      const discCount: Record<string, number> = {};
-      (alunosDisc || []).forEach((a: any) => {
-        const disc = a.disciplina || 'Outra';
-        discCount[disc] = (discCount[disc] || 0) + 1;
-      });
-      const disciplinas = Object.entries(discCount).map(([disciplina, total]) => ({ disciplina, total }));
-
-      return new Response(JSON.stringify({
-        faturacao,
-        sessoes_mes,
-        alunos_mes,
-        disciplinas
-      }), { status: 200, headers: cors(origin) });
     }
 
     // ação desconhecida

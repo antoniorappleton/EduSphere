@@ -259,6 +259,23 @@ async function deleteExercicio(id) {
   } catch(e) { alert("Erro ao apagar: " + e.message); }
 }
 
+async function handleDeleteAluno() {
+  const perfilView = document.getElementById('view-perfil-aluno');
+  const id = perfilView.dataset.currentAlunoId;
+  const nome = document.getElementById('alunoNome').textContent;
+  
+  if (!id || !confirm(`Tem a certeza que deseja ELIMINAR definitivamente o aluno "${nome}"? Esta ação não pode ser desfeita.`)) return;
+
+  try {
+    await ExplicadorService.deleteAluno(id);
+    alert("Aluno eliminado com sucesso.");
+    fecharPerfilAluno(); // Função que volta para a lista
+    initAlunosPage();    // Recarrega a lista
+  } catch (err) {
+    alert("Erro ao eliminar aluno: " + err.message);
+  }
+}
+
 // ================== CHAT LOGIC ==================
 
 async function carregarMensagensTutor(idAluno) {
@@ -563,6 +580,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const alunoId = perfilView?.dataset.currentAlunoId;
     if (alunoId) openEditAluno(alunoId);
   });
+
+  // Botão "Eliminar Aluno" na vista de perfil
+  document.getElementById('btnPerfilEliminar')?.addEventListener('click', handleDeleteAluno);
 
   // Submit do Form Editar Aluno
   const formEdit = document.getElementById('fEditAluno');
