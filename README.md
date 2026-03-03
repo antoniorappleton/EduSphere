@@ -6,7 +6,8 @@ A **EduSphere** é uma plataforma moderna e premium desenvolvida para centraliza
 
 ## 🚀 Visão Geral e Estrutura PWA
 A EduSphere é uma **Progressive Web App (PWA)** completa, permitindo a instalação direta no telemóvel (Android e iOS).
-- **Service Worker (v8)**: Garante caching inteligente, performance off-line e carregamentos instantâneos.
+- **Offline-First Architecture**: Funciona sem internet usando IndexedDB (Dexie.js) para persistência local e sincronização automática.
+- **Service Worker (v10)**: Implementa estratégias de cache *Stale-While-Revalidate* e suporte a Background Sync.
 - **Instalação Facilitada**: Popup inteligente integrado que guia utilizadores de Android e iOS na instalação da app.
 
 ---
@@ -53,6 +54,13 @@ Interface otimizada para utilização rápida no telemóvel:
 - **Authentication**: Sistema de login robusto por perfis com redirecionamento automático baseado em roles.
 - **Edge Functions**: Lógica de servidor para geração de faturas e processamento de dados complexos.
 - **Storage**: Armazenamento seguro de ficheiros de exercícios no Supabase Storage.
+
+### 🌐 Arquitetura Offline-First
+O EduSphere utiliza um sistema de sincronização híbrido para garantir produtividade contínua:
+- **Local Persistence (IndexedDB)**: Utiliza `Dexie.js` para armazenar alunos, sessões e pagamentos localmente.
+- **Outbox Pattern**: As modificações offline são enfileiradas numa `outbox` e processadas assim que a rede é detectada.
+- **Sync Engine**: Motor de sincronização que combina `Background Sync API`, eventos de rede (`window.online`) e polling de segurança.
+- **Conflict Resolution**: Implementa a estratégia *Last-Write-Wins* baseada em timestamps (`updated_at`) e UUIDs de operação.
 
 ---
 
