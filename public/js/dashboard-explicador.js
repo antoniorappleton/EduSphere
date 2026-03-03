@@ -7,6 +7,7 @@ let _dashPagamentos = [];
 
 async function loadDashboard() {
   console.log("Loading Dashboard...");
+  if (window.SyncEngine) SyncEngine.initOfflineUI();
 
   // 1. Verificar Sessão
   const { data: { session } } = await supabase.auth.getSession();

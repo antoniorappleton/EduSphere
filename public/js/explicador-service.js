@@ -85,24 +85,69 @@ window.ExplicadorService = {
   },
 
   // 4. CALENDÁRIO / SESSÕES
-    async listSessoes(alunoId = null) {
-      const action = alunoId ? 'list_sessoes_aluno' : 'list_sessoes_explicador';
-      const payload = alunoId ? { id_aluno: alunoId } : {};
+  async listSessoes(alunoId = null) {
+    const action = alunoId ? 'list_sessoes_aluno' : 'list_sessoes_explicador';
+    const payload = alunoId ? { id_aluno: alunoId } : {};
 
+    try {
       const { data, error } = await supabase.functions.invoke('expl-alunos', {
         body: { action, payload }
       });
       if (error) throw error;
-      return data || [];
+      
+      const sessoes = data || [];
+      // ATUALIZAR CACHE LOCAL (Optimistic/Background)
+      if (typeof db !== 'undefined') {
+        db.sessoes.bulkPut(sessoes.map(s => ({...s, pending_sync: false})));
+      }
+      return sessoes;
+    } catch (err) {
+      console.warn("listSessoes falhou (offline?), usando cache local:", err);
+      if (typeof db !== 'undefined') {
+        if (alunoId) {
+          return await db.sessoes.where('id_aluno').equals(alunoId).toArray();
+        } else {
+          return await db.sessoes.toArray();
+        }
+      }
+      throw err;
+    }
   },
 
-  async upsertSessao(payload) {
-    // payload: { id_sessao?, id_aluno, data, hora_inicio, duracao_min, estado, notas }
-    const { data, error } = await supabase.functions.invoke('expl-alunos', {
-      body: { action: 'upsert_sessao_aluno', payload }
-    });
-    if (error) throw error;
-    return data;
+  async upsertSessao(payload, options = {}) {
+    // 1. ADICIONAR METADADOS DE CONFLITO
+    if (!payload.operation_id) payload.operation_id = crypto.randomUUID();
+    payload.updated_at = new Date().toISOString();
+
+    // Se for um Sync, não fazemos cache recursivo
+    if (!options.isSync && typeof db !== 'undefined') {
+      // CACHE OPTIMISTIC
+      await db.sessoes.put({ ...payload, pending_sync: true });
+    }
+
+    try {
+      const { data, error } = await supabase.functions.invoke('expl-alunos', {
+        body: { action: 'upsert_sessao_aluno', payload }
+      });
+      if (error) throw error;
+
+      // Sucesso: marcar como sincronizado no local
+      if (typeof db !== 'undefined') {
+        await db.sessoes.update(payload.id_sessao || data.id_sessao, { pending_sync: false });
+      }
+      return data;
+    } catch (err) {
+      if (options.isSync) throw err; // Repassar erro se for o SyncEngine a tentar
+
+      console.warn("upsertSessao falhou (offline), guardando na Outbox:", err);
+      if (typeof OutboxManager !== 'undefined') {
+        await OutboxManager.enqueue('update', 'sessao', payload.id_sessao || 'new', payload);
+        // Tentar registar sync automático
+        if (typeof SyncEngine !== 'undefined') SyncEngine.requestSync();
+        return { ...payload, offline: true };
+      }
+      throw err;
+    }
   },
 
   async deleteSessao(id_sessao) {

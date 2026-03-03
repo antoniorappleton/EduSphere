@@ -1,85 +1,82 @@
 // service-worker.js
 
-const CACHE_STATIC = "edusphere-static-v8";
-const CACHE_DYNAMIC = "edusphere-dynamic-v8";
-
-const ASSETS = [
-  "./", // raiz do projeto
+const CACHE_NAME = "edusphere-v10"; // Incrementar para forçar atualização
+const STATIC_ASSETS = [
+  "./",
   "./index.html",
   "./login.html",
   "./aluno.html",
   "./explicador.html",
   "./styles.css",
+  "./css/nav.css",
   "./manifest.json",
-
-  // ícones PWA
-  "./public/img/imagens/logo-icon192.png",
-  "./public/img/imagens/logo-icon512.png",
-
-  // JS principal
+  "./public/js/db.js",
+  "./public/js/sync-engine.js",
   "./public/js/supabaseClient.js",
-  "./public/js/router.js",
+  "./public/js/explicador-service.js",
+  "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js",
+  "https://unpkg.com/dexie@latest/dist/dexie.js",
+  "https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0",
+  "./public/img/imagens/logo-icon192.png",
+  "./public/img/imagens/logo-icon512.png"
 ];
 
-// INSTALL – pré-cache estático
+// INSTALL: Pre-cache assets estáticos
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_STATIC).then((cache) => cache.addAll(ASSETS)),
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
   );
   self.skipWaiting();
 });
 
-// ACTIVATE – limpar caches antigos
+// ACTIVATE: Limpar caches antigos
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches
-      .keys()
-      .then((keys) =>
-        Promise.all(
-          keys
-            .filter((key) => key !== CACHE_STATIC && key !== CACHE_DYNAMIC)
-            .map((key) => caches.delete(key)),
-        ),
-      ),
+    caches.keys().then((keys) => {
+      return Promise.all(
+        keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))
+      );
+    })
   );
   self.clients.claim();
 });
 
-// FETCH – cache-first com fallback à rede e cache dinâmica
+// FETCH: Stale-While-Revalidate para assets, Network-Only para API
 self.addEventListener("fetch", (event) => {
-  const req = event.request;
+  const url = new URL(event.request.url);
 
-  // Apenas GET
-  if (req.method !== "GET") return;
+  // 1. Ignorar pedidos não-GET e pedidos à API (Supabase)
+  // A cache de dados é feita no IndexedDB, não aqui.
+  if (event.request.method !== "GET" || url.host.includes("supabase.co")) {
+    return;
+  }
 
+  // 2. Estratégia Stale-While-Revalidate
   event.respondWith(
-    caches.match(req).then((cacheRes) => {
-      if (cacheRes) return cacheRes;
-
-      return fetch(req)
-        .then((networkRes) => {
-          // cache dinâmica só para respostas “boas”
-          if (
-            networkRes &&
-            networkRes.status === 200 &&
-            networkRes.type === "basic"
-          ) {
-            const resClone = networkRes.clone();
-            caches.open(CACHE_DYNAMIC).then((cache) => {
-              cache.put(req, resClone);
-            });
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.match(event.request).then((cachedResponse) => {
+        const fetchPromise = fetch(event.request).then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            cache.put(event.request, networkResponse.clone());
           }
-          return networkRes;
-        })
-        .catch(() => {
-          // fallback simples para pedidos de páginas HTML
-          if (req.headers.get("accept")?.includes("text/html")) {
-            return new Response(
-              "<h2>Offline</h2><p>Sem ligação. Tenta novamente mais tarde.</p>",
-              { headers: { "Content-Type": "text/html" } },
-            );
-          }
+          return networkResponse;
         });
-    }),
+        return cachedResponse || fetchPromise;
+      });
+    })
   );
 });
+
+// SYNC: Background Sync
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'sync-outbox') {
+    event.waitUntil(triggerSyncInClients());
+  }
+});
+
+async function triggerSyncInClients() {
+  const allClients = await clients.matchAll({ type: 'window' });
+  for (const client of allClients) {
+    client.postMessage({ type: 'SYNC_NOW' });
+  }
+}

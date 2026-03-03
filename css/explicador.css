@@ -26,6 +26,71 @@ body.home main.auth {
   min-height: calc(100vh - 120px);
 }
 
+/* --- PWA Status Badges --- */
+.connection-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  transition: all 0.3s ease;
+}
+.connection-badge .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #cbd5e1;
+}
+.connection-badge.online {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+  color: #166534;
+}
+.connection-badge.online .dot {
+  background: #22c55e;
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.4);
+}
+.connection-badge.offline {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #991b1b;
+}
+.connection-badge.offline .dot {
+  background: #ef4444;
+}
+
+.sync-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #1e40af;
+  margin-left: 8px;
+}
+.sync-badge .material-symbols-outlined {
+  font-size: 14px;
+  animation: spin 2s linear infinite;
+}
+@keyframes spin { 100% { transform: rotate(360deg); } }
+
+.sync-badge.hidden { display: none; }
+
+.status-tag.pending-sync {
+  background: #fef9c3;
+  color: #854d0e;
+  border: 1px border #fde047;
+}
+
 .expl-main {
   flex: 1;
   min-width: 0;

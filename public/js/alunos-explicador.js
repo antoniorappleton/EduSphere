@@ -144,18 +144,24 @@ async function openPerfil(id) {
 function renderSessoesTable(list) {
   const tbody = document.getElementById('listaExplicacoes');
   if (!tbody) return;
-  tbody.innerHTML = list.length ? list.map(s => `
-    <tr>
-      <td>${new Date(s.data).toLocaleDateString('pt-PT')}</td>
-      <td>${s.hora_inicio?.slice(0,5)}</td>
-      <td>${s.hora_fim?.slice(0,5) || '—'}</td>
-      <td>${s.duracao_min} min</td>
-      <td><span class="badge ${s.estado?.toLowerCase()}">${s.estado}</span></td>
-      <td>
-        <button class="button secondary button--sm" onclick="openModalSessao('${s.id_sessao}')" title="Diário de Bordo">📝</button>
-      </td>
-    </tr>
-  `).join('') : '<tr><td colspan="6">Sem histórico.</td></tr>';
+  tbody.innerHTML = list.length ? list.map(s => {
+    const dateStr = new Date(s.data).toLocaleDateString('pt-PT');
+    // Se estiver pendente de sync, mostrar aviso
+    const syncTag = s.pending_sync ? `<span class="status-tag pending-sync" title="A aguardar internet">Pendente</span>` : "";
+
+    return `
+      <tr data-id="${s.id_sessao}">
+        <td>${dateStr}</td>
+        <td>${(s.hora_inicio || '??:??').slice(0, 5)} - ${s.hora_fim ? s.hora_fim.slice(0, 5) : '??:??'}</td>
+        <td>${syncTag} <span class="status-tag status-${(s.estado || 'AGENDADA').toLowerCase()}">${s.estado || 'AGENDADA'}</span></td>
+        <td>
+          <button class="btn-detalhe" onclick="openModalSessao('${s.id_sessao}')">
+            <span class="material-symbols-outlined">description</span>
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('') : '<tr><td colspan="4">Sem histórico.</td></tr>';
 }
 
 function renderPagamentosTable(list) {
@@ -407,6 +413,7 @@ function closeModal(id) {
 // Iniciar quando o DOM estiver pronto
 document.addEventListener('DOMContentLoaded', () => {
   initAlunosPage();
+  if (window.SyncEngine) SyncEngine.initOfflineUI();
 
   // Abrir Modal
   document.getElementById('btn-open-add-aluno')?.addEventListener('click', () => {
