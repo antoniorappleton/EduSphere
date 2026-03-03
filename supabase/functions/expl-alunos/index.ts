@@ -1076,9 +1076,13 @@ serve(async (req) => {
           headers: cors(origin)
         });
       }
-      const { data, error } = await svc.from("sessoes_explicacao").select("id_sessao, data, hora_inicio, hora_fim, duracao_min, estado, observacoes").eq("id_explicador", myExplId).eq("id_aluno", alunoId).order("data", {
-        ascending: true
-      });
+      const { data, error } = await svc
+        .from("sessoes_explicacao")
+        .select("id_sessao, data, hora_inicio, hora_fim, duracao_min, estado, observacoes, sumario, exercicios_realizados, notas_proxima_sessao")
+        .eq("id_explicador", myExplId)
+        .eq("id_aluno", alunoId)
+        .order("data", { ascending: true });
+
       if (error) {
         console.error("list_sessoes_aluno error", error);
         return new Response(JSON.stringify({
@@ -1096,7 +1100,7 @@ serve(async (req) => {
     /* =======================
        CRIAR / EDITAR SESSÃO (UPSERT)
        payload:
-         criar:  { aluno_id, data, hora_inicio?, hora_fim?, duracao_min?, estado?, observacoes? }
+         criar:  { aluno_id, data, hora_inicio?, hora_fim?, duracao_min?, estado?, observacoes?, sumario?, exercicios_realizados?, notas_proxima_sessao? }
          editar: { id_sessao, aluno_id, data, ... }
        ======================= */ if (action === "upsert_sessao_aluno") {
       const p = payload || {};
@@ -1105,11 +1109,16 @@ serve(async (req) => {
       const alunoId = String(p.aluno_id || p.id_aluno || "").trim();
       const dataStr = p.data;
       const horaIni = p.hora_inicio;
-      const horaFim = p.hora_fim;
+      let horaFim = p.hora_fim;
       const dur = p.duracao_min;
       const estado = p.estado || "AGENDADA";
-      // Suporta observacoes ou notas para consistência
+
+      // Campos do Diário de Bordo
       const obs = p.observacoes || p.notas || null;
+      const sumario = p.sumario || null;
+      const exercicios = p.exercicios_realizados || null;
+      const notasProx = p.notas_proxima_sessao || null;
+
       if (!alunoId || !dataStr) {
         return new Response(JSON.stringify({
           error: "aluno_id e data são obrigatórios"
@@ -1118,6 +1127,24 @@ serve(async (req) => {
           headers: cors(origin)
         });
       }
+
+      // Validação/Normalização de hora_fim (TIME)
+      if (horaFim !== undefined && horaFim !== null) {
+        const hf = String(horaFim).trim();
+        if (hf === "" || hf === "null") {
+          horaFim = null;
+        } else {
+          // Regex simples para HH:MM ou HH:MM:SS
+          if (!/^([01]\d|2[0-3]):([0-5]\d)(:([0-5]\d))?$/.test(hf)) {
+            return new Response(JSON.stringify({ error: "hora_fim inválida. Usa formato HH:MM" }), {
+              status: 400,
+              headers: cors(origin)
+            });
+          }
+          horaFim = hf;
+        }
+      }
+
       const aluno = await getAlunoDoExpl(alunoId);
       if (aluno.id_explicador !== myExplId) {
         return new Response(JSON.stringify({
@@ -1127,18 +1154,26 @@ serve(async (req) => {
           headers: cors(origin)
         });
       }
-      const payloadSessao = {
+
+      const payloadSessao: any = {
         id_explicador: myExplId,
         id_aluno: alunoId,
         data: dataStr,
         estado
       };
+
       if (horaIni) payloadSessao.hora_inicio = horaIni;
-      if (horaFim) payloadSessao.hora_fim = horaFim;
+      if (horaFim !== undefined) payloadSessao.hora_fim = horaFim;
       if (dur !== undefined && dur !== null && dur !== "") {
         payloadSessao.duracao_min = Number(dur);
       }
-      if (obs) payloadSessao.observacoes = obs;
+
+      // Mapeamento defensivo dos textos
+      if (obs !== null) payloadSessao.observacoes = String(obs);
+      if (sumario !== null) payloadSessao.sumario = String(sumario);
+      if (exercicios !== null) payloadSessao.exercicios_realizados = String(exercicios);
+      if (notasProx !== null) payloadSessao.notas_proxima_sessao = String(notasProx);
+
       if (!idSessao) {
         const { data, error } = await svc.from("sessoes_explicacao").insert(payloadSessao).select("id_sessao").single();
         if (error) {

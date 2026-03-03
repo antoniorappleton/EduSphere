@@ -212,6 +212,7 @@
                           <th>Fim</th>
                           <th>Duração</th>
                           <th>Estado</th>
+                          <th>Ações</th>
                         </tr>
                       </thead>
                       <tbody id="listaExplicacoes"></tbody>
@@ -708,6 +709,62 @@
           </button>
         </div>
         <div id="msgPagamento" style="margin-top: 10px; font-size: 12px; text-align: center"></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL SESSÃO DETALHE (Diário de Bordo) -->
+  <div class="modal" id="modal-sessao-detalhe">
+    <div class="modal__backdrop" onclick="closeModal('modal-sessao-detalhe')"></div>
+    <div class="modal__dialog" style="max-width: 600px">
+      <div class="modal__header">
+        <h2>Diário de Bordo - Sessão</h2>
+        <button class="modal__close" onclick="closeModal('modal-sessao-detalhe')">&times;</button>
+      </div>
+      <form id="fSessaoDetalhe">
+        <input type="hidden" name="id_sessao" id="det-sessao-id" />
+
+        <div class="expl-grid-1" style="display: flex; flex-direction: column; gap: 1rem;">
+          <label><strong>Sumário da Sessão</strong>
+            <textarea class="input" name="sumario" id="det-sessao-sumario" rows="3"
+              placeholder="O que foi abordado hoje..."></textarea>
+          </label>
+
+          <label><strong>Exercícios Realizados</strong>
+            <textarea class="input" name="exercicios_realizados" id="det-sessao-exercicios" rows="3"
+              placeholder="Lista de exercícios ou fichas..."></textarea>
+          </label>
+
+          <label><strong>Notas para Próxima Sessão</strong>
+            <textarea class="input" name="notas_proxima_sessao" id="det-sessao-notas-prox" rows="3"
+              placeholder="Tópicos a rever ou TPC pendente..."></textarea>
+          </label>
+
+          <label><strong>Observações Gerais</strong>
+            <textarea class="input" name="observacoes" id="det-sessao-obs" rows="2"
+              placeholder="Comportamento, lembretes administrativos..."></textarea>
+          </label>
+
+          <div class="expl-grid-2">
+            <label>Hora Fim (opcional)
+              <input type="time" class="input" name="hora_fim" id="det-sessao-hora-fim" />
+            </label>
+            <label>Estado
+              <select class="input" name="estado" id="det-sessao-estado">
+                <option value="AGENDADA">Agendada</option>
+                <option value="CONCLUIDA">Concluída</option>
+                <option value="CANCELADA">Cancelada</option>
+                <option value="FALTA">Falta</option>
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <div style="margin-top: 1.5rem; text-align: right; display: flex; gap: 10px; justify-content: flex-end;">
+          <button type="button" class="button secondary" onclick="closeModal('modal-sessao-detalhe')">Cancelar</button>
+          <button type="submit" class="button primary" id="btnSaveSessaoDetalhe">Gravar</button>
+        </div>
+        <div id="msgSessaoDetalhe" style="margin-top: 10px; font-size: 12px; text-align: center"></div>
       </form>
     </div>
   </div>

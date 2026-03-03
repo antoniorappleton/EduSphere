@@ -1,5 +1,7 @@
 // public/js/alunos-explicador.js
 
+let sessoesCache = [];
+
 async function initAlunosPage() {
   console.log("Initializing Alunos Page...");
   
@@ -109,6 +111,7 @@ async function openPerfil(id) {
 
     // 2. Carregar Explicações
     const sessoes = await ExplicadorService.listSessoes(id);
+    sessoesCache = sessoes; // Update local memory cache
     renderSessoesTable(sessoes);
     
     // Update Próxima Aula KPI
@@ -145,11 +148,14 @@ function renderSessoesTable(list) {
     <tr>
       <td>${new Date(s.data).toLocaleDateString('pt-PT')}</td>
       <td>${s.hora_inicio?.slice(0,5)}</td>
-      <td>—</td>
+      <td>${s.hora_fim?.slice(0,5) || '—'}</td>
       <td>${s.duracao_min} min</td>
       <td><span class="badge ${s.estado?.toLowerCase()}">${s.estado}</span></td>
+      <td>
+        <button class="button secondary button--sm" onclick="openModalSessao('${s.id_sessao}')" title="Diário de Bordo">📝</button>
+      </td>
     </tr>
-  `).join('') : '<tr><td colspan="5">Sem histórico.</td></tr>';
+  `).join('') : '<tr><td colspan="6">Sem histórico.</td></tr>';
 }
 
 function renderPagamentosTable(list) {
@@ -180,6 +186,32 @@ function renderPagamentosTable(list) {
   }).join('') : '<tr><td colspan="6">Sem pagamentos.</td></tr>';
   
   if (totalEl) totalEl.textContent = totalVisible.toFixed(2);
+}
+
+// ================== DIÁRIO DE BORDO: SESSÃO ==================
+
+function openModalSessao(idSessao) {
+  const m = document.getElementById('modal-sessao-detalhe');
+  const form = document.getElementById('fSessaoDetalhe');
+  if (!m || !form) return;
+
+  const sessao = sessoesCache.find(s => s.id_sessao === idSessao);
+  if (!sessao) {
+    console.error("Sessão não encontrada no cache local.");
+    return;
+  }
+
+  form.reset();
+  document.getElementById('det-sessao-id').value = sessao.id_sessao;
+  document.getElementById('det-sessao-sumario').value = sessao.sumario || '';
+  document.getElementById('det-sessao-exercicios').value = sessao.exercicios_realizados || '';
+  document.getElementById('det-sessao-notas-prox').value = sessao.notas_proxima_sessao || '';
+  document.getElementById('det-sessao-obs').value = sessao.observacoes || '';
+  document.getElementById('det-sessao-hora-fim').value = sessao.hora_fim ? sessao.hora_fim.slice(0,5) : '';
+  document.getElementById('det-sessao-estado').value = sessao.estado || 'AGENDADA';
+
+  m.classList.add('open');
+  m.setAttribute('aria-hidden', 'false');
 }
 
 async function openModalPagamento(id = null) {
@@ -566,6 +598,64 @@ document.addEventListener('DOMContentLoaded', () => {
       if (msgPag) {
         msgPag.style.color = 'red';
         msgPag.textContent = 'Erro: ' + (err.message || "Falha ao guardar");
+      }
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  });
+
+  // Submeter Diário de Bordo
+  const formSess = document.getElementById('fSessaoDetalhe');
+  const msgSess = document.getElementById('msgSessaoDetalhe');
+
+  formSess?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('btnSaveSessaoDetalhe');
+    const fd = new FormData(formSess);
+    const idSessao = fd.get('id_sessao');
+    const alunoId = document.getElementById('view-perfil-aluno').dataset.currentAlunoId;
+
+    if (msgSess) { msgSess.style.color = '#64748b'; msgSess.textContent = 'A guardar...'; }
+    if (btn) btn.disabled = true;
+
+    try {
+      const payload = {
+        id_sessao: idSessao,
+        id_aluno: alunoId,
+        data: sessoesCache.find(s => s.id_sessao === idSessao)?.data,
+        estado: fd.get('estado'),
+        sumario: fd.get('sumario'),
+        exercicios_realizados: fd.get('exercicios_realizados'),
+        notas_proxima_sessao: fd.get('notas_proxima_sessao'),
+        observacoes: fd.get('observacoes'),
+        hora_fim: fd.get('hora_fim') || null
+      };
+
+      const res = await ExplicadorService.upsertSessao(payload);
+      if (res.error) throw new Error(res.error);
+
+      if (msgSess) {
+        msgSess.style.color = 'green';
+        msgSess.textContent = 'Guardado com sucesso!';
+      }
+
+      // Atualizar cache local e UI sem reload total
+      const idx = sessoesCache.findIndex(s => s.id_sessao === idSessao);
+      if (idx !== -1) {
+        sessoesCache[idx] = { ...sessoesCache[idx], ...payload };
+        renderSessoesTable(sessoesCache);
+      }
+
+      setTimeout(() => {
+        closeModal('modal-sessao-detalhe');
+        if (msgSess) msgSess.textContent = '';
+      }, 1500);
+
+    } catch (err) {
+      console.error(err);
+      if (msgSess) {
+        msgSess.style.color = 'red';
+        msgSess.textContent = 'Erro: ' + (err.message || "Falha ao guardar");
       }
     } finally {
       if (btn) btn.disabled = false;
