@@ -343,7 +343,7 @@ serve(async (req) => {
        payload: { aluno_id, avisado }
        ======================= */ if (action === "set_mensalidade_avisada") {
       const p = payload || {};
-      const alunoId = String(p.aluno_id || "").trim();
+      const alunoId = String(p.aluno_id || p.id_aluno || "").trim();
       const avisado = !!p.avisado;
 
       if (!alunoId) {
@@ -636,7 +636,7 @@ serve(async (req) => {
         payload: { aluno_id, ano, mes, dia_pagamento }
         ======================= */ if (action === "iniciar_faturacao_aluno") {
       const p = payload || {};
-      const alunoId = String(p.aluno_id || "").trim();
+      const alunoId = String(p.aluno_id || p.id_aluno || "").trim();
       const ano1 = Number(p.ano);
       const mes1 = Number(p.mes);
       const diaPag = p.dia_pagamento != null ? Number(p.dia_pagamento) : 1;
@@ -791,7 +791,7 @@ serve(async (req) => {
        payload: { aluno_id, ano, mes, valor, data_pagamento? }
        ======================= */ if (action === "registar_pagamento_aluno") {
       const p = payload || {};
-      const alunoId = String(p.aluno_id || "").trim();
+      const alunoId = String(p.aluno_id || p.id_aluno || "").trim();
       const ano1 = Number(p.ano);
       const mes1 = Number(p.mes);
       const valor = Number(p.valor);
@@ -879,7 +879,7 @@ serve(async (req) => {
        payload: { aluno_id, ano, mes, valor_pago }
        ======================= */ if (action === "update_pagamento_aluno") {
       const p = payload || {};
-      const alunoId = String(p.aluno_id || "").trim();
+      const alunoId = String(p.aluno_id || p.id_aluno || "").trim();
       const ano1 = Number(p.ano);
       const mes1 = Number(p.mes);
       const valorPago = p.valor_pago !== null && p.valor_pago !== undefined && p.valor_pago !== "" ? Number(p.valor_pago) : null;
@@ -1058,7 +1058,7 @@ serve(async (req) => {
        payload: { aluno_id }
        ======================= */ if (action === "list_sessoes_aluno") {
       const p = payload || {};
-      const alunoId = String(p.aluno_id || "").trim();
+      const alunoId = String(p.aluno_id || p.id_aluno || "").trim();
       if (!alunoId) {
         return new Response(JSON.stringify({
           error: "aluno_id em falta ou inválido"

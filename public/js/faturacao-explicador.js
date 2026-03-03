@@ -59,9 +59,12 @@ async function carregarDadosFaturacao() {
 }
 
 function renderLoading() {
-    const bodies = [document.querySelector('#view-pagamentos-pendentes tbody'), document.querySelector('#view-pagamentos-concluidos tbody')];
+    const bodies = [
+        document.querySelector('#tblMensalidadesPendentes tbody'), 
+        document.querySelector('#tblMensalidadesPagas tbody')
+    ];
     bodies.forEach(b => {
-        if (b) b.innerHTML = '<tr><td colspan="5" style="text-align:center">A carregar...</td></tr>';
+        if (b) b.innerHTML = '<tr><td colspan="7" style="text-align:center">A carregar...</td></tr>';
     });
 }
 
@@ -70,40 +73,80 @@ function mostrarErro(msg) {
 }
 
 function renderTabelas() {
-    const pendentesBody = document.querySelector('#view-pagamentos-pendentes tbody');
-    const concluidosBody = document.querySelector('#view-pagamentos-concluidos tbody');
+    const pendentesBody = document.querySelector('#tblMensalidadesPendentes tbody');
+    const pagasBody = document.querySelector('#tblMensalidadesPagas tbody');
 
     const pendentes = pagamentosCache.filter(p => p.estado !== 'PAGO');
-    const concluidos = pagamentosCache.filter(p => p.estado === 'PAGO');
+    const pagas = pagamentosCache.filter(p => p.estado === 'PAGO');
 
     if (pendentesBody) {
         pendentesBody.innerHTML = pendentes.length 
-            ? pendentes.map(p => renderPagamentoRow(p)).join('')
-            : '<tr><td colspan="5" class="empty-state">Sem pagamentos pendentes para este mês.</td></tr>';
+            ? pendentes.map(p => renderPendenteRow(p)).join('')
+            : '<tr><td colspan="7" class="empty-state">Sem mensalidades em falta para este mês.</td></tr>';
     }
 
-    if (concluidosBody) {
-        concluidosBody.innerHTML = concluidos.length
-            ? concluidos.map(p => renderPagamentoRow(p)).join('')
-            : '<tr><td colspan="5" class="empty-state">Ainda sem pagamentos recebidos.</td></tr>';
+    if (pagasBody) {
+        pagasBody.innerHTML = pagas.length
+            ? pagas.map(p => renderPagaRow(p)).join('')
+            : '<tr><td colspan="5" class="empty-state">Ainda sem mensalidades pagas.</td></tr>';
     }
 }
 
-function renderPagamentoRow(p) {
+function renderPendenteRow(p) {
     const valorPrev = Number(p.valor_previsto || 0);
     const valorPago = Number(p.valor_pago || 0);
-    const dataPag = p.data_pagamento ? new Date(p.data_pagamento).toLocaleDateString('pt-PT') : '—';
-    const statusClass = p.estado.toLowerCase();
+    const emFalta = valorPrev - valorPago;
+    const statusClass = (p.estado || 'PENDENTE').toLowerCase();
+    
+    // Avisado logic
+    const isAvisado = p.mensalidade_avisada === true;
+    const avisadoIcon = isAvisado ? 'notifications_active' : 'notifications_none';
+    const avisadoClass = isAvisado ? 'avisado-sim' : 'avisado-nao';
+
+    return `
+        <tr>
+            <td><strong>${p.aluno_nome} ${p.aluno_apelido || ''}</strong></td>
+            <td>${p.mes}/${p.ano}</td>
+            <td>€${valorPrev.toFixed(2)}</td>
+            <td>€${valorPago.toFixed(2)}</td>
+            <td style="color:#ef4444; font-weight:600">€${emFalta.toFixed(2)}</td>
+            <td><span class="badge ${statusClass}">${p.estado}</span></td>
+            <td>
+                <button class="button-icon ${avisadoClass}" onclick="toggleAvisado('${p.id_aluno}', ${!isAvisado})" title="${isAvisado ? 'Marcar como não avisado' : 'Marcar como avisado'}">
+                    <span class="material-symbols-outlined">${avisadoIcon}</span>
+                </button>
+            </td>
+        </tr>
+    `;
+}
+
+function renderPagaRow(p) {
+    const valorPrev = Number(p.valor_previsto || 0);
+    const valorPago = Number(p.valor_pago || 0);
+    const statusClass = (p.estado || 'PAGO').toLowerCase();
     
     return `
         <tr>
             <td><strong>${p.aluno_nome} ${p.aluno_apelido || ''}</strong></td>
+            <td>${p.mes}/${p.ano}</td>
+            <td style="color:#16a34a; font-weight:600">€${valorPago.toFixed(2)}</td>
             <td>€${valorPrev.toFixed(2)}</td>
-            <td>€${valorPago.toFixed(2)}</td>
-            <td>${dataPag}</td>
             <td><span class="badge ${statusClass}">${p.estado}</span></td>
         </tr>
     `;
+}
+
+async function toggleAvisado(alunoId, novoEstado) {
+    try {
+        await ExplicadorService.setMensalidadeAvisada(alunoId, novoEstado);
+        // Atualizar cache local para não recarregar tudo se possível, ou recarregar
+        const pag = pagamentosCache.find(x => x.id_aluno === alunoId);
+        if (pag) pag.mensalidade_avisada = novoEstado;
+        renderTabelas();
+    } catch (err) {
+        console.error("Erro ao mudar estado de aviso:", err);
+        alert("Erro ao atualizar aviso: " + err.message);
+    }
 }
 
 function updateKpis() {

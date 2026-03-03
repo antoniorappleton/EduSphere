@@ -270,6 +270,41 @@ body.home main.auth {
   -webkit-overflow-scrolling: touch;
 }
 
+/* Button Icon for actions in tables */
+.button-icon {
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: all 0.2s;
+  color: #64748b;
+}
+
+.button-icon:hover {
+  background: #f1f5f9;
+  color: #1e293b;
+}
+
+.button-icon.avisado-sim {
+  color: #16a34a;
+}
+
+.button-icon.avisado-sim:hover {
+  background: #f0fdf4;
+}
+
+.button-icon.avisado-nao {
+  color: #94a3b8;
+}
+
+.button-icon.avisado-nao:hover {
+  background: #f8fafc;
+}
+
 /* Tabelas mais largas (ex.: faturação) */
 .table.table--wide {
   width: max-content;
