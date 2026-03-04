@@ -746,6 +746,14 @@ serve(async (req) => {
           });
         }
       }
+
+
+      // 7) Sempre tentar gerar/atualizar sessões para o mês corrente após update (idempotente)
+      const now = new Date();
+      await generateSessionsForAluno(id_aluno, now.getMonth() + 1, now.getFullYear()).catch(e => {
+        console.error("Erro ao gerar sessões apos update_aluno:", e);
+      });
+
       return new Response(JSON.stringify({
         id_aluno
       }), {
@@ -753,6 +761,7 @@ serve(async (req) => {
         headers: cors(origin)
       });
     }
+
     /* =======================
         INICIAR FATURAÇÃO DO ALUNO
         payload: { aluno_id, ano, mes, dia_pagamento }
