@@ -171,17 +171,104 @@ serve(async (req) => {
           faturacao_ativa,
           faturacao_inicio,
           dia_pagamento,
-          dia_semana_preferido
+          dia_semana_preferido,
+          hora_preferida
         `).eq("id_aluno", alunoId).eq("id_explicador", myExplId).maybeSingle();
       if (error) {
-        console.error("Erro a carregar aluno", error);
+        console.error("Erro ao carregar aluno no getAlunoDoExpl:", error);
+        // Se o erro for de coluna inexistente, podemos querer reportar de forma específica
+        if (error.message?.includes("column \"hora_preferida\" does not exist")) {
+           throw new Error("Base de dados desatualizada: Coluna 'hora_preferida' em falta. Por favor corra o SQL de migração.");
+        }
         throw new Error(error.message);
       }
+
       if (!data) {
         throw new Error("Aluno não encontrado para este explicador.");
       }
       return data;
     }
+
+    /* ======================================================
+    HELPER: gerar sessões automáticas para um mês
+    ====================================================== */
+    async function generateSessionsForAluno(alunoId: string, month: number, year: number) {
+      try {
+        const aluno = await getAlunoDoExpl(alunoId);
+        if (!aluno || !aluno.dia_semana_preferido || !aluno.sessoes_mes) {
+          console.warn(`generateSessionsForAluno: Dados insuficientes para aluno ${alunoId}`);
+          return { count: 0 };
+        }
+
+        // Suporta múltiplos dias (ex: "Segunda, Quinta")
+        const dias = aluno.dia_semana_preferido.split(",").map(d => d.trim()).filter(Boolean);
+        const targetDows = dias.map(d => mapDiaSemanaToJsIndex(d)).filter(d => d !== null);
+
+        if (targetDows.length === 0) {
+          console.warn(`generateSessionsForAluno: Nenhum dia da semana válido em: ${aluno.dia_semana_preferido}`);
+          return { count: 0 };
+        }
+
+        const startOfMonth = new Date(year, month - 1, 1);
+        const endOfMonth = new Date(year, month, 0);
+        const sessionsToCreate = [];
+
+        // Para cada dia da semana selecionado, gerar as datas
+        for (const dow of targetDows) {
+          let current = proximaDataDoDiaSemana(startOfMonth, dow);
+          if (isNaN(current.getTime())) continue;
+
+          while (current <= endOfMonth) {
+            sessionsToCreate.push({
+              id_aluno: alunoId,
+              id_explicador: myExplId,
+              data: toISODate(current),
+              hora_inicio: aluno.hora_preferida || "16:00",
+              duracao_min: 60,
+              estado: "AGENDADA"
+            });
+            current = addDays(current, 7);
+          }
+        }
+
+        // Ordenar por data
+        sessionsToCreate.sort((a, b) => a.data.localeCompare(b.data));
+
+        // Limitar ao número de sessões mensais (sessoes_mes)
+        const maxSessions = Number(aluno.sessoes_mes) || 4;
+        const limitedSessions = sessionsToCreate.slice(0, maxSessions);
+
+        if (limitedSessions.length > 0) {
+          // Evitar duplicados no mesmo dia
+          const { data: existing, error: checkErr } = await svc
+            .from("sessoes_explicacao")
+            .select("data")
+            .eq("id_aluno", alunoId)
+            .in("data", limitedSessions.map(s => s.data));
+
+          if (checkErr) throw checkErr;
+
+          const existingDates = new Set(existing?.map(s => s.data) || []);
+          const uniqueSessions = limitedSessions.filter(s => !existingDates.has(s.data));
+
+          if (uniqueSessions.length > 0) {
+            const { error: insErr } = await svc.from("sessoes_explicacao").insert(uniqueSessions);
+            if (insErr) {
+              console.error("Erro ao inserir sessões automáticas:", insErr);
+              return { count: 0, error: insErr.message };
+            }
+            return { count: uniqueSessions.length };
+          }
+        }
+        return { count: 0 };
+      } catch (e) {
+        console.error(`Exceção em generateSessionsForAluno para aluno ${alunoId}:`, e);
+        return { count: 0, error: e.message };
+      }
+    }
+
+
+
     /* =======================
      LISTAR ALUNOS
      ======================= */
@@ -482,6 +569,7 @@ serve(async (req) => {
         ano: safeNumber(p.ano),
         idade: safeNumber(p.idade),
         dia_semana_preferido: p.dia_semana_preferido?.trim() || null,
+        hora_preferida: p.hora_preferida || "16:00",
         valor_explicacao: safeNumber(p.valor_explicacao),
         sessoes_mes: safeNumber(p.sessoes_mes),
         nome_pai_cache: p.nome_pai_cache?.trim() || null,
@@ -492,6 +580,7 @@ serve(async (req) => {
         faturacao_ativa: false,
         faturacao_inicio: null,
         dia_pagamento: null
+
       }).select("id_aluno").single();
 
       if (insErr) {
@@ -529,9 +618,17 @@ serve(async (req) => {
         });
       }
 
+      // 4) Gerar sessões automáticas para o mês atual
+      const agora = new Date();
+      await generateSessionsForAluno(row.id_aluno, agora.getMonth() + 1, agora.getFullYear()).catch(e => {
+        console.error("Erro ao gerar sessões iniciais:", e);
+      });
+
       return new Response(JSON.stringify({
         id_aluno: row.id_aluno
       }), {
+
+
         status: 201,
         headers: cors(origin)
       });
@@ -1025,7 +1122,14 @@ serve(async (req) => {
               results.push(al.id_aluno);
             }
           }
+
+          // 2.1 Sempre tentar gerar sessões para garantir que estão lá (idempotente)
+          await generateSessionsForAluno(al.id_aluno, mes, ano).catch(e => {
+            console.error(`Erro ao gerar sessões no bulk billing para ${al.id_aluno}:`, e);
+          });
+
         } catch (innerErr) {
+
           console.error(`Exceção ao processar aluno ${al.id_aluno}:`, innerErr);
           errors.push({ aluno: al.id_aluno, error: innerErr.message });
         }

@@ -542,8 +542,11 @@ document.addEventListener("DOMContentLoaded", () => {
       ano: fd.get("ano"),
       valor_explicacao: fd.get("valor_explicacao"),
       sessoes_mes: sessMes,
-      dia_semana_preferido: fd.get("dia_semana_preferido"),
+      dia_semana_preferido: fd.getAll("dia_semana_preferido").join(", "),
+      hora_preferida: fd.get("hora_preferida"),
+
       nome_pai_cache: fd.get("nome_pai_cache"),
+
       contacto_pai_cache: fd.get("contacto_pai_cache"),
     };
 
@@ -818,8 +821,11 @@ document.addEventListener("DOMContentLoaded", () => {
       ano: fd.get("ano"),
       valor_explicacao: fd.get("valor_explicacao"),
       sessoes_mes: sessMes,
-      dia_semana_preferido: fd.get("dia_semana_preferido"),
+      dia_semana_preferido: fd.getAll("dia_semana_preferido").join(", "),
+      hora_preferida: fd.get("hora_preferida"),
+
       nome_pai_cache: fd.get("nome_pai_cache"),
+
       contacto_pai_cache: fd.get("contacto_pai_cache"),
       username: fd.get("username"),
       is_active: document.getElementById("edit-active").checked,
@@ -886,9 +892,19 @@ async function openEditAluno(id) {
     document.getElementById("edit-ano").value = aluno.ano || "";
     document.getElementById("edit-valor").value = aluno.valor_explicacao || "";
     document.getElementById("edit-sessoes").value = aluno.sessoes_mes || 1;
-    document.getElementById("edit-dia").value =
-      aluno.dia_semana_preferido || "";
-    document.getElementById("edit-hora").value = "16:00";
+    // Checkboxes para múltiplos dias
+    const dias = (aluno.dia_semana_preferido || "")
+      .split(",")
+      .map((d) => d.trim());
+    document
+      .querySelectorAll('#container-edit-dias input[type="checkbox"]')
+      .forEach((ck) => {
+        ck.checked = dias.includes(ck.value);
+      });
+
+    document.getElementById("edit-hora").value =
+      aluno.hora_preferida || "16:00";
+
     document.getElementById("edit-nome-pai").value = aluno.nome_pai_cache || "";
     document.getElementById("edit-contacto-pai").value =
       aluno.contacto_pai_cache || "";

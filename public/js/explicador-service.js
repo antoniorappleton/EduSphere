@@ -75,7 +75,22 @@ window.ExplicadorService = {
     const { data, error } = await supabase.functions.invoke("expl-alunos", {
       body: { action: "update_aluno", payload },
     });
-    if (error) throw error;
+    if (error) {
+      console.error("Erro ao atualizar aluno via Edge Function:", error);
+      try {
+        if (error.context && typeof error.context.json === "function") {
+          const body = await error.context.json();
+          if (body && body.error) {
+            const detailedErr = new Error(body.error);
+            if (body.details) detailedErr.details = body.details;
+            throw detailedErr;
+          }
+        }
+      } catch (e) {
+        if (e.message !== error.message) throw e;
+      }
+      throw error;
+    }
     if (data && data.error) throw new Error(data.error);
     return data;
   },
