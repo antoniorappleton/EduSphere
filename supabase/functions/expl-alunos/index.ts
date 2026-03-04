@@ -239,27 +239,50 @@ serve(async (req) => {
         const limitedSessions = sessionsToCreate.slice(0, maxSessions);
 
         if (limitedSessions.length > 0) {
-          // Evitar duplicados no mesmo dia
+          // 1. Verificar sessões que já existem nestas datas
           const { data: existing, error: checkErr } = await svc
             .from("sessoes_explicacao")
-            .select("data")
+            .select("id_sessao, data, hora_inicio")
             .eq("id_aluno", alunoId)
             .in("data", limitedSessions.map(s => s.data));
 
           if (checkErr) throw checkErr;
 
-          const existingDates = new Set(existing?.map(s => s.data) || []);
-          const uniqueSessions = limitedSessions.filter(s => !existingDates.has(s.data));
+          const existingMap = new Map((existing || []).map(s => [s.data, s]));
+          
+          const uniqueSessionsToInsert = [];
+          const sessionsToUpdate = [];
 
-          if (uniqueSessions.length > 0) {
-            const { error: insErr } = await svc.from("sessoes_explicacao").insert(uniqueSessions);
-            if (insErr) {
-              console.error("Erro ao inserir sessões automáticas:", insErr);
-              return { count: 0, error: insErr.message };
+          for (const s of limitedSessions) {
+            const ext = existingMap.get(s.data);
+            if (ext) {
+              // Se a hora for diferente, marcamos para update
+              if (ext.hora_inicio !== s.hora_inicio) {
+                sessionsToUpdate.push({ id: ext.id_sessao, hora: s.hora_inicio });
+              }
+            } else {
+              uniqueSessionsToInsert.push(s);
             }
-            return { count: uniqueSessions.length };
           }
+
+          // 2. Inserir novas
+          if (uniqueSessionsToInsert.length > 0) {
+            const { error: insErr } = await svc.from("sessoes_explicacao").insert(uniqueSessionsToInsert);
+            if (insErr) console.error("Erro ao inserir sessões:", insErr);
+          }
+
+          // 3. Atualizar horas das existentes (se mudaram)
+          if (sessionsToUpdate.length > 0) {
+            for (const upd of sessionsToUpdate) {
+              await svc.from("sessoes_explicacao")
+                .update({ hora_inicio: upd.hora })
+                .eq("id_sessao", upd.id);
+            }
+          }
+
+          return { count: uniqueSessionsToInsert.length + sessionsToUpdate.length };
         }
+
         return { count: 0 };
       } catch (e) {
         console.error(`Exceção em generateSessionsForAluno para aluno ${alunoId}:`, e);
@@ -689,6 +712,10 @@ serve(async (req) => {
       if (typeof p.dia_semana_preferido !== "undefined") {
         updates.dia_semana_preferido = trimOrNull(p.dia_semana_preferido);
       }
+      if (typeof p.hora_preferida !== "undefined") {
+        updates.hora_preferida = trimOrNull(p.hora_preferida);
+      }
+
       if (typeof p.valor_explicacao !== "undefined") {
         updates.valor_explicacao = p.valor_explicacao === null || p.valor_explicacao === "" ? null : Number(p.valor_explicacao);
       }
