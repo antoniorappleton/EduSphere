@@ -431,43 +431,59 @@ serve(async (req) => {
           headers: cors(origin)
         });
       }
-      // 1) Criar utilizador Auth para o aluno
-      const { data: au, error: authErr } = await svc.auth.admin.createUser({
-        email,
-        password,
-        email_confirm: true
-      });
-      if (authErr) {
-        console.error("Erro em createUser (aluno)", authErr);
-        return new Response(JSON.stringify({
-          error: authErr.message
-        }), {
-          status: 400,
-          headers: cors(origin)
+      // 1) Criar ou identificar utilizador Auth
+      let alunoUid: string;
+      const { data: userList, error: listErr } = await svc.auth.admin.listUsers();
+      const existingUser = userList?.users?.find(u => u.email?.toLowerCase() === email.toLowerCase());
+
+      if (existingUser) {
+        console.log("Utilizador já existe no Auth, a reutilizar UID:", existingUser.id);
+        alunoUid = existingUser.id;
+      } else {
+        const { data: au, error: authErr } = await svc.auth.admin.createUser({
+          email,
+          password,
+          email_confirm: true
         });
+        if (authErr) {
+          console.error("Erro em createUser (aluno)", authErr);
+          return new Response(JSON.stringify({
+            error: "Falha ao criar conta de utilizador",
+            details: authErr.message
+          }), {
+            status: 400,
+            headers: cors(origin)
+          });
+        }
+        alunoUid = au?.user?.id!;
       }
-      const alunoUid = au?.user?.id;
+
       if (!alunoUid) {
-        console.error("createUser não devolveu user.id");
         return new Response(JSON.stringify({
-          error: "createUser não devolveu user.id"
+          error: "Não foi possível obter ou criar o UID do utilizador"
         }), {
           status: 400,
           headers: cors(origin)
         });
       }
       // 2) Inserir em "alunos"
+      const safeNumber = (v: any) => {
+        if (v == null || v === "") return null;
+        const n = Number(v);
+        return isNaN(n) ? null : n;
+      };
+
       const { data: row, error: insErr } = await svc.from("alunos").insert({
         id_explicador: myExplId,
         user_id: alunoUid,
         nome,
         apelido: p.apelido?.trim() || null,
         telemovel: p.telemovel?.trim() || null,
-        ano: p.ano != null && p.ano !== "" ? Number(p.ano) : null,
-        idade: p.idade != null && p.idade !== "" ? Number(p.idade) : null,
+        ano: safeNumber(p.ano),
+        idade: safeNumber(p.idade),
         dia_semana_preferido: p.dia_semana_preferido?.trim() || null,
-        valor_explicacao: p.valor_explicacao != null && p.valor_explicacao !== "" ? Number(p.valor_explicacao) : null,
-        sessoes_mes: p.sessoes_mes != null && p.sessoes_mes !== "" ? Number(p.sessoes_mes) : null,
+        valor_explicacao: safeNumber(p.valor_explicacao),
+        sessoes_mes: safeNumber(p.sessoes_mes),
         nome_pai_cache: p.nome_pai_cache?.trim() || null,
         contacto_pai_cache: p.contacto_pai_cache?.trim() || null,
         email,
@@ -477,33 +493,42 @@ serve(async (req) => {
         faturacao_inicio: null,
         dia_pagamento: null
       }).select("id_aluno").single();
+
       if (insErr) {
         console.error("Erro ao inserir em alunos", insErr);
         await svc.auth.admin.deleteUser(alunoUid).catch(() => { });
         return new Response(JSON.stringify({
-          error: insErr.message
+          error: "Erro ao criar aluno na tabela",
+          details: insErr.message
         }), {
           status: 400,
           headers: cors(origin)
         });
       }
+
       // 3) Registo em app_users (role = aluno)
-      const { error: roleInsErr } = await svc.from("app_users").insert({
+      // Usamos upsert para garantir que o registo existe e tem o ref_id, 
+      // independentemente de o trigger ter corrido ou não.
+      const { error: roleUpdErr } = await svc.from("app_users").upsert({
         user_id: alunoUid,
         role: "aluno",
         ref_id: row.id_aluno
-      });
-      if (roleInsErr) {
-        console.error("Erro ao inserir em app_users (aluno)", roleInsErr);
-        await svc.from("alunos").delete().eq("id_aluno", row.id_aluno).catch(() => { });
-        await svc.auth.admin.deleteUser(alunoUid).catch(() => { });
+      }, { onConflict: "user_id" });
+      
+      if (roleUpdErr) {
+        console.error("Erro ao registar em app_users (aluno)", roleUpdErr);
+        // Não apagamos o aluno aqui para não perdermos o registo principal, 
+        // mas reportamos o erro.
         return new Response(JSON.stringify({
-          error: roleInsErr.message
+          error: "Aluno criado, mas erro ao associar permissões",
+          details: roleUpdErr.message,
+          id_aluno: row.id_aluno
         }), {
           status: 400,
           headers: cors(origin)
         });
       }
+
       return new Response(JSON.stringify({
         id_aluno: row.id_aluno
       }), {
