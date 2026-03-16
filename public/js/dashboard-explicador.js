@@ -245,7 +245,7 @@ function renderAlunos(lista, mes, ano) {
       </div>
 
       <!-- Action -->
-      <button onclick="location.href='alunos.html'" style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #e2e8f0; background: #ffffff; color: #0f172a; font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: all 0.15s ease;">
+      <button onclick="location.href='alunos.html?id=${aluno.id_aluno}'" style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #e2e8f0; background: #ffffff; color: #0f172a; font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: all 0.15s ease;">
         Ver detalhes
       </button>
     `;

@@ -171,7 +171,8 @@ serve(async (req) => {
           faturacao_ativa,
           faturacao_inicio,
           dia_pagamento,
-          dia_semana_preferido
+          dia_semana_preferido,
+          hora_preferida
         `).eq("id_aluno", alunoId).eq("id_explicador", myExplId).maybeSingle();
       if (error) {
         console.error("Erro a carregar aluno", error);
@@ -197,6 +198,7 @@ serve(async (req) => {
           ano,
           idade,
           dia_semana_preferido,
+          hora_preferida,
           valor_explicacao,
           sessoes_mes,
           nome_pai_cache,
@@ -466,6 +468,7 @@ serve(async (req) => {
         ano: p.ano != null && p.ano !== "" ? Number(p.ano) : null,
         idade: p.idade != null && p.idade !== "" ? Number(p.idade) : null,
         dia_semana_preferido: p.dia_semana_preferido?.trim() || null,
+        hora_preferida: p.hora_preferida?.trim() || null,
         valor_explicacao: p.valor_explicacao != null && p.valor_explicacao !== "" ? Number(p.valor_explicacao) : null,
         sessoes_mes: p.sessoes_mes != null && p.sessoes_mes !== "" ? Number(p.sessoes_mes) : null,
         nome_pai_cache: p.nome_pai_cache?.trim() || null,
@@ -567,6 +570,9 @@ serve(async (req) => {
       if (typeof p.dia_semana_preferido !== "undefined") {
         updates.dia_semana_preferido = trimOrNull(p.dia_semana_preferido);
       }
+      if (typeof p.hora_preferida !== "undefined") {
+        updates.hora_preferida = trimOrNull(p.hora_preferida);
+      }
       if (typeof p.valor_explicacao !== "undefined") {
         updates.valor_explicacao = p.valor_explicacao === null || p.valor_explicacao === "" ? null : Number(p.valor_explicacao);
       }
@@ -606,6 +612,17 @@ serve(async (req) => {
             status: 400,
             headers: cors(origin)
           });
+        }
+
+        // Se a hora preferida foi alterada, atualizar todas as sessões futuras (AGENDADA)
+        if (updates.hora_preferida !== undefined && updates.hora_preferida !== null) {
+          const todayIso = new Date().toISOString().split("T")[0];
+          await svc.from("sessoes_explicacao")
+            .update({ hora_inicio: updates.hora_preferida })
+            .eq("id_aluno", id_aluno)
+            .eq("id_explicador", myExplId)
+            .eq("estado", "AGENDADA")
+            .gte("data", todayIso);
         }
       }
       // 6) Atualizar utilizador AUTH (email e/ou password)
@@ -760,7 +777,7 @@ serve(async (req) => {
               id_explicador: myExplId,
               id_aluno: alunoId,
               data: toISODate(dataSessao),
-              hora_inicio: null,
+              hora_inicio: aluno.hora_preferida || null,
               estado: "AGENDADA"
             });
             dataSessao = addDays(dataSessao, 7);
@@ -1185,6 +1202,43 @@ serve(async (req) => {
             headers: cors(origin)
           });
         }
+
+        // INCREMENTAR FATURAÇÃO SE FOR SESSÃO EXTRA
+        try {
+          const dt = new Date(dataStr);
+          const y = dt.getFullYear();
+          const m = dt.getMonth() + 1;
+          const valorAdicional = Number(aluno.valor_explicacao) || 0;
+
+          if (valorAdicional > 0) {
+            const { data: pagRow } = await svc.from("pagamentos")
+              .select("id_pagamento, valor_previsto")
+              .eq("id_aluno", alunoId)
+              .eq("id_explicador", myExplId)
+              .eq("ano", y)
+              .eq("mes", m)
+              .maybeSingle();
+
+            if (pagRow) {
+              const novoPrevisto = (Number(pagRow.valor_previsto) || 0) + valorAdicional;
+              await svc.from("pagamentos").update({ valor_previsto: novoPrevisto }).eq("id_pagamento", pagRow.id_pagamento);
+            } else {
+              // Se não existir pagamento para o mês, cria um novo
+              await svc.from("pagamentos").insert({
+                id_aluno: alunoId,
+                id_explicador: myExplId,
+                ano: y,
+                mes: m,
+                valor_previsto: valorAdicional,
+                valor_pago: 0,
+                estado: "PENDENTE"
+              });
+            }
+          }
+        } catch (e) {
+          console.error("Erro ao incrementar faturação na nova sessão extra:", e);
+        }
+
         return new Response(JSON.stringify({
           id_sessao: data.id_sessao
         }), {

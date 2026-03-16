@@ -458,6 +458,7 @@ document.addEventListener('DOMContentLoaded', () => {
       valor_explicacao: fd.get('valor_explicacao'),
       sessoes_mes: sessSemana,
       dia_semana_preferido: fd.get('dia_semana_preferido'),
+      hora_preferida: fd.get('hora_preferida'),
       nome_pai_cache: fd.get('nome_pai_cache'),
       contacto_pai_cache: fd.get('contacto_pai_cache')
     };
@@ -713,6 +714,7 @@ document.addEventListener('DOMContentLoaded', () => {
       valor_explicacao: fd.get('valor_explicacao'),
       sessoes_mes: sessSemana,
       dia_semana_preferido: fd.get('dia_semana_preferido'),
+      hora_preferida: fd.get('hora_preferida'),
       nome_pai_cache: fd.get('nome_pai_cache'),
       contacto_pai_cache: fd.get('contacto_pai_cache'),
       username: fd.get('username'),
@@ -755,6 +757,14 @@ document.addEventListener('DOMContentLoaded', () => {
       if (alunoId) carregarMensagensTutor(alunoId);
     });
   });
+
+  // Abrir o perfil diretamente se houver um ID na URL (vindo do Dashboard)
+  const urlParams = new URLSearchParams(window.location.search);
+  const idToOpen = urlParams.get('id');
+  if (idToOpen) {
+    // delay curto para garantir que os elementos e o fetch inicial resolveram
+    setTimeout(() => openPerfil(idToOpen), 600);
+  }
 });
 
 
@@ -773,7 +783,7 @@ async function openEditAluno(id) {
     document.getElementById('edit-valor').value = aluno.valor_explicacao || '';
     document.getElementById('edit-sessoes').value = aluno.sessoes_mes || 1;
     document.getElementById('edit-dia').value = aluno.dia_semana_preferido || '';
-    document.getElementById('edit-hora').value = '16:00';
+    document.getElementById('edit-hora').value = aluno.hora_preferida || '16:00';
     document.getElementById('edit-nome-pai').value = aluno.nome_pai_cache || '';
     document.getElementById('edit-contacto-pai').value = aluno.contacto_pai_cache || '';
     document.getElementById('edit-active').checked = aluno.is_active !== false;
