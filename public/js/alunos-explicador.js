@@ -533,21 +533,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const fd = new FormData(formNew);
     const sessMes = Number(fd.get("sessoes_mes") || 1);
     const payload = {
-<<<<<<< HEAD
-      nome: fd.get('nome'),
-      apelido: fd.get('apelido'),
-      email: fd.get('email'),
-      password: fd.get('password'),
-      username: fd.get('username'),
-      telemovel: fd.get('telemovel'),
-      ano: fd.get('ano'),
-      valor_explicacao: fd.get('valor_explicacao'),
-      sessoes_mes: sessSemana,
-      dia_semana_preferido: fd.get('dia_semana_preferido'),
-      hora_preferida: fd.get('hora_preferida'),
-      nome_pai_cache: fd.get('nome_pai_cache'),
-      contacto_pai_cache: fd.get('contacto_pai_cache')
-=======
       nome: fd.get("nome"),
       apelido: fd.get("apelido"),
       email: fd.get("email"),
@@ -563,7 +548,6 @@ document.addEventListener("DOMContentLoaded", () => {
       nome_pai_cache: fd.get("nome_pai_cache"),
 
       contacto_pai_cache: fd.get("contacto_pai_cache"),
->>>>>>> ceefae115adf62ed29f284c8205ce4af471cc2a1
     };
 
     try {
@@ -830,21 +814,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const sessMes = Number(fd.get("sessoes_mes") || 1);
 
     const payload = {
-<<<<<<< HEAD
-      id_aluno: fd.get('id_aluno'),
-      nome: fd.get('nome'),
-      apelido: fd.get('apelido'),
-      telemovel: fd.get('telemovel'),
-      ano: fd.get('ano'),
-      valor_explicacao: fd.get('valor_explicacao'),
-      sessoes_mes: sessSemana,
-      dia_semana_preferido: fd.get('dia_semana_preferido'),
-      hora_preferida: fd.get('hora_preferida'),
-      nome_pai_cache: fd.get('nome_pai_cache'),
-      contacto_pai_cache: fd.get('contacto_pai_cache'),
-      username: fd.get('username'),
-      is_active: document.getElementById('edit-active').checked
-=======
       id_aluno: fd.get("id_aluno"),
       nome: fd.get("nome"),
       apelido: fd.get("apelido"),
@@ -860,7 +829,6 @@ document.addEventListener("DOMContentLoaded", () => {
       contacto_pai_cache: fd.get("contacto_pai_cache"),
       username: fd.get("username"),
       is_active: document.getElementById("edit-active").checked,
->>>>>>> ceefae115adf62ed29f284c8205ce4af471cc2a1
     };
 
     // Only send password if it was filled in
@@ -925,22 +893,6 @@ async function openEditAluno(id) {
     const aluno = await ExplicadorService.getAluno(id);
     if (!aluno) return;
 
-<<<<<<< HEAD
-    document.getElementById('edit-id-aluno').value = aluno.id_aluno;
-    document.getElementById('edit-nome').value = aluno.nome || '';
-    document.getElementById('edit-apelido').value = aluno.apelido || '';
-    document.getElementById('edit-telemovel').value = aluno.telemovel || '';
-    document.getElementById('edit-ano').value = aluno.ano || '';
-    document.getElementById('edit-valor').value = aluno.valor_explicacao || '';
-    document.getElementById('edit-sessoes').value = aluno.sessoes_mes || 1;
-    document.getElementById('edit-dia').value = aluno.dia_semana_preferido || '';
-    document.getElementById('edit-hora').value = aluno.hora_preferida || '16:00';
-    document.getElementById('edit-nome-pai').value = aluno.nome_pai_cache || '';
-    document.getElementById('edit-contacto-pai').value = aluno.contacto_pai_cache || '';
-    document.getElementById('edit-active').checked = aluno.is_active !== false;
-    document.getElementById('edit-username').value = aluno.username || '';
-    document.getElementById('edit-password').value = '';
-=======
     document.getElementById("edit-id-aluno").value = aluno.id_aluno;
     document.getElementById("edit-nome").value = aluno.nome || "";
     document.getElementById("edit-apelido").value = aluno.apelido || "";
@@ -967,7 +919,6 @@ async function openEditAluno(id) {
     document.getElementById("edit-active").checked = aluno.is_active !== false;
     document.getElementById("edit-username").value = aluno.username || "";
     document.getElementById("edit-password").value = "";
->>>>>>> ceefae115adf62ed29f284c8205ce4af471cc2a1
 
     calcPrevistoEdit();
 
