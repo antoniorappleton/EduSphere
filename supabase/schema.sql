@@ -94,6 +94,7 @@ CREATE TABLE IF NOT EXISTS public.alunos (
   ano INTEGER,
   idade INTEGER,
   dia_semana_preferido TEXT,
+  hora_preferida TIME DEFAULT '16:00',
   valor_explicacao DECIMAL(10,2),
   sessoes_mes INTEGER,
   nome_pai_cache TEXT,
@@ -108,6 +109,7 @@ CREATE TABLE IF NOT EXISTS public.alunos (
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
 
 ALTER TABLE public.alunos ENABLE ROW LEVEL SECURITY;
 

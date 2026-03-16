@@ -175,14 +175,123 @@ serve(async (req) => {
           hora_preferida
         `).eq("id_aluno", alunoId).eq("id_explicador", myExplId).maybeSingle();
       if (error) {
-        console.error("Erro a carregar aluno", error);
+        console.error("Erro ao carregar aluno no getAlunoDoExpl:", error);
+        // Se o erro for de coluna inexistente, podemos querer reportar de forma específica
+        if (error.message?.includes("column \"hora_preferida\" does not exist")) {
+          throw new Error("Base de dados desatualizada: Coluna 'hora_preferida' em falta. Por favor corra o SQL de migração.");
+        }
         throw new Error(error.message);
       }
+
       if (!data) {
         throw new Error("Aluno não encontrado para este explicador.");
       }
       return data;
     }
+
+    /* ======================================================
+    HELPER: gerar sessões automáticas para um mês
+    ====================================================== */
+    async function generateSessionsForAluno(alunoId: string, month: number, year: number) {
+      try {
+        const aluno = await getAlunoDoExpl(alunoId);
+        if (!aluno || !aluno.dia_semana_preferido || !aluno.sessoes_mes) {
+          console.warn(`generateSessionsForAluno: Dados insuficientes para aluno ${alunoId}`);
+          return { count: 0 };
+        }
+
+        // Suporta múltiplos dias (ex: "Segunda, Quinta")
+        const dias = aluno.dia_semana_preferido.split(",").map(d => d.trim()).filter(Boolean);
+        const targetDows = dias.map(d => mapDiaSemanaToJsIndex(d)).filter(d => d !== null);
+
+        if (targetDows.length === 0) {
+          console.warn(`generateSessionsForAluno: Nenhum dia da semana válido em: ${aluno.dia_semana_preferido}`);
+          return { count: 0 };
+        }
+
+        const startOfMonth = new Date(year, month - 1, 1);
+        const endOfMonth = new Date(year, month, 0);
+        const sessionsToCreate = [];
+
+        // Para cada dia da semana selecionado, gerar as datas
+        for (const dow of targetDows) {
+          let current = proximaDataDoDiaSemana(startOfMonth, dow);
+          if (isNaN(current.getTime())) continue;
+
+          while (current <= endOfMonth) {
+            sessionsToCreate.push({
+              id_aluno: alunoId,
+              id_explicador: myExplId,
+              data: toISODate(current),
+              hora_inicio: aluno.hora_preferida || "16:00",
+              duracao_min: 60,
+              estado: "AGENDADA"
+            });
+            current = addDays(current, 7);
+          }
+        }
+
+        // Ordenar por data
+        sessionsToCreate.sort((a, b) => a.data.localeCompare(b.data));
+
+        // Limitar ao número de sessões mensais (sessoes_mes)
+        const maxSessions = Number(aluno.sessoes_mes) || 4;
+        const limitedSessions = sessionsToCreate.slice(0, maxSessions);
+
+        if (limitedSessions.length > 0) {
+          // 1. Verificar sessões que já existem nestas datas
+          const { data: existing, error: checkErr } = await svc
+            .from("sessoes_explicacao")
+            .select("id_sessao, data, hora_inicio")
+            .eq("id_aluno", alunoId)
+            .in("data", limitedSessions.map(s => s.data));
+
+          if (checkErr) throw checkErr;
+
+          const existingMap = new Map((existing || []).map(s => [s.data, s]));
+
+          const uniqueSessionsToInsert = [];
+          const sessionsToUpdate = [];
+
+          for (const s of limitedSessions) {
+            const ext = existingMap.get(s.data);
+            if (ext) {
+              // Se a hora for diferente, marcamos para update
+              if (ext.hora_inicio !== s.hora_inicio) {
+                sessionsToUpdate.push({ id: ext.id_sessao, hora: s.hora_inicio });
+              }
+            } else {
+              uniqueSessionsToInsert.push(s);
+            }
+          }
+
+          // 2. Inserir novas
+          if (uniqueSessionsToInsert.length > 0) {
+            const { error: insErr } = await svc.from("sessoes_explicacao").insert(uniqueSessionsToInsert);
+            if (insErr) console.error("Erro ao inserir sessões:", insErr);
+          }
+
+          // 3. Atualizar horas das existentes (se mudaram)
+          if (sessionsToUpdate.length > 0) {
+            for (const upd of sessionsToUpdate) {
+              await svc.from("sessoes_explicacao")
+                .update({ hora_inicio: upd.hora })
+                .eq("id_sessao", upd.id);
+            }
+          }
+
+          return { count: uniqueSessionsToInsert.length + sessionsToUpdate.length };
+        }
+
+        return { count: 0 };
+      } catch (e) {
+        console.error(`Exceção em generateSessionsForAluno para aluno ${alunoId}:`, e);
+        return { count: 0, error: e.message };
+      }
+    }
+
+
+
     /* =======================
      LISTAR ALUNOS
      ======================= */
@@ -433,44 +542,60 @@ serve(async (req) => {
           headers: cors(origin)
         });
       }
-      // 1) Criar utilizador Auth para o aluno
-      const { data: au, error: authErr } = await svc.auth.admin.createUser({
-        email,
-        password,
-        email_confirm: true
-      });
-      if (authErr) {
-        console.error("Erro em createUser (aluno)", authErr);
-        return new Response(JSON.stringify({
-          error: authErr.message
-        }), {
-          status: 400,
-          headers: cors(origin)
+      // 1) Criar ou identificar utilizador Auth
+      let alunoUid: string;
+      const { data: userList, error: listErr } = await svc.auth.admin.listUsers();
+      const existingUser = userList?.users?.find(u => u.email?.toLowerCase() === email.toLowerCase());
+
+      if (existingUser) {
+        console.log("Utilizador já existe no Auth, a reutilizar UID:", existingUser.id);
+        alunoUid = existingUser.id;
+      } else {
+        const { data: au, error: authErr } = await svc.auth.admin.createUser({
+          email,
+          password,
+          email_confirm: true
         });
+        if (authErr) {
+          console.error("Erro em createUser (aluno)", authErr);
+          return new Response(JSON.stringify({
+            error: "Falha ao criar conta de utilizador",
+            details: authErr.message
+          }), {
+            status: 400,
+            headers: cors(origin)
+          });
+        }
+        alunoUid = au?.user?.id!;
       }
-      const alunoUid = au?.user?.id;
+
       if (!alunoUid) {
-        console.error("createUser não devolveu user.id");
         return new Response(JSON.stringify({
-          error: "createUser não devolveu user.id"
+          error: "Não foi possível obter ou criar o UID do utilizador"
         }), {
           status: 400,
           headers: cors(origin)
         });
       }
       // 2) Inserir em "alunos"
+      const safeNumber = (v: any) => {
+        if (v == null || v === "") return null;
+        const n = Number(v);
+        return isNaN(n) ? null : n;
+      };
+
       const { data: row, error: insErr } = await svc.from("alunos").insert({
         id_explicador: myExplId,
         user_id: alunoUid,
         nome,
         apelido: p.apelido?.trim() || null,
         telemovel: p.telemovel?.trim() || null,
-        ano: p.ano != null && p.ano !== "" ? Number(p.ano) : null,
-        idade: p.idade != null && p.idade !== "" ? Number(p.idade) : null,
+        ano: safeNumber(p.ano),
+        idade: safeNumber(p.idade),
         dia_semana_preferido: p.dia_semana_preferido?.trim() || null,
         hora_preferida: p.hora_preferida?.trim() || null,
-        valor_explicacao: p.valor_explicacao != null && p.valor_explicacao !== "" ? Number(p.valor_explicacao) : null,
-        sessoes_mes: p.sessoes_mes != null && p.sessoes_mes !== "" ? Number(p.sessoes_mes) : null,
+        valor_explicacao: safeNumber(p.valor_explicacao),
+        sessoes_mes: safeNumber(p.sessoes_mes),
         nome_pai_cache: p.nome_pai_cache?.trim() || null,
         contacto_pai_cache: p.contacto_pai_cache?.trim() || null,
         email,
@@ -479,37 +604,55 @@ serve(async (req) => {
         faturacao_ativa: false,
         faturacao_inicio: null,
         dia_pagamento: null
+
       }).select("id_aluno").single();
+
       if (insErr) {
         console.error("Erro ao inserir em alunos", insErr);
         await svc.auth.admin.deleteUser(alunoUid).catch(() => { });
         return new Response(JSON.stringify({
-          error: insErr.message
+          error: "Erro ao criar aluno na tabela",
+          details: insErr.message
         }), {
           status: 400,
           headers: cors(origin)
         });
       }
+
       // 3) Registo em app_users (role = aluno)
-      const { error: roleInsErr } = await svc.from("app_users").insert({
+      // Usamos upsert para garantir que o registo existe e tem o ref_id, 
+      // independentemente de o trigger ter corrido ou não.
+      const { error: roleUpdErr } = await svc.from("app_users").upsert({
         user_id: alunoUid,
         role: "aluno",
         ref_id: row.id_aluno
-      });
-      if (roleInsErr) {
-        console.error("Erro ao inserir em app_users (aluno)", roleInsErr);
-        await svc.from("alunos").delete().eq("id_aluno", row.id_aluno).catch(() => { });
-        await svc.auth.admin.deleteUser(alunoUid).catch(() => { });
+      }, { onConflict: "user_id" });
+
+      if (roleUpdErr) {
+        console.error("Erro ao registar em app_users (aluno)", roleUpdErr);
+        // Não apagamos o aluno aqui para não perdermos o registo principal, 
+        // mas reportamos o erro.
         return new Response(JSON.stringify({
-          error: roleInsErr.message
+          error: "Aluno criado, mas erro ao associar permissões",
+          details: roleUpdErr.message,
+          id_aluno: row.id_aluno
         }), {
           status: 400,
           headers: cors(origin)
         });
       }
+
+      // 4) Gerar sessões automáticas para o mês atual
+      const agora = new Date();
+      await generateSessionsForAluno(row.id_aluno, agora.getMonth() + 1, agora.getFullYear()).catch(e => {
+        console.error("Erro ao gerar sessões iniciais:", e);
+      });
+
       return new Response(JSON.stringify({
         id_aluno: row.id_aluno
       }), {
+
+
         status: 201,
         headers: cors(origin)
       });
@@ -573,6 +716,10 @@ serve(async (req) => {
       if (typeof p.hora_preferida !== "undefined") {
         updates.hora_preferida = trimOrNull(p.hora_preferida);
       }
+<<<<<<< HEAD
+=======
+
+>>>>>>> ceefae115adf62ed29f284c8205ce4af471cc2a1
       if (typeof p.valor_explicacao !== "undefined") {
         updates.valor_explicacao = p.valor_explicacao === null || p.valor_explicacao === "" ? null : Number(p.valor_explicacao);
       }
@@ -641,6 +788,14 @@ serve(async (req) => {
           });
         }
       }
+
+
+      // 7) Sempre tentar gerar/atualizar sessões para o mês corrente após update (idempotente)
+      const now = new Date();
+      await generateSessionsForAluno(id_aluno, now.getMonth() + 1, now.getFullYear()).catch(e => {
+        console.error("Erro ao gerar sessões apos update_aluno:", e);
+      });
+
       return new Response(JSON.stringify({
         id_aluno
       }), {
@@ -648,6 +803,7 @@ serve(async (req) => {
         headers: cors(origin)
       });
     }
+
     /* =======================
         INICIAR FATURAÇÃO DO ALUNO
         payload: { aluno_id, ano, mes, dia_pagamento }
@@ -1017,7 +1173,14 @@ serve(async (req) => {
               results.push(al.id_aluno);
             }
           }
+
+          // 2.1 Sempre tentar gerar sessões para garantir que estão lá (idempotente)
+          await generateSessionsForAluno(al.id_aluno, mes, ano).catch(e => {
+            console.error(`Erro ao gerar sessões no bulk billing para ${al.id_aluno}:`, e);
+          });
+
         } catch (innerErr) {
+
           console.error(`Exceção ao processar aluno ${al.id_aluno}:`, innerErr);
           errors.push({ aluno: al.id_aluno, error: innerErr.message });
         }
