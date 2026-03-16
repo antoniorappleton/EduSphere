@@ -716,10 +716,6 @@ serve(async (req) => {
       if (typeof p.hora_preferida !== "undefined") {
         updates.hora_preferida = trimOrNull(p.hora_preferida);
       }
-<<<<<<< HEAD
-=======
-
->>>>>>> ceefae115adf62ed29f284c8205ce4af471cc2a1
       if (typeof p.valor_explicacao !== "undefined") {
         updates.valor_explicacao = p.valor_explicacao === null || p.valor_explicacao === "" ? null : Number(p.valor_explicacao);
       }
