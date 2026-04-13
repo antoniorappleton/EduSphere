@@ -1506,6 +1506,28 @@ serve(async (req) => {
           headers: cors(origin)
         });
       }
+
+      // Obter sessão para decrementar valor na faturação
+      const { data: sessao } = await svc.from("sessoes_explicacao").select("id_aluno, data").eq("id_sessao", idSessao).eq("id_explicador", myExplId).maybeSingle();
+      if (sessao) {
+        try {
+          const aluno = await getAlunoDoExpl(sessao.id_aluno).catch(() => null);
+          const valor = Number(aluno?.valor_explicacao) || 0;
+          if (valor > 0) {
+            const dt = new Date(sessao.data);
+            const y = dt.getFullYear();
+            const m = dt.getMonth() + 1;
+            const { data: pagRow } = await svc.from("pagamentos").select("id_pagamento, valor_previsto").eq("id_aluno", sessao.id_aluno).eq("id_explicador", myExplId).eq("ano", y).eq("mes", m).maybeSingle();
+            if (pagRow) {
+              const novoPrevisto = Math.max(0, (Number(pagRow.valor_previsto) || 0) - valor);
+              await svc.from("pagamentos").update({ valor_previsto: novoPrevisto }).eq("id_pagamento", pagRow.id_pagamento);
+            }
+          }
+        } catch (e) {
+          console.error("Erro ao decrementar faturação na eliminação da sessão:", e);
+        }
+      }
+
       const { error } = await svc.from("sessoes_explicacao").delete().eq("id_sessao", idSessao).eq("id_explicador", myExplId);
       if (error) {
         console.error("delete_sessao_aluno error", error);

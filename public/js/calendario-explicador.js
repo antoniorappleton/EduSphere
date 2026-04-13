@@ -83,19 +83,26 @@ function renderGridLoading() {
     if (grid) grid.innerHTML = '<p style="grid-column: 1/-1; text-align:center; padding: 2rem; color:#999;">A carregar semana...</p>';
 }
 
+function formatLocalISO(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+}
+
 function renderCalendar() {
     const grid = document.getElementById('calendar-grid');
     const proxList = document.getElementById('calendar-proximas');
     if (!grid) return;
 
     grid.innerHTML = '';
-    const hojeStr = new Date().toISOString().slice(0, 10);
+    const hojeStr = formatLocalISO(new Date());
 
     // Gerar os 7 dias da semana
     for (let i = 0; i < 7; i++) {
         const d = new Date(currentWeekStart);
         d.setDate(d.getDate() + i);
-        const dStr = d.toISOString().slice(0, 10);
+        const dStr = formatLocalISO(d);
         
         const isHoje = dStr === hojeStr;
         const sessoesDia = sessoesCache.filter(s => s.data === dStr);
@@ -217,12 +224,13 @@ function updateKpis() {
     let fatSemana = 0;
     sessoesSemana.forEach(s => {
         const al = alunosCache.find(a => a.id_aluno === s.id_aluno);
-        const val = al ? Number(al.valor_explicacao) : 25;
+        const val = al && al.valor_explicacao !== undefined ? Number(al.valor_explicacao) : 25;
         fatSemana += val;
     });
 
+    const hojeStr = formatLocalISO(hoje);
     const prox = sessoesCache
-        .filter(s => s.data >= hoje.toISOString().slice(0, 10) && s.estado === 'AGENDADA')
+        .filter(s => s.data >= hojeStr && s.estado === 'AGENDADA')
         .sort((a,b) => (a.data + a.hora_inicio).localeCompare(b.data + b.hora_inicio))[0];
 
     document.getElementById('cal-kpi-sessoes-semana').textContent = sessoesSemana.length;

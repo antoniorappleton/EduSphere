@@ -103,14 +103,16 @@ function renderPendenteRow(p) {
     const avisadoIcon = isAvisado ? 'notifications_active' : 'notifications_none';
     const avisadoClass = isAvisado ? 'avisado-sim' : 'avisado-nao';
 
+    const rowColor = valorPago === 0 ? 'color: #ef4444;' : '';
+
     return `
-        <tr>
-            <td><strong>${p.aluno_nome} ${p.aluno_apelido || ''}</strong></td>
+        <tr style="${rowColor}">
+            <td><strong style="${rowColor}">${p.aluno_nome} ${p.aluno_apelido || ''}</strong></td>
             <td>${p.mes}/${p.ano}</td>
             <td>€${valorPrev.toFixed(2)}</td>
             <td>€${valorPago.toFixed(2)}</td>
             <td style="color:#ef4444; font-weight:600">€${emFalta.toFixed(2)}</td>
-            <td><span class="badge ${statusClass}">${p.estado}</span></td>
+            <td><span class="badge ${statusClass}" style="border: 1px solid currentColor">${p.estado || "PENDENTE"}</span></td>
             <td>
                 <button class="button-icon ${avisadoClass}" onclick="toggleAvisado('${p.id_aluno}', ${!isAvisado})" title="${isAvisado ? 'Marcar como não avisado' : 'Marcar como avisado'}">
                     <span class="material-symbols-outlined">${avisadoIcon}</span>

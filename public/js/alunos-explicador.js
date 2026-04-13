@@ -188,17 +188,81 @@ function renderSessoesTable(list) {
         <td>${(s.hora_inicio || "??:??").slice(0, 5)}</td>
         <td>${(s.hora_fim || "??:??").slice(0, 5)}</td>
         <td>${s.duracao_min || 60} min</td>
-        <td>${syncTag} <span class="status-tag status-${(s.estado || "AGENDADA").toLowerCase()}">${s.estado || "AGENDADA"}</span></td>
+        <td>${syncTag} 
+          <select class="input" style="padding: 2px 5px; font-size: 11px; width: auto; height: auto; min-width: 90px;" onchange="handleEstadoChange('${s.id_sessao}', this.value)">
+            <option value="AGENDADA" ${s.estado === "AGENDADA" ? "selected" : ""}>AGENDADA</option>
+            <option value="REALIZADA" ${s.estado === "REALIZADA" ? "selected" : ""}>REALIZADA</option>
+            <option value="CANCELADA" ${s.estado === "CANCELADA" ? "selected" : ""}>CANCELADA</option>
+            <option value="CONFIRMADA" ${s.estado === "CONFIRMADA" ? "selected" : ""}>CONFIRMADA</option>
+          </select>
+        </td>
         <td>
-          <button class="btn-detalhe" onclick="openModalSessao('${s.id_sessao}')">
-            <span class="material-symbols-outlined">description</span>
-          </button>
+          <div style="display:flex; gap:8px;">
+            <button class="btn-detalhe" onclick="openModalSessao('${s.id_sessao}')" title="Detalhes">
+              <span class="material-symbols-outlined">description</span>
+            </button>
+            <button class="btn-detalhe" onclick="handleDeleteSessaoClick('${s.id_sessao}')" title="Eliminar" style="color: #ef4444;">
+              <span class="material-symbols-outlined">close</span>
+            </button>
+          </div>
         </td>
       </tr>
     `;
         })
         .join("")
     : '<tr><td colspan="6">Sem histórico.</td></tr>';
+}
+
+async function handleEstadoChange(id_sessao, newEstado) {
+  const sessao = sessoesCache.find(s => s.id_sessao === id_sessao);
+  if (!sessao) return;
+  
+  const payload = {
+    ...sessao,
+    estado: newEstado
+  };
+  
+  try {
+    await ExplicadorService.upsertSessao(payload);
+    const idx = sessoesCache.findIndex(s => s.id_sessao === id_sessao);
+    if (idx !== -1) {
+      sessoesCache[idx] = { ...sessoesCache[idx], estado: newEstado };
+    }
+  } catch (err) {
+    alert("Erro ao atualizar estado: " + err.message);
+    renderSessoesTable(sessoesCache);
+  }
+}
+
+async function handleDeleteSessaoClick(id_sessao) {
+  if (!confirm("Tem a certeza que deseja eliminar esta sessão?")) return;
+  try {
+    await ExplicadorService.deleteSessao(id_sessao);
+    const perfilView = document.getElementById("view-perfil-aluno");
+    const alunoId = perfilView ? perfilView.dataset.currentAlunoId : null;
+    
+    sessoesCache = sessoesCache.filter(s => s.id_sessao !== id_sessao);
+    renderSessoesTable(sessoesCache);
+    
+    if (alunoId) {
+      try {
+        const { data: pagamentos } = await supabase
+          .from("v_pagamentos_detalhe")
+          .select("*")
+          .eq("id_aluno", alunoId)
+          .order("ano", { ascending: false })
+          .order("mes", { ascending: false });
+        renderPagamentosTable(pagamentos || []);
+        
+        // Update global KPIs in the list view if needed
+        initAlunosPage(); 
+      } catch (e) {
+        console.warn("Erro ao carregar pagamentos após eliminar sessão:", e);
+      }
+    }
+  } catch (err) {
+    alert("Erro ao eliminar sessão: " + err.message);
+  }
 }
 
 function renderPagamentosTable(list) {
