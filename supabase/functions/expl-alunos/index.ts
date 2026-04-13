@@ -1020,6 +1020,8 @@ serve(async (req) => {
       let novoEstado = "PENDENTE"; // ou o nome que tiveres no enum para “não pago totalmente”
       if (novoPago >= atualPrev && atualPrev > 0) {
         novoEstado = "PAGO";
+        // Reset do aviso quando pagamento é concluído
+        await svc.from("alunos").update({ mensalidade_avisada: false }).eq("id_aluno", alunoId).eq("id_explicador", myExplId);
       }
       const { error: updErr } = await svc.from("pagamentos").update({
         valor_previsto: atualPrev,
@@ -1633,6 +1635,10 @@ serve(async (req) => {
         return new Response(JSON.stringify({ error: result.error.message }), { status: 400, headers: cors(origin) });
       }
 
+      if (estado === "PAGO") {
+        await svc.from("alunos").update({ mensalidade_avisada: false }).eq("id_aluno", idAluno).eq("id_explicador", myExplId);
+      }
+
       return new Response(JSON.stringify({ ok: true }), { status: 200, headers: cors(origin) });
     }
 
@@ -1650,6 +1656,25 @@ serve(async (req) => {
       const { error } = await svc.from("pagamentos").delete().eq("id_pagamento", idPagamento).eq("id_explicador", myExplId);
       if (error) {
         console.error("error deleting pagamento", error);
+        return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: cors(origin) });
+      }
+
+      return new Response(JSON.stringify({ ok: true }), { status: 200, headers: cors(origin) });
+    }
+
+    /* =======================
+       SET MENSALIDADE AVISADA
+       payload: { aluno_id, avisado }
+       ======================= */
+    if (action === "set_mensalidade_avisada") {
+      const p = payload || {};
+      if (!p.aluno_id) {
+        return new Response(JSON.stringify({ error: "aluno_id é obrigatório" }), { status: 400, headers: cors(origin) });
+      }
+
+      const { error } = await svc.from("alunos").update({ mensalidade_avisada: !!p.avisado }).eq("id_aluno", p.aluno_id).eq("id_explicador", myExplId);
+      if (error) {
+        console.error("error setting mensalidade avisada", error);
         return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: cors(origin) });
       }
 
