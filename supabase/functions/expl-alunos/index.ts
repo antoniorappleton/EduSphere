@@ -126,7 +126,10 @@ serve(async (req) => {
     }
     // ---------- Helpers de datas para gerar sessões recorrentes ----------
     function toISODate(d) {
-      return d.toISOString().slice(0, 10); // YYYY-MM-DD
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
     }
     function addDays(d, days) {
       const nd = new Date(d);
@@ -383,7 +386,7 @@ serve(async (req) => {
         const hojeIso = new Date().toISOString().slice(0, 10);
 
         const { data: sessoes, error: sesErr } = await svc
-          .from("v_sessoes_detalhe")
+          .from("sessoes_explicacao")
           .select("id_aluno, data, hora_inicio, estado")
           .eq("id_explicador", myExplId)
           .gte("data", hojeIso);
@@ -1199,32 +1202,43 @@ serve(async (req) => {
    ======================= */ if (action === "list_sessoes_explicador") {
       // Todas as sessões deste explicador,
       // opcionalmente já enriquecidas com nome do aluno numa VIEW
-      const { data, error } = await svc.from("v_sessoes_detalhe") // ou "sessoes_explicacao" se não tiveres view
+      const { data, error } = await svc.from("sessoes_explicacao")
         .select(`
-      id_sessao,
-      id_explicador,
-      id_aluno,
-      aluno_nome,
-      data,
-      hora_inicio,
-      hora_fim,
-      duracao_min,
-      estado
-    `).eq("id_explicador", myExplId).order("data", {
-          ascending: true
-        }).order("hora_inicio", {
-          ascending: true
-        });
+          id_sessao,
+          id_explicador,
+          id_aluno,
+          data,
+          hora_inicio,
+          hora_fim,
+          duracao_min,
+          estado,
+          alunos ( nome, apelido )
+        `)
+        .eq("id_explicador", myExplId)
+        .order("data", { ascending: true })
+        .order("hora_inicio", { ascending: true });
+        
       if (error) {
         console.error("list_sessoes_explicador error", error);
-        return new Response(JSON.stringify({
-          error: error.message
-        }), {
-          status: 400,
-          headers: cors(origin)
-        });
+        return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: cors(origin) });
       }
-      return new Response(JSON.stringify(data ?? []), {
+      
+      const mappedData = (data || []).map((s: any) => {
+        let n = 'Desconhecido';
+        let a = '';
+        if (s.alunos) {
+          if (Array.isArray(s.alunos)) {
+            n = s.alunos[0]?.nome || n;
+            a = s.alunos[0]?.apelido || a;
+          } else {
+            n = s.alunos.nome || n;
+            a = s.alunos.apelido || a;
+          }
+        }
+        return { ...s, aluno_nome: n, aluno_apelido: a };
+      });
+      
+      return new Response(JSON.stringify(mappedData), {
         status: 200,
         headers: cors(origin)
       });

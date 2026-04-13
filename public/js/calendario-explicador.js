@@ -267,7 +267,7 @@ function openSessaoModal(id = null) {
     } else {
         title.textContent = 'Agendar Explicação';
         document.getElementById('in-sessao-id').value = '';
-        document.getElementById('in-sessao-data').value = new Date().toISOString().slice(0, 10);
+        document.getElementById('in-sessao-data').value = formatLocalISO(new Date());
         btnDel.style.display = 'none';
     }
 
