@@ -45,9 +45,13 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
 
-  // 1. Ignorar pedidos não-GET e pedidos à API (Supabase)
-  // A cache de dados é feita no IndexedDB, não aqui.
-  if (event.request.method !== "GET" || url.host.includes("supabase.co")) {
+  // 1. Ignorar pedidos que não sejam HTTP/HTTPS (ex: chrome-extension), 
+  // pedidos não-GET e pedidos à API (Supabase).
+  if (
+    !url.protocol.startsWith("http") ||
+    event.request.method !== "GET" ||
+    url.host.includes("supabase.co")
+  ) {
     return;
   }
 

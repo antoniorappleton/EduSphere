@@ -321,7 +321,7 @@
           <form id="fPwd" class="space-y-4">
             <div>
               <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nova Password</label>
-              <input type="password" id="pwd"
+              <input type="password" id="pwd" autocomplete="new-password"
                 class="w-full bg-gray-50 border border-gray-200 rounded-lg h-10 px-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all">
             </div>
             <button type="submit"
@@ -767,11 +767,21 @@
       if (!user) return;
 
       // Map User
-      const { data: map } = await supabase.from('app_users').select('ref_id').eq('user_id', user.id).single();
-      if (!map) return;
+      const { data: map } = await supabase.from('app_users').select('ref_id').eq('user_id', user.id).maybeSingle();
+      
+      let aluno = null;
+      if (map && map.ref_id) {
+        // Fetch Aluno by ID reference
+        const { data: refAluno } = await supabase.from('alunos').select('*').eq('id_aluno', map.ref_id).maybeSingle();
+        aluno = refAluno;
+      }
 
-      // Fetch Aluno
-      const { data: aluno } = await supabase.from('alunos').select('*').eq('id_aluno', map.ref_id).single();
+      // Fallback: If no ref_id or aluno not found by ID, try direct user_id lookup in alunos table
+      if (!aluno) {
+        const { data: fallback } = await supabase.from('alunos').select('*').eq('user_id', user.id).maybeSingle();
+        aluno = fallback;
+      }
+
       if (aluno) {
         // Also fetch explicador's auth user_id for messaging
         const { data: expl } = await supabase.from('explicadores').select('user_id').eq('id_explicador', aluno.id_explicador).single();
