@@ -166,15 +166,21 @@
               </div>
 
               <div class="perfil-right">
-                <button id="btnPerfilEditar" class="edit-btn">
-                  <span>✏️</span> Editar
+                <button id="btnPerfilRelatorio" class="edit-btn" style="background-color: #f0f9ff; color: #0369a1; border: 1px solid #bae6fd; display: flex; align-items: center; gap: 6px;">
+                  <span class="material-symbols-outlined" style="font-size: 18px;">monitoring</span> Relatório
+                </button>
+                <button id="btnPerfilEditar" class="edit-btn" style="display: flex; align-items: center; gap: 6px;">
+                  <span class="material-symbols-outlined" style="font-size: 18px;">edit</span> Editar
                 </button>
                 <button id="btnPerfilEliminar" class="edit-btn" style="
                       background-color: #fee2e2;
                       color: #991b1b;
-                      border-color: #fecaca;
+                      border: 1px solid #fecaca;
+                      display: flex;
+                      align-items: center;
+                      gap: 6px;
                     ">
-                  <span>🗑️</span> Eliminar
+                  <span class="material-symbols-outlined" style="font-size: 18px;">delete</span> Eliminar
                 </button>
               </div>
             </section>
@@ -911,6 +917,152 @@
       </form>
     </div>
   </div>
+
+  <!-- MODAL RELATÓRIO COMPLETO -->
+  <div class="modal" id="modal-relatorio">
+    <div class="modal__backdrop" onclick="closeModal('modal-relatorio')"></div>
+    <div class="modal__dialog" style="max-width: 800px; width: 95%; padding: 0; overflow: hidden;">
+      <div class="modal__header no-print" style="padding: 16px 24px; border-bottom: 1px solid #f1f5f9; background: #fff; position: sticky; top: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <img src="../../public/img/imagens/logo-icon192.png" alt="EduSphere" style="width: 28px; height: 28px;">
+          <h2 style="color: #1e293b; font-size: 1.1rem; margin: 0;">Relatório de Desempenho</h2>
+        </div>
+        <div style="display: flex; gap: 12px; align-items: center;">
+          <button class="button primary" onclick="window.print()" style="display: flex; align-items: center; gap: 8px; padding: 8px 16px; font-size: 14px; background-color: #b91c1c;">
+            <span class="material-symbols-outlined" style="font-size: 20px;">print</span> PDF / Imprimir
+          </button>
+          <button class="modal__close" onclick="closeModal('modal-relatorio')" style="font-size: 28px; color: #64748b;">&times;</button>
+        </div>
+      </div>
+      <div id="relatorio-content" class="relatorio-print-area" style="max-height: calc(90vh - 60px); overflow-y: auto; background: #fff;">
+        <p class="text-center py-12">A gerar relatório...</p>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    /* Estilo Frosted Glass para o Relatório */
+    #modal-relatorio.modal.open {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: none; /* Reset individual for different backdrop logic */
+    }
+
+    #modal-relatorio .modal__backdrop {
+      background: rgba(15, 23, 42, 0.85); /* Mais escuro */
+      backdrop-filter: blur(12px);         /* Mais fosco */
+      -webkit-backdrop-filter: blur(12px);
+    }
+
+    #modal-relatorio .modal__dialog {
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      animation: modalEnter 0.3s ease-out;
+    }
+
+    @keyframes modalEnter {
+      from { opacity: 0; transform: scale(0.95) translateY(10px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    @media print {
+      /* Reset de página e remoção de elementos desnecessários */
+      html, body { 
+        height: auto !important; 
+        overflow: visible !important; 
+        margin: 0 !important; 
+        padding: 0 !important; 
+        background: #fff !important;
+      }
+      
+      /* Esconder tudo o que não é o relatório */
+      .expl-shell, header, footer, .expl-fab, .no-print, .modal__backdrop, 
+      .modal:not(#modal-relatorio), .modal__header { 
+        display: none !important; 
+      }
+
+      /* Configurar o modal de relatório para ocupar a página toda */
+      #modal-relatorio {
+        display: block !important;
+        position: static !important;
+        width: 100% !important;
+        height: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        z-index: auto;
+      }
+
+      .modal__dialog {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+        border: none !important;
+        transform: none !important;
+        max-height: none !important;
+        overflow: visible !important;
+      }
+
+      .relatorio-print-area {
+        overflow: visible !important;
+        height: auto !important;
+        max-height: none !important;
+        display: block !important;
+      }
+
+      .relatorio-paper {
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
+        box-shadow: none !important;
+      }
+
+      /* Forçar o browser a imprimir cores e fundos */
+      * { 
+        -webkit-print-color-adjust: exact !important; 
+        print-color-adjust: exact !important; 
+        color-adjust: exact !important;
+      }
+    }
+
+    .relatorio-paper {
+      background: white;
+      padding: 40px;
+      font-family: 'Inter', sans-serif;
+      color: #1e293b;
+    }
+
+    .relatorio-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 2px solid #f1f5f9;
+      padding-bottom: 20px;
+      margin-bottom: 30px;
+    }
+
+    .relatorio-section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #e2e8f0;
+    }
+
+    .relatorio-sessions-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    /* Scrollbar custom para o modal */
+    #relatorio-content::-webkit-scrollbar { width: 6px; }
+    #relatorio-content::-webkit-scrollbar-track { background: transparent; }
+    #relatorio-content::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    #relatorio-content::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+  </style>
 
   <script src="../../public/js/explicador-service.js"></script>
   <script src="../../public/js/alunos-explicador.js"></script>

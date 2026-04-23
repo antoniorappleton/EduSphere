@@ -564,6 +564,7 @@ function closeModal(id) {
   if (m) {
     m.classList.remove("open");
     m.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = ""; // Restaurar scroll
   }
 }
 
@@ -582,6 +583,12 @@ document.addEventListener("DOMContentLoaded", () => {
         m.setAttribute("aria-hidden", "false");
       }
     });
+ 
+  // Abrir Relatório
+  document.getElementById("btnPerfilRelatorio")?.addEventListener("click", () => {
+    const alunoId = document.getElementById("view-perfil-aluno").dataset.currentAlunoId;
+    if (alunoId) gerarRelatorio(alunoId);
+  });
 
   // Submeter Form de Novo Aluno
   const formNew = document.getElementById("fNewAluno");
@@ -1013,4 +1020,180 @@ function calcPrevistoEdit() {
   const total = v * s;
   const el = document.getElementById("edit-previsto-mensal");
   if (el) el.textContent = formatCurrency(total);
+}
+
+async function gerarRelatorio(id) {
+  const modal = document.getElementById("modal-relatorio");
+  const content = document.getElementById("relatorio-content");
+  if (!modal || !content) return;
+
+  modal.classList.add("open");
+  modal.setAttribute("aria-hidden", "false");
+  document.body.style.overflow = "hidden"; // Prevenir scroll do fundo
+  content.innerHTML = '<div class="text-center py-12"><div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div><p class="text-gray-500">A processar dados e gerar relatório profissional...</p></div>';
+
+  try {
+    const aluno = await ExplicadorService.getAluno(id);
+    const sessoes = await ExplicadorService.listSessoes(id);
+    const explId = await ExplicadorService.getMyExplId();
+    const { data: expl } = await supabase.from('explicadores').select('nome').eq('id_explicador', explId).single();
+
+    // Filter sessions for current month
+    const agora = new Date();
+    const mesAtual = agora.getMonth();
+    const anoAtual = agora.getFullYear();
+    
+    // Sort all sessions first
+    const sortedSessoes = [...sessoes].sort((a, b) => a.data.localeCompare(b.data));
+    
+    // Sessions for the current month
+    const sessoesMes = sortedSessoes.filter(s => {
+      const d = new Date(s.data);
+      return d.getMonth() === mesAtual && d.getFullYear() === anoAtual;
+    });
+
+    const realizasMes = sessoesMes.filter(s => s.estado === 'REALIZADA');
+
+    const valorSessao = Number(aluno.valor_explicacao || 0);
+    const sessoesPactadas = Number(aluno.sessoes_mes || 0);
+    const totalMes = realizasMes.length * valorSessao;
+    const mensalidadePactada = valorSessao * sessoesPactadas;
+
+    const html = `
+      <div class="relatorio-paper">
+        <!-- CABEÇALHO PROFISSIONAL -->
+        <div class="relatorio-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #b91c1c; padding-bottom: 20px; margin-bottom: 30px;">
+          <div style="display: flex; align-items: center; gap: 15px;">
+            <img src="../../public/img/imagens/logo-icon192.png" alt="Logo" style="width: 50px; height: 50px; object-fit: contain;">
+            <div>
+              <h1 style="color: #b91c1c; font-weight: 800; font-size: 26px; margin: 0; letter-spacing: -0.02em;">EduSphere</h1>
+              <p style="color: #64748b; font-size: 13px; font-weight: 600; margin: 2px 0 0; text-transform: uppercase; letter-spacing: 0.05em;">Relatório Mensal de Atividade</p>
+            </div>
+          </div>
+          <div style="text-align: right">
+            <p style="font-weight: 700; color: #1e293b; font-size: 16px; margin: 0;">${expl?.nome || 'Explicador'}</p>
+            <p style="font-size: 12px; color: #94a3b8; font-weight: 500; margin: 2px 0 0;">Emitido em ${agora.toLocaleDateString('pt-PT')}</p>
+          </div>
+        </div>
+
+        <div class="relatorio-grid" style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 24px; margin-bottom: 30px;">
+          <div class="relatorio-info-box" style="background: #fff; padding: 24px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+            <h3 style="color: #b91c1c; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 18px; font-weight: 800; border-left: 4px solid #b91c1c; padding-left: 10px;">Perfil do Aluno</h3>
+            <div class="relatorio-data-row" style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 15px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
+              <span style="color: #64748b;">Nome Completo</span>
+              <span style="font-weight: 700; color: #0f172a;">${aluno.nome} ${aluno.apelido || ''}</span>
+            </div>
+            <div class="relatorio-data-row" style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 15px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
+              <span style="color: #64748b;">Ano Escolar</span>
+              <span style="font-weight: 700; color: #0f172a;">${aluno.ano}º Ano de Escolaridade</span>
+            </div>
+            <div class="relatorio-data-row" style="display: flex; justify-content: space-between; font-size: 15px;">
+              <span style="color: #64748b;">Período de Referência</span>
+              <span style="font-weight: 700; color: #0f172a; text-transform: capitalize;">${agora.toLocaleDateString('pt-PT', { month: 'long', year: 'numeric' })}</span>
+            </div>
+          </div>
+
+          <div class="relatorio-info-box" style="background: #fef2f2; padding: 24px; border-radius: 12px; border: 1px solid #fee2e2;">
+            <h3 style="color: #991b1b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 18px; font-weight: 800;">Resumo do Mês</h3>
+            <div class="relatorio-data-row" style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px;">
+              <span style="color: #b91c1c; opacity: 0.8;">Sessões Realizadas</span>
+              <span style="font-weight: 700; color: #991b1b;">${realizasMes.length}</span>
+            </div>
+            <div class="relatorio-data-row" style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px;">
+              <span style="color: #b91c1c; opacity: 0.8;">Investimento p/ Sessão</span>
+              <span style="font-weight: 700; color: #991b1b;">${formatCurrency(valorSessao)}</span>
+            </div>
+            <div class="relatorio-data-row" style="display: flex; justify-content: space-between; font-size: 15px; padding-top: 12px; border-top: 1px dashed #fecaca; margin-top: 5px;">
+              <span style="color: #991b1b; font-weight: 800;">Total Acumulado</span>
+              <span style="font-weight: 900; color: #b91c1c; font-size: 18px;">${formatCurrency(totalMes)}</span>
+            </div>
+          </div>
+        </div>
+
+        <h2 class="relatorio-section-title" style="font-size: 18px; font-weight: 800; color: #1e293b; margin: 40px 0 20px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #f1f5f9; padding-bottom: 12px;">
+          <span style="background: #b91c1c; color: white; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+          </span>
+          Histórico de Atividade e Evolução
+        </h2>
+        
+        <div style="overflow: hidden; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 40px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+          <table class="relatorio-sessions-table" style="width: 100%; border-collapse: collapse;">
+            <thead>
+              <tr style="background: #f8fafc; border-bottom: 2px solid #e2e8f0;">
+                <th style="padding: 16px; text-align: left; font-size: 12px; text-transform: uppercase; color: #64748b; font-weight: 800; width: 130px;">Data / Hora</th>
+                <th style="padding: 16px; text-align: left; font-size: 12px; text-transform: uppercase; color: #64748b; font-weight: 800;">Sumário e Notas Pedagógicas</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${sessoesMes.length ? sessoesMes.map(s => {
+                const dateObj = new Date(s.data);
+                const isPast = s.estado === 'REALIZADA';
+                const rowStyle = isPast ? '' : 'opacity: 0.5; background: #fdfdfd;';
+                const statusBadge = isPast ? '' : `<span style="font-size: 10px; background: #f1f5f9; color: #94a3b8; padding: 2px 8px; border-radius: 4px; margin-left: 10px; font-weight: 700;">${s.estado}</span>`;
+                
+                return `
+                <tr style="border-bottom: 1px solid #f1f5f9; ${rowStyle}">
+                  <td style="padding: 18px 16px; vertical-align: top;">
+                    <div style="font-weight: 800; color: #1e293b; font-size: 14px;">${dateObj.toLocaleDateString('pt-PT')}</div>
+                    <div style="font-size: 12px; color: #94a3b8; margin-top: 4px; font-weight: 500;">${(s.hora_inicio || '').slice(0,5)}h</div>
+                  </td>
+                  <td style="padding: 18px 16px;">
+                    <div style="font-size: 15px; color: #334155; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center;">
+                      ${s.sumario || 'Sessão Registada'} ${statusBadge}
+                    </div>
+                    ${s.observacoes ? `<div style="font-size: 13px; color: #475569; background: #f8fafc; padding: 12px; border-radius: 10px; border-left: 4px solid #cbd5e1; font-style: italic; line-height: 1.5; margin-bottom: 10px;">"${s.observacoes}"</div>` : ''}
+                    ${s.exercicios_realizados ? `<div style="font-size: 13px; color: #64748b; display: flex; align-items: center; gap: 8px;">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#b91c1c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                      <strong style="color: #475569;">Exercícios:</strong> ${s.exercicios_realizados}
+                    </div>` : ''}
+                  </td>
+                </tr>
+                `;
+              }).join('') : '<tr><td colspan="2" style="padding: 40px; text-align: center; color: #94a3b8; font-weight: 500;">Nenhuma atividade pedagógica registada no período selecionado.</td></tr>'}
+            </tbody>
+          </table>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 40px;">
+          <div style="background: #fff; padding: 20px; border-radius: 12px; text-align: center; border: 1px solid #e2e8f0; border-top: 4px solid #64748b;">
+            <p style="font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 800; margin-bottom: 8px; letter-spacing: 0.05em;">Acordo Mensal</p>
+            <p style="font-size: 22px; font-weight: 800; color: #1e293b;">${formatCurrency(mensalidadePactada)}</p>
+          </div>
+          <div style="background: #fff; padding: 20px; border-radius: 12px; text-align: center; border: 1px solid #e2e8f0; border-top: 4px solid #64748b;">
+            <p style="font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 800; margin-bottom: 8px; letter-spacing: 0.05em;">Aulas Contratadas</p>
+            <p style="font-size: 22px; font-weight: 800; color: #1e293b;">${sessoesPactadas}</p>
+          </div>
+          <div style="background: #b91c1c; padding: 20px; border-radius: 12px; text-align: center; color: white; box-shadow: 0 10px 15px -3px rgba(185, 28, 28, 0.2);">
+            <p style="font-size: 11px; text-transform: uppercase; color: #ffffff; opacity: 0.9; font-weight: 800; margin-bottom: 8px; letter-spacing: 0.05em;">Previsão Próximo Mês</p>
+            <p style="font-size: 24px; font-weight: 900;">${formatCurrency(mensalidadePactada)}</p>
+          </div>
+        </div>
+
+        <div class="relatorio-footer" style="margin-top: 80px; padding-top: 30px; border-top: 1px solid #f1f5f9; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 15px;">
+          <div style="display: flex; gap: 40px; color: #94a3b8; font-size: 12px; font-weight: 500;">
+            <span>Doc: REL-${aluno.id_aluno.slice(0,8).toUpperCase()}</span>
+            <span>Sistema: EduSphere Core v2.0</span>
+            <span>Ref: Pedagógico-Mensal</span>
+          </div>
+          <p style="color: #64748b; font-size: 12px; max-width: 500px; line-height: 1.6;">Este documento é um relatório informativo de acompanhamento escolar gerado automaticamente pela plataforma <strong>EduSphere</strong>. Tem como objetivo a transparência e a partilha de progresso entre o explicador e os encarregados de educação.</p>
+          <div style="margin-top: 10px; font-weight: 900; color: #b91c1c; font-size: 18px; letter-spacing: 4px; opacity: 0.3;">EDUSPHERE</div>
+        </div>
+      </div>
+    `;
+
+    content.innerHTML = html;
+  } catch (err) {
+    console.error(err);
+    content.innerHTML = `
+      <div class="text-center py-12">
+        <div style="color: #ef4444; margin-bottom: 20px; display: flex; justify-content: center;">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+        </div>
+        <h3 style="font-weight: 700; color: #1e293b; margin-bottom: 10px;">Erro ao gerar relatório</h3>
+        <p style="color: #64748b; font-size: 14px;">${err.message}</p>
+        <button class="button secondary mt-6" onclick="closeModal('modal-relatorio')">Fechar</button>
+      </div>
+    `;
+  }
 }

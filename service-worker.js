@@ -64,6 +64,9 @@ self.addEventListener("fetch", (event) => {
             cache.put(event.request, networkResponse.clone());
           }
           return networkResponse;
+        }).catch(() => {
+          // Fallback if network fails and no cache
+          return cachedResponse || new Response("Offline", { status: 503 });
         });
         return cachedResponse || fetchPromise;
       });
