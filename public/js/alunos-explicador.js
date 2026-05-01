@@ -1022,10 +1022,30 @@ function calcPrevistoEdit() {
   if (el) el.textContent = formatCurrency(total);
 }
 
-async function gerarRelatorio(id) {
+async function gerarRelatorio(id, mes = null, ano = null) {
   const modal = document.getElementById("modal-relatorio");
   const content = document.getElementById("relatorio-content");
   if (!modal || !content) return;
+
+  const selMes = document.getElementById("relatorio-mes-sel");
+  const selAno = document.getElementById("relatorio-ano-sel");
+
+  // Se o modal ainda não está aberto (primeira chamada), configuramos os seletores
+  if (!modal.classList.contains("open")) {
+    const agoraInit = new Date();
+    if (selMes) selMes.value = agoraInit.getMonth();
+    if (selAno) selAno.value = agoraInit.getFullYear();
+
+    // Adicionar listeners para recarregar quando mudar (apenas uma vez)
+    if (selMes && !selMes.dataset.hasListener) {
+      selMes.addEventListener("change", () => gerarRelatorio(id, selMes.value, selAno.value));
+      selMes.dataset.hasListener = "true";
+    }
+    if (selAno && !selAno.dataset.hasListener) {
+      selAno.addEventListener("change", () => gerarRelatorio(id, selMes.value, selAno.value));
+      selAno.dataset.hasListener = "true";
+    }
+  }
 
   modal.classList.add("open");
   modal.setAttribute("aria-hidden", "false");
@@ -1038,15 +1058,19 @@ async function gerarRelatorio(id) {
     const explId = await ExplicadorService.getMyExplId();
     const { data: expl } = await supabase.from('explicadores').select('nome').eq('id_explicador', explId).single();
 
-    // Filter sessions for current month
+    // Determinar período
     const agora = new Date();
-    const mesAtual = agora.getMonth();
-    const anoAtual = agora.getFullYear();
+    const mesAtual = mes !== null ? Number(mes) : (selMes ? Number(selMes.value) : agora.getMonth());
+    const anoAtual = ano !== null ? Number(ano) : (selAno ? Number(selAno.value) : agora.getFullYear());
     
+    // Nome do mês para o relatório
+    const dataPeriodo = new Date(anoAtual, mesAtual, 1);
+    const labelPeriodo = dataPeriodo.toLocaleDateString('pt-PT', { month: 'long', year: 'numeric' });
+
     // Sort all sessions first
     const sortedSessoes = [...sessoes].sort((a, b) => a.data.localeCompare(b.data));
     
-    // Sessions for the current month
+    // Sessions for the selected month
     const sessoesMes = sortedSessoes.filter(s => {
       const d = new Date(s.data);
       return d.getMonth() === mesAtual && d.getFullYear() === anoAtual;
@@ -1089,7 +1113,7 @@ async function gerarRelatorio(id) {
             </div>
             <div class="relatorio-data-row" style="display: flex; justify-content: space-between; font-size: 15px;">
               <span style="color: #64748b;">Período de Referência</span>
-              <span style="font-weight: 700; color: #0f172a; text-transform: capitalize;">${agora.toLocaleDateString('pt-PT', { month: 'long', year: 'numeric' })}</span>
+              <span style="font-weight: 700; color: #0f172a; text-transform: capitalize;">${labelPeriodo}</span>
             </div>
           </div>
 

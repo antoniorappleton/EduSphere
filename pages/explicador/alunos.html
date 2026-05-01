@@ -928,6 +928,28 @@
           <h2 style="color: #1e293b; font-size: 1.1rem; margin: 0;">Relatório de Desempenho</h2>
         </div>
         <div style="display: flex; gap: 12px; align-items: center;">
+          <div style="display: flex; gap: 6px; align-items: center;" class="no-print">
+            <select id="relatorio-mes-sel" class="input" style="padding: 4px 8px; font-size: 13px; width: auto; height: 34px; border-color: #e2e8f0;">
+              <option value="0">Janeiro</option>
+              <option value="1">Fevereiro</option>
+              <option value="2">Março</option>
+              <option value="3">Abril</option>
+              <option value="4">Maio</option>
+              <option value="5">Junho</option>
+              <option value="6">Julho</option>
+              <option value="7">Agosto</option>
+              <option value="8">Setembro</option>
+              <option value="9">Outubro</option>
+              <option value="10">Novembro</option>
+              <option value="11">Dezembro</option>
+            </select>
+            <select id="relatorio-ano-sel" class="input" style="padding: 4px 8px; font-size: 13px; width: auto; height: 34px; border-color: #e2e8f0;">
+              <option value="2024">2024</option>
+              <option value="2025">2025</option>
+              <option value="2026">2026</option>
+              <option value="2027">2027</option>
+            </select>
+          </div>
           <button class="button primary" onclick="window.print()" style="display: flex; align-items: center; gap: 8px; padding: 8px 16px; font-size: 14px; background-color: #b91c1c;">
             <span class="material-symbols-outlined" style="font-size: 20px;">print</span> PDF / Imprimir
           </button>
