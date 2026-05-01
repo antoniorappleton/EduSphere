@@ -1072,8 +1072,11 @@ async function gerarRelatorio(id, mes = null, ano = null) {
     
     // Sessions for the selected month
     const sessoesMes = sortedSessoes.filter(s => {
-      const d = new Date(s.data);
-      return d.getMonth() === mesAtual && d.getFullYear() === anoAtual;
+      // Usar split para evitar problemas de fuso horário com new Date()
+      const parts = s.data.split('-');
+      const y = parseInt(parts[0]);
+      const m = parseInt(parts[1]) - 1; // JS months are 0-11
+      return m === mesAtual && y === anoAtual;
     });
 
     const realizasMes = sessoesMes.filter(s => s.estado === 'REALIZADA');
@@ -1150,21 +1153,19 @@ async function gerarRelatorio(id, mes = null, ano = null) {
               </tr>
             </thead>
             <tbody>
-              ${sessoesMes.length ? sessoesMes.map(s => {
-                const dateObj = new Date(s.data);
-                const isPast = s.estado === 'REALIZADA';
-                const rowStyle = isPast ? '' : 'opacity: 0.5; background: #fdfdfd;';
-                const statusBadge = isPast ? '' : `<span style="font-size: 10px; background: #f1f5f9; color: #94a3b8; padding: 2px 8px; border-radius: 4px; margin-left: 10px; font-weight: 700;">${s.estado}</span>`;
+              ${realizasMes.length ? realizasMes.map(s => {
+                const parts = s.data.split('-');
+                const dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
                 
                 return `
-                <tr style="border-bottom: 1px solid #f1f5f9; ${rowStyle}">
+                <tr style="border-bottom: 1px solid #f1f5f9;">
                   <td style="padding: 18px 16px; vertical-align: top;">
                     <div style="font-weight: 800; color: #1e293b; font-size: 14px;">${dateObj.toLocaleDateString('pt-PT')}</div>
                     <div style="font-size: 12px; color: #94a3b8; margin-top: 4px; font-weight: 500;">${(s.hora_inicio || '').slice(0,5)}h</div>
                   </td>
                   <td style="padding: 18px 16px;">
                     <div style="font-size: 15px; color: #334155; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center;">
-                      ${s.sumario || 'Sessão Registada'} ${statusBadge}
+                      ${s.sumario || 'Sessão Realizada'}
                     </div>
                     ${s.observacoes ? `<div style="font-size: 13px; color: #475569; background: #f8fafc; padding: 12px; border-radius: 10px; border-left: 4px solid #cbd5e1; font-style: italic; line-height: 1.5; margin-bottom: 10px;">"${s.observacoes}"</div>` : ''}
                     ${s.exercicios_realizados ? `<div style="font-size: 13px; color: #64748b; display: flex; align-items: center; gap: 8px;">
@@ -1174,14 +1175,14 @@ async function gerarRelatorio(id, mes = null, ano = null) {
                   </td>
                 </tr>
                 `;
-              }).join('') : '<tr><td colspan="2" style="padding: 40px; text-align: center; color: #94a3b8; font-weight: 500;">Nenhuma atividade pedagógica registada no período selecionado.</td></tr>'}
+              }).join('') : '<tr><td colspan="2" style="padding: 40px; text-align: center; color: #94a3b8; font-weight: 500;">Nenhuma atividade pedagógica realizada no período selecionado.</td></tr>'}
             </tbody>
           </table>
         </div>
 
         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 40px;">
           <div style="background: #fff; padding: 20px; border-radius: 12px; text-align: center; border: 1px solid #e2e8f0; border-top: 4px solid #64748b;">
-            <p style="font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 800; margin-bottom: 8px; letter-spacing: 0.05em;">Acordo Mensal</p>
+            <p style="font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 800; margin-bottom: 8px; letter-spacing: 0.05em;">Mensalidade</p>
             <p style="font-size: 22px; font-weight: 800; color: #1e293b;">${formatCurrency(mensalidadePactada)}</p>
           </div>
           <div style="background: #fff; padding: 20px; border-radius: 12px; text-align: center; border: 1px solid #e2e8f0; border-top: 4px solid #64748b;">

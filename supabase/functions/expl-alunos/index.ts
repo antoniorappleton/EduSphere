@@ -140,13 +140,23 @@ serve(async (req) => {
     function mapDiaSemanaToJsIndex(dia) {
       if (!dia) return null;
       const v = dia.trim().toLowerCase();
-      if (v.startsWith("seg")) return 1;
-      if (v.startsWith("ter")) return 2;
-      if (v.startsWith("qua")) return 3;
-      if (v.startsWith("qui")) return 4;
-      if (v.startsWith("sex")) return 5;
-      if (v.startsWith("sáb") || v.startsWith("sab")) return 6;
-      if (v.startsWith("dom")) return 0;
+      // Nomes (Segunda, Segunda-feira, Seg, etc.)
+      if (v.includes("seg")) return 1;
+      if (v.includes("ter")) return 2;
+      if (v.includes("qua")) return 3;
+      if (v.includes("qui")) return 4;
+      if (v.includes("sex")) return 5;
+      if (v.includes("sáb") || v.includes("sab")) return 6;
+      if (v.includes("dom")) return 0;
+      // Ordinais/Dígitos (2ª, 2a, 2, etc.)
+      // Em PT: 2ª feira = Mon(1), 3ª = Tue(2), 4ª = Wed(3), 5ª = Thu(4), 6ª = Fri(5)
+      if (v.includes("2")) return 1;
+      if (v.includes("3")) return 2;
+      if (v.includes("4")) return 3;
+      if (v.includes("5")) return 4;
+      if (v.includes("6")) return 5;
+      if (v.includes("7")) return 6;
+      if (v.includes("1")) return 0;
       return null;
     }
     // dado um dia de início e o índice JS do dia-semana alvo (0..6),
@@ -912,43 +922,11 @@ serve(async (req) => {
           });
         }
       }
-      // 3) Gerar sessões recorrentes para o calendário
+      // 3) Gerar sessões automáticas para o mês escolhido
       try {
-        const targetDow = mapDiaSemanaToJsIndex(aluno.dia_semana_preferido ?? null);
-        if (targetDow !== null) {
-          // base: máximo entre hoje e 1º dia do mês escolhido
-          const hoje = new Date();
-          hoje.setHours(0, 0, 0, 0);
-          const inicioMes = new Date(ano1, mes1 - 1, 1);
-          inicioMes.setHours(0, 0, 0, 0);
-          const baseInicio = hoje > inicioMes ? hoje : inicioMes;
-          // primeira sessão >= baseInicio no dia da semana preferido
-          const primeiroDiaSessao = proximaDataDoDiaSemana(baseInicio, targetDow);
-          const sessoes = [];
-          let dataSessao = primeiroDiaSessao;
-          const NUM_SEMANAS = 8; // podes ajustar mais tarde
-          for (let i = 0; i < NUM_SEMANAS; i++) {
-            sessoes.push({
-              id_explicador: myExplId,
-              id_aluno: alunoId,
-              data: toISODate(dataSessao),
-              hora_inicio: aluno.hora_preferida || null,
-              estado: "AGENDADA"
-            });
-            dataSessao = addDays(dataSessao, 7);
-          }
-          if (sessoes.length) {
-            const { error: sessErr } = await svc.from("sessoes_explicacao").insert(sessoes);
-            if (sessErr) {
-              console.error("Erro a criar sessões recorrentes em iniciar_faturacao_aluno", sessErr);
-              // não fazemos return de erro para não estragar a faturação
-            }
-          }
-        } else {
-          console.log("Aluno sem dia_semana_preferido válido, não foram geradas sessões recorrentes.");
-        }
+        await generateSessionsForAluno(alunoId, mes1, ano1);
       } catch (e) {
-        console.error("Erro inesperado ao gerar sessões recorrentes", e);
+        console.error("Erro inesperado ao gerar sessões isoladas por mês", e);
       }
       // resposta final
       return new Response(JSON.stringify({
