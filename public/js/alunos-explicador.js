@@ -1210,11 +1210,11 @@ async function gerarRelatorio(id, mes = null, ano = null) {
 
         <div class="relatorio-footer-grid">
           <div style="background: #fff; padding: 20px; border-radius: 12px; text-align: center; border: 1px solid #e2e8f0; border-top: 4px solid #64748b;">
-            <p style="font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 800; margin-bottom: 8px; letter-spacing: 0.05em;">Aulas Contratadas</p>
+            <p style="font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 800; margin-bottom: 8px; letter-spacing: 0.05em;">Sessões Previstas</p>
             <p style="font-size: 22px; font-weight: 800; color: #1e293b;">${sessoesPrevistas}</p>
           </div>
           <div style="background: #fff; padding: 20px; border-radius: 12px; text-align: center; border: 1px solid #e2e8f0; border-top: 4px solid #64748b;">
-            <p style="font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 800; margin-bottom: 8px; letter-spacing: 0.05em;">Investimento p/ Sessão</p>
+            <p style="font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 800; margin-bottom: 8px; letter-spacing: 0.05em;">Valor p/ Sessão</p>
             <p style="font-size: 22px; font-weight: 800; color: #1e293b;">${formatCurrency(valorSessao)}</p>
           </div>
           <div style="background: #b91c1c; padding: 20px; border-radius: 12px; text-align: center; color: white; box-shadow: 0 10px 15px -3px rgba(185, 28, 28, 0.2);">
@@ -1229,7 +1229,7 @@ async function gerarRelatorio(id, mes = null, ano = null) {
             <span>Sistema: EduSphere Core v2.0</span>
             <span>Ref: Pedagógico-Mensal</span>
           </div>
-          <p style="color: #64748b; font-size: 12px; max-width: 500px; line-height: 1.6;">Este documento é um relatório informativo de acompanhamento escolar gerado automaticamente pela plataforma <strong>EduSphere</strong>. Tem como objetivo a transparência e a partilha de progresso entre o explicador e os encarregados de educação.</p>
+          <p style="color: #64748b; font-size: 13px; max-width: 600px; line-height: 1.6; font-style: italic;">"Este relatório reflete o meu compromisso em transformar a aprendizagem num processo de autonomia e descoberta. Mais do que rever conteúdos, o nosso foco nas sessões é o desenvolvimento de métodos de trabalho sólidos e a promoção de uma aprendizagem autónoma, capacitando o aluno para os desafios do futuro. by António Appleton"</p>
           <div style="margin-top: 10px; font-weight: 900; color: #b91c1c; font-size: 18px; letter-spacing: 4px; opacity: 0.3;">EDUSPHERE</div>
         </div>
       </div>
