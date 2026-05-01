@@ -1991,3 +1991,77 @@ body.home main.auth {
   opacity: 0.7;
   text-align: right;
 }
+/* ---------- RESPONSIVIDADE RELATÓRIO PDF ---------- */
+
+.relatorio-paper {
+  background: white;
+  padding: 40px;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.relatorio-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 24px;
+}
+
+.relatorio-footer-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-top: 40px;
+}
+
+@media (max-width: 768px) {
+  .relatorio-paper {
+    padding: 20px 15px;
+  }
+
+  .relatorio-header {
+    flex-direction: column;
+    text-align: center !important;
+    gap: 15px;
+  }
+
+  .relatorio-header div {
+    text-align: center !important;
+    width: 100%;
+  }
+
+  .relatorio-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .relatorio-footer-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .relatorio-sessions-table th:nth-child(3), 
+  .relatorio-sessions-table td:nth-child(3) {
+    display: none; /* Esconder duração em mobile se necessário */
+  }
+
+  .relatorio-section-title {
+    font-size: 16px !important;
+  }
+
+  .relatorio-data-row {
+    font-size: 13px !important;
+  }
+}
+
+@media print {
+  .relatorio-paper {
+    padding: 0;
+    box-shadow: none;
+    border: none;
+  }
+  .no-print {
+    display: none;
+  }
+}

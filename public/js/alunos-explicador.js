@@ -1127,7 +1127,7 @@ async function gerarRelatorio(id, mes = null, ano = null) {
           </div>
         </div>
 
-        <div class="relatorio-grid" style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 24px; margin-bottom: 30px;">
+        <div class="relatorio-grid" style="margin-bottom: 30px;">
           <div class="relatorio-info-box" style="background: #fff; padding: 24px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
             <h3 style="color: #b91c1c; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 18px; font-weight: 800; border-left: 4px solid #b91c1c; padding-left: 10px;">Perfil do Aluno</h3>
             <div class="relatorio-data-row" style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 15px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
@@ -1208,7 +1208,7 @@ async function gerarRelatorio(id, mes = null, ano = null) {
           </table>
         </div>
 
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 40px;">
+        <div class="relatorio-footer-grid">
           <div style="background: #fff; padding: 20px; border-radius: 12px; text-align: center; border: 1px solid #e2e8f0; border-top: 4px solid #64748b;">
             <p style="font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 800; margin-bottom: 8px; letter-spacing: 0.05em;">Aulas Contratadas</p>
             <p style="font-size: 22px; font-weight: 800; color: #1e293b;">${sessoesPrevistas}</p>
