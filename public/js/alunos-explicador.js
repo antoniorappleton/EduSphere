@@ -1036,13 +1036,15 @@ async function gerarRelatorio(id, mes = null, ano = null) {
     if (selMes) selMes.value = agoraInit.getMonth();
     if (selAno) selAno.value = agoraInit.getFullYear();
 
-    // Adicionar listeners para recarregar quando mudar (apenas uma vez)
+    // Armazenar ID atual no modal para os listeners acederem ao aluno correto
+    modal.dataset.currentId = id;
+
     if (selMes && !selMes.dataset.hasListener) {
-      selMes.addEventListener("change", () => gerarRelatorio(id, selMes.value, selAno.value));
+      selMes.addEventListener("change", () => gerarRelatorio(modal.dataset.currentId, selMes.value, selAno.value));
       selMes.dataset.hasListener = "true";
     }
     if (selAno && !selAno.dataset.hasListener) {
-      selAno.addEventListener("change", () => gerarRelatorio(id, selMes.value, selAno.value));
+      selAno.addEventListener("change", () => gerarRelatorio(modal.dataset.currentId, selMes.value, selAno.value));
       selAno.dataset.hasListener = "true";
     }
   }
@@ -1082,9 +1084,31 @@ async function gerarRelatorio(id, mes = null, ano = null) {
     const realizasMes = sessoesMes.filter(s => s.estado === 'REALIZADA');
 
     const valorSessao = Number(aluno.valor_explicacao || 0);
-    const sessoesPactadas = Number(aluno.sessoes_mes || 0);
-    const totalMes = realizasMes.length * valorSessao;
-    const mensalidadePactada = valorSessao * sessoesPactadas;
+    const sessoesPrevistas = Number(aluno.sessoes_mes || 0);
+    
+    // Buscar dados de pagamento do mês para refletir pagamentos parciais
+    let valorPago = 0;
+    let valorPrevistoDB = 0;
+    try {
+      const { data: pagRow } = await supabase
+        .from('pagamentos')
+        .select('valor_pago, valor_previsto')
+        .eq('id_aluno', id)
+        .eq('ano', anoAtual)
+        .eq('mes', mesAtual + 1)
+        .maybeSingle();
+      
+      if (pagRow) {
+        valorPago = Number(pagRow.valor_pago || 0);
+        valorPrevistoDB = Number(pagRow.valor_previsto || 0);
+      }
+    } catch (e) {
+      console.warn("Erro ao buscar pagamentos:", e);
+    }
+
+    // O "Valor a Pagar" deste relatório é baseado no que foi REALMENTE realizado
+    const totalRealizado = realizasMes.length * valorSessao;
+    const valorPendente = Math.max(totalRealizado - valorPago, 0);
 
     const html = `
       <div class="relatorio-paper">
@@ -1127,12 +1151,16 @@ async function gerarRelatorio(id, mes = null, ano = null) {
               <span style="font-weight: 700; color: #991b1b;">${realizasMes.length}</span>
             </div>
             <div class="relatorio-data-row" style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px;">
-              <span style="color: #b91c1c; opacity: 0.8;">Investimento p/ Sessão</span>
+              <span style="color: #b91c1c; opacity: 0.8;">Valor p/ Sessão</span>
               <span style="font-weight: 700; color: #991b1b;">${formatCurrency(valorSessao)}</span>
             </div>
+            <div class="relatorio-data-row" style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px;">
+              <span style="color: #b91c1c; opacity: 0.8;">Valor Pago</span>
+              <span style="font-weight: 700; color: #991b1b;">${formatCurrency(valorPago)}</span>
+            </div>
             <div class="relatorio-data-row" style="display: flex; justify-content: space-between; font-size: 15px; padding-top: 12px; border-top: 1px dashed #fecaca; margin-top: 5px;">
-              <span style="color: #991b1b; font-weight: 800;">Total Acumulado</span>
-              <span style="font-weight: 900; color: #b91c1c; font-size: 18px;">${formatCurrency(totalMes)}</span>
+              <span style="color: #991b1b; font-weight: 800;">Valor a Pagar</span>
+              <span style="font-weight: 900; color: #b91c1c; font-size: 18px;">${formatCurrency(valorPendente)}</span>
             </div>
           </div>
         </div>
@@ -1182,16 +1210,16 @@ async function gerarRelatorio(id, mes = null, ano = null) {
 
         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 40px;">
           <div style="background: #fff; padding: 20px; border-radius: 12px; text-align: center; border: 1px solid #e2e8f0; border-top: 4px solid #64748b;">
-            <p style="font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 800; margin-bottom: 8px; letter-spacing: 0.05em;">Mensalidade</p>
-            <p style="font-size: 22px; font-weight: 800; color: #1e293b;">${formatCurrency(mensalidadePactada)}</p>
+            <p style="font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 800; margin-bottom: 8px; letter-spacing: 0.05em;">Aulas Contratadas</p>
+            <p style="font-size: 22px; font-weight: 800; color: #1e293b;">${sessoesPrevistas}</p>
           </div>
           <div style="background: #fff; padding: 20px; border-radius: 12px; text-align: center; border: 1px solid #e2e8f0; border-top: 4px solid #64748b;">
-            <p style="font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 800; margin-bottom: 8px; letter-spacing: 0.05em;">Aulas Contratadas</p>
-            <p style="font-size: 22px; font-weight: 800; color: #1e293b;">${sessoesPactadas}</p>
+            <p style="font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 800; margin-bottom: 8px; letter-spacing: 0.05em;">Investimento p/ Sessão</p>
+            <p style="font-size: 22px; font-weight: 800; color: #1e293b;">${formatCurrency(valorSessao)}</p>
           </div>
           <div style="background: #b91c1c; padding: 20px; border-radius: 12px; text-align: center; color: white; box-shadow: 0 10px 15px -3px rgba(185, 28, 28, 0.2);">
             <p style="font-size: 11px; text-transform: uppercase; color: #ffffff; opacity: 0.9; font-weight: 800; margin-bottom: 8px; letter-spacing: 0.05em;">Previsão Próximo Mês</p>
-            <p style="font-size: 24px; font-weight: 900;">${formatCurrency(mensalidadePactada)}</p>
+            <p style="font-size: 24px; font-weight: 900;">${formatCurrency(valorSessao * sessoesPrevistas)}</p>
           </div>
         </div>
 
