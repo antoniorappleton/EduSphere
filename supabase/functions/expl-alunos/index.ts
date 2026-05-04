@@ -170,6 +170,34 @@ serve(async (req) => {
       d.setHours(0, 0, 0, 0);
       return d;
     }
+
+    /**
+     * Calcula o número de sessões previstas para um mês baseando-se nos dias da semana preferidos.
+     * Fallback para sessoes_mes se não houver dias definidos.
+     */
+    function getExpectedSessionsCount(diaSemanaPreferido, month, year, fallbackSessoesMes) {
+      if (!diaSemanaPreferido) return Number(fallbackSessoesMes) || 0;
+
+      const dias = diaSemanaPreferido.split(",").map(d => d.trim()).filter(Boolean);
+      const targetDows = dias.map(d => mapDiaSemanaToJsIndex(d)).filter(d => d !== null);
+
+      if (targetDows.length === 0) return Number(fallbackSessoesMes) || 0;
+
+      const startOfMonth = new Date(year, month - 1, 1);
+      const endOfMonth = new Date(year, month, 0);
+      let total = 0;
+
+      for (const dow of targetDows) {
+        let current = proximaDataDoDiaSemana(startOfMonth, dow);
+        if (isNaN(current.getTime())) continue;
+        
+        while (current <= endOfMonth) {
+          total++;
+          current = addDays(current, 7);
+        }
+      }
+      return total;
+    }
     /* ======================================================
    HELPER: carregar aluno do explicador
    ====================================================== */ async function getAlunoDoExpl(alunoId) {
@@ -247,9 +275,8 @@ serve(async (req) => {
         // Ordenar por data
         sessionsToCreate.sort((a, b) => a.data.localeCompare(b.data));
 
-        // Limitar ao número de sessões mensais (sessoes_mes)
-        const maxSessions = Number(aluno.sessoes_mes) || 4;
-        const limitedSessions = sessionsToCreate.slice(0, maxSessions);
+        // Seguindo a lógica do utilizador: gerar todas as sessões que calham nos dias escolhidos
+        const limitedSessions = sessionsToCreate; 
 
         if (limitedSessions.length > 0) {
           // 1. Verificar sessões que já existem nestas datas
@@ -842,8 +869,8 @@ serve(async (req) => {
       // garante que o aluno é mesmo deste explicador + lê dados base
       const aluno = await getAlunoDoExpl(alunoId);
       const valorExp = Number(aluno.valor_explicacao) || 0;
-      const sessoesMes = Number(aluno.sessoes_mes) || 0;
-      const valorPrevDefault = valorExp * sessoesMes; // pode ser 0
+      const sessionCount = getExpectedSessionsCount(aluno.dia_semana_preferido, mes1, ano1, aluno.sessoes_mes);
+      const valorPrevDefault = valorExp * sessionCount; // dinâmico
       // primeiro dia do mês/ano escolhidos (YYYY-MM-DD)
       const inicio = new Date(ano1, mes1 - 1, 1).toISOString().slice(0, 10);
       // 1) Atualizar o aluno para marcar faturação ativa
@@ -956,8 +983,8 @@ serve(async (req) => {
       }
       const aluno = await getAlunoDoExpl(alunoId);
       const valorExp = Number(aluno.valor_explicacao) || 0;
-      const sessoesMes = Number(aluno.sessoes_mes) || 0;
-      const valorPrevDefault1 = valorExp * sessoesMes;
+      const sessionCount = getExpectedSessionsCount(aluno.dia_semana_preferido, mes1, ano1, aluno.sessoes_mes);
+      const valorPrevDefault1 = valorExp * sessionCount;
       const { data: pagRow, error: pagErr } = await svc.from("pagamentos").select("valor_previsto, valor_pago, estado").eq("id_aluno", alunoId).eq("id_explicador", myExplId).eq("ano", ano1).eq("mes", mes1).maybeSingle();
       if (pagErr) {
         console.error("Erro ao ler pagamentos", pagErr);
@@ -1093,7 +1120,7 @@ serve(async (req) => {
       // 1. Obter todos os alunos ativos deste explicador
       const { data: alunos, error: alErr } = await svc
         .from("alunos")
-        .select("id_aluno, valor_explicacao, sessoes_mes")
+        .select("id_aluno, valor_explicacao, sessoes_mes, dia_semana_preferido")
         .eq("id_explicador", myExplId)
         .eq("is_active", true);
 
@@ -1111,9 +1138,50 @@ serve(async (req) => {
 
       for (const al of (alunos || [])) {
         try {
+          // 2.1 Sempre tentar gerar sessões para garantir que as sessões base estão lá (idempotente)
+          // Fazemos isto ANTES de calcular o valor previsto para que as novas sessões sejam contadas
+          await generateSessionsForAluno(al.id_aluno, mes, ano).catch(e => {
+            console.error(`Erro ao gerar sessões no bulk billing para ${al.id_aluno}:`, e);
+          });
+
+          // 2.2 Contar sessões REAIS na base de dados para este mês
+          // Isto apanha sessões geradas automaticamente E sessões extra adicionadas manualmente
+          const startIso = `${ano}-${String(mes).padStart(2, '0')}-01`;
+          const lastDay = new Date(ano, mes, 0).getDate();
+          const endIso = `${ano}-${String(mes).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+
+          const { count: realSessionCount, error: countErr } = await svc
+            .from("sessoes_explicacao")
+            .select("*", { count: "exact", head: true })
+            .eq("id_aluno", al.id_aluno)
+            .eq("id_explicador", myExplId)
+            .gte("data", startIso)
+            .lte("data", endIso)
+            .neq("estado", "CANCELADA");
+
+          if (countErr) {
+            console.error(`Erro ao contar sessões para aluno ${al.id_aluno}:`, countErr);
+          }
+
+          // 2.3 Determinar o número de sessões a cobrar
+          // Se houver sessões na BD, usamos esse número. 
+          // Se não houver nada (ex: aluno novo sem sessões ainda), usamos o cálculo do calendário.
+          let finalSessionCount = realSessionCount || 0;
+          if (finalSessionCount === 0) {
+            finalSessionCount = getExpectedSessionsCount(al.dia_semana_preferido, mes, ano, al.sessoes_mes);
+          }
+
+          let valorPrev = (Number(al.valor_explicacao) || 0) * finalSessionCount;
+
+          // Garantir que não enviamos NaN para a BD (causa 400)
+          if (isNaN(valorPrev) || !isFinite(valorPrev)) {
+            console.warn(`Valor previsto inválido para aluno ${al.id_aluno}: ${valorPrev}`);
+            valorPrev = 0;
+          }
+
           const { data: existing, error: checkErr } = await svc
             .from("pagamentos")
-            .select("id_pagamento")
+            .select("id_pagamento, estado, valor_previsto, valor_pago")
             .eq("id_aluno", al.id_aluno)
             .eq("id_explicador", myExplId)
             .eq("ano", ano)
@@ -1127,14 +1195,6 @@ serve(async (req) => {
           }
 
           if (!existing) {
-            let valorPrev = (Number(al.valor_explicacao) || 0) * (Number(al.sessoes_mes) || 0);
-
-            // Garantir que não enviamos NaN para a BD (causa 400)
-            if (isNaN(valorPrev) || !isFinite(valorPrev)) {
-              console.warn(`Valor previsto inválido para aluno ${al.id_aluno}: ${valorPrev}`);
-              valorPrev = 0;
-            }
-
             const { error: insErr } = await svc.from("pagamentos").insert({
               id_aluno: al.id_aluno,
               id_explicador: myExplId,
@@ -1142,7 +1202,7 @@ serve(async (req) => {
               mes: mes,
               valor_previsto: valorPrev,
               valor_pago: 0,
-              estado: "PENDENTE"
+              estado: valorPrev > 0 ? "PENDENTE" : "PAGO"
             });
 
             if (insErr) {
@@ -1151,15 +1211,35 @@ serve(async (req) => {
             } else {
               results.push(al.id_aluno);
             }
+          } else if (Number(existing.valor_previsto) !== valorPrev) {
+            // Recalcular estado se o valor previsto mudou
+            const valorPago = Number(existing.valor_pago) || 0;
+            let novoEstado = existing.estado || "PENDENTE";
+            
+            // Só alteramos o estado se não estiver explicitamente PAGO (ou se o novo valor exceder o que foi pago)
+            if (valorPago >= valorPrev) {
+                novoEstado = "PAGO";
+            } else if (valorPago > 0) {
+                novoEstado = "PARCIAL";
+            } else if (valorPrev > 0) {
+                // Se o estado atual era PAGO mas agora deve mais, volta a PENDENTE/ATRASO
+                if (novoEstado === "PAGO") novoEstado = "PENDENTE";
+            } else {
+                novoEstado = "PAGO";
+            }
+
+            const { error: updErr } = await svc.from("pagamentos")
+              .update({ valor_previsto: valorPrev, estado: novoEstado })
+              .eq("id_pagamento", existing.id_pagamento);
+            
+            if (updErr) {
+              console.error(`Erro ao atualizar pagamento para aluno ${al.id_aluno}:`, updErr);
+              errors.push({ aluno: al.id_aluno, error: updErr.message });
+            } else {
+              results.push(al.id_aluno); 
+            }
           }
-
-          // 2.1 Sempre tentar gerar sessões para garantir que estão lá (idempotente)
-          await generateSessionsForAluno(al.id_aluno, mes, ano).catch(e => {
-            console.error(`Erro ao gerar sessões no bulk billing para ${al.id_aluno}:`, e);
-          });
-
         } catch (innerErr) {
-
           console.error(`Exceção ao processar aluno ${al.id_aluno}:`, innerErr);
           errors.push({ aluno: al.id_aluno, error: innerErr.message });
         }
