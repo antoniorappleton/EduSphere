@@ -445,7 +445,9 @@ async function handleDeleteAluno() {
     fecharPerfilAluno(); // Função que volta para a lista
     initAlunosPage(); // Recarrega a lista
   } catch (err) {
-    alert("Erro ao eliminar aluno: " + err.message);
+    let msg = err.message || "Falha técnica";
+    if (err.details) msg += ` (${err.details})`;
+    alert("Erro ao eliminar aluno: " + msg);
   }
 }
 

@@ -542,23 +542,105 @@ serve(async (req) => {
       }
       // 1) garantir que este aluno é mesmo deste explicador
       const aluno = await getAlunoDoExpl(alunoId);
-      // 2) apagar dependências (pagamentos, sessões, app_users)
-      await svc.from("pagamentos").delete().eq("id_aluno", alunoId).eq("id_explicador", myExplId);
-      await svc.from("sessoes_explicacao").delete().eq("id_aluno", alunoId).eq("id_explicador", myExplId);
-      await svc.from("app_users").delete().eq("user_id", aluno.user_id).eq("role", "aluno");
-      // 3) apagar aluno
-      await svc.from("alunos").delete().eq("id_aluno", alunoId).eq("id_explicador", myExplId);
-      // 4) apagar utilizador AUTH (para o email poder ser reutilizado)
-      const { error: delErr } = await svc.auth.admin.deleteUser(aluno.user_id);
-      if (delErr) {
-        console.error("delete_aluno: erro ao apagar user auth", delErr);
+
+      // 2) apagar dependências, uma a uma, com erro explícito
+      //    (não confiar apenas em ON DELETE CASCADE — a BD real pode não
+      //    ter as constraints exatamente como estão no schema.sql)
+      // "mensagens" não tem coluna id_explicador — filtramos só por id_aluno
+      // (já validado que este aluno pertence a este explicador acima)
+      const dependentTables = ["exercicios", "pagamentos", "sessoes_explicacao"];
+      for (const table of dependentTables) {
+        const { error: depErr } = await svc.from(table).delete()
+          .eq("id_aluno", alunoId)
+          .eq("id_explicador", myExplId);
+        if (depErr) {
+          console.error(`delete_aluno: erro ao apagar dependências em "${table}"`, depErr);
+          return new Response(JSON.stringify({
+            error: `Erro ao apagar registos relacionados (${table})`,
+            details: depErr.message
+          }), {
+            status: 400,
+            headers: cors(origin)
+          });
+        }
+      }
+
+      const { error: mensagensErr } = await svc.from("mensagens").delete()
+        .eq("id_aluno", alunoId);
+      if (mensagensErr) {
+        console.error(`delete_aluno: erro ao apagar dependências em "mensagens"`, mensagensErr);
         return new Response(JSON.stringify({
-          error: delErr.message
+          error: `Erro ao apagar registos relacionados (mensagens)`,
+          details: mensagensErr.message
         }), {
           status: 400,
           headers: cors(origin)
         });
       }
+
+      const { error: appUserErr } = await svc.from("app_users")
+        .delete()
+        .eq("user_id", aluno.user_id)
+        .eq("role", "aluno");
+      if (appUserErr) {
+        console.error("delete_aluno: erro ao apagar app_users", appUserErr);
+        return new Response(JSON.stringify({
+          error: "Erro ao apagar permissões do aluno",
+          details: appUserErr.message
+        }), {
+          status: 400,
+          headers: cors(origin)
+        });
+      }
+
+      // 3) apagar aluno
+      const { error: alunoDelErr } = await svc.from("alunos")
+        .delete()
+        .eq("id_aluno", alunoId)
+        .eq("id_explicador", myExplId);
+      if (alunoDelErr) {
+        console.error("delete_aluno: erro ao apagar aluno", alunoDelErr);
+        return new Response(JSON.stringify({
+          error: "Erro ao apagar registo do aluno",
+          details: alunoDelErr.message
+        }), {
+          status: 400,
+          headers: cors(origin)
+        });
+      }
+
+      // 4) apagar utilizador AUTH (para o email poder ser reutilizado),
+      //    mas só se nenhum outro aluno ainda usar o mesmo user_id
+      //    (protege contra registos duplicados por tentativas repetidas)
+      const { data: outrosAlunos, error: outrosErr } = await svc
+        .from("alunos")
+        .select("id_aluno")
+        .eq("user_id", aluno.user_id)
+        .limit(1);
+      if (outrosErr) {
+        console.warn("delete_aluno: erro ao verificar duplicados de user_id", outrosErr);
+      }
+
+      if (!outrosAlunos || outrosAlunos.length === 0) {
+        const { error: delErr } = await svc.auth.admin.deleteUser(aluno.user_id);
+        if (delErr) {
+          const jaNaoExiste = /not.*found/i.test(delErr.message || "");
+          if (!jaNaoExiste) {
+            console.error("delete_aluno: erro ao apagar user auth", delErr);
+            return new Response(JSON.stringify({
+              error: "Aluno e dados associados foram apagados, mas falhou apagar a conta de login",
+              details: delErr.message
+            }), {
+              status: 400,
+              headers: cors(origin)
+            });
+          }
+          console.warn("delete_aluno: user auth já não existia, a ignorar", delErr.message);
+        }
+      } else {
+        console.log("delete_aluno: user_id ainda usado por outro registo de aluno, conta de login mantida");
+      }
+
       // ✅ FECHO DO BLOCO delete_aluno
       return new Response(JSON.stringify({
         ok: true
@@ -582,6 +664,28 @@ serve(async (req) => {
           headers: cors(origin)
         });
       }
+
+      // 0) Impedir duplicados: já existe um aluno com este email para este explicador?
+      //    (evita registos "presos" quando o formulário é reenviado após uma falha)
+      const { data: dupAluno, error: dupErr } = await svc
+        .from("alunos")
+        .select("id_aluno")
+        .eq("id_explicador", myExplId)
+        .ilike("email", email)
+        .maybeSingle();
+      if (dupErr) {
+        console.error("create_aluno: erro ao verificar duplicados", dupErr);
+      }
+      if (dupAluno) {
+        return new Response(JSON.stringify({
+          error: "Já existe um aluno registado com este email",
+          id_aluno: dupAluno.id_aluno
+        }), {
+          status: 409,
+          headers: cors(origin)
+        });
+      }
+
       // 1) Criar ou identificar utilizador Auth
       let alunoUid: string;
       const { data: userList, error: listErr } = await svc.auth.admin.listUsers();

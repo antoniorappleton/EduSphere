@@ -1,6 +1,23 @@
 // public/js/explicador-service.js
 
 window.ExplicadorService = {
+  // Helper: extrai a mensagem de erro detalhada devolvida pela Edge Function
+  async _unwrapFnError(error) {
+    try {
+      if (error.context && typeof error.context.json === "function") {
+        const body = await error.context.json();
+        if (body && body.error) {
+          const detailedErr = new Error(body.error);
+          if (body.details) detailedErr.details = body.details;
+          return detailedErr;
+        }
+      }
+    } catch (e) {
+      // corpo não era JSON ou já foi consumido; usa o erro original
+    }
+    return error;
+  },
+
   // Helpers
   async getMyExplId() {
     const {
@@ -52,20 +69,7 @@ window.ExplicadorService = {
 
     if (error) {
       console.error("Erro ao criar aluno via Edge Function:", error);
-      // Tentar extrair erro detalhado do corpo da resposta se for um FunctionsHttpError
-      try {
-        if (error.context && typeof error.context.json === "function") {
-          const body = await error.context.json();
-          if (body && body.error) {
-            const detailedErr = new Error(body.error);
-            if (body.details) detailedErr.details = body.details;
-            throw detailedErr;
-          }
-        }
-      } catch (e) {
-        if (e.message !== error.message) throw e;
-      }
-      throw error;
+      throw await this._unwrapFnError(error);
     }
     return data;
   },
@@ -77,19 +81,7 @@ window.ExplicadorService = {
     });
     if (error) {
       console.error("Erro ao atualizar aluno via Edge Function:", error);
-      try {
-        if (error.context && typeof error.context.json === "function") {
-          const body = await error.context.json();
-          if (body && body.error) {
-            const detailedErr = new Error(body.error);
-            if (body.details) detailedErr.details = body.details;
-            throw detailedErr;
-          }
-        }
-      } catch (e) {
-        if (e.message !== error.message) throw e;
-      }
-      throw error;
+      throw await this._unwrapFnError(error);
     }
     if (data && data.error) throw new Error(data.error);
     return data;
@@ -100,7 +92,10 @@ window.ExplicadorService = {
     const { data, error } = await supabase.functions.invoke("expl-alunos", {
       body: { action: "delete_aluno", payload: { id_aluno } },
     });
-    if (error) throw error;
+    if (error) {
+      console.error("Erro ao eliminar aluno via Edge Function:", error);
+      throw await this._unwrapFnError(error);
+    }
     if (data && data.error) throw new Error(data.error);
     return data;
   },
