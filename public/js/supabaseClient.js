@@ -23,7 +23,7 @@ const SUPABASE_ANON_KEY =
 
   // (Opcional) alias extra, se quiseres
   window.sb = client;
-  window.APP_VERSION = "2026.09.21";
+  window.APP_VERSION = "2026.09.21.1";
 
   console.log("✅ Supabase client inicializado", client);
 })();

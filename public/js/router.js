@@ -1,4 +1,4 @@
-const APP_VERSION = window.APP_VERSION || '2026.09.21';
+const APP_VERSION = window.APP_VERSION || '2026.09.21.1';
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
