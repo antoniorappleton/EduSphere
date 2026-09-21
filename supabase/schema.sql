@@ -542,5 +542,6 @@ DO $$ BEGIN
     ALTER TABLE public.pagamentos
       ADD CONSTRAINT uq_pagamentos_aluno_mes UNIQUE (id_aluno, ano, mes);
 EXCEPTION
+    WHEN duplicate_table THEN null;
     WHEN duplicate_object THEN null;
 END $$;
