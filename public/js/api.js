@@ -76,3 +76,14 @@ export async function createAluno({ nome, apelido, contacto, ano, email, passwor
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
+
+export async function getAlunoCredentials(id_aluno) {
+  const headers = await authHeader();
+  const res = await fetch(`${FN_BASE}/expl-alunos`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ action: 'get_aluno_credentials', payload: { aluno_id: id_aluno } })
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}

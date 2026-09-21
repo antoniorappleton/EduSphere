@@ -1,5 +1,15 @@
 // public/js/alunos-explicador.js
 
+function escapeHtml(str) {
+  if (str == null) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 let sessoesCache = [];
 
 async function initAlunosPage() {
@@ -98,6 +108,10 @@ async function openPerfil(id) {
 
   listView.style.display = "none";
   perfilView.style.display = "block";
+
+  // Esconder credenciais de um eventual aluno visto anteriormente
+  const credCard = document.getElementById("aluno-credenciais-card");
+  if (credCard) credCard.style.display = "none";
 
   try {
     // 1. Carregar Dados do Aluno
@@ -501,7 +515,7 @@ async function carregarMensagensTutor(idAluno) {
         return `
         <div class="chat-msg ${isMine ? "chat-msg--mine" : "chat-msg--theirs"}">
           <div class="chat-msg__bubble">
-            <p>${m.texto}</p>
+            <p>${escapeHtml(m.texto)}</p>
             <span class="chat-msg__meta">${time}</span>
           </div>
         </div>
@@ -590,6 +604,30 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("btnPerfilRelatorio")?.addEventListener("click", () => {
     const alunoId = document.getElementById("view-perfil-aluno").dataset.currentAlunoId;
     if (alunoId) gerarRelatorio(alunoId);
+  });
+
+  // Ver credenciais guardadas do aluno (email/username + password)
+  document.getElementById("btnPerfilCredenciais")?.addEventListener("click", async () => {
+    const alunoId = document.getElementById("view-perfil-aluno").dataset.currentAlunoId;
+    if (!alunoId) return;
+
+    if (!confirm("Mostrar a password guardada deste aluno? Só tu deves ver esta informação.")) {
+      return;
+    }
+
+    const card = document.getElementById("aluno-credenciais-card");
+    const emailEl = document.getElementById("credAlunoEmail");
+    const passEl = document.getElementById("credAlunoPassword");
+
+    try {
+      const creds = await ExplicadorService.getAlunoCredentials(alunoId);
+      emailEl.textContent = creds.username || creds.email || "—";
+      passEl.textContent = creds.password || "—";
+      card.style.display = "block";
+    } catch (err) {
+      console.error("Erro ao obter credenciais:", err);
+      alert(err.message || "Não foi possível obter as credenciais guardadas.");
+    }
   });
 
   // Submeter Form de Novo Aluno

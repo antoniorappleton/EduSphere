@@ -51,7 +51,9 @@ window.ExplicadorService = {
 
       const { data: alunos, error } = await supabase
         .from("alunos")
-        .select("*")
+        .select(
+          "id_aluno, user_id, id_explicador, nome, apelido, telemovel, ano, idade, dia_semana_preferido, hora_preferida, valor_explicacao, sessoes_mes, nome_pai_cache, contacto_pai_cache, email, username, is_active, faturacao_ativa, faturacao_inicio, dia_pagamento, mensalidade_avisada, created_at, updated_at",
+        )
         .eq("id_explicador", explId)
         .order("nome", { ascending: true });
 
@@ -101,10 +103,15 @@ window.ExplicadorService = {
   },
 
   // 3. GET ALUNO DETAILS
+  // Nota: NÃO usar select("*") aqui — a coluna password_backup está
+  // deliberadamente bloqueada (REVOKE) para o cliente autenticado, e um
+  // "*" faria a query inteira falhar com "permission denied for column".
   async getAluno(id) {
     const { data, error } = await supabase
       .from("alunos")
-      .select("*")
+      .select(
+        "id_aluno, user_id, id_explicador, nome, apelido, telemovel, ano, idade, dia_semana_preferido, hora_preferida, valor_explicacao, sessoes_mes, nome_pai_cache, contacto_pai_cache, email, username, is_active, faturacao_ativa, faturacao_inicio, dia_pagamento, mensalidade_avisada, created_at, updated_at",
+      )
       .eq("id_aluno", id)
       .single();
     if (error) throw error;
@@ -282,6 +289,19 @@ window.ExplicadorService = {
       body: { action: "delete_pagamento_aluno", payload: { id_pagamento } },
     });
     if (error) throw error;
+    if (data && data.error) throw new Error(data.error);
+    return data;
+  },
+
+  // 6b. VER CREDENCIAIS GUARDADAS DO ALUNO (backup criado/atualizado por nós)
+  async getAlunoCredentials(id_aluno) {
+    const { data, error } = await supabase.functions.invoke("expl-alunos", {
+      body: { action: "get_aluno_credentials", payload: { aluno_id: id_aluno } },
+    });
+    if (error) {
+      console.error("Erro ao obter credenciais do aluno:", error);
+      throw await this._unwrapFnError(error);
+    }
     if (data && data.error) throw new Error(data.error);
     return data;
   },

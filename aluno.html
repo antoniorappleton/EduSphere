@@ -762,6 +762,8 @@
 
 
     // --- BOOTSTRAP ---
+    const ALUNO_SELECT_COLS = 'id_aluno, user_id, id_explicador, nome, apelido, telemovel, ano, idade, dia_semana_preferido, hora_preferida, valor_explicacao, sessoes_mes, nome_pai_cache, contacto_pai_cache, email, username, is_active, faturacao_ativa, faturacao_inicio, dia_pagamento, mensalidade_avisada, created_at, updated_at';
+
     (async () => {
       const user = await Auth.requireRole('aluno', './login.html');
       if (!user) return;
@@ -772,13 +774,15 @@
       let aluno = null;
       if (map && map.ref_id) {
         // Fetch Aluno by ID reference
-        const { data: refAluno } = await supabase.from('alunos').select('*').eq('id_aluno', map.ref_id).maybeSingle();
+        // Nota: NÃO usar select('*') — a coluna password_backup está
+        // bloqueada (REVOKE) para o cliente, e '*' faria a query falhar.
+        const { data: refAluno } = await supabase.from('alunos').select(ALUNO_SELECT_COLS).eq('id_aluno', map.ref_id).maybeSingle();
         aluno = refAluno;
       }
 
       // Fallback: If no ref_id or aluno not found by ID, try direct user_id lookup in alunos table
       if (!aluno) {
-        const { data: fallback } = await supabase.from('alunos').select('*').eq('user_id', user.id).maybeSingle();
+        const { data: fallback } = await supabase.from('alunos').select(ALUNO_SELECT_COLS).eq('user_id', user.id).maybeSingle();
         aluno = fallback;
       }
 
@@ -896,6 +900,16 @@
 
     // --- MESSAGING LOGIC ---
 
+    function escapeHtml(str) {
+      if (str == null) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
     async function carregarMensagens() {
       const container = document.getElementById('chatContainer');
       if (!container || !ALUNO?.id_explicador) return;
@@ -928,7 +942,7 @@
           return `
             <div class="flex ${isMine ? 'justify-end' : 'justify-start'}">
               <div class="max-w-[75%] px-3 py-2 rounded-2xl text-sm ${isMine ? 'bg-primary text-white rounded-br-sm' : 'bg-white border border-gray-100 text-gray-800 rounded-bl-sm shadow-sm'}">
-                <p>${m.texto}</p>
+                <p>${escapeHtml(m.texto)}</p>
                 <p class="text-[9px] mt-1 ${isMine ? 'text-white/60' : 'text-gray-400'}">${date} ${time}</p>
               </div>
             </div>`;

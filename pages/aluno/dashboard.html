@@ -114,7 +114,7 @@
         // Schema: alunos (id, user_id, nome, ...)
         const { data: aluno, error: errAluno } = await supabase
           .from('alunos')
-          .select('*')
+          .select('id_aluno, user_id, id_explicador, nome, apelido, telemovel, ano, idade, dia_semana_preferido, hora_preferida, valor_explicacao, sessoes_mes, nome_pai_cache, contacto_pai_cache, email, username, is_active, faturacao_ativa, faturacao_inicio, dia_pagamento, mensalidade_avisada, created_at, updated_at')
           .eq('user_id', session.user.id)
           .maybeSingle();
 

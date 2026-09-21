@@ -446,8 +446,24 @@ BEGIN
             );
         ELSIF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'mensagens' AND column_name = 'id_aluno') THEN
             CREATE POLICY "Users insert own messages" ON public.mensagens FOR INSERT WITH CHECK (
-                 id_aluno IN (SELECT id_aluno FROM public.alunos WHERE user_id = auth.uid()) 
+                 id_aluno IN (SELECT id_aluno FROM public.alunos WHERE user_id = auth.uid())
             );
         END IF;
     END IF;
 END $$;
+
+-- =============================================================================
+-- 15. BACKUP DA PASSWORD DO ALUNO (guardado pelo explicador que criou a conta)
+-- =============================================================================
+-- Guarda a password definida na criação/edição do aluno, encriptada
+-- (AES-256-GCM feito na Edge Function, nunca em texto simples nesta coluna).
+-- Só a Edge Function (service_role) lê/escreve esta coluna — nem o aluno
+-- nem o explicador conseguem lê-la diretamente via supabase-js/RLS; o
+-- acesso passa sempre pela ação "get_aluno_credentials", que valida a
+-- posse do aluno antes de desencriptar.
+
+ALTER TABLE public.alunos
+  ADD COLUMN IF NOT EXISTS password_backup TEXT;
+
+REVOKE SELECT (password_backup) ON public.alunos FROM authenticated, anon;
+REVOKE INSERT (password_backup), UPDATE (password_backup) ON public.alunos FROM authenticated, anon;

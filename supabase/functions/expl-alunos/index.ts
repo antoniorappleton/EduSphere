@@ -21,9 +21,54 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.47.10?targe
 const URL = Deno.env.get("SUPABASE_URL");
 const ANON = Deno.env.get("SUPABASE_ANON_KEY");
 const SVC = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+// Chave para encriptar o backup da password do aluno (AES-256-GCM).
+// Definir em: Supabase Dashboard > Edge Functions > Secrets.
+// Gerar com, p.ex.: openssl rand -base64 32
+const PW_BACKUP_KEY = Deno.env.get("ALUNO_PW_BACKUP_KEY");
 if (!URL || !ANON || !SVC) {
   throw new Error("Faltam SUPABASE_URL / SUPABASE_ANON_KEY / SUPABASE_SERVICE_ROLE_KEY");
 }
+
+// ---------- Encriptação do backup de password (AES-256-GCM) ----------
+function b64ToBytes(b64: string): Uint8Array {
+  return Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+}
+function bytesToB64(bytes: Uint8Array): string {
+  let bin = "";
+  for (const b of bytes) bin += String.fromCharCode(b);
+  return btoa(bin);
+}
+async function getBackupKey(): Promise<CryptoKey> {
+  if (!PW_BACKUP_KEY) {
+    throw new Error(
+      "ALUNO_PW_BACKUP_KEY não está configurada (Supabase Dashboard > Edge Functions > Secrets)."
+    );
+  }
+  const raw = b64ToBytes(PW_BACKUP_KEY);
+  return crypto.subtle.importKey("raw", raw, "AES-GCM", false, ["encrypt", "decrypt"]);
+}
+async function encryptPasswordBackup(plain: string): Promise<string> {
+  const key = await getBackupKey();
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const cipher = await crypto.subtle.encrypt(
+    { name: "AES-GCM", iv },
+    key,
+    new TextEncoder().encode(plain)
+  );
+  const combined = new Uint8Array(iv.length + cipher.byteLength);
+  combined.set(iv, 0);
+  combined.set(new Uint8Array(cipher), iv.length);
+  return bytesToB64(combined);
+}
+async function decryptPasswordBackup(stored: string): Promise<string> {
+  const key = await getBackupKey();
+  const combined = b64ToBytes(stored);
+  const iv = combined.slice(0, 12);
+  const cipher = combined.slice(12);
+  const plainBuf = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, cipher);
+  return new TextDecoder().decode(plainBuf);
+}
+
 function cors(origin = "*") {
   const o = origin || "*";
   return {
@@ -688,10 +733,60 @@ serve(async (req) => {
 
       // 1) Criar ou identificar utilizador Auth
       let alunoUid: string;
+      // Só guardamos backup da password quando SOMOS nós a definir a password
+      // da conta (utilizador novo). Se reutilizamos um utilizador já
+      // existente, a password que ele já tem pode não ser esta.
+      let passwordBackupEnc: string | null = null;
       const { data: userList, error: listErr } = await svc.auth.admin.listUsers();
       const existingUser = userList?.users?.find(u => u.email?.toLowerCase() === email.toLowerCase());
 
       if (existingUser) {
+        // Segurança: nunca reutilizar cegamente um user_id já existente.
+        // Se este email já pertence a um admin/explicador (ou a um aluno
+        // de OUTRO explicador), reutilizar o UID e fazer upsert do role
+        // sobrescreveria o papel desse utilizador (privilege takeover).
+        const { data: existingRole, error: existingRoleErr } = await svc
+          .from("app_users")
+          .select("role, ref_id")
+          .eq("user_id", existingUser.id)
+          .maybeSingle();
+
+        if (existingRoleErr) {
+          console.error("create_aluno: erro ao verificar role existente", existingRoleErr);
+          return new Response(JSON.stringify({
+            error: "Erro ao validar utilizador existente",
+            details: existingRoleErr.message
+          }), {
+            status: 400,
+            headers: cors(origin)
+          });
+        }
+
+        if (existingRole && existingRole.role !== "aluno") {
+          return new Response(JSON.stringify({
+            error: "Este email já está associado a uma conta de outro tipo e não pode ser usado para um aluno."
+          }), {
+            status: 409,
+            headers: cors(origin)
+          });
+        }
+
+        if (existingRole && existingRole.role === "aluno" && existingRole.ref_id) {
+          const { data: outroAluno } = await svc
+            .from("alunos")
+            .select("id_aluno, id_explicador")
+            .eq("id_aluno", existingRole.ref_id)
+            .maybeSingle();
+          if (outroAluno && outroAluno.id_explicador !== myExplId) {
+            return new Response(JSON.stringify({
+              error: "Este email já está registado como aluno de outro explicador."
+            }), {
+              status: 409,
+              headers: cors(origin)
+            });
+          }
+        }
+
         console.log("Utilizador já existe no Auth, a reutilizar UID:", existingUser.id);
         alunoUid = existingUser.id;
       } else {
@@ -711,6 +806,10 @@ serve(async (req) => {
           });
         }
         alunoUid = au?.user?.id!;
+        passwordBackupEnc = await encryptPasswordBackup(password).catch((e) => {
+          console.error("Erro ao encriptar backup da password:", e);
+          return null;
+        });
       }
 
       if (!alunoUid) {
@@ -747,7 +846,8 @@ serve(async (req) => {
         is_active: p.is_active ?? true,
         faturacao_ativa: false,
         faturacao_inicio: null,
-        dia_pagamento: null
+        dia_pagamento: null,
+        password_backup: passwordBackupEnc
 
       }).select("id_aluno").single();
 
@@ -926,6 +1026,18 @@ serve(async (req) => {
             status: 400,
             headers: cors(origin)
           });
+        }
+
+        // Atualizar também o backup encriptado, já que acabámos de definir
+        // nós mesmos a nova password real da conta.
+        if (newPassword) {
+          const enc = await encryptPasswordBackup(newPassword).catch((e) => {
+            console.error("update_aluno: erro ao encriptar backup da password:", e);
+            return null;
+          });
+          if (enc) {
+            await svc.from("alunos").update({ password_backup: enc }).eq("id_aluno", id_aluno);
+          }
         }
       }
 
@@ -1668,6 +1780,66 @@ serve(async (req) => {
         }),
         { status: 200, headers: cors(origin) }
       );
+    }
+
+    /* =======================
+       VER CREDENCIAIS DO ALUNO (backup guardado na criação/edição)
+       payload: { aluno_id }
+       ======================= */
+    if (action === "get_aluno_credentials") {
+      const p = payload || {};
+      const alunoId = String(p.aluno_id || p.id_aluno || "").trim();
+      if (!alunoId) {
+        return new Response(JSON.stringify({ error: "aluno_id em falta" }), {
+          status: 400,
+          headers: cors(origin)
+        });
+      }
+
+      // getAlunoDoExpl já garante que o aluno pertence a este explicador
+      await getAlunoDoExpl(alunoId);
+
+      const { data: row, error } = await svc
+        .from("alunos")
+        .select("email, username, password_backup")
+        .eq("id_aluno", alunoId)
+        .eq("id_explicador", myExplId)
+        .maybeSingle();
+
+      if (error) {
+        console.error("get_aluno_credentials error", error);
+        return new Response(JSON.stringify({ error: error.message }), {
+          status: 400,
+          headers: cors(origin)
+        });
+      }
+
+      if (!row?.password_backup) {
+        return new Response(JSON.stringify({
+          error: "Não há password guardada para este aluno (foi criado antes desta funcionalidade, ou a conta já existia previamente)."
+        }), {
+          status: 404,
+          headers: cors(origin)
+        });
+      }
+
+      try {
+        const password = await decryptPasswordBackup(row.password_backup);
+        return new Response(JSON.stringify({
+          email: row.email,
+          username: row.username,
+          password
+        }), {
+          status: 200,
+          headers: cors(origin)
+        });
+      } catch (e) {
+        console.error("get_aluno_credentials: erro ao desencriptar", e);
+        return new Response(JSON.stringify({ error: "Erro ao desencriptar password guardada." }), {
+          status: 500,
+          headers: cors(origin)
+        });
+      }
     }
 
     /* =======================
