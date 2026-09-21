@@ -79,7 +79,7 @@ async function loadDashboard() {
   // 4. Fetch Alunos (Top 4)
   const { data: alunos } = await supabase
     .from('alunos')
-    .select('*')
+    .select('id_aluno, user_id, id_explicador, nome, apelido, telemovel, ano, idade, dia_semana_preferido, hora_preferida, valor_explicacao, sessoes_mes, nome_pai_cache, contacto_pai_cache, email, username, is_active, faturacao_ativa, faturacao_inicio, dia_pagamento, mensalidade_avisada, created_at, updated_at')
     .eq('id_explicador', explId)
     .eq('is_active', true)
     .order('created_at', { ascending: false })
@@ -135,7 +135,7 @@ async function loadDashboard() {
   if (countEl) {
      const { count } = await supabase
         .from('alunos')
-        .select('*', { count: 'exact', head: true })
+        .select('id_aluno', { count: 'exact', head: true })
         .eq('id_explicador', explId)
         .eq('is_active', true);
      countEl.textContent = `(${count || 0} ativos)`;

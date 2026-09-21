@@ -1012,31 +1012,135 @@ serve(async (req) => {
             .gte("data", todayIso);
         }
       }
-      // 6) Atualizar utilizador AUTH (email e/ou password)
+      // 6) Atualizar (ou CRIAR, se ainda não existir) o utilizador AUTH
       if (newEmail || newPassword) {
-        const authUpdate = {};
-        if (newEmail) authUpdate.email = newEmail;
-        if (newPassword) authUpdate.password = newPassword;
-        const { error: authUpdErr } = await svc.auth.admin.updateUserById(alunoRow.user_id, authUpdate);
-        if (authUpdErr) {
-          console.error("update_aluno: erro ao atualizar Auth", authUpdErr);
-          return new Response(JSON.stringify({
-            error: authUpdErr.message
-          }), {
-            status: 400,
-            headers: cors(origin)
-          });
-        }
+        if (!alunoRow.user_id) {
+          // Aluno antigo/importado sem conta de login associada.
+          // Precisamos de criar a conta agora em vez de tentar fazer
+          // update a um user_id que não existe.
+          const emailParaConta = newEmail || alunoRow.email;
+          if (!emailParaConta) {
+            return new Response(JSON.stringify({
+              error: "É necessário um email para criar a conta de login deste aluno."
+            }), { status: 400, headers: cors(origin) });
+          }
+          if (!newPassword) {
+            return new Response(JSON.stringify({
+              error: "É necessária uma password (mín. 6 caracteres) para criar a conta de login deste aluno."
+            }), { status: 400, headers: cors(origin) });
+          }
 
-        // Atualizar também o backup encriptado, já que acabámos de definir
-        // nós mesmos a nova password real da conta.
-        if (newPassword) {
+          const { data: userList, error: listErr } = await svc.auth.admin.listUsers();
+          const existingUser = userList?.users?.find(
+            (u) => u.email?.toLowerCase() === emailParaConta.toLowerCase()
+          );
+
+          let alunoUid;
+          if (existingUser) {
+            // Mesma proteção do create_aluno: nunca reutilizar cegamente
+            // um user_id que já pertence a outra conta/role.
+            const { data: existingRole, error: existingRoleErr } = await svc
+              .from("app_users")
+              .select("role, ref_id")
+              .eq("user_id", existingUser.id)
+              .maybeSingle();
+            if (existingRoleErr) {
+              return new Response(JSON.stringify({
+                error: "Erro ao validar utilizador existente",
+                details: existingRoleErr.message
+              }), { status: 400, headers: cors(origin) });
+            }
+            if (existingRole && existingRole.role !== "aluno") {
+              return new Response(JSON.stringify({
+                error: "Este email já está associado a uma conta de outro tipo e não pode ser usado para um aluno."
+              }), { status: 409, headers: cors(origin) });
+            }
+            if (existingRole && existingRole.role === "aluno" && existingRole.ref_id && existingRole.ref_id !== id_aluno) {
+              const { data: outroAluno } = await svc
+                .from("alunos")
+                .select("id_aluno, id_explicador")
+                .eq("id_aluno", existingRole.ref_id)
+                .maybeSingle();
+              if (outroAluno && outroAluno.id_explicador !== myExplId) {
+                return new Response(JSON.stringify({
+                  error: "Este email já está registado como aluno de outro explicador."
+                }), { status: 409, headers: cors(origin) });
+              }
+            }
+
+            alunoUid = existingUser.id;
+            const { error: pwErr } = await svc.auth.admin.updateUserById(alunoUid, { password: newPassword });
+            if (pwErr) {
+              return new Response(JSON.stringify({ error: pwErr.message }), { status: 400, headers: cors(origin) });
+            }
+          } else {
+            const { data: au, error: authErr } = await svc.auth.admin.createUser({
+              email: emailParaConta,
+              password: newPassword,
+              email_confirm: true
+            });
+            if (authErr) {
+              console.error("update_aluno: erro ao criar conta de login", authErr);
+              return new Response(JSON.stringify({
+                error: "Falha ao criar conta de utilizador",
+                details: authErr.message
+              }), { status: 400, headers: cors(origin) });
+            }
+            alunoUid = au?.user?.id;
+          }
+
+          const { error: linkErr } = await svc.from("alunos")
+            .update({ user_id: alunoUid, email: emailParaConta })
+            .eq("id_aluno", id_aluno)
+            .eq("id_explicador", myExplId);
+          if (linkErr) {
+            return new Response(JSON.stringify({ error: linkErr.message }), { status: 400, headers: cors(origin) });
+          }
+
+          const { error: roleErr } = await svc.from("app_users").upsert(
+            { user_id: alunoUid, role: "aluno", ref_id: id_aluno },
+            { onConflict: "user_id" }
+          );
+          if (roleErr) {
+            return new Response(JSON.stringify({
+              error: "Conta criada, mas erro ao associar permissões",
+              details: roleErr.message
+            }), { status: 400, headers: cors(origin) });
+          }
+
           const enc = await encryptPasswordBackup(newPassword).catch((e) => {
             console.error("update_aluno: erro ao encriptar backup da password:", e);
             return null;
           });
           if (enc) {
             await svc.from("alunos").update({ password_backup: enc }).eq("id_aluno", id_aluno);
+          }
+        } else {
+          // Aluno já tem conta de login -> apenas atualizar
+          const authUpdate = {};
+          if (newEmail) authUpdate.email = newEmail;
+          if (newPassword) authUpdate.password = newPassword;
+          const { error: authUpdErr } = await svc.auth.admin.updateUserById(alunoRow.user_id, authUpdate);
+          if (authUpdErr) {
+            console.error("update_aluno: erro ao atualizar Auth", authUpdErr);
+            return new Response(JSON.stringify({
+              error: authUpdErr.message
+            }), {
+              status: 400,
+              headers: cors(origin)
+            });
+          }
+
+          // Atualizar também o backup encriptado, já que acabámos de definir
+          // nós mesmos a nova password real da conta.
+          if (newPassword) {
+            const enc = await encryptPasswordBackup(newPassword).catch((e) => {
+              console.error("update_aluno: erro ao encriptar backup da password:", e);
+              return null;
+            });
+            if (enc) {
+              await svc.from("alunos").update({ password_backup: enc }).eq("id_aluno", id_aluno);
+            }
           }
         }
       }

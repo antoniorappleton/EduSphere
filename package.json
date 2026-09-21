@@ -1,6 +1,6 @@
 {
   "name": "edusphere",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "App de apoio a explicadores, pais e alunos.",
   "main": "service-worker.js",
   "scripts": {

@@ -1,6 +1,7 @@
 // service-worker.js
 
-const CACHE_NAME = "edusphere-v10"; // Incrementar para forçar atualização
+const APP_VERSION = "2026.09.21";
+const CACHE_NAME = `edusphere-v12-${APP_VERSION}`; // Incrementar para forçar atualização
 const STATIC_ASSETS = [
   "./",
   "./index.html",

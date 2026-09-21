@@ -38,13 +38,33 @@ CREATE TABLE IF NOT EXISTS public.app_users (
 
 ALTER TABLE public.app_users ENABLE ROW LEVEL SECURITY;
 
+-- Função auxiliar SECURITY DEFINER: verifica se o utilizador atual é admin
+-- SEM estar sujeita ao RLS de app_users. Uma policy que faz "EXISTS (SELECT
+-- ... FROM app_users ...)" dentro da própria policy de app_users obriga o
+-- Postgres a reavaliar o RLS da mesma tabela durante a avaliação da policy,
+-- o que pode falhar (erro, não silêncioso) para TODOS os utilizadores,
+-- não só admins — foi isto que partiu o login depois de recriarmos as
+-- policies. Com SECURITY DEFINER a função lê a tabela sem RLS.
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS boolean
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+STABLE
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.app_users
+    WHERE user_id = auth.uid() AND role = 'admin'
+  );
+$$;
+
+DROP POLICY IF EXISTS "Users can view own app_user" ON public.app_users;
 CREATE POLICY "Users can view own app_user" ON public.app_users
   FOR SELECT USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Admins manage all app_users" ON public.app_users;
 CREATE POLICY "Admins manage all app_users" ON public.app_users
-  FOR ALL USING (
-    EXISTS (SELECT 1 FROM public.app_users WHERE user_id = auth.uid() AND role = 'admin')
-  );
+  FOR ALL USING (public.is_admin());
 
 -- =============================================================================
 -- 3. TABELA explicadores
@@ -66,20 +86,43 @@ CREATE TABLE IF NOT EXISTS public.explicadores (
 
 ALTER TABLE public.explicadores ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Admins manage explicadores" ON public.explicadores
-  FOR ALL USING (
-    EXISTS (SELECT 1 FROM public.app_users WHERE user_id = auth.uid() AND role = 'admin')
-  );
+-- Funções SECURITY DEFINER para quebrar o ciclo explicadores <-> alunos:
+-- a policy "Aluno read own explicador" (nesta tabela) consulta alunos, e a
+-- policy "Explicador manage own alunos" (em alunos) consulta explicadores.
+-- Avaliadas como subqueries normais, cada uma reativa o RLS da outra
+-- tabela, que por sua vez volta a acionar a primeira — o mesmo problema
+-- de recursão que já corrigimos em app_users, agora entre duas tabelas.
+CREATE OR REPLACE FUNCTION public.current_explicador_id()
+RETURNS uuid
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+STABLE
+AS $$
+  SELECT id_explicador FROM public.explicadores WHERE user_id = auth.uid() LIMIT 1;
+$$;
 
+CREATE OR REPLACE FUNCTION public.current_aluno_explicador_id()
+RETURNS uuid
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+STABLE
+AS $$
+  SELECT id_explicador FROM public.alunos WHERE user_id = auth.uid() LIMIT 1;
+$$;
+
+DROP POLICY IF EXISTS "Admins manage explicadores" ON public.explicadores;
+CREATE POLICY "Admins manage explicadores" ON public.explicadores
+  FOR ALL USING (public.is_admin());
+
+DROP POLICY IF EXISTS "Explicador manage own data" ON public.explicadores;
 CREATE POLICY "Explicador manage own data" ON public.explicadores
   FOR ALL USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Aluno read own explicador" ON public.explicadores;
 CREATE POLICY "Aluno read own explicador" ON public.explicadores
-  FOR SELECT USING (
-    id_explicador IN (
-      SELECT id_explicador FROM public.alunos WHERE user_id = auth.uid()
-    )
-  );
+  FOR SELECT USING (id_explicador = public.current_aluno_explicador_id());
 
 -- =============================================================================
 -- 4. TABELA alunos
@@ -113,13 +156,11 @@ CREATE TABLE IF NOT EXISTS public.alunos (
 
 ALTER TABLE public.alunos ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Explicador manage own alunos" ON public.alunos;
 CREATE POLICY "Explicador manage own alunos" ON public.alunos
-  FOR ALL USING (
-    id_explicador IN (
-      SELECT id_explicador FROM public.explicadores WHERE user_id = auth.uid()
-    )
-  );
+  FOR ALL USING (id_explicador = public.current_explicador_id());
 
+DROP POLICY IF EXISTS "Aluno read own data" ON public.alunos;
 CREATE POLICY "Aluno read own data" ON public.alunos
   FOR SELECT USING (auth.uid() = user_id);
 
@@ -140,6 +181,7 @@ CREATE TABLE IF NOT EXISTS public.sessoes_explicacao (
 
 ALTER TABLE public.sessoes_explicacao ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Explicador manage sessoes" ON public.sessoes_explicacao;
 CREATE POLICY "Explicador manage sessoes" ON public.sessoes_explicacao
   FOR ALL USING (
     id_explicador IN (
@@ -147,6 +189,7 @@ CREATE POLICY "Explicador manage sessoes" ON public.sessoes_explicacao
     )
   );
 
+DROP POLICY IF EXISTS "Aluno read sessoes" ON public.sessoes_explicacao;
 CREATE POLICY "Aluno read sessoes" ON public.sessoes_explicacao
   FOR SELECT USING (
     id_aluno IN (
@@ -172,6 +215,7 @@ CREATE TABLE IF NOT EXISTS public.pagamentos (
 
 ALTER TABLE public.pagamentos ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Explicador manage pagamentos" ON public.pagamentos;
 CREATE POLICY "Explicador manage pagamentos" ON public.pagamentos
   FOR ALL USING (
     id_explicador IN (
@@ -179,6 +223,7 @@ CREATE POLICY "Explicador manage pagamentos" ON public.pagamentos
     )
   );
 
+DROP POLICY IF EXISTS "Aluno read pagamentos" ON public.pagamentos;
 CREATE POLICY "Aluno read pagamentos" ON public.pagamentos
   FOR SELECT USING (
     id_aluno IN (
@@ -206,6 +251,7 @@ CREATE TABLE IF NOT EXISTS public.exercicios (
 
 ALTER TABLE public.exercicios ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Explicador manage own exercicios" ON public.exercicios;
 CREATE POLICY "Explicador manage own exercicios" ON public.exercicios
   FOR ALL USING (
     id_explicador IN (
@@ -213,6 +259,7 @@ CREATE POLICY "Explicador manage own exercicios" ON public.exercicios
     )
   );
 
+DROP POLICY IF EXISTS "Aluno read own exercicios" ON public.exercicios;
 CREATE POLICY "Aluno read own exercicios" ON public.exercicios
   FOR SELECT USING (
     id_aluno IN (
@@ -224,12 +271,19 @@ CREATE POLICY "Aluno read own exercicios" ON public.exercicios
 -- 8. VIEWS
 -- =============================================================================
 
-CREATE OR REPLACE VIEW public.v_pagamentos_detalhe AS
+-- Nota: usamos DROP + CREATE em vez de CREATE OR REPLACE porque as tabelas
+-- de base ganharam colunas ao longo do tempo (ex: sumario, observacoes,
+-- hora_fim em sessoes_explicacao) que não estão neste ficheiro; isso muda
+-- a posição/ordem das colunas que "s.*"/"p.*" expandem, e CREATE OR REPLACE
+-- VIEW recusa-se a mudar nomes/posições de colunas já existentes na view.
+DROP VIEW IF EXISTS public.v_pagamentos_detalhe;
+CREATE VIEW public.v_pagamentos_detalhe AS
 SELECT p.*, a.nome as aluno_nome, a.apelido as aluno_apelido
 FROM public.pagamentos p
 JOIN public.alunos a ON p.id_aluno = a.id_aluno;
 
-CREATE OR REPLACE VIEW public.v_sessoes_detalhe AS
+DROP VIEW IF EXISTS public.v_sessoes_detalhe;
+CREATE VIEW public.v_sessoes_detalhe AS
 SELECT s.*, a.nome as aluno_nome, a.apelido as aluno_apelido
 FROM public.sessoes_explicacao s
 JOIN public.alunos a ON s.id_aluno = a.id_aluno;
@@ -256,6 +310,7 @@ CREATE TRIGGER on_auth_user_created
 -- =============================================================================
 -- 10. POLICY: Aluno pode confirmar presença (UPDATE estado)
 -- =============================================================================
+DROP POLICY IF EXISTS "Aluno confirm sessoes" ON public.sessoes_explicacao;
 CREATE POLICY "Aluno confirm sessoes" ON public.sessoes_explicacao
   FOR UPDATE USING (
     id_aluno IN (
@@ -283,12 +338,14 @@ CREATE TABLE IF NOT EXISTS public.mensagens (
 
 ALTER TABLE public.mensagens ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users read own messages" ON public.mensagens;
 CREATE POLICY "Users read own messages" ON public.mensagens
   FOR SELECT USING (
     auth.uid()::text = de_user_id::text
     OR auth.uid()::text = para_user_id::text
   );
 
+DROP POLICY IF EXISTS "Users insert own messages" ON public.mensagens;
 CREATE POLICY "Users insert own messages" ON public.mensagens
   FOR INSERT WITH CHECK (
     auth.uid()::text = de_user_id::text
@@ -333,7 +390,6 @@ BEGIN
         ELSE
             CREATE POLICY "Users can view own profile" ON public.profiles
               FOR SELECT USING (auth.uid() = id);
-        END IF;
         END IF;
     END IF;
 END $$;
