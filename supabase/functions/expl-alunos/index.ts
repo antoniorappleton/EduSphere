@@ -1947,6 +1947,163 @@ serve(async (req) => {
     }
 
     /* =======================
+       REPOR / DEFINIR PASSWORD DE ACESSO DO ALUNO
+       payload: { aluno_id, email, new_password }
+       Ação explícita e independente do update_aluno: funciona quer o
+       aluno já tenha conta de login (Auth) quer não tenha ainda (cria-a).
+       Pode ser chamada as vezes que forem precisas.
+       ======================= */
+    if (action === "reset_aluno_password") {
+      const p = payload || {};
+      const alunoId = String(p.aluno_id || p.id_aluno || "").trim();
+      const newPassword = String(p.new_password || p.password || "").trim();
+      const emailInput = String(p.email || "").trim();
+
+      if (!alunoId) {
+        return new Response(JSON.stringify({ error: "aluno_id em falta" }), {
+          status: 400,
+          headers: cors(origin)
+        });
+      }
+      if (!newPassword || newPassword.length < 6) {
+        return new Response(JSON.stringify({ error: "A password tem de ter pelo menos 6 caracteres." }), {
+          status: 400,
+          headers: cors(origin)
+        });
+      }
+
+      const { data: alunoRow, error: alunoErr } = await svc
+        .from("alunos")
+        .select("id_aluno, id_explicador, user_id, email")
+        .eq("id_aluno", alunoId)
+        .eq("id_explicador", myExplId)
+        .maybeSingle();
+      if (alunoErr) {
+        return new Response(JSON.stringify({ error: alunoErr.message }), { status: 400, headers: cors(origin) });
+      }
+      if (!alunoRow) {
+        return new Response(JSON.stringify({ error: "Aluno não encontrado" }), { status: 404, headers: cors(origin) });
+      }
+
+      const emailParaConta = emailInput || alunoRow.email;
+      if (!emailParaConta) {
+        return new Response(JSON.stringify({
+          error: "É necessário indicar o email de login deste aluno."
+        }), { status: 400, headers: cors(origin) });
+      }
+
+      let alunoUid = alunoRow.user_id;
+
+      if (alunoUid) {
+        // Já tem conta -> atualizar password (e email, se foi alterado)
+        const authUpdate: any = { password: newPassword };
+        if (emailInput && emailInput !== alunoRow.email) authUpdate.email = emailInput;
+        const { error: authUpdErr } = await svc.auth.admin.updateUserById(alunoUid, authUpdate);
+        if (authUpdErr) {
+          console.error("reset_aluno_password: erro ao atualizar Auth", authUpdErr);
+          return new Response(JSON.stringify({ error: authUpdErr.message }), { status: 400, headers: cors(origin) });
+        }
+      } else {
+        // Ainda não tem conta -> criar (ou reutilizar uma já existente com
+        // o mesmo email, com a mesma proteção contra roubo de role do
+        // create_aluno).
+        const { data: userList } = await svc.auth.admin.listUsers();
+        const existingUser = userList?.users?.find(
+          (u) => u.email?.toLowerCase() === emailParaConta.toLowerCase()
+        );
+
+        if (existingUser) {
+          const { data: existingRole, error: existingRoleErr } = await svc
+            .from("app_users")
+            .select("role, ref_id")
+            .eq("user_id", existingUser.id)
+            .maybeSingle();
+          if (existingRoleErr) {
+            return new Response(JSON.stringify({
+              error: "Erro ao validar utilizador existente",
+              details: existingRoleErr.message
+            }), { status: 400, headers: cors(origin) });
+          }
+          if (existingRole && existingRole.role !== "aluno") {
+            return new Response(JSON.stringify({
+              error: "Este email já está associado a uma conta de outro tipo e não pode ser usado para um aluno."
+            }), { status: 409, headers: cors(origin) });
+          }
+          if (existingRole && existingRole.role === "aluno" && existingRole.ref_id && existingRole.ref_id !== alunoId) {
+            const { data: outroAluno } = await svc
+              .from("alunos")
+              .select("id_aluno, id_explicador")
+              .eq("id_aluno", existingRole.ref_id)
+              .maybeSingle();
+            if (outroAluno && outroAluno.id_explicador !== myExplId) {
+              return new Response(JSON.stringify({
+                error: "Este email já está registado como aluno de outro explicador."
+              }), { status: 409, headers: cors(origin) });
+            }
+          }
+
+          alunoUid = existingUser.id;
+          const { error: pwErr } = await svc.auth.admin.updateUserById(alunoUid, { password: newPassword });
+          if (pwErr) {
+            return new Response(JSON.stringify({ error: pwErr.message }), { status: 400, headers: cors(origin) });
+          }
+        } else {
+          const { data: au, error: authErr } = await svc.auth.admin.createUser({
+            email: emailParaConta,
+            password: newPassword,
+            email_confirm: true
+          });
+          if (authErr) {
+            console.error("reset_aluno_password: erro ao criar conta", authErr);
+            return new Response(JSON.stringify({
+              error: "Falha ao criar conta de utilizador",
+              details: authErr.message
+            }), { status: 400, headers: cors(origin) });
+          }
+          alunoUid = au?.user?.id;
+        }
+
+        const { error: linkErr } = await svc.from("alunos")
+          .update({ user_id: alunoUid })
+          .eq("id_aluno", alunoId)
+          .eq("id_explicador", myExplId);
+        if (linkErr) {
+          return new Response(JSON.stringify({ error: linkErr.message }), { status: 400, headers: cors(origin) });
+        }
+
+        const { error: roleErr } = await svc.from("app_users").upsert(
+          { user_id: alunoUid, role: "aluno", ref_id: alunoId },
+          { onConflict: "user_id" }
+        );
+        if (roleErr) {
+          return new Response(JSON.stringify({
+            error: "Conta criada, mas erro ao associar permissões",
+            details: roleErr.message
+          }), { status: 400, headers: cors(origin) });
+        }
+      }
+
+      // Guardar o email atualizado no registo (se foi corrigido/indicado)
+      if (emailInput && emailInput !== alunoRow.email) {
+        await svc.from("alunos").update({ email: emailInput }).eq("id_aluno", alunoId).eq("id_explicador", myExplId);
+      }
+
+      // Guardar sempre o backup encriptado da password que acabámos de definir
+      const enc = await encryptPasswordBackup(newPassword).catch((e) => {
+        console.error("reset_aluno_password: erro ao encriptar backup:", e);
+        return null;
+      });
+      if (enc) {
+        await svc.from("alunos").update({ password_backup: enc }).eq("id_aluno", alunoId);
+      }
+
+      return new Response(JSON.stringify({ ok: true, email: emailParaConta }), {
+        status: 200,
+        headers: cors(origin)
+      });
+    }
+
+    /* =======================
        APAGAR SESSÃO
        payload: { id_sessao }
        ======================= */ if (action === "delete_sessao_aluno") {

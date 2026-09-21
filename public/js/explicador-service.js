@@ -306,6 +306,24 @@ window.ExplicadorService = {
     return data;
   },
 
+  // 6c. REPOR / DEFINIR PASSWORD DE ACESSO DO ALUNO
+  // Funciona mesmo que o aluno ainda não tenha conta de login (cria-a),
+  // ou já tenha (só atualiza). Pode ser chamado as vezes que for preciso.
+  async resetAlunoPassword(id_aluno, email, new_password) {
+    const { data, error } = await supabase.functions.invoke("expl-alunos", {
+      body: {
+        action: "reset_aluno_password",
+        payload: { aluno_id: id_aluno, email, new_password },
+      },
+    });
+    if (error) {
+      console.error("Erro ao repor password do aluno:", error);
+      throw await this._unwrapFnError(error);
+    }
+    if (data && data.error) throw new Error(data.error);
+    return data;
+  },
+
   // 7. SINO DE AVISO (toggle mensalidade_avisada)
   async setMensalidadeAvisada(alunoId, avisado) {
     const { data, error } = await supabase.functions.invoke("expl-alunos", {

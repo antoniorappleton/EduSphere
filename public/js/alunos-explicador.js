@@ -606,27 +606,74 @@ document.addEventListener("DOMContentLoaded", () => {
     if (alunoId) gerarRelatorio(alunoId);
   });
 
-  // Ver credenciais guardadas do aluno (email/username + password)
+  // Ver credenciais guardadas do aluno (email/username + password) e
+  // permitir repor uma nova password a qualquer momento.
   document.getElementById("btnPerfilCredenciais")?.addEventListener("click", async () => {
     const alunoId = document.getElementById("view-perfil-aluno").dataset.currentAlunoId;
     if (!alunoId) return;
 
-    if (!confirm("Mostrar a password guardada deste aluno? Só tu deves ver esta informação.")) {
-      return;
-    }
-
     const card = document.getElementById("aluno-credenciais-card");
     const emailEl = document.getElementById("credAlunoEmail");
     const passEl = document.getElementById("credAlunoPassword");
+    const resetEmailInput = document.getElementById("resetAlunoEmail");
+    const resetMsg = document.getElementById("resetAlunoMsg");
+    if (resetMsg) resetMsg.textContent = "";
+
+    // Pré-preencher o email de login com o email atual do aluno,
+    // para o explicador confirmar/corrigir antes de definir a password.
+    try {
+      const aluno = await ExplicadorService.getAluno(alunoId);
+      if (resetEmailInput) resetEmailInput.value = aluno?.email || "";
+    } catch (e) {
+      console.warn("Não foi possível pré-preencher o email:", e);
+    }
+
+    // Mostrar sempre o painel (mesmo que ainda não haja backup guardado),
+    // para o explicador poder definir uma password nova de qualquer forma.
+    card.style.display = "block";
+    emailEl.textContent = "—";
+    passEl.textContent = "—";
 
     try {
       const creds = await ExplicadorService.getAlunoCredentials(alunoId);
       emailEl.textContent = creds.username || creds.email || "—";
       passEl.textContent = creds.password || "—";
-      card.style.display = "block";
     } catch (err) {
-      console.error("Erro ao obter credenciais:", err);
-      alert(err.message || "Não foi possível obter as credenciais guardadas.");
+      console.warn("Sem password guardada para este aluno ainda:", err.message);
+    }
+  });
+
+  // Repor / definir a password de acesso do aluno (funciona mesmo que
+  // o aluno ainda não tenha conta de login criada).
+  document.getElementById("fResetAlunoPassword")?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const alunoId = document.getElementById("view-perfil-aluno").dataset.currentAlunoId;
+    const email = document.getElementById("resetAlunoEmail")?.value?.trim();
+    const password = document.getElementById("resetAlunoPassword")?.value?.trim();
+    const resetMsg = document.getElementById("resetAlunoMsg");
+
+    if (!alunoId || !email || !password) return;
+
+    if (resetMsg) {
+      resetMsg.style.color = "#854d0e";
+      resetMsg.textContent = "A aplicar...";
+    }
+
+    try {
+      const res = await ExplicadorService.resetAlunoPassword(alunoId, email, password);
+      if (resetMsg) {
+        resetMsg.style.color = "green";
+        resetMsg.textContent = `Feito! O aluno já pode entrar com ${res.email}.`;
+      }
+      document.getElementById("resetAlunoPassword").value = "";
+      document.getElementById("credAlunoEmail").textContent = res.email;
+      document.getElementById("credAlunoPassword").textContent = password;
+    } catch (err) {
+      console.error("Erro ao repor password:", err);
+      if (resetMsg) {
+        resetMsg.style.color = "red";
+        resetMsg.textContent = "Erro: " + (err.message || "Falha técnica");
+      }
     }
   });
 
