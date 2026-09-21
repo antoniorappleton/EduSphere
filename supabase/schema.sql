@@ -523,3 +523,24 @@ ALTER TABLE public.alunos
 
 REVOKE SELECT (password_backup) ON public.alunos FROM authenticated, anon;
 REVOKE INSERT (password_backup), UPDATE (password_backup) ON public.alunos FROM authenticated, anon;
+
+-- =============================================================================
+-- 16. EVITAR PAGAMENTOS DUPLICADOS PARA O MESMO ALUNO/MÊS
+-- =============================================================================
+-- Não havia nenhuma UNIQUE constraint a impedir dois registos de pagamento
+-- para o mesmo aluno no mesmo ano/mês. Vários fluxos (iniciar_faturacao_aluno,
+-- generate_monthly_billing, registar_pagamento_aluno) fazem "verifica se já
+-- existe, senão insere" sem essa garantia — se forem chamados mais que uma
+-- vez para o mesmo mês, ficam dois registos, e o total pago/previsto que o
+-- aluno vê fica a somar os dois (valores errados no ecrã do aluno).
+--
+-- ⚠️ Se este ALTER falhar com "duplicate key value violates unique
+-- constraint", significa que já existem duplicados na tabela — nesse caso
+-- não corras isto sozinho; volta a falar comigo para decidirmos em conjunto
+-- como fundir os registos duplicados sem perder dados de pagamentos reais.
+DO $$ BEGIN
+    ALTER TABLE public.pagamentos
+      ADD CONSTRAINT uq_pagamentos_aluno_mes UNIQUE (id_aluno, ano, mes);
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;

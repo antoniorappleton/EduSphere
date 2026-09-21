@@ -595,7 +595,19 @@
 
       if (error) return;
 
-      const pag = (data || []).filter(Boolean);
+      // Defesa contra registos duplicados de pagamento para o mesmo mês
+      // (não há UNIQUE em pagamentos(id_aluno, ano, mes) na BD, e vários
+      // fluxos podem criar mais que um registo se forem chamados 2x).
+      // Sem isto, o total pago somaria os duplicados a dobrar.
+      const porMes = new Map();
+      for (const p of (data || []).filter(Boolean)) {
+        const key = `${p.ano}-${p.mes}`;
+        const atual = porMes.get(key);
+        if (!atual || new Date(p.created_at || 0) > new Date(atual.created_at || 0)) {
+          porMes.set(key, p);
+        }
+      }
+      const pag = Array.from(porMes.values());
       const totalPago = pag.reduce((acc, p) => acc + (Number(p.valor_pago || 0)), 0);
 
       // Update Totals
@@ -619,14 +631,17 @@
         const hoje = new Date();
         const anoA = hoje.getFullYear();
         const mesA = hoje.getMonth() + 1;
-        const hasRec = pag.some(p => p.ano === anoA && p.mes === mesA);
+        // Comparação numérica (não "===") porque "mes"/"ano" podem vir da
+        // BD como texto e não como número, dependendo do registo.
+        const hasRec = pag.some(p => Number(p.ano) === anoA && Number(p.mes) === mesA);
         if (!hasRec) {
           const start = `${anoA}-${String(mesA).padStart(2, '0')}-01`;
           const end = new Date(anoA, mesA, 0).toISOString().slice(0, 10);
           const { data: expMes } = await supabase.from('sessoes_explicacao').select('id_sessao').eq('id_aluno', ALUNO.id_aluno).gte('data', start).lte('data', end);
           if (expMes && expMes.length > 0) {
             hasPending = true;
-            pendingTarget = { ano: anoA, mes: mesA, valor_previsto: expMes.length * 25, valor_pago: 0, estado: 'PREVISTO' };
+            const valorSessao = Number(ALUNO.valor_explicacao || 0);
+            pendingTarget = { ano: anoA, mes: mesA, valor_previsto: expMes.length * valorSessao, valor_pago: 0, estado: 'PREVISTO' };
           }
         }
       }
