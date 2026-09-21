@@ -4,14 +4,12 @@
 
 :root {
   --admin-sidebar-w: 260px;
-  --admin-bg: #f8fafc;
-  --admin-primary: #0f172a;
-  /* Slate 900 */
-  --admin-accent: #3b82f6;
-  /* Blue 500 */
+  --admin-bg: #f7f3ee;
+  --admin-primary: #1b1614;
+  --admin-accent: #8d3d37;
   --admin-card-bg: rgba(255, 255, 255, 0.8);
   --admin-glass: rgba(255, 255, 255, 0.7);
-  --admin-border: rgba(226, 232, 240, 0.8);
+  --admin-border: rgba(104, 75, 66, 0.12);
   --admin-shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
   --admin-shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
   --admin-shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
@@ -23,8 +21,8 @@
   min-height: 100vh;
   background: var(--admin-bg);
   background-image:
-    radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.05) 0, transparent 50%),
-    radial-gradient(at 100% 0%, rgba(239, 68, 68, 0.03) 0, transparent 50%);
+    radial-gradient(at 0% 0%, rgba(141, 61, 55, 0.08) 0, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(102, 44, 35, 0.05) 0, transparent 50%);
 }
 
 /* ---------- SIDEBAR ---------- */
@@ -91,7 +89,7 @@
 .admin-nav-link.active {
   background: var(--admin-accent);
   color: #fff;
-  box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 10px 15px -3px rgba(141, 61, 55, 0.32);
 }
 
 .admin-nav-link .material-symbols-outlined {

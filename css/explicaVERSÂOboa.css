@@ -8,22 +8,22 @@
    ========================================================= */
 :root{
   --primary: #a92a1f;
-  --accent:  #7ED6A8;
-  --bg:      #F2F2F2;
-  --text:    #333333;
+  --accent:  #d8a27f;
+  --bg:      #f7f3ee;
+  --text:    #2b1d1b;
   --white:   #FFFFFF;
 
   /* tokens específicos painel explicador */
-  --expl-bg:        #f5f7fb;
-  --expl-sidebar:   #020617;
-  --expl-sidebar-bg:#020617;
+  --expl-bg:        #f5f1ee;
+  --expl-sidebar:   #1b1614;
+  --expl-sidebar-bg:#1b1614;
   --expl-card-bg:   #ffffff;
-  --expl-border:    #e5e7eb;
-  --expl-text:      #111827;
-  --expl-text-soft: #6b7280;
-  --expl-primary:   #3b82f6;
-  --expl-success:   #16a34a;
-  --expl-danger:    #ef4444;
+  --expl-border:    #e9ddd8;
+  --expl-text:      #221916;
+  --expl-text-soft: #6d5752;
+  --expl-primary:   #8d3d37;
+  --expl-success:   #1d7a4d;
+  --expl-danger:    #c93a3a;
 }
 
 /* =========================================================

@@ -238,7 +238,7 @@ function renderAlunos(lista, mes, ano) {
       <!-- Content: Monthly Payment info -->
       <div style="margin-bottom: 1.5rem;">
         <p style="margin: 0 0 4px; font-size: 0.875rem; color: #64748b;">Previsão mensal:</p>
-        <p style="margin: 0 0 12px; font-size: 1.1rem; font-weight: 600; color: #0f172a;">${formatCurrency(aluno.valor_explicacao * (aluno.sessoes_mes || 1))}</p>
+        <p style="margin: 0 0 12px; font-size: 1.1rem; font-weight: 600; color: #0f172a;">${formatCurrency(ExplicadorService.getPrevisaoMensal(aluno, mes, ano))}</p>
         <span style="display: inline-flex; padding: 4px 12px; border-radius: 999px; font-size: 0.75rem; font-weight: 600; ${statusColor}">
           ${statusText}
         </span>

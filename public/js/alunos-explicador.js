@@ -59,10 +59,15 @@ function renderAlunoCard(aluno) {
         : "")
     : "Sem aulas";
 
-  // Billing: valor/sessão × sessões/mês
-  const valorSessao = Number(aluno.valor_explicacao || 0);
-  const sessMes = Number(aluno.sessoes_mes || 1);
-  const previstoMensal = valorSessao * sessMes;
+  // Billing: mesma fórmula usada pela Edge Function para gerar a faturação
+  // real (valor/sessão × nº de sessões esperadas no mês corrente, segundo
+  // os dias da semana preferidos do aluno — não apenas "sessoes_mes").
+  const hoje = new Date();
+  const previstoMensal = ExplicadorService.getPrevisaoMensal(
+    aluno,
+    hoje.getMonth() + 1,
+    hoje.getFullYear()
+  );
 
   div.innerHTML = `
     <div class="dash-aluno-card__top">
@@ -372,9 +377,14 @@ async function openModalPagamento(id = null) {
     }
   } else {
     title.textContent = "Registar Pagamento";
-    document.getElementById("in-pag-mes").value = new Date().getMonth() + 1;
-    document.getElementById("in-pag-ano").value = new Date().getFullYear();
-    document.getElementById("in-pag-prev").value = aluno.valor_explicacao || 0;
+    const mesAtual = new Date().getMonth() + 1;
+    const anoAtual = new Date().getFullYear();
+    document.getElementById("in-pag-mes").value = mesAtual;
+    document.getElementById("in-pag-ano").value = anoAtual;
+    // Previsão mensal correta (preço/sessão × nº de sessões esperadas no
+    // mês), não apenas o preço de uma sessão isolada.
+    document.getElementById("in-pag-prev").value =
+      ExplicadorService.getPrevisaoMensal(aluno, mesAtual, anoAtual);
   }
 
   m.classList.add("open");
@@ -850,6 +860,19 @@ document.addEventListener("DOMContentLoaded", () => {
         data_pagamento: fd.get("data_pagamento") || null,
         estado: fd.get("estado"),
       };
+
+      // O estado tem de bater certo com os valores — nunca deixar "Pago"
+      // ficar guardado com valor_pago < valor_previsto (ou vice-versa).
+      // "EM_ATRASO" é a única exceção: não é derivável só dos montantes,
+      // por isso respeitamos a escolha do explicador nesse caso.
+      if (payload.estado !== "EM_ATRASO") {
+        const vPrev = Number(payload.valor_previsto) || 0;
+        const vPago = Number(payload.valor_pago) || 0;
+        if (vPrev > 0 && vPago >= vPrev) payload.estado = "PAGO";
+        else if (vPago > 0) payload.estado = "PARCIAL";
+        else if (vPrev === 0) payload.estado = "PAGO";
+        else payload.estado = "PENDENTE";
+      }
 
       await ExplicadorService.upsertPagamento(payload);
 

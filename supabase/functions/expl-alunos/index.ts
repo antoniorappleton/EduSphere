@@ -1342,11 +1342,19 @@ serve(async (req) => {
         atualPago = Number(pagRow.valor_pago) || 0;
       }
       const novoPago = atualPago + valor;
-      let novoEstado = "PENDENTE"; // ou o nome que tiveres no enum para “não pago totalmente”
-      if (novoPago >= atualPrev && atualPrev > 0) {
+      // Mesma lógica do generate_monthly_billing, para o estado nunca ficar
+      // dessincronizado dos valores reais (ex: "Pendente" com pagamento
+      // parcial já registado, ou "Pendente" para sempre quando não há
+      // valor previsto configurado).
+      let novoEstado;
+      if (novoPago >= atualPrev) {
         novoEstado = "PAGO";
         // Reset do aviso quando pagamento é concluído
         await svc.from("alunos").update({ mensalidade_avisada: false }).eq("id_aluno", alunoId).eq("id_explicador", myExplId);
+      } else if (novoPago > 0) {
+        novoEstado = "PARCIAL";
+      } else {
+        novoEstado = "PENDENTE";
       }
       const { error: updErr } = await svc.from("pagamentos").update({
         valor_previsto: atualPrev,

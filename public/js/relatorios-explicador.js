@@ -133,10 +133,17 @@ function renderFatChart() {
     pagGroups[key].pago += Number(p.valor_pago || 0);
   });
 
-  // Projected monthly billing from active students: valor/sessão × sessões/mês
-  const previstoProjecao = _cachedAlunos.reduce((sum, a) => {
-    return sum + (Number(a.valor_explicacao || 0) * Number(a.sessoes_mes || 1));
-  }, 0);
+  // Projeção de faturação mensal, por mês concreto: mesma fórmula que a
+  // Edge Function usa para calcular valor_previsto (valor/sessão × nº de
+  // sessões esperadas nesse mês específico segundo os dias preferidos do
+  // aluno). Não pode ser uma soma fixa aplicada a todos os meses futuros —
+  // meses diferentes têm números diferentes de ocorrências de cada dia da
+  // semana.
+  function previstoProjecaoParaMes(mes, ano) {
+    return _cachedAlunos.reduce((sum, a) => {
+      return sum + ExplicadorService.getPrevisaoMensal(a, mes, ano);
+    }, 0);
+  }
 
   // Build data arrays
   const labels = [];
@@ -157,8 +164,9 @@ function renderFatChart() {
       dataPrevisto.push(existing.previsto);
       dataRecebido.push(existing.pago);
     } else if (isFuture || isCurrent) {
-      // Projected — use active students billing
-      dataPrevisto.push(Math.round(previstoProjecao * 100) / 100);
+      // Projected — use active students billing for this specific month
+      const previstoMes = previstoProjecaoParaMes(m.mes, m.ano);
+      dataPrevisto.push(Math.round(previstoMes * 100) / 100);
       dataRecebido.push(0);
     } else {
       dataPrevisto.push(0);

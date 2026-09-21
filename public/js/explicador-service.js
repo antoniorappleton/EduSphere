@@ -1,6 +1,79 @@
 // public/js/explicador-service.js
 
 window.ExplicadorService = {
+  // ---------------------------------------------------------------------
+  // Réplica em JS da lógica usada no backend (getExpectedSessionsCount em
+  // supabase/functions/expl-alunos/index.ts). Existe para que qualquer
+  // "previsão mensal" mostrada no frontend (dashboard, relatórios, form de
+  // pagamento) bata sempre certo com o valor que a Edge Function vai
+  // efetivamente gravar quando a faturação desse mês for gerada. Usar
+  // "valor_explicacao * sessoes_mes" sozinho diverge sempre que o aluno
+  // tem dias da semana preferidos definidos.
+  // ---------------------------------------------------------------------
+  _mapDiaSemanaToJsIndex(dia) {
+    if (!dia) return null;
+    const v = dia.trim().toLowerCase();
+    if (v.includes("seg")) return 1;
+    if (v.includes("ter")) return 2;
+    if (v.includes("qua")) return 3;
+    if (v.includes("qui")) return 4;
+    if (v.includes("sex")) return 5;
+    if (v.includes("sáb") || v.includes("sab")) return 6;
+    if (v.includes("dom")) return 0;
+    if (v.includes("2")) return 1;
+    if (v.includes("3")) return 2;
+    if (v.includes("4")) return 3;
+    if (v.includes("5")) return 4;
+    if (v.includes("6")) return 5;
+    if (v.includes("7")) return 6;
+    if (v.includes("1")) return 0;
+    return null;
+  },
+
+  _proximaDataDoDiaSemana(inicio, targetDow) {
+    const d = new Date(inicio);
+    const diff0 = targetDow - d.getDay();
+    d.setDate(d.getDate() + (diff0 < 0 ? diff0 + 7 : diff0));
+    d.setHours(0, 0, 0, 0);
+    return d;
+  },
+
+  getExpectedSessionsCount(diaSemanaPreferido, month, year, fallbackSessoesMes) {
+    if (!diaSemanaPreferido) return Number(fallbackSessoesMes) || 0;
+    const dias = diaSemanaPreferido.split(",").map((d) => d.trim()).filter(Boolean);
+    const targetDows = dias
+      .map((d) => this._mapDiaSemanaToJsIndex(d))
+      .filter((d) => d !== null);
+    if (targetDows.length === 0) return Number(fallbackSessoesMes) || 0;
+
+    const startOfMonth = new Date(year, month - 1, 1);
+    const endOfMonth = new Date(year, month, 0);
+    let total = 0;
+    for (const dow of targetDows) {
+      let current = this._proximaDataDoDiaSemana(startOfMonth, dow);
+      if (isNaN(current.getTime())) continue;
+      while (current <= endOfMonth) {
+        total++;
+        current = new Date(current);
+        current.setDate(current.getDate() + 7);
+      }
+    }
+    return total;
+  },
+
+  // Previsão mensal (€) para um aluno num mês/ano concretos — mesma fórmula
+  // que a Edge Function usa para calcular valor_previsto.
+  getPrevisaoMensal(aluno, month, year) {
+    const valorSessao = Number(aluno?.valor_explicacao || 0);
+    const count = this.getExpectedSessionsCount(
+      aluno?.dia_semana_preferido,
+      month,
+      year,
+      aluno?.sessoes_mes
+    );
+    return valorSessao * count;
+  },
+
   // Helper: extrai a mensagem de erro detalhada devolvida pela Edge Function
   async _unwrapFnError(error) {
     try {

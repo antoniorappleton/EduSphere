@@ -188,7 +188,7 @@
 /* link "Ver todas →" no header dos cards */
 .expl-section-link {
   font-size: 0.85rem;
-  color: #1d4ed8;
+  color: #5f1d1d;
   cursor: pointer;
 }
 
@@ -854,7 +854,7 @@
   width: 6px;
   height: 6px;
   border-radius: 999px;
-  background: #2563eb; /* azulinho para marcar sessões */
+  background: #a92a1f;
   transform: translateX(-50%);
 }
 
