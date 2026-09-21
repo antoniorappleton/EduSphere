@@ -63,11 +63,14 @@ function renderAlunoCard(aluno) {
   // real (valor/sessão × nº de sessões esperadas no mês corrente, segundo
   // os dias da semana preferidos do aluno — não apenas "sessoes_mes").
   const hoje = new Date();
-  const previstoMensal = ExplicadorService.getPrevisaoMensal(
-    aluno,
+  const valorSessao = Number(aluno.valor_explicacao || 0);
+  const sessMes = ExplicadorService.getExpectedSessionsCount(
+    aluno.dia_semana_preferido,
     hoje.getMonth() + 1,
-    hoje.getFullYear()
+    hoje.getFullYear(),
+    aluno.sessoes_mes
   );
+  const previstoMensal = valorSessao * sessMes;
 
   div.innerHTML = `
     <div class="dash-aluno-card__top">
@@ -1194,8 +1197,27 @@ async function gerarRelatorio(id, mes = null, ano = null) {
     const realizasMes = sessoesMes.filter(s => s.estado === 'REALIZADA');
 
     const valorSessao = Number(aluno.valor_explicacao || 0);
-    const sessoesPrevistas = Number(aluno.sessoes_mes || 0);
-    
+    // mesAtual aqui é 0-indexed (select do relatório usa 0=Janeiro); a
+    // fórmula partilhada espera 1-indexed, por isso o "+1".
+    const sessoesPrevistas = ExplicadorService.getExpectedSessionsCount(
+      aluno.dia_semana_preferido,
+      mesAtual + 1,
+      anoAtual,
+      aluno.sessoes_mes
+    );
+    let mesProxIdx = mesAtual + 2; // +1 p/ 1-indexed, +1 p/ mês seguinte
+    let anoProx = anoAtual;
+    if (mesProxIdx > 12) {
+      mesProxIdx -= 12;
+      anoProx += 1;
+    }
+    const sessoesProximoMes = ExplicadorService.getExpectedSessionsCount(
+      aluno.dia_semana_preferido,
+      mesProxIdx,
+      anoProx,
+      aluno.sessoes_mes
+    );
+
     // Buscar dados de pagamento do mês para refletir pagamentos parciais
     let valorPago = 0;
     let valorPrevistoDB = 0;
@@ -1329,7 +1351,7 @@ async function gerarRelatorio(id, mes = null, ano = null) {
           </div>
           <div style="background: #b91c1c; padding: 20px; border-radius: 12px; text-align: center; color: white; box-shadow: 0 10px 15px -3px rgba(185, 28, 28, 0.2);">
             <p style="font-size: 11px; text-transform: uppercase; color: #ffffff; opacity: 0.9; font-weight: 800; margin-bottom: 8px; letter-spacing: 0.05em;">Previsão Próximo Mês</p>
-            <p style="font-size: 24px; font-weight: 900;">${formatCurrency(valorSessao * sessoesPrevistas)}</p>
+            <p style="font-size: 24px; font-weight: 900;">${formatCurrency(valorSessao * sessoesProximoMes)}</p>
           </div>
         </div>
 
