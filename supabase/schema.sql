@@ -545,3 +545,62 @@ EXCEPTION
     WHEN duplicate_table THEN null;
     WHEN duplicate_object THEN null;
 END $$;
+
+-- =============================================================================
+-- 17. TABELA testes_aluno (calendário de testes/avaliações por aluno)
+-- =============================================================================
+-- Antes os testes eram escritos à mão nas notas das sessões (observacoes /
+-- notas_proxima_sessao), sem data própria nem forma de os listar. Aqui cada
+-- teste tem data, disciplina e, depois de realizado, a nota obtida.
+-- Escrita: explicador (via Edge Function expl-alunos, que valida a posse do
+-- aluno). Leitura: explicador dono e o próprio aluno.
+
+CREATE TABLE IF NOT EXISTS public.testes_aluno (
+  id_teste UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  id_aluno UUID NOT NULL REFERENCES public.alunos(id_aluno) ON DELETE CASCADE,
+  id_explicador UUID NOT NULL REFERENCES public.explicadores(id_explicador) ON DELETE CASCADE,
+  disciplina TEXT NOT NULL,
+  tipo TEXT NOT NULL DEFAULT 'TESTE'
+    CHECK (tipo IN ('TESTE', 'EXAME', 'FICHA', 'TRABALHO', 'OUTRO')),
+  data DATE NOT NULL,
+  hora TIME,
+  materia TEXT,
+  estado TEXT NOT NULL DEFAULT 'AGENDADO'
+    CHECK (estado IN ('AGENDADO', 'REALIZADO', 'CANCELADO')),
+  nota_obtida DECIMAL(6,2),
+  escala_max DECIMAL(6,2) DEFAULT 20
+    CHECK (escala_max IS NULL OR escala_max > 0),
+  observacoes TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  CONSTRAINT ck_testes_nota_na_escala
+    CHECK (nota_obtida IS NULL OR (nota_obtida >= 0 AND (escala_max IS NULL OR nota_obtida <= escala_max)))
+);
+
+CREATE INDEX IF NOT EXISTS idx_testes_aluno_data ON public.testes_aluno (id_aluno, data);
+CREATE INDEX IF NOT EXISTS idx_testes_explicador_data ON public.testes_aluno (id_explicador, data);
+
+ALTER TABLE public.testes_aluno ENABLE ROW LEVEL SECURITY;
+
+-- Explicador: só os testes dos seus alunos. O WITH CHECK impede também
+-- associar um teste a um aluno de outro explicador.
+DROP POLICY IF EXISTS "Explicador manage own testes" ON public.testes_aluno;
+CREATE POLICY "Explicador manage own testes" ON public.testes_aluno
+  FOR ALL
+  USING (id_explicador = public.current_explicador_id())
+  WITH CHECK (
+    id_explicador = public.current_explicador_id()
+    AND id_aluno IN (
+      SELECT id_aluno FROM public.alunos
+      WHERE id_explicador = public.current_explicador_id()
+    )
+  );
+
+-- Aluno: apenas leitura dos seus próprios testes.
+DROP POLICY IF EXISTS "Aluno read own testes" ON public.testes_aluno;
+CREATE POLICY "Aluno read own testes" ON public.testes_aluno
+  FOR SELECT USING (
+    id_aluno IN (
+      SELECT id_aluno FROM public.alunos WHERE user_id = auth.uid()
+    )
+  );

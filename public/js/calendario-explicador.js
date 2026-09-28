@@ -12,6 +12,17 @@ currentWeekStart.setDate(diff);
 
 let sessoesCache = [];
 let alunosCache = [];
+let testesCache = [];
+
+function escapeHtml(str) {
+    if (str == null) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
 
 document.addEventListener('DOMContentLoaded', async () => {
     initCalendar();
@@ -56,6 +67,11 @@ async function carregarDadosSemana() {
         // Por agora a listSessoes devolve tudo ou por aluno. 
         // Idealmente filtraria por data no backend, mas vamos filtrar no frontend por agora.
         sessoesCache = await ExplicadorService.listSessoes();
+        // Testes: falha silenciosa para não bloquear o calendário de sessões
+        testesCache = await ExplicadorService.listTestes().catch((e) => {
+            console.warn("Erro ao carregar testes:", e);
+            return [];
+        });
         renderCalendar();
         updateKpis();
     } catch (err) {
@@ -106,6 +122,7 @@ function renderCalendar() {
         
         const isHoje = dStr === hojeStr;
         const sessoesDia = sessoesCache.filter(s => s.data === dStr);
+        const testesDia = testesCache.filter(t => t.data === dStr && t.estado !== 'CANCELADO');
 
         const col = document.createElement('div');
         col.className = `calendar-day-col ${isHoje ? 'is-today' : ''}`;
@@ -119,6 +136,7 @@ function renderCalendar() {
                 <span class="day-num">${dayNum}</span>
             </div>
             <div class="day-events">
+                ${testesDia.map(t => renderTesteMini(t)).join('')}
                 ${sessoesDia.map(s => renderEventMini(s)).join('')}
             </div>
         `;
@@ -135,6 +153,17 @@ function renderCalendar() {
         proxList.innerHTML = futuras.length 
             ? futuras.map(s => renderEventRow(s)).join('')
             : '<p class="empty-state">Sem sessões agendadas.</p>';
+    }
+
+    // Próximos testes (todos os alunos)
+    const testesList = document.getElementById('calendar-testes');
+    if (testesList) {
+        const proxTestes = testesCache
+            .filter(t => t.data >= hojeStr && t.estado === 'AGENDADO')
+            .slice(0, 8);
+        testesList.innerHTML = proxTestes.length
+            ? proxTestes.map(t => renderTesteRow(t)).join('')
+            : '<p class="empty-state">Sem testes marcados.</p>';
     }
 
     // Listagem completa (Todas)
@@ -157,6 +186,43 @@ function renderEventMini(s) {
             <span class="event-time">${hora}</span>
             <span class="event-title">${aluno}</span>
         </div>
+    `;
+}
+
+function testeAlunoNome(t) {
+    return t.aluno ? `${t.aluno.nome} ${t.aluno.apelido || ''}`.trim() : 'Aluno';
+}
+
+// Clicar num teste abre o perfil do aluno (onde é editado)
+function renderTesteMini(t) {
+    const hora = t.hora ? t.hora.slice(0, 5) : '';
+    const titulo = `${t.disciplina} — ${testeAlunoNome(t)}`;
+    return `
+        <a class="event-mini teste" href="alunos.html?id=${encodeURIComponent(t.id_aluno)}"
+           title="${escapeHtml(titulo)}" onclick="event.stopPropagation()">
+            <span class="event-time">📝${hora ? ' ' + escapeHtml(hora) : ''}</span>
+            <span class="event-title">${escapeHtml(t.disciplina)} · ${escapeHtml(testeAlunoNome(t))}</span>
+        </a>
+    `;
+}
+
+function renderTesteRow(t) {
+    const d = new Date(t.data + 'T00:00:00');
+    const mes = d.toLocaleDateString('pt-PT', { month: 'short' }).replace('.', '');
+    const hora = t.hora ? ` · ${escapeHtml(t.hora.slice(0, 5))}` : '';
+    const tipo = { TESTE: 'Teste', EXAME: 'Exame', FICHA: 'Ficha', TRABALHO: 'Trabalho', OUTRO: 'Outro' }[t.tipo] || t.tipo;
+    return `
+        <a class="cal-event-item" href="alunos.html?id=${encodeURIComponent(t.id_aluno)}" style="text-decoration:none">
+            <div class="cal-event-date">
+                <span class="day">${d.getDate()}</span>
+                <span class="month">${escapeHtml(mes)}</span>
+            </div>
+            <div class="cal-event-info">
+                <p class="name">${escapeHtml(t.disciplina)} — ${escapeHtml(testeAlunoNome(t))}</p>
+                <p class="time">${escapeHtml(tipo)}${hora}${t.materia ? ' · ' + escapeHtml(t.materia) : ''}</p>
+            </div>
+            <div class="cal-event-status teste">${escapeHtml(tipo)}</div>
+        </a>
     `;
 }
 

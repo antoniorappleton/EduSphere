@@ -163,6 +163,9 @@ async function openPerfil(id) {
     const exercicios = await ExplicadorService.listExercicios(id);
     renderExerciciosTable(exercicios);
 
+    // 3b. Carregar Testes (não bloqueia o perfil se a tabela ainda não existir)
+    carregarTestesAluno(id);
+
     // 4. Carregar Pagamentos
     // Nota: listPagamentos ainda não está no service, mas podemos usar fallback ou implementar
     // Por agora, vamos deixar placeholder se falhar
@@ -450,6 +453,172 @@ async function deleteExercicio(id) {
     renderExerciciosTable(exercicios);
   } catch (e) {
     alert("Erro ao apagar: " + e.message);
+  }
+}
+
+// ================== TESTES DO ALUNO ==================
+let testesCache = [];
+
+const TESTE_TIPO_LABEL = {
+  TESTE: "Teste",
+  EXAME: "Exame",
+  FICHA: "Ficha",
+  TRABALHO: "Trabalho",
+  OUTRO: "Outro",
+};
+const TESTE_ESTADO_LABEL = {
+  AGENDADO: "Agendado",
+  REALIZADO: "Realizado",
+  CANCELADO: "Cancelado",
+};
+// reutiliza as cores de badge das sessões
+const TESTE_ESTADO_BADGE = {
+  AGENDADO: "agendada",
+  REALIZADO: "realizada",
+  CANCELADO: "cancelada",
+};
+
+function formatNotaTeste(t) {
+  if (t.nota_obtida == null) return "—";
+  const nota = Number(t.nota_obtida).toLocaleString("pt-PT", { maximumFractionDigits: 2 });
+  const escala = t.escala_max != null ? Number(t.escala_max) : null;
+  return escala ? `${nota} / ${escala}` : nota;
+}
+
+async function carregarTestesAluno(alunoId) {
+  const tbody = document.getElementById("listaTestes");
+  try {
+    testesCache = await ExplicadorService.listTestes(alunoId);
+    renderTestesTable(testesCache);
+  } catch (e) {
+    console.warn("Erro ao carregar testes:", e);
+    if (tbody) {
+      tbody.innerHTML =
+        '<tr><td colspan="7">Não foi possível carregar os testes.</td></tr>';
+    }
+  }
+}
+
+function renderTestesTable(list) {
+  const tbody = document.getElementById("listaTestes");
+  if (!tbody) return;
+
+  if (!list.length) {
+    tbody.innerHTML = '<tr><td colspan="7">Sem testes registados.</td></tr>';
+    return;
+  }
+
+  const hoje = new Date().toISOString().slice(0, 10);
+  // próximos primeiro (ordem crescente), depois os passados (mais recentes primeiro)
+  const futuros = list.filter((t) => t.data >= hoje);
+  const passados = list.filter((t) => t.data < hoje).reverse();
+
+  tbody.innerHTML = [...futuros, ...passados]
+    .map((t) => {
+      const dataFmt = new Date(t.data + "T00:00:00").toLocaleDateString("pt-PT");
+      const hora = t.hora ? ` ${escapeHtml(t.hora.slice(0, 5))}` : "";
+      const badge = TESTE_ESTADO_BADGE[t.estado] || "agendada";
+      return `
+    <tr>
+      <td>${escapeHtml(dataFmt)}${hora}</td>
+      <td>${escapeHtml(t.disciplina)}</td>
+      <td>${escapeHtml(TESTE_TIPO_LABEL[t.tipo] || t.tipo)}</td>
+      <td>${escapeHtml(t.materia || "—")}</td>
+      <td>${escapeHtml(formatNotaTeste(t))}</td>
+      <td><span class="badge ${badge}">${escapeHtml(TESTE_ESTADO_LABEL[t.estado] || t.estado)}</span></td>
+      <td>
+        <button class="button secondary button--sm" data-edit-teste="${escapeHtml(t.id_teste)}" title="Editar" aria-label="Editar teste">✏️</button>
+      </td>
+    </tr>`;
+    })
+    .join("");
+}
+
+function openModalTeste(idTeste = null) {
+  const form = document.getElementById("fTeste");
+  const modal = document.getElementById("modal-teste");
+  if (!form || !modal) return;
+
+  form.reset();
+  document.getElementById("msgTeste").textContent = "";
+  const t = idTeste ? testesCache.find((x) => x.id_teste === idTeste) : null;
+
+  document.getElementById("modal-teste-titulo").textContent = t
+    ? "Editar Teste"
+    : "Registar Teste";
+  document.getElementById("btnDeleteTeste").style.display = t ? "" : "none";
+
+  form.id_teste.value = t?.id_teste || "";
+  form.disciplina.value = t?.disciplina || "";
+  form.tipo.value = t?.tipo || "TESTE";
+  form.data.value = t?.data || "";
+  form.hora.value = t?.hora ? t.hora.slice(0, 5) : "";
+  form.materia.value = t?.materia || "";
+  form.estado.value = t?.estado || "AGENDADO";
+  form.nota_obtida.value = t?.nota_obtida ?? "";
+  form.escala_max.value = t?.escala_max ?? 20;
+  form.observacoes.value = t?.observacoes || "";
+
+  modal.classList.add("open");
+  modal.setAttribute("aria-hidden", "false");
+  form.disciplina.focus();
+}
+
+async function handleTesteSubmit(e) {
+  e.preventDefault();
+  const form = e.target;
+  const msg = document.getElementById("msgTeste");
+  const btn = document.getElementById("btnSaveTeste");
+  const alunoId =
+    document.getElementById("view-perfil-aluno").dataset.currentAlunoId;
+  const fd = new FormData(form);
+
+  const payload = {
+    id_teste: fd.get("id_teste") || undefined,
+    id_aluno: alunoId,
+    disciplina: fd.get("disciplina"),
+    tipo: fd.get("tipo"),
+    data: fd.get("data"),
+    hora: fd.get("hora") || null,
+    materia: fd.get("materia") || null,
+    estado: fd.get("estado"),
+    nota_obtida: fd.get("nota_obtida") === "" ? null : fd.get("nota_obtida"),
+    escala_max: fd.get("escala_max") || 20,
+    observacoes: fd.get("observacoes") || null,
+  };
+
+  if (btn) btn.disabled = true;
+  msg.style.color = "";
+  msg.textContent = "A guardar...";
+  try {
+    await ExplicadorService.upsertTeste(payload);
+    closeModal("modal-teste");
+    await carregarTestesAluno(alunoId);
+  } catch (err) {
+    console.error(err);
+    msg.style.color = "red";
+    msg.textContent = "Erro: " + (err.message || "Falha ao guardar");
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+async function handleDeleteTeste() {
+  const form = document.getElementById("fTeste");
+  const id = form?.id_teste.value;
+  if (!id) return;
+  if (!confirm("Tem a certeza que deseja apagar este teste?")) return;
+
+  const msg = document.getElementById("msgTeste");
+  try {
+    await ExplicadorService.deleteTeste(id);
+    closeModal("modal-teste");
+    const alunoId =
+      document.getElementById("view-perfil-aluno").dataset.currentAlunoId;
+    await carregarTestesAluno(alunoId);
+  } catch (err) {
+    msg.style.color = "red";
+    msg.textContent = "Erro ao apagar: " + (err.message || "");
   }
 }
 
@@ -1043,6 +1212,19 @@ document.addEventListener("DOMContentLoaded", () => {
     } finally {
       if (btn) btn.disabled = false;
     }
+  });
+
+  // Testes do aluno
+  document
+    .getElementById("btn-novo-teste")
+    ?.addEventListener("click", () => openModalTeste());
+  document.getElementById("fTeste")?.addEventListener("submit", handleTesteSubmit);
+  document
+    .getElementById("btnDeleteTeste")
+    ?.addEventListener("click", handleDeleteTeste);
+  document.getElementById("listaTestes")?.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-edit-teste]");
+    if (btn) openModalTeste(btn.dataset.editTeste);
   });
 
   // Listener para o form de chat no perfil

@@ -16,6 +16,8 @@
 //   - set_mensalidade_avisada
 //   - get_relatorios
 //   - generate_monthly_billing
+//   - upsert_teste_aluno
+//   - delete_teste_aluno
 import { serve } from "https://deno.land/std@0.223.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.47.10?target=deno";
 const URL = Deno.env.get("SUPABASE_URL");
@@ -2333,6 +2335,105 @@ serve(async (req) => {
 
       if (error) {
         console.error("Erro delete_exercicio", error);
+        return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: cors(origin) });
+      }
+
+      return new Response(JSON.stringify({ ok: true }), { status: 200, headers: cors(origin) });
+    }
+
+    /* =======================
+       CRIAR / EDITAR TESTE DO ALUNO
+       payload: { id_teste?, id_aluno, disciplina, tipo?, data, hora?, materia?,
+                  estado?, nota_obtida?, escala_max?, observacoes? }
+       ======================= */
+    if (action === "upsert_teste_aluno") {
+      const p = payload || {};
+      const TIPOS = ["TESTE", "EXAME", "FICHA", "TRABALHO", "OUTRO"];
+      const ESTADOS = ["AGENDADO", "REALIZADO", "CANCELADO"];
+      const bad = (msg) =>
+        new Response(JSON.stringify({ error: msg }), { status: 400, headers: cors(origin) });
+
+      if (!p.id_aluno || !p.disciplina || !p.data) {
+        return bad("id_aluno, disciplina e data são obrigatórios");
+      }
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(String(p.data))) return bad("data inválida");
+      if (p.hora && !/^\d{2}:\d{2}(:\d{2})?$/.test(String(p.hora))) return bad("hora inválida");
+
+      const tipo = p.tipo ? String(p.tipo).toUpperCase() : "TESTE";
+      const estado = p.estado ? String(p.estado).toUpperCase() : "AGENDADO";
+      if (!TIPOS.includes(tipo)) return bad("tipo inválido");
+      if (!ESTADOS.includes(estado)) return bad("estado inválido");
+
+      const toNum = (v) => (v === null || v === undefined || v === "" ? null : Number(v));
+      const nota = toNum(p.nota_obtida);
+      const escala = toNum(p.escala_max) ?? 20;
+      if (nota !== null && (isNaN(nota) || nota < 0 || nota > escala)) {
+        return bad(`nota_obtida tem de estar entre 0 e ${escala}`);
+      }
+      if (isNaN(escala) || escala <= 0) return bad("escala_max inválida");
+
+      // O aluno tem de pertencer a este explicador
+      const aluno = await getAlunoDoExpl(p.id_aluno);
+      if (!aluno) return bad("Aluno não encontrado para este explicador");
+
+      const row = {
+        id_aluno: p.id_aluno,
+        id_explicador: myExplId,
+        disciplina: String(p.disciplina).trim().slice(0, 120),
+        tipo,
+        data: p.data,
+        hora: p.hora || null,
+        materia: p.materia ? String(p.materia).slice(0, 2000) : null,
+        estado,
+        nota_obtida: nota,
+        escala_max: escala,
+        observacoes: p.observacoes ? String(p.observacoes).slice(0, 2000) : null,
+        updated_at: new Date().toISOString(),
+      };
+
+      let query;
+      if (p.id_teste) {
+        query = svc
+          .from("testes_aluno")
+          .update(row)
+          .eq("id_teste", p.id_teste)
+          .eq("id_explicador", myExplId)
+          .select()
+          .maybeSingle();
+      } else {
+        query = svc.from("testes_aluno").insert(row).select().single();
+      }
+
+      const { data, error } = await query;
+      if (error) {
+        console.error("Erro upsert_teste_aluno", error);
+        return bad(error.message);
+      }
+      if (!data) {
+        return new Response(JSON.stringify({ error: "Teste não encontrado" }), { status: 404, headers: cors(origin) });
+      }
+
+      return new Response(JSON.stringify(data), { status: p.id_teste ? 200 : 201, headers: cors(origin) });
+    }
+
+    /* =======================
+       APAGAR TESTE DO ALUNO
+       payload: { id_teste }
+       ======================= */
+    if (action === "delete_teste_aluno") {
+      const p = payload || {};
+      if (!p.id_teste) {
+        return new Response(JSON.stringify({ error: "id_teste é obrigatório" }), { status: 400, headers: cors(origin) });
+      }
+
+      const { error } = await svc
+        .from("testes_aluno")
+        .delete()
+        .eq("id_teste", p.id_teste)
+        .eq("id_explicador", myExplId);
+
+      if (error) {
+        console.error("Erro delete_teste_aluno", error);
         return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: cors(origin) });
       }
 

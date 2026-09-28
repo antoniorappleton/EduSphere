@@ -1720,6 +1720,14 @@ body.home main.auth {
     opacity: 0.7;
 }
 
+.event-mini.teste {
+    display: block;
+    background: #fffbeb;
+    border-left-color: #d97706;
+    color: #92400e;
+    text-decoration: none;
+}
+
 .event-time {
     font-weight: 700;
     margin-right: 4px;
@@ -1778,6 +1786,7 @@ body.home main.auth {
 .cal-event-status.agendada { background: #dbeafe; color: #1e40af; }
 .cal-event-status.realizada { background: #dcfce7; color: #15803d; }
 .cal-event-status.cancelada { background: #fee2e2; color: #b91c1c; }
+.cal-event-status.teste { background: #fef3c7; color: #92400e; }
 
 /* List View */
 .cal-list-row {

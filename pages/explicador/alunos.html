@@ -236,6 +236,9 @@
                 <button class="tab" data-tab="exercicios" onclick="showPerfilTab('exercicios')">
                   Exercícios
                 </button>
+                <button class="tab" data-tab="testes" onclick="showPerfilTab('testes')">
+                  Testes
+                </button>
                 <button class="tab" data-tab="mensagens" onclick="showPerfilTab('mensagens')">
                   Mensagens
                 </button>
@@ -313,6 +316,35 @@
                       <tbody id="listaExercicios">
                         <tr>
                           <td colspan="5">A carregar...</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                <!-- TESTES -->
+                <div id="tab-testes" class="tab-content">
+                  <div class="pag-header">
+                    <h3>Calendário de Testes</h3>
+                    <button class="button secondary button--sm" id="btn-novo-teste">
+                      + Registar teste
+                    </button>
+                  </div>
+                  <div class="table-wrapper perfil-table-wrapper">
+                    <table class="tabela perfil-tabela">
+                      <thead>
+                        <tr>
+                          <th>Data</th>
+                          <th>Disciplina</th>
+                          <th>Tipo</th>
+                          <th>Matéria</th>
+                          <th>Nota</th>
+                          <th>Estado</th>
+                          <th>Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody id="listaTestes">
+                        <tr>
+                          <td colspan="7">A carregar...</td>
                         </tr>
                       </tbody>
                     </table>
@@ -786,6 +818,89 @@
     </div>
   </div>
 
+  <!-- MODAL TESTE -->
+  <div class="modal" id="modal-teste" aria-hidden="true">
+    <div class="modal__backdrop" onclick="closeModal('modal-teste')"></div>
+    <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="modal-teste-titulo">
+      <div class="modal__header">
+        <h2 id="modal-teste-titulo">Registar Teste</h2>
+        <button class="modal__close" type="button" aria-label="Fechar" onclick="closeModal('modal-teste')">
+          &times;
+        </button>
+      </div>
+      <form id="fTeste">
+        <input type="hidden" name="id_teste" />
+
+        <div class="expl-grid-2">
+          <label>Disciplina
+            <input type="text" class="input" name="disciplina" required maxlength="120"
+              placeholder="Ex: Matemática" list="dl-disciplinas" /></label>
+          <label>Tipo
+            <select class="input" name="tipo">
+              <option value="TESTE">Teste</option>
+              <option value="EXAME">Exame</option>
+              <option value="FICHA">Ficha de avaliação</option>
+              <option value="TRABALHO">Trabalho</option>
+              <option value="OUTRO">Outro</option>
+            </select>
+          </label>
+        </div>
+        <datalist id="dl-disciplinas">
+          <option value="Matemática"></option>
+          <option value="Português"></option>
+          <option value="Inglês"></option>
+          <option value="Físico-Química"></option>
+          <option value="Ciências Naturais"></option>
+          <option value="Biologia e Geologia"></option>
+          <option value="História"></option>
+          <option value="Geografia"></option>
+        </datalist>
+
+        <div class="expl-grid-2">
+          <label>Data
+            <input type="date" class="input" name="data" required /></label>
+          <label>Hora (opcional)
+            <input type="time" class="input" name="hora" /></label>
+        </div>
+
+        <label>Matéria
+          <textarea class="input" name="materia" rows="2" maxlength="2000"
+            placeholder="Ex: Equações do 2.º grau, funções"></textarea></label>
+
+        <div class="expl-grid-2">
+          <label>Estado
+            <select class="input" name="estado">
+              <option value="AGENDADO">Agendado</option>
+              <option value="REALIZADO">Realizado</option>
+              <option value="CANCELADO">Cancelado</option>
+            </select>
+          </label>
+          <label>Nota obtida
+            <div style="display: flex; gap: 6px; align-items: center">
+              <input type="number" class="input" name="nota_obtida" min="0" step="0.1" placeholder="—" />
+              <span>/</span>
+              <input type="number" class="input" name="escala_max" min="1" step="1" value="20"
+                aria-label="Escala máxima" style="max-width: 80px" />
+            </div>
+          </label>
+        </div>
+
+        <label>Observações
+          <textarea class="input" name="observacoes" rows="2" maxlength="2000"></textarea></label>
+
+        <div style="margin-top: 1rem; display: flex; justify-content: space-between; gap: 8px">
+          <button type="button" class="button secondary" id="btnDeleteTeste" style="display: none">
+            Apagar
+          </button>
+          <button type="submit" class="button primary" id="btnSaveTeste" style="margin-left: auto">
+            Guardar
+          </button>
+        </div>
+        <div id="msgTeste" role="status" style="margin-top: 10px; font-size: 12px"></div>
+      </form>
+    </div>
+  </div>
+
   <script>
       // Navigation Logic
       function fecharPerfilAluno() {
@@ -797,13 +912,13 @@
         document
           .querySelectorAll(".tab-content")
           .forEach((c) => c.classList.remove("active"));
-        document.getElementById("tab-" + tabId).classList.add("active");
+        document.getElementById("tab-" + tabId)?.classList.add("active");
         document
           .querySelectorAll(".tab")
         .forEach((b) => b.classList.remove("active"));
         document
           .querySelector(`.tab[data-tab="${tabId}"]`)
-          .classL("active");
+          ?.classList.add("active");
       }
   </script>
   <!-- MODAL PAGAMENTO -->

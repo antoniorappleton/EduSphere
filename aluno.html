@@ -147,6 +147,18 @@
           </div>
         </div>
 
+        <!-- Próximos Testes -->
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="font-bold text-gray-900">Próximos testes</h2>
+            <button class="text-xs font-bold text-primary hover:text-primary/80"
+              onclick="document.querySelector('[data-target=calendario]').click()">Ver todos</button>
+          </div>
+          <div id="testesProximos" class="flex flex-col gap-2">
+            <p class="text-xs text-gray-400 italic">A carregar…</p>
+          </div>
+        </div>
+
         <!-- Quick links -->
         <div class="grid grid-cols-1 gap-3">
           <div
@@ -191,6 +203,11 @@
           <div id="cal-ui" class="calendar-ui-grid">
             <!-- Grid Calendar injected by JS -->
           </div>
+        </div>
+
+        <div>
+          <h3 class="font-bold text-gray-900 mb-3 text-sm uppercase text-gray-500">Testes</h3>
+          <div id="calTestes" class="space-y-2"></div>
         </div>
 
         <div>
@@ -463,7 +480,79 @@
           : "<p class='text-xs text-gray-400 italic'>Histórico vazio.</p>";
       }
 
+      await carregarTestes();
       renderCalendarioVisual(sessoes);
+    }
+
+    // --- TESTES LOGIC ---
+    window.TESTES_ALUNO = [];
+    const TESTE_TIPO_LABEL = { TESTE: 'Teste', EXAME: 'Exame', FICHA: 'Ficha', TRABALHO: 'Trabalho', OUTRO: 'Outro' };
+
+    async function carregarTestes() {
+      if (!window.ALUNO || !ALUNO.id_aluno) return;
+      const { data, error } = await supabase
+        .from('testes_aluno')
+        .select('id_teste, disciplina, tipo, data, hora, materia, estado, nota_obtida, escala_max')
+        .eq('id_aluno', ALUNO.id_aluno)
+        .order('data', { ascending: true });
+
+      const homeEl = document.getElementById('testesProximos');
+      const calEl = document.getElementById('calTestes');
+      if (error) {
+        console.warn('Erro ao carregar testes:', error);
+        const errHtml = "<p class='text-xs text-gray-400 italic'>Não foi possível carregar os testes.</p>";
+        if (homeEl) homeEl.innerHTML = errHtml;
+        if (calEl) calEl.innerHTML = errHtml;
+        return;
+      }
+
+      window.TESTES_ALUNO = data || [];
+      const hoje = new Date().toISOString().slice(0, 10);
+      const futuros = TESTES_ALUNO.filter(t => t.data >= hoje && t.estado === 'AGENDADO');
+      const realizados = TESTES_ALUNO.filter(t => t.estado === 'REALIZADO').reverse();
+
+      if (homeEl) {
+        homeEl.innerHTML = futuros.length
+          ? futuros.slice(0, 3).map(renderTesteItem).join('')
+          : "<p class='text-xs text-gray-400 italic'>Sem testes marcados.</p>";
+      }
+      if (calEl) {
+        const lista = [...futuros, ...realizados.slice(0, 5)];
+        calEl.innerHTML = lista.length
+          ? lista.map(renderTesteItem).join('')
+          : "<p class='text-xs text-gray-400 italic'>Sem testes registados.</p>";
+      }
+    }
+
+    function renderTesteItem(t) {
+      const d = new Date(t.data + 'T00:00:00');
+      const dias = Math.round((d - new Date(new Date().toDateString())) / 86400000);
+      let quando = '';
+      if (t.estado === 'AGENDADO') {
+        quando = dias === 0 ? 'Hoje' : dias === 1 ? 'Amanhã' : dias > 1 ? `Faltam ${dias} dias` : '';
+      }
+      const hora = t.hora ? ` · ${escapeHtml(t.hora.slice(0, 5))}` : '';
+      const nota = t.nota_obtida != null
+        ? `<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-green-100 text-green-700">${escapeHtml(Number(t.nota_obtida).toLocaleString('pt-PT'))}${t.escala_max ? ' / ' + escapeHtml(Number(t.escala_max)) : ''}</span>`
+        : (quando ? `<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">${quando}</span>` : '');
+
+      return `
+          <div class="bg-white border border-amber-100 p-3 rounded-lg shadow-sm">
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-3 min-w-0">
+                <div class="h-10 w-10 shrink-0 rounded-lg bg-amber-50 flex flex-col items-center justify-center border border-amber-100">
+                  <span class="text-[10px] text-amber-600 uppercase font-bold leading-none">${escapeHtml(d.toLocaleDateString('pt-PT', { month: 'short' }).replace('.', ''))}</span>
+                  <span class="text-sm font-bold text-gray-900 leading-none mt-0.5">${d.getDate()}</span>
+                </div>
+                <div class="min-w-0">
+                  <p class="text-sm font-bold text-gray-900 truncate">${escapeHtml(t.disciplina)}</p>
+                  <p class="text-xs text-gray-500 truncate">${escapeHtml(TESTE_TIPO_LABEL[t.tipo] || t.tipo)}${hora}${t.materia ? ' · ' + escapeHtml(t.materia) : ''}</p>
+                </div>
+              </div>
+              ${nota}
+            </div>
+          </div>
+        `;
     }
 
     function renderCalendarioItem(a, isFuture) {
@@ -521,6 +610,14 @@
         sessoesPorDia[dia].push(s);
       });
 
+      const testesPorDia = {};
+      (window.TESTES_ALUNO || []).forEach((t) => {
+        if (!t.data || t.estado === 'CANCELADO') return;
+        const d = new Date(t.data + 'T00:00:00');
+        if (d.getFullYear() !== ano || d.getMonth() !== mesIndex) return;
+        testesPorDia[d.getDate()] = (testesPorDia[d.getDate()] || 0) + 1;
+      });
+
       const firstDay = new Date(ano, mesIndex, 1);
       const lastDay = new Date(ano, mesIndex + 1, 0);
       const diasNoMes = lastDay.getDate();
@@ -534,6 +631,7 @@
            <div class="flex gap-1">
              <div class="h-2 w-2 rounded-full bg-green-500" title="Realizada"></div>
              <div class="h-2 w-2 rounded-full bg-blue-500" title="Agendada"></div>
+             <div class="h-2 w-2 rounded-full bg-amber-500" title="Teste"></div>
            </div>
         </div>
         <div class="grid grid-cols-7 gap-1 text-center text-xs text-gray-400 font-medium mb-2">
@@ -553,8 +651,11 @@
           else if (sessList.some(s => s.estado === 'AGENDADA')) dotColor = "bg-blue-500";
         }
 
-        const activeClass = hasSession ? "font-bold text-gray-900 bg-gray-50 rounded-lg" : "text-gray-500";
-        const dotHtml = hasSession ? `<div class="mx-auto mt-0.5 h-1 w-1 rounded-full ${dotColor}"></div>` : '';
+        const activeClass = (hasSession || testesPorDia[dia] > 0) ? "font-bold text-gray-900 bg-gray-50 rounded-lg" : "text-gray-500";
+        const hasTeste = testesPorDia[dia] > 0;
+        const dotHtml = (hasSession || hasTeste)
+          ? `<div class="flex justify-center gap-0.5 mt-0.5">${hasSession ? `<div class="h-1 w-1 rounded-full ${dotColor}"></div>` : ''}${hasTeste ? '<div class="h-1 w-1 rounded-full bg-amber-500" title="Teste"></div>' : ''}</div>`
+          : '';
 
         html += `
           <div class="h-9 flex flex-col items-center justify-center ${activeClass}">
@@ -817,6 +918,7 @@
         // Load Data
         carregarProximasExplicacoes();
         carregarResumoPagamentos();
+        carregarTestes();
       }
     })();
 

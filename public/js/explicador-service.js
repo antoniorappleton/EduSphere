@@ -300,6 +300,36 @@ window.ExplicadorService = {
     return data;
   },
 
+  // 5b. TESTES / AVALIAÇÕES
+  // alunoId opcional: sem ele devolve os testes de todos os alunos (calendário)
+  async listTestes(alunoId = null) {
+    let q = supabase
+      .from("testes_aluno")
+      .select("*, aluno:alunos(nome, apelido)")
+      .order("data", { ascending: true })
+      .order("hora", { ascending: true, nullsFirst: true });
+    if (alunoId) q = q.eq("id_aluno", alunoId);
+    const { data, error } = await q;
+    if (error) throw error;
+    return data || [];
+  },
+
+  async upsertTeste(payload) {
+    const { data, error } = await supabase.functions.invoke("expl-alunos", {
+      body: { action: "upsert_teste_aluno", payload },
+    });
+    if (error) throw await this._unwrapFnError(error);
+    return data;
+  },
+
+  async deleteTeste(id_teste) {
+    const { data, error } = await supabase.functions.invoke("expl-alunos", {
+      body: { action: "delete_teste_aluno", payload: { id_teste } },
+    });
+    if (error) throw await this._unwrapFnError(error);
+    return data;
+  },
+
   async uploadFile(file) {
     const fileExt = file.name.split(".").pop();
     const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
