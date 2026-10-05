@@ -44,7 +44,7 @@ DECLARE
   v_prox_id UUID;
   v_prox_prev NUMERIC(10,2);
   v_prox_pago NUMERIC(10,2);
-  v_novo_estado pagamento_estado;
+  v_novo_estado estado_pagamento;
 BEGIN
   FOR rec IN
     SELECT p.id_pagamento, p.id_aluno, p.id_explicador, p.ano, p.mes,
