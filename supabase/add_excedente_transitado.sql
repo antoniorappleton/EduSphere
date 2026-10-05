@@ -51,14 +51,14 @@ BEGIN
            p.valor_previsto, p.valor_pago, a.nome, a.apelido
     FROM public.pagamentos p
     JOIN public.alunos a ON a.id_aluno = p.id_aluno
-    WHERE p.mes = 9
+    WHERE p.mes::int = 9
       AND (
         (a.nome ILIKE '%Vasco%' AND (COALESCE(a.nome,'') || ' ' || COALESCE(a.apelido,'')) ILIKE '%Varela%Pinto%')
         OR a.nome ILIKE '%Bryan%'
         OR a.apelido ILIKE '%Bryan%'
       )
   LOOP
-    v_excesso := GREATEST(COALESCE(rec.valor_pago, 0) - COALESCE(rec.valor_previsto, 0), 0);
+    v_excesso := GREATEST(COALESCE(rec.valor_pago::numeric, 0) - COALESCE(rec.valor_previsto::numeric, 0), 0);
 
     RAISE NOTICE 'Aluno % % — Setembro %: previsto=%, pago=%, excedente a transitar para Outubro=%',
       rec.nome, rec.apelido, rec.ano, rec.valor_previsto, rec.valor_pago, v_excesso;
@@ -73,7 +73,7 @@ BEGIN
       SELECT id_pagamento, valor_previsto, valor_pago
         INTO v_prox_id, v_prox_prev, v_prox_pago
       FROM public.pagamentos
-      WHERE id_aluno = rec.id_aluno AND ano = v_prox_ano AND mes = 10;
+      WHERE id_aluno = rec.id_aluno AND ano::int = v_prox_ano AND mes::int = 10;
 
       IF FOUND THEN
         v_novo_estado := CASE
