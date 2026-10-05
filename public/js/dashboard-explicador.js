@@ -387,8 +387,18 @@ function openDashMonthReport(ano, mes) {
   } else {
     const totalPago = items.reduce((s, p) => s + Number(p.valor_pago || 0), 0);
     const totalPrev = items.reduce((s, p) => s + Number(p.valor_previsto || 0), 0);
+    const totalCreditoRecebido = items.reduce((s, p) => s + Number(p.credito_recebido || 0), 0);
+    const totalExcedenteTransitado = items.reduce((s, p) => s + Number(p.excedente_transitado || 0), 0);
+    const emFalta = totalPrev - totalPago - totalCreditoRecebido;
+    const proxMesNome = DASH_MESES[mes % 12];
 
     body.innerHTML = `
+      ${totalExcedenteTransitado > 0 ? `
+      <div style="padding:0.75rem 1rem; background:#eff6ff; border:1px solid #bfdbfe; border-radius:10px; margin-bottom:1rem;">
+        <p style="margin:0; font-size:0.85rem; color:#1e40af;">
+          <strong>${formatCurrency(totalExcedenteTransitado)}</strong> pagos além do previsto este mês transitam como crédito para ${proxMesNome}.
+        </p>
+      </div>` : ''}
       <div style="display:flex; gap:0.75rem; margin-bottom:1rem; flex-wrap:wrap;">
         <div style="flex:1; min-width:100px; padding:0.75rem 1rem; background:#f8fafc; border-radius:10px; text-align:center;">
           <p style="margin:0; font-size:0.8rem; color:#64748b;">Previsto</p>
@@ -398,20 +408,27 @@ function openDashMonthReport(ano, mes) {
           <p style="margin:0; font-size:0.8rem; color:#64748b;">Recebido</p>
           <p style="margin:4px 0 0; font-size:1.1rem; font-weight:700; color:#16a34a;">${formatCurrency(totalPago)}</p>
         </div>
-        <div style="flex:1; min-width:100px; padding:0.75rem 1rem; background:#fef2f2; border-radius:10px; text-align:center;">
+        <div style="flex:1; min-width:100px; padding:0.75rem 1rem; background:${emFalta > 0 ? '#fef2f2' : '#f0fdf4'}; border-radius:10px; text-align:center;">
           <p style="margin:0; font-size:0.8rem; color:#64748b;">Em falta</p>
-          <p style="margin:4px 0 0; font-size:1.1rem; font-weight:700; color:#b91c1c;">${formatCurrency(totalPrev - totalPago)}</p>
+          <p style="margin:4px 0 0; font-size:1.1rem; font-weight:700; color:${emFalta > 0 ? '#b91c1c' : '#16a34a'};">${formatCurrency(emFalta)}</p>
         </div>
       </div>
       <div style="max-height:300px; overflow-y:auto;">
         ${items.map(p => {
           const nome = p.alunos ? `${p.alunos.nome} ${p.alunos.apelido || ''}`.trim() : '—';
           const isPago = p.estado === 'PAGO';
+          const credito = Number(p.credito_recebido || 0);
+          const excedente = Number(p.excedente_transitado || 0);
+          const nota = excedente > 0
+            ? `<br><small style="color:#1e40af;">+${formatCurrency(excedente)} transita p/ o mês seguinte</small>`
+            : credito > 0
+              ? `<br><small style="color:#1e40af;">inclui ${formatCurrency(credito)} transitado do mês anterior</small>`
+              : '';
           return `
             <div style="display:flex; align-items:center; justify-content:space-between; padding:0.6rem 0; border-bottom:1px solid #f1f5f9;">
               <span style="font-weight:500;">${nome}</span>
               <div style="display:flex; gap:0.75rem; align-items:center;">
-                <span style="font-size:0.9rem;">${formatCurrency(p.valor_pago)} / ${formatCurrency(p.valor_previsto)}</span>
+                <span style="font-size:0.9rem; text-align:right;">${formatCurrency(p.valor_pago)} / ${formatCurrency(p.valor_previsto)}${nota}</span>
                 <span class="sessao-badge ${isPago ? 'sessao-badge--realizada' : 'sessao-badge--agendada'}">${p.estado}</span>
               </div>
             </div>`;

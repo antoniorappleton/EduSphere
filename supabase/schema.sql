@@ -604,3 +604,29 @@ CREATE POLICY "Aluno read own testes" ON public.testes_aluno
       SELECT id_aluno FROM public.alunos WHERE user_id = auth.uid()
     )
   );
+
+-- =============================================================================
+-- 18. TRANSIÇÃO DE EXCEDENTE DE PAGAMENTO ENTRE PERÍODOS
+-- =============================================================================
+-- Quando um aluno paga mais do que o valor_previsto de um mês (ex: previsto
+-- 90€ para 3 explicações, mas pago 150€), os 60€ a mais contam como
+-- adiantamento de sessões do mês seguinte. A Edge Function expl-alunos (ver
+-- sincronizarExcedenteTransitado em supabase/functions/expl-alunos/index.ts)
+-- mantém estas duas colunas atualizadas sempre que um pagamento é
+-- registado/editado ou uma mensalidade é (re)gerada.
+--
+-- RLS/Storage não mudam: estas colunas estão nas políticas já existentes de
+-- `pagamentos` (secção 6), que cobrem a tabela inteira.
+--
+-- Para corrigir retroativamente histórico anterior a esta lógica, ver
+-- supabase/add_excedente_transitado.sql (script pontual, corre uma vez).
+
+ALTER TABLE public.pagamentos
+  ADD COLUMN IF NOT EXISTS excedente_transitado DECIMAL(10,2) NOT NULL DEFAULT 0;
+ALTER TABLE public.pagamentos
+  ADD COLUMN IF NOT EXISTS credito_recebido DECIMAL(10,2) NOT NULL DEFAULT 0;
+
+COMMENT ON COLUMN public.pagamentos.excedente_transitado IS
+  'Parte do valor pago NESTE período que excede o valor_previsto e foi reservada para o mês seguinte (informativo, mostrado no relatório de fim de período deste mês).';
+COMMENT ON COLUMN public.pagamentos.credito_recebido IS
+  'Crédito recebido de um excedente pago no mês ANTERIOR, já aplicado ao que falta pagar neste período.';

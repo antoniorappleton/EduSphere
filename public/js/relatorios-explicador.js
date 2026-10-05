@@ -377,7 +377,7 @@ function renderMonthlyList(pags) {
     // Robust paid check
     const allPaid = g.items.every(p => {
       const est = (p.estado || '').toUpperCase();
-      const vPago = Number(p.valor_pago || 0);
+      const vPago = Number(p.valor_pago || 0) + Number(p.credito_recebido || 0);
       const vPrev = Number(p.valor_previsto || 0);
       return est === 'PAGO' || (vPrev > 0 && vPago >= vPrev);
     });
@@ -425,10 +425,24 @@ function openMonthReport(ano, mes) {
   } else {
     const totalPago = items.reduce((s, p) => s + Number(p.valor_pago || 0), 0);
     const totalPrev = items.reduce((s, p) => s + Number(p.valor_previsto || 0), 0);
-    const emFalta = totalPrev - totalPago;
-    const taxa = totalPrev > 0 ? Math.round((totalPago / totalPrev) * 100) : 0;
+    // Crédito recebido de um mês anterior (adiantamento de um aluno que pagou
+    // a mais) conta para "quanto falta" deste mês, mas não é dinheiro
+    // recebido AGORA — por isso entra em emFalta, não em totalPago.
+    const totalCreditoRecebido = items.reduce((s, p) => s + Number(p.credito_recebido || 0), 0);
+    // Excedente deste mês que já ficou reservado para o mês seguinte —
+    // ver nota "transita para o próximo período" abaixo.
+    const totalExcedenteTransitado = items.reduce((s, p) => s + Number(p.excedente_transitado || 0), 0);
+    const emFalta = totalPrev - totalPago - totalCreditoRecebido;
+    const taxa = totalPrev > 0 ? Math.round(((totalPago + totalCreditoRecebido) / totalPrev) * 100) : 0;
+    const proxMesNome = MESES[mes % 12];
 
     body.innerHTML = `
+      ${totalExcedenteTransitado > 0 ? `
+      <div style="padding:0.75rem 1rem; background:#eff6ff; border:1px solid #bfdbfe; border-radius:10px; margin-bottom:1rem;">
+        <p style="margin:0; font-size:0.85rem; color:#1e40af;">
+          <strong>${fmtCurrency(totalExcedenteTransitado)}</strong> pagos além do previsto este mês transitam como crédito para ${proxMesNome}.
+        </p>
+      </div>` : ''}
       <!-- Mini KPIs -->
       <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap:0.75rem; margin-bottom:1.25rem;">
         <div style="padding:0.75rem 1rem; background:#f8fafc; border-radius:10px; text-align:center;">
@@ -477,16 +491,23 @@ function openMonthReport(ano, mes) {
               const est = (p.estado || '').toUpperCase();
               const vPago = Number(p.valor_pago || 0);
               const vPrev = Number(p.valor_previsto || 0);
-              const isPaid = est === 'PAGO' || (vPrev > 0 && vPago >= vPrev);
+              const credito = Number(p.credito_recebido || 0);
+              const excedente = Number(p.excedente_transitado || 0);
+              const isPaid = est === 'PAGO' || (vPrev > 0 && (vPago + credito) >= vPrev);
 
               const badgeCls = isPaid ? 'sessao-badge--realizada' : est === 'PARCIAL' ? 'sessao-badge--agendada' : 'sessao-badge--cancelada';
               const badgeTxt = isPaid ? 'Pago' : est === 'PARCIAL' ? 'Parcial' : 'Pendente';
+              const nota = excedente > 0
+                ? `<br><small style="color:#1e40af;">+${fmtCurrency(excedente)} transita p/ o mês seguinte</small>`
+                : credito > 0
+                  ? `<br><small style="color:#1e40af;">inclui ${fmtCurrency(credito)} transitado do mês anterior</small>`
+                  : '';
 
               return `
                 <tr style="border-bottom:1px solid #f1f5f9;">
                   <td style="text-align:left; padding:10px 6px; font-weight:500;">${nome}</td>
                   <td style="text-align:right; padding:10px 6px;">${fmtCurrency(vPrev)}</td>
-                  <td style="text-align:right; padding:10px 6px; color:${isPaid ? '#16a34a' : '#0f172a'}; font-weight:${isPaid ? '600' : '400'};">${fmtCurrency(vPago)}</td>
+                  <td style="text-align:right; padding:10px 6px; color:${isPaid ? '#16a34a' : '#0f172a'}; font-weight:${isPaid ? '600' : '400'};">${fmtCurrency(vPago)}${nota}</td>
                   <td style="text-align:center; padding:10px 6px;"><span class="sessao-badge ${badgeCls}">${badgeTxt}</span></td>
                 </tr>`;
             }).join('')}

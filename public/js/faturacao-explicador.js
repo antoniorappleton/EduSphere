@@ -95,7 +95,8 @@ function renderTabelas() {
 function renderPendenteRow(p) {
     const valorPrev = Number(p.valor_previsto || 0);
     const valorPago = Number(p.valor_pago || 0);
-    const emFalta = valorPrev - valorPago;
+    const creditoRecebido = Number(p.credito_recebido || 0);
+    const emFalta = valorPrev - valorPago - creditoRecebido;
     const statusClass = (p.estado || 'PENDENTE').toLowerCase();
     
     // Avisado logic
@@ -110,7 +111,7 @@ function renderPendenteRow(p) {
             <td><strong style="${rowColor}">${p.aluno_nome} ${p.aluno_apelido || ''}</strong></td>
             <td>${p.mes}/${p.ano}</td>
             <td>€${valorPrev.toFixed(2)}</td>
-            <td>€${valorPago.toFixed(2)}</td>
+            <td>€${valorPago.toFixed(2)}${creditoRecebido > 0 ? `<br><small style="color:#1e40af; font-weight:400;">+€${creditoRecebido.toFixed(2)} crédito transitado</small>` : ''}</td>
             <td style="color:#ef4444; font-weight:600">€${emFalta.toFixed(2)}</td>
             <td><span class="badge ${statusClass}" style="border: 1px solid currentColor">${p.estado || "PENDENTE"}</span></td>
             <td>
@@ -154,13 +155,15 @@ async function toggleAvisado(alunoId, novoEstado) {
 function updateKpis() {
     let totalPrevisto = 0;
     let totalRecebido = 0;
+    let totalCredito = 0;
 
     pagamentosCache.forEach(p => {
         totalPrevisto += Number(p.valor_previsto || 0);
         totalRecebido += Number(p.valor_pago || 0);
+        totalCredito += Number(p.credito_recebido || 0);
     });
 
-    const pendente = totalPrevisto - totalRecebido;
+    const pendente = totalPrevisto - totalRecebido - totalCredito;
 
     document.getElementById('kpi-fat-previsto').textContent = formatCurrency(totalPrevisto);
     document.getElementById('kpi-fat-recebido').textContent = formatCurrency(totalRecebido);

@@ -278,6 +278,103 @@ serve(async (req) => {
     }
 
     /* ======================================================
+   HELPER: transitar excedente de pagamento para o mês seguinte
+   Quando um aluno paga mais do que o valor_previsto de um período (ex:
+   previsto 90€, pago 150€), os 60€ a mais contam como adiantamento das
+   sessões do mês seguinte. Esta função:
+     1) corrige o próprio estado do mês de origem para refletir também
+        qualquer credito_recebido que já tivesse (ex: uma edição manual que
+        tenha recalculado o estado sem saber desse crédito);
+     2) grava o excedente em pagamentos.excedente_transitado no mês de
+        origem, só para aparecer no relatório de fim de período;
+     3) credita o mesmo valor em pagamentos.credito_recebido no mês
+        seguinte (criando a linha se ainda não existir), e recalcula o
+        estado desse mês já considerando o crédito;
+     4) propaga em cascata: se o crédito também cobrir integralmente o mês
+        seguinte com sobra, o excedente continua a avançar mês a mês.
+   É sempre recalculada a partir dos valores atuais em BD (nunca soma a um
+   excedente anterior), por isso é seguro chamar depois de qualquer
+   alteração a valor_pago/valor_previsto sem duplicar valores. Nunca mexe
+   num estado "EM_ATRASO" — essa escolha é sempre manual, nunca derivada.
+   ====================================================== */
+    async function sincronizarExcedenteTransitado(alunoId: string, ano: number, mes: number) {
+      const { data: row } = await svc.from("pagamentos")
+        .select("id_pagamento, valor_previsto, valor_pago, credito_recebido, excedente_transitado, estado")
+        .eq("id_aluno", alunoId).eq("id_explicador", myExplId)
+        .eq("ano", ano).eq("mes", mes).maybeSingle();
+      if (!row) return;
+
+      const previsto = Number(row.valor_previsto) || 0;
+      const pagoEfetivo = (Number(row.valor_pago) || 0) + (Number(row.credito_recebido) || 0);
+      const excedente = Math.max(pagoEfetivo - previsto, 0);
+
+      const patch: Record<string, unknown> = {};
+      if (Number(row.excedente_transitado) !== excedente) patch.excedente_transitado = excedente;
+
+      if (row.estado !== "EM_ATRASO") {
+        const estadoCorrigido = previsto > 0 && pagoEfetivo >= previsto
+          ? "PAGO"
+          : pagoEfetivo > 0
+            ? "PARCIAL"
+            : previsto === 0
+              ? "PAGO"
+              : "PENDENTE";
+        if (estadoCorrigido !== row.estado) patch.estado = estadoCorrigido;
+      }
+
+      if (Object.keys(patch).length > 0) {
+        await svc.from("pagamentos").update(patch).eq("id_pagamento", row.id_pagamento);
+      }
+
+      const proxMes = mes === 12 ? 1 : mes + 1;
+      const proxAno = mes === 12 ? ano + 1 : ano;
+
+      const { data: proxRow } = await svc.from("pagamentos")
+        .select("id_pagamento, valor_previsto, valor_pago, credito_recebido, estado")
+        .eq("id_aluno", alunoId).eq("id_explicador", myExplId)
+        .eq("ano", proxAno).eq("mes", proxMes).maybeSingle();
+
+      if (!proxRow) {
+        if (excedente <= 0) return;
+        // Ainda não há linha de faturação para o mês seguinte (ex: pagamento
+        // adiantado antes de iniciar_faturacao_aluno/generate_monthly_billing
+        // correr para esse mês) — cria-se já com o crédito reservado, para
+        // não se perder quando essa linha for criada mais tarde.
+        await svc.from("pagamentos").insert({
+          id_aluno: alunoId,
+          id_explicador: myExplId,
+          ano: proxAno,
+          mes: proxMes,
+          valor_previsto: 0,
+          valor_pago: 0,
+          credito_recebido: excedente,
+          estado: "PAGO"
+        });
+        return;
+      }
+
+      const creditoAtual = Number(proxRow.credito_recebido) || 0;
+      if (creditoAtual === excedente) return; // já sincronizado, evita recursão infinita
+
+      const prevSeguinte = Number(proxRow.valor_previsto) || 0;
+      const pagoSeguinte = Number(proxRow.valor_pago) || 0;
+      const totalEfetivoSeguinte = pagoSeguinte + excedente;
+      const patchSeguinte: Record<string, unknown> = { credito_recebido: excedente };
+      if (proxRow.estado !== "EM_ATRASO") {
+        if (prevSeguinte > 0 && totalEfetivoSeguinte >= prevSeguinte) patchSeguinte.estado = "PAGO";
+        else if (totalEfetivoSeguinte > 0) patchSeguinte.estado = "PARCIAL";
+        else patchSeguinte.estado = "PENDENTE";
+      }
+
+      await svc.from("pagamentos")
+        .update(patchSeguinte)
+        .eq("id_pagamento", proxRow.id_pagamento);
+
+      // Cascata para o mês seguinte a esse, caso também fique com sobra.
+      await sincronizarExcedenteTransitado(alunoId, proxAno, proxMes);
+    }
+
+    /* ======================================================
     HELPER: gerar sessões automáticas para um mês
     ====================================================== */
     async function generateSessionsForAluno(alunoId: string, month: number, year: number) {
@@ -1277,6 +1374,11 @@ serve(async (req) => {
       } catch (e) {
         console.error("Erro inesperado ao gerar sessões isoladas por mês", e);
       }
+      try {
+        await sincronizarExcedenteTransitado(alunoId, ano1, mes1);
+      } catch (e) {
+        console.error("Erro ao sincronizar excedente transitado", e);
+      }
       // resposta final
       return new Response(JSON.stringify({
         ok: true
@@ -1373,6 +1475,11 @@ serve(async (req) => {
           headers: cors(origin)
         });
       }
+      try {
+        await sincronizarExcedenteTransitado(alunoId, ano1, mes1);
+      } catch (e) {
+        console.error("Erro ao sincronizar excedente transitado", e);
+      }
       return new Response(JSON.stringify({
         ok: true,
         valor_previsto: atualPrev,
@@ -1428,6 +1535,11 @@ serve(async (req) => {
           status: 400,
           headers: cors(origin)
         });
+      }
+      try {
+        await sincronizarExcedenteTransitado(alunoId, ano1, mes1);
+      } catch (e) {
+        console.error("Erro ao sincronizar excedente transitado", e);
       }
       return new Response(JSON.stringify({
         ok: true
@@ -1566,8 +1678,14 @@ serve(async (req) => {
               console.error(`Erro ao atualizar pagamento para aluno ${al.id_aluno}:`, updErr);
               errors.push({ aluno: al.id_aluno, error: updErr.message });
             } else {
-              results.push(al.id_aluno); 
+              results.push(al.id_aluno);
             }
+          }
+
+          try {
+            await sincronizarExcedenteTransitado(al.id_aluno, ano, mes);
+          } catch (syncErr) {
+            console.error(`Erro ao sincronizar excedente transitado para aluno ${al.id_aluno}:`, syncErr);
           }
         } catch (innerErr) {
           console.error(`Exceção ao processar aluno ${al.id_aluno}:`, innerErr);
@@ -2244,6 +2362,12 @@ serve(async (req) => {
         await svc.from("alunos").update({ mensalidade_avisada: false }).eq("id_aluno", idAluno).eq("id_explicador", myExplId);
       }
 
+      try {
+        await sincronizarExcedenteTransitado(idAluno, ano, mes);
+      } catch (e) {
+        console.error("Erro ao sincronizar excedente transitado", e);
+      }
+
       return new Response(JSON.stringify({ ok: true }), { status: 200, headers: cors(origin) });
     }
 
@@ -2258,10 +2382,43 @@ serve(async (req) => {
         return new Response(JSON.stringify({ error: "id_pagamento é obrigatório" }), { status: 400, headers: cors(origin) });
       }
 
+      // Antes de apagar, ler o aluno/ano/mes para poder limpar o crédito que
+      // este pagamento possa ter transitado para o mês seguinte (senão ficava
+      // um crédito "órfão", sem pagamento de origem que o justifique).
+      const { data: rowToDelete } = await svc.from("pagamentos")
+        .select("id_aluno, ano, mes")
+        .eq("id_pagamento", idPagamento).eq("id_explicador", myExplId).maybeSingle();
+
       const { error } = await svc.from("pagamentos").delete().eq("id_pagamento", idPagamento).eq("id_explicador", myExplId);
       if (error) {
         console.error("error deleting pagamento", error);
         return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: cors(origin) });
+      }
+
+      if (rowToDelete) {
+        try {
+          const proxMes = Number(rowToDelete.mes) === 12 ? 1 : Number(rowToDelete.mes) + 1;
+          const proxAno = Number(rowToDelete.mes) === 12 ? Number(rowToDelete.ano) + 1 : Number(rowToDelete.ano);
+          const { data: proxRow } = await svc.from("pagamentos")
+            .select("id_pagamento, valor_previsto, valor_pago, credito_recebido, estado")
+            .eq("id_aluno", rowToDelete.id_aluno).eq("id_explicador", myExplId)
+            .eq("ano", proxAno).eq("mes", proxMes).maybeSingle();
+          if (proxRow && Number(proxRow.credito_recebido) > 0) {
+            const patchSeguinte: Record<string, unknown> = { credito_recebido: 0 };
+            if (proxRow.estado !== "EM_ATRASO") {
+              const prevSeguinte = Number(proxRow.valor_previsto) || 0;
+              const pagoSeguinte = Number(proxRow.valor_pago) || 0;
+              if (prevSeguinte > 0 && pagoSeguinte >= prevSeguinte) patchSeguinte.estado = "PAGO";
+              else if (pagoSeguinte > 0) patchSeguinte.estado = "PARCIAL";
+              else patchSeguinte.estado = "PENDENTE";
+            }
+            await svc.from("pagamentos")
+              .update(patchSeguinte)
+              .eq("id_pagamento", proxRow.id_pagamento);
+          }
+        } catch (e) {
+          console.error("Erro ao limpar crédito transitado após apagar pagamento", e);
+        }
       }
 
       return new Response(JSON.stringify({ ok: true }), { status: 200, headers: cors(origin) });

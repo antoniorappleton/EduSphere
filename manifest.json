@@ -1,7 +1,7 @@
 {
   "name": "EduSphere",
   "short_name": "EduSphere",
-  "version": "2026.09.21",
+  "version": "2026.10.05",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

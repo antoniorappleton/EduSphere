@@ -1399,30 +1399,41 @@ async function gerarRelatorio(id, mes = null, ano = null) {
       anoProx,
       aluno.sessoes_mes
     );
+    const labelProximoMes = new Date(anoProx, mesProxIdx - 1, 1).toLocaleDateString('pt-PT', { month: 'long' });
 
     // Buscar dados de pagamento do mês para refletir pagamentos parciais
     let valorPago = 0;
     let valorPrevistoDB = 0;
+    let creditoRecebido = 0;
+    let excedenteTransitado = 0;
     try {
       const { data: pagRow } = await supabase
         .from('pagamentos')
-        .select('valor_pago, valor_previsto')
+        .select('valor_pago, valor_previsto, credito_recebido, excedente_transitado')
         .eq('id_aluno', id)
         .eq('ano', anoAtual)
         .eq('mes', mesAtual + 1)
         .maybeSingle();
-      
+
       if (pagRow) {
         valorPago = Number(pagRow.valor_pago || 0);
         valorPrevistoDB = Number(pagRow.valor_previsto || 0);
+        creditoRecebido = Number(pagRow.credito_recebido || 0);
+        excedenteTransitado = Number(pagRow.excedente_transitado || 0);
       }
     } catch (e) {
       console.warn("Erro ao buscar pagamentos:", e);
     }
 
-    // O "Valor a Pagar" deste relatório é baseado no que foi REALMENTE realizado
+    // O "Valor a Pagar" deste relatório é baseado no que foi REALMENTE realizado,
+    // descontando também o crédito transitado de um mês anterior em que o
+    // aluno tenha pago além do previsto (ver sincronizarExcedenteTransitado
+    // na Edge Function expl-alunos).
     const totalRealizado = realizasMes.length * valorSessao;
-    const valorPendente = Math.max(totalRealizado - valorPago, 0);
+    const valorPendente = Math.max(totalRealizado - valorPago - creditoRecebido, 0);
+    // O que falta cobrar do próximo mês, já líquido de qualquer excedente
+    // deste mês que transite para lá.
+    const previsaoProximoMes = Math.max((valorSessao * sessoesProximoMes) - excedenteTransitado, 0);
 
     const html = `
       <div class="relatorio-paper">
@@ -1472,10 +1483,20 @@ async function gerarRelatorio(id, mes = null, ano = null) {
               <span style="color: #b91c1c; opacity: 0.8;">Valor Pago</span>
               <span style="font-weight: 700; color: #991b1b;">${formatCurrency(valorPago)}</span>
             </div>
+            ${creditoRecebido > 0 ? `
+            <div class="relatorio-data-row" style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px;">
+              <span style="color: #b91c1c; opacity: 0.8;">Crédito do mês anterior</span>
+              <span style="font-weight: 700; color: #991b1b;">${formatCurrency(creditoRecebido)}</span>
+            </div>` : ''}
             <div class="relatorio-data-row" style="display: flex; justify-content: space-between; font-size: 15px; padding-top: 12px; border-top: 1px dashed #fecaca; margin-top: 5px;">
               <span style="color: #991b1b; font-weight: 800;">Valor a Pagar</span>
               <span style="font-weight: 900; color: #b91c1c; font-size: 18px;">${formatCurrency(valorPendente)}</span>
             </div>
+            ${excedenteTransitado > 0 ? `
+            <div class="relatorio-data-row" style="display: flex; justify-content: space-between; font-size: 12px; margin-top: 8px;">
+              <span style="color: #1e40af;">Excedente pago este mês, transita p/ ${labelProximoMes}</span>
+              <span style="font-weight: 700; color: #1e40af;">${formatCurrency(excedenteTransitado)}</span>
+            </div>` : ''}
           </div>
         </div>
 
@@ -1533,7 +1554,8 @@ async function gerarRelatorio(id, mes = null, ano = null) {
           </div>
           <div style="background: #b91c1c; padding: 20px; border-radius: 12px; text-align: center; color: white; box-shadow: 0 10px 15px -3px rgba(185, 28, 28, 0.2);">
             <p style="font-size: 11px; text-transform: uppercase; color: #ffffff; opacity: 0.9; font-weight: 800; margin-bottom: 8px; letter-spacing: 0.05em;">Previsão Próximo Mês</p>
-            <p style="font-size: 24px; font-weight: 900;">${formatCurrency(valorSessao * sessoesProximoMes)}</p>
+            <p style="font-size: 24px; font-weight: 900;">${formatCurrency(previsaoProximoMes)}</p>
+            ${excedenteTransitado > 0 ? `<p style="font-size: 11px; margin-top: 6px; opacity: 0.9;">já desconta ${formatCurrency(excedenteTransitado)} transitado</p>` : ''}
           </div>
         </div>
 
