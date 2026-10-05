@@ -749,7 +749,9 @@
 
       if (hasPending && pendingTarget) {
         const p = pendingTarget;
-        pendingVal = Number(p.valor_previsto || 0) - Number(p.valor_pago || 0);
+        // credito_recebido: adiantamento de um mês anterior em que pagaste
+        // mais do que o previsto — já reduz o que falta pagar este mês.
+        pendingVal = Math.max(Number(p.valor_previsto || 0) - Number(p.valor_pago || 0) - Number(p.credito_recebido || 0), 0);
 
         if (pendingVal > 0) {
           hasPending = true;
@@ -816,10 +818,14 @@
         } else {
           tbody.innerHTML = historyPagos.map(p => {
             const mLabel = new Date(p.ano, p.mes - 1, 1).toLocaleDateString("pt-PT", { month: 'short' });
+            const credito = Number(p.credito_recebido || 0);
+            const nota = credito > 0
+              ? `<br><span class="text-[10px] text-blue-600">+€ ${credito.toFixed(2)} transitado do mês anterior</span>`
+              : '';
             return `
               <tr class="hover:bg-gray-50 border-b border-gray-50 last:border-0 text-gray-700">
                 <td class="px-4 py-3 font-medium capitalize text-gray-900">${mLabel} ${p.ano}</td>
-                <td class="px-4 py-3">€ ${Number(p.valor_pago).toFixed(2)}</td>
+                <td class="px-4 py-3">€ ${Number(p.valor_pago).toFixed(2)}${nota}</td>
                 <td class="px-4 py-3 text-right"><span class="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded uppercase">Pago</span></td>
               </tr>
             `;

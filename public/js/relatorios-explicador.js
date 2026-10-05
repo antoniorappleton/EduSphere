@@ -61,10 +61,11 @@ async function initReports() {
 
     // 4. KPIs (mês corrente)
     const curMonthPags = _cachedPagamentos.filter(p => Number(p.ano) === curYear && Number(p.mes) === curMonth);
-    let totalPago = 0, totalPrev = 0;
+    let totalPago = 0, totalPrev = 0, totalCreditoRecebido = 0;
     curMonthPags.forEach(p => {
       totalPago += Number(p.valor_pago || 0);
       totalPrev += Number(p.valor_previsto || 0);
+      totalCreditoRecebido += Number(p.credito_recebido || 0);
     });
 
     const sessoesEsteMes = _cachedSessoes.filter(s => {
@@ -73,7 +74,11 @@ async function initReports() {
       return d.getFullYear() === curYear && (d.getMonth() + 1) === curMonth;
     });
 
-    const taxa = totalPrev > 0 ? Math.round((totalPago / totalPrev) * 100) : 0;
+    // Crédito transitado de um mês anterior conta como "cobrado" para a taxa
+    // de cobrança (consistente com o badge "Tudo pago" em renderMonthlyList,
+    // que também trata esse crédito como cobertura), mas não entra na
+    // "faturação" (totalPago) — esse valor é só o dinheiro recebido ESTE mês.
+    const taxa = totalPrev > 0 ? Math.round(((totalPago + totalCreditoRecebido) / totalPrev) * 100) : 0;
     renderKpis(activeCount || 0, totalPago, sessoesEsteMes.length, taxa);
 
     // 5. Charts (built from local data)

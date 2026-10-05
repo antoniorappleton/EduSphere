@@ -38,7 +38,7 @@ async function loadDashboard() {
   // Fetch ALL pagamentos for KPIs + status detection (last 12 months)
   const { data: allPagsExpl } = await supabase
     .from('pagamentos')
-    .select('valor_previsto, valor_pago, estado, id_aluno, ano, mes')
+    .select('valor_previsto, valor_pago, estado, id_aluno, ano, mes, credito_recebido, excedente_transitado')
     .eq('id_explicador', explId)
     .gte('ano', currentYear - 1)
     .order('ano', { ascending: false })
@@ -55,10 +55,13 @@ async function loadDashboard() {
     pags.forEach(p => {
       const prev = parseFloat(p.valor_previsto || 0);
       const pago = parseFloat(p.valor_pago || 0);
+      const credito = parseFloat(p.credito_recebido || 0);
       totalPrevisto += prev;
       totalRealizado += pago;
       if (p.estado !== 'PAGO') {
-        totalPendentes += (prev - pago);
+        // credito_recebido já cobre parte do que falta (adiantamento de um
+        // mês anterior) — sem isto, "Pendente" ficava inflado.
+        totalPendentes += Math.max(prev - pago - credito, 0);
       }
     });
   }

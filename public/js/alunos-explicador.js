@@ -302,11 +302,18 @@ function renderPagamentosTable(list) {
           totalVisible += Number(p.valor_pago || 0);
           // Armazenar os dados na row para edição fácil
           const pJson = JSON.stringify(p).replace(/"/g, "&quot;");
+          const credito = Number(p.credito_recebido || 0);
+          const excedente = Number(p.excedente_transitado || 0);
+          const nota = excedente > 0
+            ? `<br><small style="color:#1e40af;">+${formatCurrency(excedente)} transita p/ o mês seguinte</small>`
+            : credito > 0
+              ? `<br><small style="color:#1e40af;">inclui ${formatCurrency(credito)} transitado do mês anterior</small>`
+              : '';
           return `
       <tr data-pagamento='${pJson}'>
         <td>${p.data_pagamento ? new Date(p.data_pagamento).toLocaleDateString("pt-PT") : "—"}</td>
         <td>${p.mes}/${p.ano}</td>
-        <td>${formatCurrency(p.valor_pago)} / ${formatCurrency(p.valor_previsto)}</td>
+        <td>${formatCurrency(p.valor_pago)} / ${formatCurrency(p.valor_previsto)}${nota}</td>
         <td>Multibanco/MBWay</td>
         <td><span class="badge ${p.estado?.toLowerCase()}">${p.estado}</span></td>
         <td>
